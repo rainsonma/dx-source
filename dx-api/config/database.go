@@ -71,5 +71,14 @@ func init() {
 		"migrations": map[string]any{
 			"table": "migrations",
 		},
+		// Redis connection
+		"redis": map[string]any{
+			"default": map[string]any{
+				"host":     config.GetString("REDIS_HOST", "127.0.0.1"),
+				"port":     config.GetString("REDIS_PORT", "6379"),
+				"password": config.GetString("REDIS_PASSWORD"),
+				"database": config.GetInt("REDIS_DB", 0),
+			},
+		},
 	})
 }

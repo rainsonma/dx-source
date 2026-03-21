@@ -19,10 +19,10 @@ var (
 // GetRedis returns the shared Redis client (singleton)
 func GetRedis() *redis.Client {
 	redisOnce.Do(func() {
-		host := facades.Config().GetString("cache.stores.redis.host", "127.0.0.1")
-		port := facades.Config().GetString("cache.stores.redis.port", "6379")
-		password := facades.Config().GetString("cache.stores.redis.password", "")
-		db := facades.Config().GetInt("cache.stores.redis.database", 0)
+		host := facades.Config().GetString("database.redis.default.host", "127.0.0.1")
+		port := facades.Config().GetString("database.redis.default.port", "6379")
+		password := facades.Config().GetString("database.redis.default.password", "")
+		db := facades.Config().GetInt("database.redis.default.database", 0)
 
 		redisClient = redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%s", host, port),
