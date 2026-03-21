@@ -19,7 +19,7 @@
 
 ## Current Status
 
-**Progress: 147/302 tasks completed (Phases 0-3 done)**
+**Progress: Phases 0-4 backend complete. Phase 4 frontend wiring done, old files pending removal.**
 
 | Phase | Status |
 |-------|--------|
@@ -27,10 +27,10 @@
 | P1: Auth (Sign In / Sign Up / JWT) | COMPLETED |
 | P2: User Profile & Settings | COMPLETED |
 | P3: Games & Content (Read-Only) | COMPLETED |
-| P4: Game Sessions & Gameplay | **NEXT** |
+| P4: Game Sessions & Gameplay | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
 | P5-P11 | Not started |
 
-**Next step:** Start Phase 4 — the most complex phase (game sessions, scoring, combos, stats, DB transactions).
+**Next step:** Remove old dx-web server-side files (4.2.4-4.2.6), then verify (4.3), then start Phase 5.
 
 ## Progress Legend
 
@@ -849,7 +849,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **4.1.7** DB transactions for atomic updates (session stats + game stats + records)
 
-- [ ] **4.1.8** Tests — critical, test all state transitions:
+- [x] **4.1.8** Tests — critical, test all state transitions:
   - Full session lifecycle: start → answer → complete level → advance → end
   - Scoring: combo bonuses, EXP threshold
   - Edge cases: duplicate answers, concurrent sessions, force complete
