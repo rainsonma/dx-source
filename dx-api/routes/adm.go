@@ -1,8 +1,10 @@
 package routes
 
 import (
-	"dx-api/app/facades"
+	adm "dx-api/app/http/controllers/adm"
 	"dx-api/app/http/middleware"
+
+	"dx-api/app/facades"
 
 	"github.com/goravel/framework/contracts/route"
 )
@@ -10,11 +12,19 @@ import (
 func Adm() {
 	r := facades.Route()
 
+	admAuthController := adm.NewAuthController()
+
 	// All admin API routes under /adm prefix
 	r.Prefix("/adm").Group(func(router route.Router) {
 		// Admin auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
-			// Admin auth endpoints will be added in Phase 1
+			auth.Post("/login", admAuthController.Login)
+		})
+
+		// Admin auth routes (protected, admin JWT required)
+		router.Prefix("/auth").Middleware(middleware.AdmJwtAuth()).Group(func(auth route.Router) {
+			auth.Get("/me", admAuthController.Me)
+			auth.Post("/logout", admAuthController.Logout)
 		})
 
 		// Protected admin routes (admin JWT + RBAC + operation log)

@@ -523,9 +523,11 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ---
 
-## Phase 1: Auth (Sign In / Sign Up / JWT)
+## Phase 1: Auth (Sign In / Sign Up / JWT) [BACKEND COMPLETED]
 
 > **Goal:** Users authenticate via Go API. NextAuth removed from dx-web. JWT issued by Goravel is the single auth token for all clients.
+>
+> **Status:** Backend implementation complete — client auth (7 endpoints) and admin auth (3 endpoints) with services, controllers, requests, routes. Frontend migration pending.
 
 ### 1.1 Backend (dx-api)
 
