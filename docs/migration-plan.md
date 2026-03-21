@@ -17,6 +17,21 @@
 | **dx-web port** | 3000 (unchanged) |
 | **API structure** | Two route groups: `/api/*` (client APIs for web/WeChat/Flutter) and `/adm/*` (admin APIs for admin portal) |
 
+## Current Status
+
+**Progress: 147/302 tasks completed (Phases 0-3 done)**
+
+| Phase | Status |
+|-------|--------|
+| P0: Infrastructure & Config | COMPLETED |
+| P1: Auth (Sign In / Sign Up / JWT) | COMPLETED |
+| P2: User Profile & Settings | COMPLETED |
+| P3: Games & Content (Read-Only) | COMPLETED |
+| P4: Game Sessions & Gameplay | **NEXT** |
+| P5-P11 | Not started |
+
+**Next step:** Start Phase 4 — the most complex phase (game sessions, scoring, combos, stats, DB transactions).
+
 ## Progress Legend
 
 - [ ] Not started
