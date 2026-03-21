@@ -45,11 +45,13 @@ dx-source/
 │   ├── Dockerfile.dev      # dev: npm run dev with Turbopack
 │   └── .dockerignore
 └── deploy/
+    ├── .gitignore              # ignores env/*.env.* (actual env files)
     ├── docker-compose.dev.yml
     ├── docker-compose.prod.yml
     ├── env/
-    │   ├── .env.dev
-    │   └── .env.prod
+    │   ├── .env.dev            # gitignored — actual secrets
+    │   ├── .env.prod           # gitignored — actual secrets
+    │   └── .env.example        # committed — template for setup
     └── nginx/
         ├── nginx.dev.conf
         └── nginx.prod.conf
@@ -135,7 +137,7 @@ Code change: update `api-server.ts` to read `API_INTERNAL_URL` (falls back to `N
 const API_URL = process.env.API_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 ```
 
-The `next.config.ts` image rewrite (`/api/uploads/images/:id`) becomes redundant behind nginx (nginx already routes `/api/*` to dx-api), but is harmless to keep for non-Docker local dev.
+The `next.config.ts` image rewrite (`/api/uploads/images/:id`) is redundant behind nginx (nginx already routes `/api/*` to dx-api) and should be removed.
 
 ## Docker Compose
 
@@ -320,9 +322,23 @@ node_modules/
 
 Goravel's scheduler runs within the main application process — `app.Start()` starts a goroutine that evaluates the schedule every minute. No separate cron container or host-level cron is needed. The two daily tasks (`app:reset-energy-beans` at 01:00, `app:update-play-streaks` at 02:00) run automatically inside the dx-api container.
 
+## Git Safety
+
+Env files with real secrets are gitignored. Only templates are committed.
+
+**deploy/.gitignore:**
+```
+env/.env.dev
+env/.env.prod
+```
+
+**deploy/env/.env.example** — committed template with placeholder values and comments. Developers copy it to `.env.dev` and fill in real values.
+
+Nginx configs (`nginx/*.conf`) are safe to commit — they contain no secrets.
+
 ## Code Changes Required
 
-1. **dx-web/next.config.ts** — add `output: "standalone"` for production Docker builds
+1. **dx-web/next.config.ts** — add `output: "standalone"`, remove `/api/uploads/images/:id` rewrite (nginx handles it)
 2. **dx-web/src/lib/api-server.ts** — use `API_INTERNAL_URL` env var (falls back to `NEXT_PUBLIC_API_URL`)
 3. **dx-api/config/cors.go** — remove hardcoded `http://localhost:3000` from allowed origins (redundant behind nginx, `CORS_ALLOWED_ORIGINS` env var handles it)
 
