@@ -19,7 +19,7 @@
 
 ## Current Status
 
-**Progress: Phases 0-4 backend complete. Phase 4 frontend wiring done, old files pending removal.**
+**Progress: Phases 0-5 backend + frontend wired. Old dx-web server files pending removal.**
 
 | Phase | Status |
 |-------|--------|
@@ -29,9 +29,10 @@
 | P3: Games & Content (Read-Only) | COMPLETED |
 | P4: Game Sessions & Gameplay | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
 | P5: User Tracking & Favorites | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
-| P6-P11 | Not started |
+| P6: Community & Social | **NEXT** |
+| P7-P11 | Not started |
 
-**Next step:** Remove old dx-web files (P4: 4.2.4-4.2.6, P5: 5.2.4-5.2.5), verify, then start Phase 6.
+**Next step:** Start Phase 6 (Community & Social). Also remove old dx-web files from P4/P5 when convenient.
 
 ## Progress Legend
 
