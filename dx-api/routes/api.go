@@ -37,6 +37,16 @@ func Api() {
 			})
 		})
 
+		// Public game routes
+		gameController := &apicontrollers.GameController{}
+		router.Prefix("/games").Group(func(games route.Router) {
+			games.Get("/", gameController.List)
+			games.Get("/search", gameController.Search)
+			games.Get("/{id}", gameController.Detail)
+		})
+		router.Get("/game-categories", gameController.Categories)
+		router.Get("/game-presses", gameController.Presses)
+
 		// Auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
 			auth.Post("/signup/send-code", authController.SendSignUpCode)
@@ -54,6 +64,11 @@ func Api() {
 
 		// Protected routes (user JWT required)
 		router.Middleware(middleware.JwtAuth()).Group(func(protected route.Router) {
+			// Protected game routes
+			contentController := &apicontrollers.ContentController{}
+			protected.Get("/games/recent", gameController.Recent)
+			protected.Get("/games/{id}/levels/{levelId}/content", contentController.LevelContent)
+
 			// User profile routes
 			userController := &apicontrollers.UserController{}
 			protected.Prefix("/user").Group(func(user route.Router) {

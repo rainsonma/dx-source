@@ -704,7 +704,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ---
 
-## Phase 3: Games & Content (Read-Only)
+## Phase 3: Games & Content (Read-Only) [COMPLETED]
 
 > **Goal:** Game listing, search, categories, content items served from Go API.
 
@@ -724,7 +724,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **3.1.1** `app/services/api/game_service.go`:
+- [x] **3.1.1** `app/services/api/game_service.go`:
   - `ListPublishedGames(filters, cursor, limit)` — cursor pagination (12 per page), join cover/category/author
   - `SearchGames(query, limit)` — search by name, published only
   - `GetRecentGames(userId)` — from game_stats_total ordered by last_played_at
@@ -732,37 +732,37 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `ListCategories()` — hierarchical categories with parent-child
   - `ListPresses()` — publishers list
 
-- [ ] **3.1.2** `app/services/api/content_service.go`:
+- [x] **3.1.2** `app/services/api/content_service.go`:
   - `GetLevelContent(gameLevelId, degree)` — content items filtered by degree's content types, ordered by `order`
 
-- [ ] **3.1.3** `app/http/requests/api/game_request.go`:
+- [x] **3.1.3** `app/http/requests/api/game_request.go`:
   - `ListGamesRequest` — cursor (optional), limit (optional, default 12), category_ids (optional, array), press_id (optional), mode (optional)
   - `SearchGamesRequest` — query (required, min 1), limit (optional, default 10)
   - `LevelContentRequest` — degree (required, one of game degrees)
 
-- [ ] **3.1.4** `app/http/controllers/api/game_controller.go`, `app/http/controllers/api/content_controller.go`
+- [x] **3.1.4** `app/http/controllers/api/game_controller.go`, `app/http/controllers/api/content_controller.go`
 
-- [ ] **3.1.5** Register routes — mix of public and protected
+- [x] **3.1.5** Register routes — mix of public and protected
 
-- [ ] **3.1.6** Tests
+- [x] **3.1.6** Tests
 
 ### 3.2 Frontend (dx-web)
 
-- [ ] **3.2.1** Create game/content API functions
-- [ ] **3.2.2** Update game listing, search, hall pages to call API
-- [ ] **3.2.3** Update play page content loading to call API
-- [ ] **3.2.4** Remove `src/features/web/games/actions/game.action.ts`
-- [ ] **3.2.5** Remove `src/features/web/hall/actions/game-search.action.ts`
-- [ ] **3.2.6** Remove `src/features/web/play/actions/content.action.ts`
-- [ ] **3.2.7** Remove related services and model query files that are no longer called from dx-web
+- [x] **3.2.1** Create game/content API functions
+- [x] **3.2.2** Update game listing, search, hall pages to call API
+- [x] **3.2.3** Update play page content loading to call API
+- [x] **3.2.4** Remove `src/features/web/games/actions/game.action.ts`
+- [x] **3.2.5** Remove `src/features/web/hall/actions/game-search.action.ts`
+- [x] **3.2.6** Remove `src/features/web/play/actions/content.action.ts`
+- [x] **3.2.7** Remove related services and model query files that are no longer called from dx-web
 
 ### 3.3 Verification
 
-- [ ] **3.3.1** Game listing with pagination works
-- [ ] **3.3.2** Category/press filters work
-- [ ] **3.3.3** Game search returns results
-- [ ] **3.3.4** Recent games show for authenticated users
-- [ ] **3.3.5** Content items load correctly for each degree
+- [x] **3.3.1** Game listing with pagination works
+- [x] **3.3.2** Category/press filters work
+- [x] **3.3.3** Game search returns results
+- [x] **3.3.4** Recent games show for authenticated users
+- [x] **3.3.5** Content items load correctly for each degree
 
 ---
 

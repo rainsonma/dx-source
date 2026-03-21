@@ -12,4 +12,5 @@ var (
 	ErrNicknameTaken     = errors.New("nickname already taken")
 	ErrImageNotFound     = errors.New("image not found")
 	ErrImageNotOwned     = errors.New("image not owned by user")
+	ErrGameNotFound      = errors.New("game not found")
 )
