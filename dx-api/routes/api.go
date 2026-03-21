@@ -54,7 +54,16 @@ func Api() {
 
 		// Protected routes (user JWT required)
 		router.Middleware(middleware.JwtAuth()).Group(func(protected route.Router) {
-			// Protected endpoints will be added in Phases 2-9
+			// User profile routes
+			userController := &apicontrollers.UserController{}
+			protected.Prefix("/user").Group(func(user route.Router) {
+				user.Get("/profile", userController.GetProfile)
+				user.Put("/profile", userController.UpdateProfile)
+				user.Put("/avatar", userController.UpdateAvatar)
+				user.Post("/email/send-code", userController.SendEmailCode)
+				user.Put("/email", userController.ChangeEmail)
+				user.Put("/password", userController.ChangePassword)
+			})
 		})
 	})
 }

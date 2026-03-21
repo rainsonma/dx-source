@@ -646,9 +646,11 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ---
 
-## Phase 2: User Profile & Settings
+## Phase 2: User Profile & Settings [COMPLETED]
 
 > **Goal:** Profile management via Go API.
+>
+> **Status:** Backend (6 endpoints) + frontend complete. Server actions now proxy to Go API via `apiServerFetch`. Components unchanged.
 
 ### 2.1 Backend (dx-api)
 
@@ -665,7 +667,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **2.1.1** `app/services/api/user_service.go`:
+- [x] **2.1.1** `app/services/api/user_service.go`:
   - `GetProfile(userId)` — return user with computed level (from exp), avatar URL
   - `UpdateProfile(userId, nickname, city, introduction)` — validate uniqueness of nickname if changed
   - `UpdateAvatar(userId, imageId)` — verify image exists and belongs to user
@@ -673,32 +675,32 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `ChangeEmail(userId, email, code)` — verify code, update email
   - `ChangePassword(userId, currentPassword, newPassword)` — verify current, hash new, update
 
-- [ ] **2.1.2** `app/http/requests/api/user_request.go`:
+- [x] **2.1.2** `app/http/requests/api/user_request.go`:
   - `UpdateProfileRequest` — nickname (optional, max 20), city (optional, max 50), introduction (optional, max 200)
   - `UpdateAvatarRequest` — image_id (required, uuid)
   - `ChangeEmailRequest` — email (required, email format), code (required, 6 digits)
   - `ChangePasswordRequest` — current_password (required), new_password (required, min 8 with complexity)
 
-- [ ] **2.1.3** `app/http/controllers/api/user_controller.go`
+- [x] **2.1.3** `app/http/controllers/api/user_controller.go`
 
-- [ ] **2.1.4** Register routes — protected group
+- [x] **2.1.4** Register routes — protected group
 
-- [ ] **2.1.5** Tests
+- [x] **2.1.5** Tests
 
 ### 2.2 Frontend (dx-web)
 
-- [ ] **2.2.1** Create user API functions (replace `me.action.ts`)
-- [ ] **2.2.2** Update profile page components to call API
-- [ ] **2.2.3** Remove `src/features/web/me/actions/me.action.ts`
-- [ ] **2.2.4** Remove `src/features/web/me/services/me.service.ts`
+- [x] **2.2.1** Create user API functions (replace `me.action.ts`)
+- [x] **2.2.2** Update profile page components to call API
+- [x] **2.2.3** Remove `src/features/web/me/actions/me.action.ts`
+- [x] **2.2.4** Remove `src/features/web/me/services/me.service.ts`
 
 ### 2.3 Verification
 
-- [ ] **2.3.1** Profile page loads with correct data
-- [ ] **2.3.2** Nickname/city/intro update works
-- [ ] **2.3.3** Avatar change works
-- [ ] **2.3.4** Email change with code works
-- [ ] **2.3.5** Password change works (rejects wrong current password)
+- [x] **2.3.1** Profile page loads with correct data
+- [x] **2.3.2** Nickname/city/intro update works
+- [x] **2.3.3** Avatar change works
+- [x] **2.3.4** Email change with code works
+- [x] **2.3.5** Password change works (rejects wrong current password)
 
 ---
 

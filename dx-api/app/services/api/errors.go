@@ -9,4 +9,7 @@ var (
 	ErrDuplicateUsername = errors.New("username already taken")
 	ErrUserNotFound      = errors.New("user not found")
 	ErrInvalidPassword   = errors.New("invalid password")
+	ErrNicknameTaken     = errors.New("nickname already taken")
+	ErrImageNotFound     = errors.New("image not found")
+	ErrImageNotOwned     = errors.New("image not owned by user")
 )

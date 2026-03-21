@@ -14,6 +14,7 @@ const (
 	CodeInvalidCode      = 40005
 	CodeCodeExpired      = 40006
 	CodeInsufficientBeans = 40007
+	CodeNicknameTaken     = 40008
 
 	// 401xx: Auth
 	CodeUnauthorized = 40100
@@ -30,6 +31,7 @@ const (
 	CodeSessionNotFound = 40403
 	CodeLevelNotFound   = 40404
 	CodeContentNotFound = 40405
+	CodeImageNotFound   = 40406
 
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900
