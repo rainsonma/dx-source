@@ -1,0 +1,67 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - dx-api
+      - dx-web
+    restart: always
+
+  dx-api:
+    build:
+      context: ../dx-api
+      dockerfile: Dockerfile
+    env_file:
+      - ./env/.env.prod
+    volumes:
+      - api-storage:/www/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: always
+
+  dx-web:
+    build:
+      context: ../dx-web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://your-domain.com}
+    env_file:
+      - ./env/.env.prod
+    depends_on:
+      - dx-api
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ./env/.env.prod
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: always
+
+volumes:
+  pgdata:
+  redisdata:
+  api-storage:
