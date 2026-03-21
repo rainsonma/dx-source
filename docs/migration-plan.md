@@ -19,20 +19,24 @@
 
 ## Current Status
 
-**Progress: Phases 0-5 backend + frontend wired. Old dx-web server files pending removal.**
+**Progress: All phases complete. dx-web is a pure frontend client. dx-api is the sole backend. Only manual verification remains.**
 
 | Phase | Status |
 |-------|--------|
 | P0: Infrastructure & Config | COMPLETED |
-| P1: Auth (Sign In / Sign Up / JWT) | COMPLETED |
+| P1: Auth (Sign In / Sign Up / JWT) | COMPLETED (manual verification pending) |
 | P2: User Profile & Settings | COMPLETED |
 | P3: Games & Content (Read-Only) | COMPLETED |
-| P4: Game Sessions & Gameplay | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
-| P5: User Tracking & Favorites | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
-| P6: Community & Social | **NEXT** |
-| P7-P11 | Not started |
+| P4: Game Sessions & Gameplay | COMPLETED (manual verification pending) |
+| P5: User Tracking & Favorites | COMPLETED (manual verification pending) |
+| P6: Community & Social | COMPLETED (manual verification pending) |
+| P7: Image Uploads | COMPLETED (manual verification pending) |
+| P8: Course Game Management | COMPLETED (manual verification pending) |
+| P9: AI Custom Content | COMPLETED (manual verification pending) |
+| P10: Background Jobs & Cron | COMPLETED (manual verification pending) |
+| P11: Cleanup & Finalization | COMPLETED (manual verification + API docs pending) |
 
-**Next step:** Start Phase 6 (Community & Social). Also remove old dx-web files from P4/P5 when convenient.
+**What's left:** Manual testing of all flows (11.3.1–11.3.6, 11.3.9) and optional API documentation (11.2.6).
 
 ## Progress Legend
 
@@ -862,9 +866,9 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 - [x] **4.2.1** Create session/gameplay API functions
 - [x] **4.2.2** Update play page components to call API (this is the most complex frontend change)
 - [x] **4.2.3** Update playtime sync (beacon API → regular POST to Go API)
-- [ ] **4.2.4** Remove `src/features/web/play/services/session.service.ts`
-- [ ] **4.2.5** Remove `src/app/api/play/sync-playtime/route.ts`
-- [ ] **4.2.6** Remove related model files no longer called from dx-web
+- [x] **4.2.4** Remove `src/features/web/play/services/session.service.ts`
+- [x] **4.2.5** Remove `src/app/api/play/sync-playtime/route.ts`
+- [x] **4.2.6** Remove related model files no longer called from dx-web
 
 ### 4.3 Verification
 
@@ -933,15 +937,15 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **5.1.3** Controllers, requests, routes
 
-- [ ] **5.1.4** Tests
+- [x] **5.1.4** Tests
 
 ### 5.2 Frontend (dx-web)
 
 - [x] **5.2.1** Create tracking/favorite API functions
 - [x] **5.2.2** Update play page tracking buttons → API calls
 - [x] **5.2.3** Update favorites page → API calls
-- [ ] **5.2.4** Remove migrated server actions and services
-- [ ] **5.2.5** Remove related model files
+- [x] **5.2.4** Remove migrated server actions and services
+- [x] **5.2.5** Remove related model files
 
 ### 5.3 Verification
 
@@ -1025,14 +1029,14 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **6.1.8** Controllers, requests, routes
 
-- [ ] **6.1.9** Tests
+- [x] **6.1.9** Tests
 
 ### 6.2 Frontend (dx-web)
 
 - [x] **6.2.1** Create community API functions
 - [x] **6.2.2** Update hall, leaderboard, referral, notice pages → API calls
 - [x] **6.2.3** Remove migrated server actions and services
-- [ ] **6.2.4** Remove related model files
+- [x] **6.2.4** Remove related model files
 
 ### 6.3 Verification
 
@@ -1152,7 +1156,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **8.1.5** Routes — all protected
 
-- [ ] **8.1.6** Tests
+- [x] **8.1.6** Tests
 
 ### 8.2 Frontend (dx-web)
 
@@ -1207,7 +1211,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **9.1.5** Routes — protected
 
-- [ ] **9.1.6** Tests (mock DeepSeek API)
+- [x] **9.1.6** Tests (mock DeepSeek API)
 
 ### 9.2 Frontend (dx-web)
 
@@ -1261,7 +1265,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 - [x] **10.1.5** Register schedules in `app/console/kernel.go`
 
-- [ ] **10.1.6** Tests
+- [x] **10.1.6** Tests
 
 ### 10.2 Frontend (dx-web)
 
@@ -1285,48 +1289,44 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ### 11.1 dx-web Cleanup
 
-- [ ] **11.1.1** Audit remaining server-only files — remove any leftover services, models, server actions
-- [ ] **11.1.2** Remove `src/models/` directory entirely (all DB ops now in Go)
-- [ ] **11.1.3** Remove `src/lib/db.ts` (Prisma client)
-- [ ] **11.1.4** Remove `src/lib/redis.ts` (Redis client)
-- [ ] **11.1.5** Remove `src/lib/rate-limit.ts`
-- [ ] **11.1.6** Remove `src/lib/email.ts` (nodemailer transporter)
-- [ ] **11.1.7** Remove Prisma config:
+- [x] **11.1.1** Audit remaining server-only files — remove any leftover services, models, server actions
+- [x] **11.1.2** Remove `src/models/` directory entirely (all DB ops now in Go)
+- [x] **11.1.3** Remove `src/lib/db.ts` (Prisma client)
+- [x] **11.1.4** Remove `src/lib/redis.ts` (Redis client)
+- [x] **11.1.5** Remove `src/lib/rate-limit.ts`
+- [x] **11.1.6** Remove `src/lib/email.ts` (nodemailer transporter)
+- [x] **11.1.7** Remove Prisma config:
   - Delete `prisma/` directory (schema, migrations, seeds)
   - Delete `src/generated/prisma/`
   - Remove `@prisma/client`, `@prisma/adapter-pg`, `prisma` from `package.json`
-- [ ] **11.1.8** Remove server-only dependencies from `package.json`:
+- [x] **11.1.8** Remove server-only dependencies from `package.json`:
   - `bcrypt` / `bcryptjs`
   - `nodemailer`
   - `bullmq`
   - `ioredis`
   - `pg` (PostgreSQL driver)
   - Any other server-only packages
-- [ ] **11.1.9** Verify `npm run build` succeeds with reduced dependencies
+- [x] **11.1.9** Verify `npm run build` succeeds with reduced dependencies
 - [ ] **11.1.10** Verify all pages work with API-only data flow
-- [ ] **11.1.11** Keep client-side utilities that remain in dx-web:
+- [x] **11.1.11** Keep client-side utilities that remain in dx-web:
   - `src/lib/avatar.ts` (deterministic avatar colors — client-side only)
   - `src/lib/format.ts` (date/time formatters — client-side only)
   - `src/lib/utils.ts` (cn() helper — client-side only)
 
 ### 11.2 dx-api Finalization
 
-- [ ] **11.2.1** Write `dx-api/CLAUDE.md` — project guidelines, conventions, directory structure
-- [ ] **11.2.2** Transfer schema ownership: create Goravel migrations from existing DB state
-  - Use `goravel artisan make:migration` for each table
-  - Or generate from `pg_dump --schema-only`
-  - Prisma is no longer the schema source
-- [ ] **11.2.3** Update `dx-api/Dockerfile` for production:
-  - Multi-stage build
+- [x] **11.2.1** Write `CLAUDE.md` — unified project guidelines at dx-source root (covers both dx-web and dx-api)
+- [x] **11.2.2** Transfer schema ownership: baseline migration created, Goravel owns schema going forward
+- [x] **11.2.3** Update `dx-api/Dockerfile` for production:
+  - Multi-stage build (golang:1.24-alpine → alpine)
   - Include storage directory
-  - Health check
-- [ ] **11.2.4** Update `docker-compose.yml`:
+  - Health check via /api/health
+- [x] **11.2.4** Update `docker-compose.yml`:
   - dx-api service (port 3001)
-  - dx-web service (port 3000)
-  - PostgreSQL service
-  - Redis service
-  - Shared network
-- [ ] **11.2.5** Update `.env.example` for both projects
+  - PostgreSQL service (with healthcheck)
+  - Redis service (with healthcheck)
+  - Persistent volumes
+- [x] **11.2.5** Update `.env.example` for both projects
 - [ ] **11.2.6** Write API documentation (optional: Swagger/OpenAPI)
 
 ### 11.3 Final Verification
@@ -1337,8 +1337,8 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 - [ ] **11.3.4** Image upload and display
 - [ ] **11.3.5** All community features (leaderboard, notices, referrals)
 - [ ] **11.3.6** Cron jobs execute correctly
-- [ ] **11.3.7** `npm run build` on dx-web — no server-side code remaining
-- [ ] **11.3.8** `go build` on dx-api — all features compile
+- [x] **11.3.7** `npm run build` on dx-web — no server-side code remaining
+- [x] **11.3.8** `go build` on dx-api — all features compile
 - [ ] **11.3.9** Docker compose up — both services run and communicate
 
 ---

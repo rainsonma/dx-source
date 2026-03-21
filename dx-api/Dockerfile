@@ -1,20 +1,27 @@
-FROM golang:alpine AS builder
+# Build stage
+FROM golang:1.24-alpine AS builder
 
-ENV GO111MODULE=on \
-    CGO_ENABLED=0
+RUN apk add --no-cache git
 
 WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN go mod tidy
-RUN go build --ldflags "-s -w -extldflags -static" -o main .
+RUN CGO_ENABLED=0 go build -ldflags "-s -w" -o main .
 
+# Runtime stage
 FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /www
 
 COPY --from=builder /build/main /www/
-COPY --from=builder /build/.env /www/.env
-COPY --from=builder /build/public/ /www/public/
-COPY --from=builder /build/resources/ /www/resources/
+COPY --from=builder /build/storage/ /www/storage/
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3001/api/health || exit 1
 
 ENTRYPOINT ["/www/main"]

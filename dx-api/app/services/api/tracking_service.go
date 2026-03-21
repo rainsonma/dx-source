@@ -42,6 +42,7 @@ type TrackingContentData struct {
 type ReviewItemData struct {
 	ID           string               `json:"id"`
 	ContentItem  *TrackingContentData `json:"contentItem"`
+	GameID       string               `json:"gameId"`
 	GameName     *string              `json:"gameName"`
 	LastReviewAt any                  `json:"lastReviewAt"`
 	NextReviewAt any                  `json:"nextReviewAt"`
@@ -329,6 +330,7 @@ func ListReviews(userID, cursor string, limit int) ([]ReviewItemData, string, bo
 	for _, r := range reviews {
 		item := ReviewItemData{
 			ID:           r.ID,
+			GameID:       r.GameID,
 			LastReviewAt: r.LastReviewAt,
 			NextReviewAt: r.NextReviewAt,
 			ReviewCount:  r.ReviewCount,

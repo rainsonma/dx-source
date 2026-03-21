@@ -175,6 +175,20 @@ func Api() {
 				ai.Post("/generate-content-items", aiCustomController.GenerateContentItems)
 			})
 
+			// User-facing admin routes (user JWT + admin check)
+			protected.Middleware(middleware.AdminGuard()).Group(func(admin route.Router) {
+				admCommunityController := apicontrollers.NewAdminCommunityController()
+
+				// Notice management
+				admin.Post("/admin/notices", admCommunityController.CreateNotice)
+				admin.Put("/admin/notices/{id}", admCommunityController.UpdateNotice)
+				admin.Delete("/admin/notices/{id}", admCommunityController.DeleteNotice)
+
+				// Redeem management
+				admin.Post("/admin/redeems/generate", admCommunityController.GenerateCodes)
+				admin.Get("/admin/redeems", admCommunityController.GetAllRedeems)
+			})
+
 			// Course game management routes
 			courseGameController := apicontrollers.NewCourseGameController()
 			protected.Prefix("/course-games").Group(func(cg route.Router) {
