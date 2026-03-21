@@ -79,6 +79,27 @@ func Api() {
 				user.Put("/email", userController.ChangeEmail)
 				user.Put("/password", userController.ChangePassword)
 			})
+
+			// Game session routes
+			sessionController := apicontrollers.NewGameSessionController()
+			protected.Prefix("/sessions").Group(func(sessions route.Router) {
+				sessions.Post("/start", sessionController.Start)
+				sessions.Get("/active", sessionController.CheckActive)
+				sessions.Get("/active-level", sessionController.CheckActiveLevel)
+				sessions.Get("/any-active", sessionController.CheckAnyActive)
+
+				sessions.Post("/{id}/end", sessionController.End)
+				sessions.Post("/{id}/force-complete", sessionController.ForceComplete)
+				sessions.Post("/{id}/levels/start", sessionController.StartLevel)
+				sessions.Post("/{id}/levels/{levelId}/complete", sessionController.CompleteLevel)
+				sessions.Post("/{id}/levels/{levelId}/advance", sessionController.AdvanceLevel)
+				sessions.Post("/{id}/levels/{levelId}/restart", sessionController.RestartLevel)
+				sessions.Post("/{id}/answers", sessionController.RecordAnswer)
+				sessions.Post("/{id}/skips", sessionController.RecordSkip)
+				sessions.Post("/{id}/sync-playtime", sessionController.SyncPlayTime)
+				sessions.Get("/{id}/restore", sessionController.Restore)
+				sessions.Put("/{id}/content-item", sessionController.UpdateContentItem)
+			})
 		})
 	})
 }

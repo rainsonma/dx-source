@@ -809,7 +809,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **4.1.1** `app/services/api/session_service.go` (largest service — consider splitting into sub-files):
+- [x] **4.1.1** `app/services/api/session_service.go` (largest service — consider splitting into sub-files):
   - `StartSession(userId, gameId, degree, pattern)` — check no active session, create session + first level
   - `EndSession(userId, sessionId)` — calculate final scores, mark ended, update stats
   - `ForceCompleteSession(userId, sessionId)` — complete all remaining, end session
@@ -826,28 +826,28 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `RestoreSessionData(sessionId, gameLevelId)` — accumulated stats for resume
   - `UpdateCurrentContentItem(userId, sessionId, contentItemId)` — save resume point
 
-- [ ] **4.1.2** `app/services/api/stats_service.go`:
+- [x] **4.1.2** `app/services/api/stats_service.go`:
   - `UpsertGameStats(userId, gameId, sessionData)` — update total stats after session events
   - `UpdateGameStatsAfterSession(userId, gameId, sessionData)` — after session end
   - `UpsertLevelStats(userId, gameLevelId, levelData)` — after level complete
   - `MarkGameFirstCompletion(userId, gameId)` — first-time completion tracking
 
-- [ ] **4.1.3** `app/services/api/bean_service.go`:
+- [x] **4.1.3** `app/services/api/bean_service.go`:
   - `ConsumeBeans(userId, amount, slug, reason)` — debit beans, create ledger entry
   - `RefundBeans(userId, amount, slug, reason)` — credit beans back
   - `GetBalance(userId)` — current bean count
 
-- [ ] **4.1.4** `app/http/requests/api/session_request.go`:
+- [x] **4.1.4** `app/http/requests/api/session_request.go`:
   - Validation for each session endpoint
   - `StartSessionRequest` — game_id (required), degree (required), pattern (required)
   - `RecordAnswerRequest` — game_session_level_id (the session-level record ID, not the game level ID), game_level_id, content_item_id, is_correct, source_answer, user_answer, duration
   > **Note:** `game_session_level_id` is the session-level record; `game_level_id` is the game's level. Both are needed — the former for the record's FK, the latter for stats.
 
-- [ ] **4.1.5** `app/http/controllers/api/game_session_controller.go`
+- [x] **4.1.5** `app/http/controllers/api/game_session_controller.go`
 
-- [ ] **4.1.6** Register routes — protected, some rate-limited
+- [x] **4.1.6** Register routes — protected, some rate-limited
 
-- [ ] **4.1.7** DB transactions for atomic updates (session stats + game stats + records)
+- [x] **4.1.7** DB transactions for atomic updates (session stats + game stats + records)
 
 - [ ] **4.1.8** Tests — critical, test all state transitions:
   - Full session lifecycle: start → answer → complete level → advance → end
@@ -857,13 +857,12 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ### 4.2 Frontend (dx-web)
 
-- [ ] **4.2.1** Create session/gameplay API functions
-- [ ] **4.2.2** Update play page components to call API (this is the most complex frontend change)
-- [ ] **4.2.3** Update playtime sync (beacon API → regular POST to Go API)
-- [ ] **4.2.4** Remove `src/features/web/play/actions/session.action.ts` (22 actions)
-- [ ] **4.2.5** Remove `src/features/web/play/services/session.service.ts`
-- [ ] **4.2.6** Remove `src/app/api/play/sync-playtime/route.ts`
-- [ ] **4.2.7** Remove related model files no longer called from dx-web
+- [x] **4.2.1** Create session/gameplay API functions
+- [x] **4.2.2** Update play page components to call API (this is the most complex frontend change)
+- [x] **4.2.3** Update playtime sync (beacon API → regular POST to Go API)
+- [ ] **4.2.4** Remove `src/features/web/play/services/session.service.ts`
+- [ ] **4.2.5** Remove `src/app/api/play/sync-playtime/route.ts`
+- [ ] **4.2.6** Remove related model files no longer called from dx-web
 
 ### 4.3 Verification
 
