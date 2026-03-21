@@ -16,7 +16,7 @@ func init() {
 		// To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 		"paths":                []string{"*"},
 		"allowed_methods":      []string{"*"},
-		"allowed_origins":      []string{"http://localhost:3000", config.Env("CORS_ALLOWED_ORIGINS", "").(string)},
+		"allowed_origins":      []string{config.Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000").(string)},
 		"allowed_headers":      []string{"Authorization", "Content-Type", "X-Requested-With", "Accept"},
 		"exposed_headers":      []string{},
 		"max_age":              0,
