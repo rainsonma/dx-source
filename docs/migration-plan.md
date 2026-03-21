@@ -984,54 +984,54 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **6.1.1** `app/services/api/leaderboard_service.go`:
+- [x] **6.1.1** `app/services/api/leaderboard_service.go`:
   - `GetLeaderboard(type, period, userId)` — ranking query with user's position
   - 4 query variants: all-time exp, all-time playtime, windowed exp, windowed playtime
   - Uses raw SQL with CTEs and `RANK() OVER` window functions
   - Filters: `user.is_active = true`
 
-- [ ] **6.1.2** `app/services/api/hall_service.go`:
+- [x] **6.1.2** `app/services/api/hall_service.go`:
   - `GetDashboard(userId)` — aggregate: profile, master stats, review stats, recent sessions, today's activity
   - `GetHeatmap(userId, year)` — raw SQL: daily answer counts grouped by date for the year
 
-- [ ] **6.1.3** `app/services/api/referral_service.go`:
+- [x] **6.1.3** `app/services/api/referral_service.go`:
   - `GetInviteData(userId)` — combined endpoint: invite URL (from user.invite_code), referral stats, first page of referrals
   - `GetReferrals(userId, cursor, limit)` — paginated referral records
 
-- [ ] **6.1.4** `app/services/api/notice_service.go`:
+- [x] **6.1.4** `app/services/api/notice_service.go`:
   - `GetNotices(cursor, limit)` — cursor pagination, 20 per page, active only
   - `MarkNoticesRead(userId)` — update user.last_read_notice_at to now
 
-- [ ] **6.1.4b** `app/services/adm/notice_service.go`:
+- [x] **6.1.4b** `app/services/adm/notice_service.go`:
   - `CreateNotice(title, content, icon)` — via `/adm/notices`
   - `UpdateNotice(id, title, content, icon)` — via `/adm/notices/:id`
   - `DeleteNotice(id)` — soft delete, via `/adm/notices/:id`
 
-- [ ] **6.1.5** `app/services/api/feedback_service.go`:
+- [x] **6.1.5** `app/services/api/feedback_service.go`:
   - `SubmitFeedback(userId, type, description)` — create feedback record
   - `SubmitReport(userId, gameId, gameLevelId, contentItemId, reason, note)` — rate limited
 
-- [ ] **6.1.6** `app/services/api/redeem_service.go`:
+- [x] **6.1.6** `app/services/api/redeem_service.go`:
   - `GetRedeems(userId, cursor, limit)` — user's own redemptions
   - `RedeemCode(userId, code)` — transactional: verify code unused, mark redeemed, update user grade/VIP due date, grant beans (amount depends on grade)
 
-- [ ] **6.1.6b** `app/services/adm/redeem_service.go`:
+- [x] **6.1.6b** `app/services/adm/redeem_service.go`:
   - `GenerateCodes(grade, count)` — via `/adm/redeems/generate`
   - `GetAllRedeems(cursor, limit)` — via `/adm/redeems`
 
-- [ ] **6.1.7** `app/services/api/content_seek_service.go`:
+- [x] **6.1.7** `app/services/api/content_seek_service.go`:
   - `GetContentSeeks(userId)` — user's content seek records
   - `SubmitContentSeek(userId, courseName, description, diskUrl)` — upsert by course_name, increment count
 
-- [ ] **6.1.8** Controllers, requests, routes
+- [x] **6.1.8** Controllers, requests, routes
 
 - [ ] **6.1.9** Tests
 
 ### 6.2 Frontend (dx-web)
 
-- [ ] **6.2.1** Create community API functions
-- [ ] **6.2.2** Update hall, leaderboard, referral, notice pages → API calls
-- [ ] **6.2.3** Remove migrated server actions and services
+- [x] **6.2.1** Create community API functions
+- [x] **6.2.2** Update hall, leaderboard, referral, notice pages → API calls
+- [x] **6.2.3** Remove migrated server actions and services
 - [ ] **6.2.4** Remove related model files
 
 ### 6.3 Verification
@@ -1060,29 +1060,31 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **7.1.1** `app/services/api/upload_service.go`:
+- [x] **7.1.1** `app/services/api/upload_service.go`:
   - `UploadImage(userId, file, role)` — validate size/MIME, generate path (ULID), save to disk, create DB record
-  - `GetImageURL(imageId)` — return serve URL
+  - `GetImagePath(imageId)` — return absolute file path and content type for serving
+  - `ValidateUploadFile(file, role)` — check size/MIME/role
+  - `helpers.ImageServeURL(id)` — returns API-relative serve URL `/api/uploads/images/{id}`
 
-- [ ] **7.1.2** `app/http/requests/api/upload_request.go`:
+- [x] **7.1.2** `app/http/requests/api/upload_request.go`:
   - File size <= 2MB
   - MIME: image/jpeg, image/png
   - Role: must be valid image role
 
-- [ ] **7.1.3** `app/http/controllers/api/upload_controller.go`
+- [x] **7.1.3** `app/http/controllers/api/upload_controller.go`
 
-- [ ] **7.1.4** Static file serving route for uploaded images
+- [x] **7.1.4** Static file serving route for uploaded images (serves by ID with cache headers)
 
-- [ ] **7.1.5** Routes
+- [x] **7.1.5** Routes (POST protected, GET public)
 
-- [ ] **7.1.6** Tests
+- [x] **7.1.6** Tests (validation: size, MIME, roles — 18 test cases)
 
 ### 7.2 Frontend (dx-web)
 
-- [ ] **7.2.1** Update Uppy upload target URL → Go API
-- [ ] **7.2.2** Update image URLs to point to Go API
-- [ ] **7.2.3** Remove `src/app/api/uploads/` route
-- [ ] **7.2.4** Remove `src/features/com/images/services/upload-image.service.ts`
+- [x] **7.2.1** Update Uppy upload target URL → Go API (with JWT auth header, envelope extraction)
+- [x] **7.2.2** Update image URLs to point to Go API (Next.js rewrite + Go API returns ID-based serve URLs)
+- [x] **7.2.3** Remove `src/app/api/uploads/` route
+- [x] **7.2.4** Remove `src/features/com/images/services/upload-image.service.ts` and `image-path.ts`
 
 ### 7.3 Verification
 

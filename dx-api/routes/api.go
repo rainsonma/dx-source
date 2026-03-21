@@ -15,6 +15,8 @@ func Api() {
 
 	authController := apicontrollers.NewAuthController()
 
+	uploadController := apicontrollers.NewUploadController()
+
 	// All client API routes under /api prefix
 	r.Prefix("/api").Group(func(router route.Router) {
 		// Health check (public)
@@ -47,6 +49,9 @@ func Api() {
 		router.Get("/game-categories", gameController.Categories)
 		router.Get("/game-presses", gameController.Presses)
 
+		// Public upload serving (no auth required)
+		router.Get("/uploads/images/{id}", uploadController.ServeImage)
+
 		// Auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
 			auth.Post("/signup/send-code", authController.SendSignUpCode)
@@ -64,6 +69,9 @@ func Api() {
 
 		// Protected routes (user JWT required)
 		router.Middleware(middleware.JwtAuth()).Group(func(protected route.Router) {
+			// Upload routes
+			protected.Post("/uploads/images", uploadController.UploadImage)
+
 			// Protected game routes
 			contentController := &apicontrollers.ContentController{}
 			protected.Get("/games/recent", gameController.Recent)
@@ -129,6 +137,34 @@ func Api() {
 			// Favorites routes
 			protected.Post("/favorites/toggle", trackingController.ToggleFavorite)
 			protected.Get("/favorites", trackingController.ListFavorites)
+
+			// Community & Social routes
+			communityController := apicontrollers.NewCommunityController()
+			protected.Get("/leaderboard", communityController.GetLeaderboard)
+
+			// Hall routes
+			protected.Get("/hall/dashboard", communityController.GetDashboard)
+			protected.Get("/hall/heatmap", communityController.GetHeatmap)
+
+			// Invite & Referrals
+			protected.Get("/invite", communityController.GetInviteData)
+			protected.Get("/referrals", communityController.GetReferrals)
+
+			// Notices
+			protected.Get("/notices", communityController.GetNotices)
+			protected.Post("/notices/mark-read", communityController.MarkNoticesRead)
+
+			// Feedback & Reports
+			protected.Post("/feedback", communityController.SubmitFeedback)
+			protected.Post("/reports", communityController.SubmitReport)
+
+			// Redeems
+			protected.Get("/redeems", communityController.GetRedeems)
+			protected.Post("/redeems", communityController.RedeemCode)
+
+			// Content Seek
+			protected.Get("/content-seek", communityController.GetContentSeeks)
+			protected.Post("/content-seek", communityController.SubmitContentSeek)
 		})
 	})
 }

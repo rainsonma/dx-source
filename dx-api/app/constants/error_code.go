@@ -36,6 +36,13 @@ const (
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900
 
+	// 413xx: Payload Too Large
+	CodeFileTooLarge = 41300
+
+	// 415xx: Unsupported Media Type
+	CodeInvalidFileType  = 41500
+	CodeInvalidImageRole = 41501
+
 	// 500xx: Server Error
 	CodeInternalError  = 50000
 	CodeAIServiceError = 50001

@@ -55,10 +55,8 @@ func GetProfile(userID string) (*ProfileData, error) {
 
 	var avatarURL *string
 	if user.AvatarID != nil && *user.AvatarID != "" {
-		var image models.Image
-		if err := facades.Orm().Query().Where("id", *user.AvatarID).First(&image); err == nil && image.ID != "" {
-			avatarURL = &image.Url
-		}
+		url := helpers.ImageServeURL(*user.AvatarID)
+		avatarURL = &url
 	}
 
 	profile := &ProfileData{
