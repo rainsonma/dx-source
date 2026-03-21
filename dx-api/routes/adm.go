@@ -33,7 +33,16 @@ func Adm() {
 			middleware.AdmRbac(),
 			middleware.AdmOperateLog(),
 		).Group(func(protected route.Router) {
-			// Admin CRUD endpoints will be added later
+			communityController := adm.NewCommunityController()
+
+			// Notices
+			protected.Post("/notices", communityController.CreateNotice)
+			protected.Put("/notices/{id}", communityController.UpdateNotice)
+			protected.Delete("/notices/{id}", communityController.DeleteNotice)
+
+			// Redeems
+			protected.Post("/redeems/generate", communityController.GenerateCodes)
+			protected.Get("/redeems", communityController.GetAllRedeems)
 		})
 	})
 }

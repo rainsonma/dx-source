@@ -1237,18 +1237,18 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **10.1.1** `app/jobs/send_email_job.go`:
+- [x] **10.1.1** `app/jobs/send_email_job.go`:
   - Goravel queue job for sending emails
   - Receives: to, subject, html
   - Uses Goravel mail facade
   - Handles failures gracefully
 
-- [ ] **10.1.2** `app/console/commands/update_play_streaks.go`:
+- [x] **10.1.2** `app/console/commands/update_play_streaks.go`:
   - Artisan command: `app:update-play-streaks`
   - Logic: users with `last_played_at = yesterday` → increment `current_play_streak`, update `max_play_streak`; users with `last_played_at < yesterday` → reset `current_play_streak` to **1** (not 0); users with `last_played_at = today` → skip
   - Schedule: daily at 2:00 AM
 
-- [ ] **10.1.3** `app/console/commands/reset_energy_beans.go`:
+- [x] **10.1.3** `app/console/commands/reset_energy_beans.go`:
   - Artisan command: `app:reset-energy-beans`
   - Logic: find users on membership anniversary → debit unused beans → credit new grant
   - Handle day-of-month edge cases (29/30/31 in shorter months)
@@ -1257,19 +1257,19 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - Schedule: daily at 1:00 AM
   - DB transactions for atomic debit/credit
 
-- [ ] **10.1.4** Register commands in Goravel kernel
+- [x] **10.1.4** Register commands in Goravel kernel
 
-- [ ] **10.1.5** Register schedules in `app/console/kernel.go`
+- [x] **10.1.5** Register schedules in `app/console/kernel.go`
 
 - [ ] **10.1.6** Tests
 
 ### 10.2 Frontend (dx-web)
 
-- [ ] **10.2.1** Remove `src/workers/email.worker.ts`
-- [ ] **10.2.2** Remove `scripts/cron/update-play-streaks.ts`
-- [ ] **10.2.3** Remove `scripts/cron/reset-energy-beans.ts`
-- [ ] **10.2.4** Remove `scripts/lib/db.ts`
-- [ ] **10.2.5** Remove BullMQ and related dependencies from `package.json`
+- [x] **10.2.1** Remove `src/workers/email.worker.ts`
+- [x] **10.2.2** Remove `scripts/cron/update-play-streaks.ts`
+- [x] **10.2.3** Remove `scripts/cron/reset-energy-beans.ts`
+- [x] **10.2.4** Remove `scripts/lib/db.ts`
+- [x] **10.2.5** Remove BullMQ and related dependencies from `package.json`
 
 ### 10.3 Verification
 
