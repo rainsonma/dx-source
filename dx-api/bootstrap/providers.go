@@ -23,6 +23,7 @@ import (
 	"github.com/goravel/framework/view"
 	"github.com/goravel/gin"
 	"github.com/goravel/postgres"
+	goravelredis "github.com/goravel/redis"
 )
 
 func Providers() []foundation.ServiceProvider {
@@ -48,5 +49,6 @@ func Providers() []foundation.ServiceProvider {
 		&schedule.ServiceProvider{},
 		&filesystem.ServiceProvider{},
 		&testing.ServiceProvider{},
+		&goravelredis.ServiceProvider{},
 	}
 }
