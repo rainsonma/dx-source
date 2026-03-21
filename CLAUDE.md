@@ -173,6 +173,13 @@ MAIL_HOST=    MAIL_PORT=    MAIL_USERNAME=    MAIL_PASSWORD=
 DEEPSEEK_API_KEY=
 ```
 
+## Code Style
+
+- **Neat, short, and clean** — no bloat, no unnecessary verbosity
+- **Many small files** over few large files
+- **Composite logic from small snippets** — break large files into focused pieces
+- **Always encapsulate** logic in functions or helpers when possible
+
 ## Code Guidelines
 
 - **No console.log** in production code
