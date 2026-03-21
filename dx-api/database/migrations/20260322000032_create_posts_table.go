@@ -1,0 +1,36 @@
+package migrations
+
+import (
+	"github.com/goravel/framework/contracts/database/schema"
+
+	"dx-api/app/facades"
+)
+
+type M20260322000032_CreatePostsTable struct{}
+
+func (r *M20260322000032_CreatePostsTable) Signature() string {
+	return "20260322000032_create_posts_table"
+}
+
+func (r *M20260322000032_CreatePostsTable) Up() error {
+	if !facades.Schema().HasTable("posts") {
+		return facades.Schema().Create("posts", func(table schema.Blueprint) {
+			table.String("id")
+			table.Primary("id")
+			table.String("user_id")
+			table.Text("content").Default("")
+			table.String("image_id").Nullable()
+			table.Column("tags", "text[]").Nullable()
+			table.Integer("like_count").Default(0)
+			table.Integer("comment_count").Default(0)
+			table.Integer("share_count").Default(0)
+			table.Boolean("is_active").Default(true)
+			table.TimestampsTz()
+		})
+	}
+	return nil
+}
+
+func (r *M20260322000032_CreatePostsTable) Down() error {
+	return facades.Schema().DropIfExists("posts")
+}

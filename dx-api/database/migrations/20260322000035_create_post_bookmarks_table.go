@@ -1,0 +1,30 @@
+package migrations
+
+import (
+	"github.com/goravel/framework/contracts/database/schema"
+
+	"dx-api/app/facades"
+)
+
+type M20260322000035_CreatePostBookmarksTable struct{}
+
+func (r *M20260322000035_CreatePostBookmarksTable) Signature() string {
+	return "20260322000035_create_post_bookmarks_table"
+}
+
+func (r *M20260322000035_CreatePostBookmarksTable) Up() error {
+	if !facades.Schema().HasTable("post_bookmarks") {
+		return facades.Schema().Create("post_bookmarks", func(table schema.Blueprint) {
+			table.String("id")
+			table.Primary("id")
+			table.String("post_id")
+			table.String("user_id")
+			table.TimestampTz("created_at").Nullable()
+		})
+	}
+	return nil
+}
+
+func (r *M20260322000035_CreatePostBookmarksTable) Down() error {
+	return facades.Schema().DropIfExists("post_bookmarks")
+}

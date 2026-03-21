@@ -1,0 +1,34 @@
+package migrations
+
+import (
+	"github.com/goravel/framework/contracts/database/schema"
+
+	"dx-api/app/facades"
+)
+
+type M20260322000027_CreateGameLevelsTable struct{}
+
+func (r *M20260322000027_CreateGameLevelsTable) Signature() string {
+	return "20260322000027_create_game_levels_table"
+}
+
+func (r *M20260322000027_CreateGameLevelsTable) Up() error {
+	if !facades.Schema().HasTable("game_levels") {
+		return facades.Schema().Create("game_levels", func(table schema.Blueprint) {
+			table.String("id")
+			table.Primary("id")
+			table.String("game_id")
+			table.String("name").Default("")
+			table.Text("description").Nullable()
+			table.Double("order").Default(0)
+			table.Integer("passing_score").Default(0)
+			table.Boolean("is_active").Default(true)
+			table.TimestampsTz()
+		})
+	}
+	return nil
+}
+
+func (r *M20260322000027_CreateGameLevelsTable) Down() error {
+	return facades.Schema().DropIfExists("game_levels")
+}
