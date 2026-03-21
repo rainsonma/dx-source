@@ -1190,32 +1190,32 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **9.1.1** `app/helpers/deepseek.go`:
+- [x] **9.1.1** `app/helpers/deepseek.go`:
   - DeepSeek API client (HTTP)
   - Chat completion request/response types
   - Streaming support for SSE endpoints
 
-- [ ] **9.1.2** `app/services/api/ai_custom_service.go`:
+- [x] **9.1.2** `app/services/api/ai_custom_service.go`:
   - `GenerateMetadata(userId, keywords)` — consume 5 beans, call DeepSeek, moderation check, refund on error
   - `FormatMetadata(userId, rawText)` — structure into sentence/vocab units, moderation, bean consumption
   - `BreakMetadata(userId, contentMetas, writer)` — SSE: break sentences into word/block/phrase/sentence units, concurrent (limit 20, use semaphore pattern)
   - `GenerateContentItems(userId, contentMetas, writer)` — SSE: generate IPA phonetics, POS, translations, concurrent (limit 50, use semaphore pattern)
 
-- [ ] **9.1.3** Moderation logic — detect inappropriate content, return warning
+- [x] **9.1.3** Moderation logic — detect inappropriate content, return warning
 
-- [ ] **9.1.4** `app/http/controllers/api/ai_custom_controller.go`
+- [x] **9.1.4** `app/http/controllers/api/ai_custom_controller.go`
 
-- [ ] **9.1.5** Routes — protected
+- [x] **9.1.5** Routes — protected
 
 - [ ] **9.1.6** Tests (mock DeepSeek API)
 
 ### 9.2 Frontend (dx-web)
 
-- [ ] **9.2.1** Create AI API functions with SSE consumption (EventSource or fetch + ReadableStream)
-- [ ] **9.2.2** Update AI custom pages → API calls
-- [ ] **9.2.3** Remove `src/app/api/ai-custom/` routes (4 files)
-- [ ] **9.2.4** Remove `src/features/web/ai-custom/services/` (4 AI service files, keep course-game if not already removed)
-- [ ] **9.2.5** Remove `src/lib/sse-stream.ts`
+- [x] **9.2.1** Create AI API functions with SSE consumption (EventSource or fetch + ReadableStream)
+- [x] **9.2.2** Update AI custom pages → API calls
+- [x] **9.2.3** Remove `src/app/api/ai-custom/` routes (4 files)
+- [x] **9.2.4** Remove `src/features/web/ai-custom/services/` (4 AI service files, keep course-game if not already removed)
+- [x] **9.2.5** Remove `src/lib/sse-stream.ts`
 
 ### 9.3 Verification
 

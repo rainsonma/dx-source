@@ -166,6 +166,15 @@ func Api() {
 			protected.Get("/content-seek", communityController.GetContentSeeks)
 			protected.Post("/content-seek", communityController.SubmitContentSeek)
 
+			// AI custom content routes
+			aiCustomController := apicontrollers.NewAiCustomController()
+			protected.Prefix("/ai-custom").Group(func(ai route.Router) {
+				ai.Post("/generate-metadata", aiCustomController.GenerateMetadata)
+				ai.Post("/format-metadata", aiCustomController.FormatMetadata)
+				ai.Post("/break-metadata", aiCustomController.BreakMetadata)
+				ai.Post("/generate-content-items", aiCustomController.GenerateContentItems)
+			})
+
 			// Course game management routes
 			courseGameController := apicontrollers.NewCourseGameController()
 			protected.Prefix("/course-games").Group(func(cg route.Router) {
