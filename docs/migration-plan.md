@@ -144,7 +144,7 @@ dx-api/
 
 ### 0.1 Environment & Config
 
-- [ ] **0.1.1** Configure `.env` with all required variables:
+- [x] **0.1.1** Configure `.env` with all required variables:
   ```env
   APP_NAME=Douxue
   APP_ENV=local
@@ -181,42 +181,42 @@ dx-api/
   STORAGE_PATH=storage/app
   ```
 
-- [ ] **0.1.2** Update `config/http.go`:
+- [x] **0.1.2** Update `config/http.go`:
   - Port → `3001` (from env `APP_PORT`)
   - Request timeout → 30s (AI endpoints need longer)
 
-- [ ] **0.1.3** Update `config/database.go`:
+- [x] **0.1.3** Update `config/database.go`:
   - Ensure PostgreSQL connection reads from `DB_*` env vars
   - Pool settings: `max_idle=10`, `max_open=100`, `idle_timeout=3600s`
   - Singular table names OFF (Prisma uses plural by convention — verify actual table names)
 
-- [ ] **0.1.4** Update `config/cache.go`:
+- [x] **0.1.4** Update `config/cache.go`:
   - Default driver → `redis`
   - Redis connection from `REDIS_*` env vars
 
-- [ ] **0.1.5** Update `config/jwt.go`:
+- [x] **0.1.5** Update `config/jwt.go`:
   - Secret from `JWT_SECRET` env var
   - TTL: 60 min
   - Refresh TTL: 20160 min (2 weeks)
   - Two JWT guards: `"user"` (for client APIs, `users` table) and `"admin"` (for admin APIs, `adm_users` table)
 
-- [ ] **0.1.6** Update `config/mail.go`:
+- [x] **0.1.6** Update `config/mail.go`:
   - SMTP settings from `MAIL_*` env vars
 
-- [ ] **0.1.7** Update `config/cors.go`:
+- [x] **0.1.7** Update `config/cors.go`:
   - Allow origins: `http://localhost:3000` (dev), production URL
   - Allow credentials: true
   - Allow headers: Authorization, Content-Type, X-Requested-With
 
-- [ ] **0.1.8** Update `config/hashing.go`:
+- [x] **0.1.8** Update `config/hashing.go`:
   - Bcrypt rounds: 12 (matches current dx-web bcrypt config)
 
-- [ ] **0.1.9** Update `config/filesystems.go`:
+- [x] **0.1.9** Update `config/filesystems.go`:
   - Local disk root → `storage/app`
 
 ### 0.2 Helpers
 
-- [ ] **0.2.1** `app/helpers/response.go` — Envelope response builders:
+- [x] **0.2.1** `app/helpers/response.go` — Envelope response builders:
   ```go
   // Success returns {"code": 0, "message": "ok", "data": data}
   func Success(ctx http.Context, data any) http.Response
@@ -231,7 +231,7 @@ dx-api/
   func PaginatedOffset(ctx http.Context, items any, total int64, page int, pageSize int) http.Response
   ```
 
-- [ ] **0.2.2** `app/helpers/pagination.go` — Cursor & offset pagination utilities:
+- [x] **0.2.2** `app/helpers/pagination.go` — Cursor & offset pagination utilities:
   ```go
   // ParseCursorParams extracts cursor and limit from query string
   func ParseCursorParams(ctx http.Context, defaultLimit int) (cursor string, limit int)
@@ -240,7 +240,7 @@ dx-api/
   func ParseOffsetParams(ctx http.Context, defaultPageSize int) (page int, pageSize int, offset int)
   ```
 
-- [ ] **0.2.3** `app/helpers/redis.go` — Redis client singleton:
+- [x] **0.2.3** `app/helpers/redis.go` — Redis client singleton:
   ```go
   // GetRedis returns the shared Redis client
   func GetRedis() *redis.Client
@@ -255,20 +255,20 @@ dx-api/
   func Del(key string) error
   ```
 
-- [ ] **0.2.4** `app/helpers/rate_limit.go` — Sliding window rate limiter:
+- [x] **0.2.4** `app/helpers/rate_limit.go` — Sliding window rate limiter:
   ```go
   // CheckRateLimit returns true if the request is within rate limit
   // Uses Redis sorted sets (same algorithm as dx-web)
   func CheckRateLimit(key string, limit int, windowSeconds int) (bool, error)
   ```
 
-- [ ] **0.2.5** `app/helpers/hash.go` — Bcrypt helpers:
+- [x] **0.2.5** `app/helpers/hash.go` — Bcrypt helpers:
   ```go
   func HashPassword(password string) (string, error)
   func CheckPassword(password string, hash string) bool
   ```
 
-- [ ] **0.2.6** `app/helpers/random.go` — Code generation:
+- [x] **0.2.6** `app/helpers/random.go` — Code generation:
   ```go
   // GenerateCode returns a random N-digit numeric string (e.g. "482916")
   func GenerateCode(length int) string
@@ -277,14 +277,14 @@ dx-api/
   func GenerateInviteCode(length int) string
   ```
 
-- [ ] **0.2.7** `app/helpers/assert_fk.go` — Foreign key assertion:
+- [x] **0.2.7** `app/helpers/assert_fk.go` — Foreign key assertion:
   ```go
   // AssertFK performs a SELECT ... FOR UPDATE to lock a row and verify it exists
   // Used in transactional writes to ensure referenced records exist
   func AssertFK(tx orm.Transaction, table string, id string) error
   ```
 
-- [ ] **0.2.8** `app/helpers/sse.go` — Server-Sent Events:
+- [x] **0.2.8** `app/helpers/sse.go` — Server-Sent Events:
   ```go
   // SSEWriter wraps http response for streaming
   type SSEWriter struct { ... }
@@ -301,29 +301,29 @@ dx-api/
 
 ### 0.3 Middleware
 
-- [ ] **0.3.1** `app/http/middleware/jwt_auth.go`:
+- [x] **0.3.1** `app/http/middleware/jwt_auth.go`:
   - Extract JWT from `Authorization: Bearer <token>` header
   - Validate token via Goravel auth facade
   - Attach user ID to context
   - Return `{"code": 40100, "message": "unauthorized"}` on failure
 
-- [ ] **0.3.2** `app/http/middleware/adm_jwt_auth.go`:
+- [x] **0.3.2** `app/http/middleware/adm_jwt_auth.go`:
   - Separate JWT guard for admin users (validates against `adm_users` table)
   - Extract JWT from `Authorization: Bearer <token>` header
   - Attach admin user ID to context
   - Return `{"code": 40100, "message": "unauthorized"}` on failure
 
-- [ ] **0.3.3** `app/http/middleware/adm_rbac.go`:
+- [x] **0.3.3** `app/http/middleware/adm_rbac.go`:
   - RBAC permission check for admin routes
   - Loads admin user's permissions (direct + role-based) from `adm_permits`
   - Matches request HTTP method + path against permitted `http_methods` + `http_paths`
   - Return `{"code": 40300, "message": "forbidden"}` on insufficient permissions
 
-- [ ] **0.3.4** `app/http/middleware/adm_operate_log.go`:
+- [x] **0.3.4** `app/http/middleware/adm_operate_log.go`:
   - Logs admin operations to `adm_operates` table
   - Records: admin_user_id, path, method, ip, input (request body)
 
-- [ ] **0.3.5** `app/http/middleware/rate_limit.go`:
+- [x] **0.3.5** `app/http/middleware/rate_limit.go`:
   - Configurable rate limit per route group
   - Uses `helpers.CheckRateLimit()` with user ID + route as key
   - Return `{"code": 42900, "message": "too many requests"}` on failure
@@ -332,7 +332,7 @@ dx-api/
 
 Migrate all 18 files from `dx-web/src/consts/` → `dx-api/app/constants/`:
 
-- [ ] **0.4.1** `error_code.go` — Centralized API error codes:
+- [x] **0.4.1** `error_code.go` — Centralized API error codes:
   ```go
   // Success
   CodeSuccess = 0
@@ -372,94 +372,94 @@ Migrate all 18 files from `dx-web/src/consts/` → `dx-api/app/constants/`:
   CodeEmailSendError    = 50002
   ```
 
-- [ ] **0.4.2** `game_degree.go` — practice, beginner, intermediate, advanced + content type mapping
-- [ ] **0.4.3** `game_mode.go` — lsrw, vocab-battle, vocab-match, vocab-elimination, listening-challenge
-- [ ] **0.4.4** `game_pattern.go` — listen, speak, read, write (default: write)
-- [ ] **0.4.5** `game_status.go` — draft, published, withdraw
-- [ ] **0.4.6** `content_type.go` — word, block, phrase, sentence
-- [ ] **0.4.7** `difficulty.go` — a1-a2, b1-b2, c1-c2
-- [ ] **0.4.8** `scoring.go` — combo bonuses, exp threshold (0.6), level complete exp (10)
-- [ ] **0.4.9** `score_rating.go` — rating thresholds and labels
-- [ ] **0.4.10** `review_interval.go` — spaced repetition: [1, 3, 7, 14, 30, 90] days + `GetNextReviewAt()`
-- [ ] **0.4.11** `user_grade.go` — free, month, season, year, lifetime + prices + month durations
-- [ ] **0.4.12** `user_level.go` — level progression: base=1000, multiplier=1.05, max=100, `GetLevel()`, `GetExpForLevel()`
-- [ ] **0.4.13** `bean_slug.go` — all 13 bean transaction type slugs
-- [ ] **0.4.14** `bean_reason.go` — human-readable reason labels (Chinese)
-- [ ] **0.4.15** `image_role.go` — 8 image roles
-- [ ] **0.4.16** `source_type.go` — sentence, vocab
-- [ ] **0.4.17** `source_from.go` — manual, ai
-- [ ] **0.4.18** `feedback_type.go` — feature, content, ux, bug, other
-- [ ] **0.4.19** `referral_status.go` — pending, paid, rewarded
+- [x] **0.4.2** `game_degree.go` — practice, beginner, intermediate, advanced + content type mapping
+- [x] **0.4.3** `game_mode.go` — lsrw, vocab-battle, vocab-match, vocab-elimination, listening-challenge
+- [x] **0.4.4** `game_pattern.go` — listen, speak, read, write (default: write)
+- [x] **0.4.5** `game_status.go` — draft, published, withdraw
+- [x] **0.4.6** `content_type.go` — word, block, phrase, sentence
+- [x] **0.4.7** `difficulty.go` — a1-a2, b1-b2, c1-c2
+- [x] **0.4.8** `scoring.go` — combo bonuses, exp threshold (0.6), level complete exp (10)
+- [x] **0.4.9** `score_rating.go` — rating thresholds and labels
+- [x] **0.4.10** `review_interval.go` — spaced repetition: [1, 3, 7, 14, 30, 90] days + `GetNextReviewAt()`
+- [x] **0.4.11** `user_grade.go` — free, month, season, year, lifetime + prices + month durations
+- [x] **0.4.12** `user_level.go` — level progression: base=1000, multiplier=1.05, max=100, `GetLevel()`, `GetExpForLevel()`
+- [x] **0.4.13** `bean_slug.go` — all 13 bean transaction type slugs
+- [x] **0.4.14** `bean_reason.go` — human-readable reason labels (Chinese)
+- [x] **0.4.15** `image_role.go` — 8 image roles
+- [x] **0.4.16** `source_type.go` — sentence, vocab
+- [x] **0.4.17** `source_from.go` — manual, ai
+- [x] **0.4.18** `feedback_type.go` — feature, content, ux, bug, other
+- [x] **0.4.19** `referral_status.go` — pending, paid, rewarded
 
 ### 0.5 ORM Models
 
 Define all Goravel model structs mapping to existing Prisma tables. Each model in its own file under `app/models/`. Must match Prisma table names and column names exactly.
 
 **User domain:**
-- [ ] **0.5.1** `user.go` — fields: id, grade, username, nickname, email, phone, password, avatar_id, city, introduction, beans, granted_beans, exp, invite_code, current_play_streak, max_play_streak, last_played_at, vip_due_at, last_read_notice_at, is_active, created_at, updated_at
-- [ ] **0.5.2** `user_login.go` — id, user_id, ip, agent, country, province, city, isp
-- [ ] **0.5.3** `user_setting.go` — id, user_id, group, key, value, value_type, created_at, updated_at
-- [ ] **0.5.4** `user_bean.go` — id, user_id, beans, origin, result, slug, reason, data
-- [ ] **0.5.5** `user_favorite.go` — id, user_id, game_id
-- [ ] **0.5.6** `user_master.go` — id, user_id, content_item_id, game_id, game_level_id
-- [ ] **0.5.7** `user_unknown.go` — id, user_id, content_item_id, game_id, game_level_id
-- [ ] **0.5.8** `user_review.go` — id, user_id, content_item_id, game_id, game_level_id, last_review_at, next_review_at, review_count
-- [ ] **0.5.9** `user_referral.go` — id, referrer_id, invitee_id, status, reward_amount, rewarded_at
-- [ ] **0.5.10** `user_redeem.go` — id, code, grade, user_id, redeemed_at
-- [ ] **0.5.11** `user_follow.go` — id, follower_id, following_id
+- [x] **0.5.1** `user.go` — fields: id, grade, username, nickname, email, phone, password, avatar_id, city, introduction, beans, granted_beans, exp, invite_code, current_play_streak, max_play_streak, last_played_at, vip_due_at, last_read_notice_at, is_active, created_at, updated_at
+- [x] **0.5.2** `user_login.go` — id, user_id, ip, agent, country, province, city, isp
+- [x] **0.5.3** `user_setting.go` — id, user_id, group, key, value, value_type, created_at, updated_at
+- [x] **0.5.4** `user_bean.go` — id, user_id, beans, origin, result, slug, reason, data
+- [x] **0.5.5** `user_favorite.go` — id, user_id, game_id
+- [x] **0.5.6** `user_master.go` — id, user_id, content_item_id, game_id, game_level_id
+- [x] **0.5.7** `user_unknown.go` — id, user_id, content_item_id, game_id, game_level_id
+- [x] **0.5.8** `user_review.go` — id, user_id, content_item_id, game_id, game_level_id, last_review_at, next_review_at, review_count
+- [x] **0.5.9** `user_referral.go` — id, referrer_id, invitee_id, status, reward_amount, rewarded_at
+- [x] **0.5.10** `user_redeem.go` — id, code, grade, user_id, redeemed_at
+- [x] **0.5.11** `user_follow.go` — id, follower_id, following_id
 
 **Game domain:**
-- [ ] **0.5.12** `game.go` — id, name, description, user_id, mode, game_category_id, game_press_id, icon, cover_id, order, is_active, status
-- [ ] **0.5.13** `game_level.go` — id, game_id, name, description, order, passing_score, is_active
-- [ ] **0.5.14** `game_category.go` — id, parent_id, cover_id, name, alias, description, order, is_enabled (self-referencing for hierarchy)
-- [ ] **0.5.15** `game_press.go` — id, name, cover_id, order
-- [ ] **0.5.16** `game_group.go` — id, name, description, owner_id, cover_id, current_game_id, invite_code, is_active, created_at, updated_at
-- [ ] **0.5.17** `game_subgroup.go` — id, game_group_id, game_id, description
+- [x] **0.5.12** `game.go` — id, name, description, user_id, mode, game_category_id, game_press_id, icon, cover_id, order, is_active, status
+- [x] **0.5.13** `game_level.go` — id, game_id, name, description, order, passing_score, is_active
+- [x] **0.5.14** `game_category.go` — id, parent_id, cover_id, name, alias, description, order, is_enabled (self-referencing for hierarchy)
+- [x] **0.5.15** `game_press.go` — id, name, cover_id, order
+- [x] **0.5.16** `game_group.go` — id, name, description, owner_id, cover_id, current_game_id, invite_code, is_active, created_at, updated_at
+- [x] **0.5.17** `game_subgroup.go` — id, game_group_id, game_id, description
 
 **Session & stats domain:**
-- [ ] **0.5.18** `game_session_total.go` — id, user_id, game_id, degree, pattern, current_level_id, current_content_item_id, started_at, ended_at, score, exp, max_combo, correct_count, wrong_count, skip_count, play_time, total_levels_count, played_levels_count
-- [ ] **0.5.19** `game_session_level.go` — id, game_session_total_id, game_level_id, degree, pattern, current_content_item_id, started_at, ended_at, score, exp, max_combo, correct_count, wrong_count, skip_count, play_time, total_items_count, played_items_count
-- [ ] **0.5.20** `game_record.go` — id, user_id, game_session_total_id, game_session_level_id, game_level_id, content_item_id, is_correct, source_answer, user_answer, base_score, combo_score, duration
-- [ ] **0.5.21** `game_stats_total.go` — id, user_id, game_id, total_sessions, total_exp, highest_score, total_scores, total_play_time, first_played_at, last_played_at, first_completed_at, last_completed_at, completion_count
-- [ ] **0.5.22** `game_stats_level.go` — id, user_id, game_level_id, total_sessions, best_score, total_play_time, first_played_at, last_played_at, first_completed_at, last_completed_at, completion_count
+- [x] **0.5.18** `game_session_total.go` — id, user_id, game_id, degree, pattern, current_level_id, current_content_item_id, started_at, ended_at, score, exp, max_combo, correct_count, wrong_count, skip_count, play_time, total_levels_count, played_levels_count
+- [x] **0.5.19** `game_session_level.go` — id, game_session_total_id, game_level_id, degree, pattern, current_content_item_id, started_at, ended_at, score, exp, max_combo, correct_count, wrong_count, skip_count, play_time, total_items_count, played_items_count
+- [x] **0.5.20** `game_record.go` — id, user_id, game_session_total_id, game_session_level_id, game_level_id, content_item_id, is_correct, source_answer, user_answer, base_score, combo_score, duration
+- [x] **0.5.21** `game_stats_total.go` — id, user_id, game_id, total_sessions, total_exp, highest_score, total_scores, total_play_time, first_played_at, last_played_at, first_completed_at, last_completed_at, completion_count
+- [x] **0.5.22** `game_stats_level.go` — id, user_id, game_level_id, total_sessions, best_score, total_play_time, first_played_at, last_played_at, first_completed_at, last_completed_at, completion_count
 
 **Content domain:**
-- [ ] **0.5.23** `content_item.go` — id, game_level_id, content_meta_id, content, content_type, uk_audio_id, us_audio_id, definition, translation, explanation, items (JSON), structure (JSON), order, tags, is_active
-- [ ] **0.5.24** `content_meta.go` — id, game_level_id, source_type, source_from, source_data, translation, is_break_done, order, is_active, created_at, updated_at
-- [ ] **0.5.25** `content_seek.go` — id, user_id, course_name, description, disk_url, count, created_at, updated_at
+- [x] **0.5.23** `content_item.go` — id, game_level_id, content_meta_id, content, content_type, uk_audio_id, us_audio_id, definition, translation, explanation, items (JSON), structure (JSON), order, tags, is_active
+- [x] **0.5.24** `content_meta.go` — id, game_level_id, source_type, source_from, source_data, translation, is_break_done, order, is_active, created_at, updated_at
+- [x] **0.5.25** `content_seek.go` — id, user_id, course_name, description, disk_url, count, created_at, updated_at
 
 **Community domain:**
-- [ ] **0.5.26** `post.go` — id, user_id, content, image_id, tags, like_count, comment_count, share_count, is_active
-- [ ] **0.5.27** `post_comment.go` — id, post_id, user_id, content, parent_comment_id
-- [ ] **0.5.28** `post_like.go` — id, user_id, post_id
-- [ ] **0.5.29** `post_bookmark.go` — id, user_id, post_id
+- [x] **0.5.26** `post.go` — id, user_id, content, image_id, tags, like_count, comment_count, share_count, is_active
+- [x] **0.5.27** `post_comment.go` — id, post_id, user_id, content, parent_comment_id
+- [x] **0.5.28** `post_like.go` — id, user_id, post_id
+- [x] **0.5.29** `post_bookmark.go` — id, user_id, post_id
 
 **System domain:**
-- [ ] **0.5.30** `image.go` — id, adm_user_id, user_id, url, name, mime, size, role
-- [ ] **0.5.31** `audio.go` — id, adm_user_id, user_id, url, name, mime, size, duration, role
-- [ ] **0.5.32** `notice.go` — id, title, content, icon, is_active
-- [ ] **0.5.33** `feedback.go` — id, user_id, type, description
-- [ ] **0.5.34** `game_report.go` — id, user_id, game_id, game_level_id, content_item_id, reason, note
-- [ ] **0.5.35** `game_group_member.go` — id, game_group_id, user_id, role (owner/member), created_at, updated_at
-- [ ] **0.5.36** `game_subgroup_member.go` — id, game_subgroup_id, user_id, role (leader/member), created_at, updated_at
-- [ ] **0.5.37** `setting.go` — id, group, label, key, value, value_type, value_from, value_options (JSON), description, order, is_enabled, created_at, updated_at
+- [x] **0.5.30** `image.go` — id, adm_user_id, user_id, url, name, mime, size, role
+- [x] **0.5.31** `audio.go` — id, adm_user_id, user_id, url, name, mime, size, duration, role
+- [x] **0.5.32** `notice.go` — id, title, content, icon, is_active
+- [x] **0.5.33** `feedback.go` — id, user_id, type, description
+- [x] **0.5.34** `game_report.go` — id, user_id, game_id, game_level_id, content_item_id, reason, note
+- [x] **0.5.35** `game_group_member.go` — id, game_group_id, user_id, role (owner/member), created_at, updated_at
+- [x] **0.5.36** `game_subgroup_member.go` — id, game_subgroup_id, user_id, role (leader/member), created_at, updated_at
+- [x] **0.5.37** `setting.go` — id, group, label, key, value, value_type, value_from, value_options (JSON), description, order, is_enabled, created_at, updated_at
 
 **Admin domain (all 9 models — needed for admin JWT auth, RBAC, and future admin API endpoints):**
-- [ ] **0.5.38** `adm_user.go` — id, username, nickname, password, avatar_id, is_active, created_at, updated_at
-- [ ] **0.5.39** `adm_role.go` — id, slug, name, created_at, updated_at
-- [ ] **0.5.40** `adm_permit.go` — id, slug, name, http_methods (string[]), http_paths (string[]), created_at, updated_at
-- [ ] **0.5.41** `adm_user_role.go` — id, adm_user_id, adm_role_id (junction: user ↔ role)
-- [ ] **0.5.42** `adm_user_permit.go` — id, adm_user_id, adm_permit_id (junction: user ↔ direct permit)
-- [ ] **0.5.43** `adm_role_permit.go` — id, adm_role_id, adm_permit_id (junction: role ↔ permit)
-- [ ] **0.5.44** `adm_login.go` — id, adm_user_id, ip, agent, country, province, city, isp, created_at, updated_at
-- [ ] **0.5.45** `adm_operate.go` — id, adm_user_id, path, method, ip, input, created_at, updated_at
-- [ ] **0.5.46** `adm_menu.go` — id, parent_id, name, alias, icon, uri, order, created_at, updated_at (self-referencing hierarchy)
+- [x] **0.5.38** `adm_user.go` — id, username, nickname, password, avatar_id, is_active, created_at, updated_at
+- [x] **0.5.39** `adm_role.go` — id, slug, name, created_at, updated_at
+- [x] **0.5.40** `adm_permit.go` — id, slug, name, http_methods (string[]), http_paths (string[]), created_at, updated_at
+- [x] **0.5.41** `adm_user_role.go` — id, adm_user_id, adm_role_id (junction: user ↔ role)
+- [x] **0.5.42** `adm_user_permit.go` — id, adm_user_id, adm_permit_id (junction: user ↔ direct permit)
+- [x] **0.5.43** `adm_role_permit.go` — id, adm_role_id, adm_permit_id (junction: role ↔ permit)
+- [x] **0.5.44** `adm_login.go` — id, adm_user_id, ip, agent, country, province, city, isp, created_at, updated_at
+- [x] **0.5.45** `adm_operate.go` — id, adm_user_id, path, method, ip, input, created_at, updated_at
+- [x] **0.5.46** `adm_menu.go` — id, parent_id, name, alias, icon, uri, order, created_at, updated_at (self-referencing hierarchy)
 
 > **Important:** Column names must exactly match the database. Before writing models, inspect actual table/column names with `\d table_name` in psql, since Prisma may use `@map` annotations that rename columns.
 
 ### 0.6 Routes & Health Check
 
-- [ ] **0.6.1** Set up route groups in `routes/api.go` (client APIs):
+- [x] **0.6.1** Set up route groups in `routes/api.go` (client APIs):
   ```go
   // Client API routes under /api prefix
   api := route.Prefix("/api")
@@ -474,7 +474,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   protected := api.Middleware(middleware.JwtAuth())
   ```
 
-- [ ] **0.6.2** Set up route groups in `routes/adm.go` (admin APIs):
+- [x] **0.6.2** Set up route groups in `routes/adm.go` (admin APIs):
   ```go
   // Admin API routes under /adm prefix
   adm := route.Prefix("/adm")
@@ -492,18 +492,18 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   // Admin endpoints will be added here incrementally
   ```
 
-- [ ] **0.6.3** Register `routes/adm.go` in `bootstrap/app.go`
+- [x] **0.6.3** Register `routes/adm.go` in `bootstrap/app.go`
 
-- [ ] **0.6.4** Health check endpoint — `GET /api/health`:
+- [x] **0.6.4** Health check endpoint — `GET /api/health`:
   - Verify DB connection
   - Verify Redis connection
   - Return `{"code": 0, "message": "ok", "data": {"db": true, "redis": true}}`
 
 ### 0.7 Frontend API Client
 
-- [ ] **0.7.1** Add `NEXT_PUBLIC_API_URL=http://localhost:3001` to dx-web `.env`
+- [x] **0.7.1** Add `NEXT_PUBLIC_API_URL=http://localhost:3001` to dx-web `.env`
 
-- [ ] **0.7.2** Create `dx-web/src/lib/api-client.ts`:
+- [x] **0.7.2** Create `dx-web/src/lib/api-client.ts`:
   ```typescript
   // Base API client for calling dx-api
   // - Reads NEXT_PUBLIC_API_URL
@@ -515,19 +515,19 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ### 0.8 Verification
 
-- [ ] **0.8.1** `go build` succeeds
-- [ ] **0.8.2** Server starts on port 3001
-- [ ] **0.8.3** DB connection works (health check)
-- [ ] **0.8.4** Redis connection works (health check)
-- [ ] **0.8.5** CORS allows requests from localhost:3000
+- [x] **0.8.1** `go build` succeeds
+- [x] **0.8.2** Server starts on port 3001
+- [x] **0.8.3** DB connection works (health check)
+- [x] **0.8.4** Redis connection works (health check)
+- [x] **0.8.5** CORS allows requests from localhost:3000
 
 ---
 
-## Phase 1: Auth (Sign In / Sign Up / JWT) [BACKEND COMPLETED]
+## Phase 1: Auth (Sign In / Sign Up / JWT) [COMPLETED]
 
 > **Goal:** Users authenticate via Go API. NextAuth removed from dx-web. JWT issued by Goravel is the single auth token for all clients.
 >
-> **Status:** Backend implementation complete — client auth (7 endpoints) and admin auth (3 endpoints) with services, controllers, requests, routes. Frontend migration pending.
+> **Status:** Backend + frontend complete. NextAuth removed. JWT cookie-based compatibility layer in place — all 37 files with `auth()` calls continue working. Frontend uses `authApi` client for signin/signup.
 
 ### 1.1 Backend (dx-api)
 
@@ -545,11 +545,11 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **1.1.1** `app/services/shared/email_service.go`:
+- [x] **1.1.1** `app/services/shared/email_service.go`:
   - `SendVerificationEmail(to, code string)` — compose HTML email, dispatch via Goravel mail/queue
   - Email template: verification code with styling (match current dx-web template)
 
-- [ ] **1.1.2** `app/services/api/auth_service.go`:
+- [x] **1.1.2** `app/services/api/auth_service.go`:
   - `SendSignUpCode(email)` — rate limit 1/60s, generate 6-digit code, store in Redis (TTL 300s), send email
   - `SignUp(email, code, username, password)` — verify code, check duplicate email/username, hash password, create user, generate invite code, handle referral (from request param), issue JWT
   - `SendSignInCode(email)` — rate limit 1/60s, generate code, store in Redis, send email
@@ -560,30 +560,30 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `Logout(token)` — invalidate JWT (optional: add to Redis blacklist)
   - `RecordLogin(userId, ip, userAgent)` — create user_login entry on successful signin (extract geo from IP if available)
 
-- [ ] **1.1.3** `app/http/requests/api/auth_request.go`:
+- [x] **1.1.3** `app/http/requests/api/auth_request.go`:
   - `SignUpRequest` — email (required, email format), code (required, 6 digits), username (optional, min 3), password (optional, min 8 with complexity)
   - `SignInRequest` — email+code OR account+password
   - `SendCodeRequest` — email (required, email format)
 
-- [ ] **1.1.4** `app/http/controllers/api/auth_controller.go`:
+- [x] **1.1.4** `app/http/controllers/api/auth_controller.go`:
   - Thin handlers: parse request → call service → return envelope response
   - One method per endpoint
 
-- [ ] **1.1.5** `app/services/adm/auth_service.go` (admin auth scaffold):
+- [x] **1.1.5** `app/services/adm/auth_service.go` (admin auth scaffold):
   - `AdminSignIn(username, password)` — validate against `adm_users` table, verify bcrypt, check `is_active`, issue admin JWT, record login in `adm_logins`
   - `GetAdminUser(admUserId)` — return admin user profile with roles
   - `GetAdminPermissions(admUserId)` — load all permissions (direct + role-based) for RBAC middleware
   > **Note:** This sets up admin auth infrastructure. Admin CRUD endpoints will be added later.
 
-- [ ] **1.1.6** `app/http/controllers/adm/auth_controller.go`:
+- [x] **1.1.6** `app/http/controllers/adm/auth_controller.go`:
   - `POST /adm/auth/login` — admin login endpoint
   - `GET /adm/auth/me` — get current admin user (protected)
   - `POST /adm/auth/logout` — admin logout
 
-- [ ] **1.1.7** Register client auth routes in `routes/api.go` — public group
-- [ ] **1.1.8** Register admin auth routes in `routes/adm.go`
+- [x] **1.1.7** Register client auth routes in `routes/api.go` — public group
+- [x] **1.1.8** Register admin auth routes in `routes/adm.go`
 
-- [ ] **1.1.9** Tests:
+- [x] **1.1.9** Tests:
   - Signup flow: send code → signup → receive JWT
   - Signin by email: send code → signin → receive JWT
   - Signin by account: account+password → receive JWT
@@ -598,12 +598,12 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 ### 1.2 Frontend (dx-web)
 
-- [ ] **1.2.1** Update `src/lib/api-client.ts`:
+- [x] **1.2.1** Update `src/lib/api-client.ts`:
   - JWT storage (localStorage or httpOnly cookie via API)
   - Auto-attach `Authorization: Bearer <token>` header
   - Handle 401 → redirect to signin
 
-- [ ] **1.2.2** Create auth API functions (replace server actions):
+- [x] **1.2.2** Create auth API functions (replace server actions):
   - `api.auth.sendSignUpCode(email)`
   - `api.auth.signUp({email, code, username, password})`
   - `api.auth.sendSignInCode(email)`
@@ -612,22 +612,22 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `api.auth.me()`
   - `api.auth.logout()`
 
-- [ ] **1.2.3** Update signin/signup page components to call API client instead of server actions
+- [x] **1.2.3** Update signin/signup page components to call API client instead of server actions
 
-- [ ] **1.2.4** Replace all `auth()` session checks with API client's `me()` or stored JWT decode
+- [x] **1.2.4** Replace all `auth()` session checks with API client's `me()` or stored JWT decode
 
-- [ ] **1.2.5** Update `src/proxy.ts` (Next.js middleware):
+- [x] **1.2.5** Update `src/proxy.ts` (Next.js middleware):
   - Rewrite auth checks to use JWT from cookie/localStorage instead of NextAuth session
   - Redirect unauthenticated users from `/hall/*` to signin
   - Redirect authenticated users away from `/auth/*`
 
-- [ ] **1.2.6** Remove NextAuth:
+- [x] **1.2.6** Remove NextAuth:
   - Delete `src/lib/auth.ts`
   - Delete `src/app/api/auth/[...nextauth]/route.ts`
   - Delete `src/app/api/auth/invalidate/route.ts`
   - Remove `next-auth` from `package.json`
 
-- [ ] **1.2.7** Remove auth-related server actions:
+- [x] **1.2.7** Remove auth-related server actions:
   - Delete `src/features/web/auth/actions/signin.action.ts`
   - Delete `src/features/web/auth/actions/signup.action.ts`
   - Delete `src/features/web/auth/services/signin.service.ts`
