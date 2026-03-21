@@ -9,6 +9,7 @@ import (
 	"dx-api/app/facades"
 	"dx-api/app/models"
 
+	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -405,15 +406,16 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Delete items then metas
-	if _, err := facades.Orm().Query().Where("game_level_id", gameLevelID).Delete(&models.ContentItem{}); err != nil {
-		return fmt.Errorf("failed to delete content items: %w", err)
-	}
-	if _, err := facades.Orm().Query().Where("game_level_id", gameLevelID).Delete(&models.ContentMeta{}); err != nil {
-		return fmt.Errorf("failed to delete content metas: %w", err)
-	}
-
-	return nil
+	// Delete items then metas in transaction
+	return facades.Orm().Transaction(func(tx orm.Query) error {
+		if _, err := tx.Where("game_level_id", gameLevelID).Delete(&models.ContentItem{}); err != nil {
+			return fmt.Errorf("failed to delete content items: %w", err)
+		}
+		if _, err := tx.Where("game_level_id", gameLevelID).Delete(&models.ContentMeta{}); err != nil {
+			return fmt.Errorf("failed to delete content metas: %w", err)
+		}
+		return nil
+	})
 }
 
 // verifyMetaBelongsToGame checks that a content meta belongs to a game via its level.
@@ -502,7 +504,7 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 		return refItem.Order + 1000, nil
 	}
 
-	if direction == "before" {
+	if direction == "above" || direction == "before" {
 		if refIdx == 0 {
 			return refItem.Order / 2, nil
 		}

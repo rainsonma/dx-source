@@ -9,6 +9,7 @@ import (
 	"dx-api/app/facades"
 	"dx-api/app/models"
 
+	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/oklog/ulid/v2"
 )
 
@@ -222,38 +223,40 @@ func DeleteGame(userID, gameID string) error {
 		return ErrGamePublished
 	}
 
-	// Get level IDs for cascade
-	var levels []models.GameLevel
-	if err := facades.Orm().Query().Where("game_id", gameID).Get(&levels); err != nil {
-		return fmt.Errorf("failed to load levels: %w", err)
-	}
-
-	levelIDs := make([]string, 0, len(levels))
-	for _, l := range levels {
-		levelIDs = append(levelIDs, l.ID)
-	}
-
-	// Cascade delete content items and metas for all levels
-	if len(levelIDs) > 0 {
-		if _, err := facades.Orm().Query().Where("game_level_id IN ?", levelIDs).Delete(&models.ContentItem{}); err != nil {
-			return fmt.Errorf("failed to delete content items: %w", err)
+	return facades.Orm().Transaction(func(tx orm.Query) error {
+		// Get level IDs for cascade
+		var levels []models.GameLevel
+		if err := tx.Where("game_id", gameID).Get(&levels); err != nil {
+			return fmt.Errorf("failed to load levels: %w", err)
 		}
-		if _, err := facades.Orm().Query().Where("game_level_id IN ?", levelIDs).Delete(&models.ContentMeta{}); err != nil {
-			return fmt.Errorf("failed to delete content metas: %w", err)
+
+		levelIDs := make([]string, 0, len(levels))
+		for _, l := range levels {
+			levelIDs = append(levelIDs, l.ID)
 		}
-	}
 
-	// Delete levels
-	if _, err := facades.Orm().Query().Where("game_id", gameID).Delete(&models.GameLevel{}); err != nil {
-		return fmt.Errorf("failed to delete levels: %w", err)
-	}
+		// Cascade delete content items and metas for all levels
+		if len(levelIDs) > 0 {
+			if _, err := tx.Where("game_level_id IN ?", levelIDs).Delete(&models.ContentItem{}); err != nil {
+				return fmt.Errorf("failed to delete content items: %w", err)
+			}
+			if _, err := tx.Where("game_level_id IN ?", levelIDs).Delete(&models.ContentMeta{}); err != nil {
+				return fmt.Errorf("failed to delete content metas: %w", err)
+			}
+		}
 
-	// Delete game
-	if _, err := facades.Orm().Query().Where("id", gameID).Delete(&models.Game{}); err != nil {
-		return fmt.Errorf("failed to delete game: %w", err)
-	}
+		// Delete levels
+		if _, err := tx.Where("game_id", gameID).Delete(&models.GameLevel{}); err != nil {
+			return fmt.Errorf("failed to delete levels: %w", err)
+		}
 
-	return nil
+		// Delete game
+		if _, err := tx.Where("id", gameID).Delete(&models.Game{}); err != nil {
+			return fmt.Errorf("failed to delete game: %w", err)
+		}
+
+		return nil
+	})
 }
 
 // PublishGame validates readiness and sets status to published.
@@ -372,20 +375,19 @@ func DeleteLevel(userID, gameID, levelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Cascade delete content
-	if _, err := facades.Orm().Query().Where("game_level_id", levelID).Delete(&models.ContentItem{}); err != nil {
-		return fmt.Errorf("failed to delete content items: %w", err)
-	}
-	if _, err := facades.Orm().Query().Where("game_level_id", levelID).Delete(&models.ContentMeta{}); err != nil {
-		return fmt.Errorf("failed to delete content metas: %w", err)
-	}
-
-	// Delete level
-	if _, err := facades.Orm().Query().Where("id", levelID).Delete(&models.GameLevel{}); err != nil {
-		return fmt.Errorf("failed to delete level: %w", err)
-	}
-
-	return nil
+	// Cascade delete content + level in transaction
+	return facades.Orm().Transaction(func(tx orm.Query) error {
+		if _, err := tx.Where("game_level_id", levelID).Delete(&models.ContentItem{}); err != nil {
+			return fmt.Errorf("failed to delete content items: %w", err)
+		}
+		if _, err := tx.Where("game_level_id", levelID).Delete(&models.ContentMeta{}); err != nil {
+			return fmt.Errorf("failed to delete content metas: %w", err)
+		}
+		if _, err := tx.Where("id", levelID).Delete(&models.GameLevel{}); err != nil {
+			return fmt.Errorf("failed to delete level: %w", err)
+		}
+		return nil
+	})
 }
 
 // CourseGameCounts represents the count of user's games by status.

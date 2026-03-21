@@ -499,7 +499,13 @@ func mapCourseGameError(ctx contractshttp.Context, err error) contractshttp.Resp
 	case errors.Is(err, services.ErrItemLimitExceeded):
 		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "每条元数据练习单元数量已达上限")
 	default:
-		// For publish validation errors with level name, pass through the message
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, err.Error())
+		// Pass through Chinese validation messages (e.g. publish: level has no content);
+		// hide raw internal errors from clients.
+		msg := err.Error()
+		if len(msg) > 0 && msg[0] > 127 {
+			// Starts with a multibyte char — likely a Chinese user-facing message
+			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, msg)
+		}
+		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "操作失败")
 	}
 }
