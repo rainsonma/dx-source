@@ -1123,7 +1123,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **8.1.1** `app/services/api/course_game_service.go`:
+- [x] **8.1.1** `app/services/api/course_game_service.go`:
   - `ListUserGames(userId, status, cursor, limit)` — user's own games, paginated
   - `CreateGame(userId, name, description, mode, categoryId, pressId, coverId)` — create with draft status
   - `UpdateGame(userId, gameId, ...)` — owner check, reject if published
@@ -1133,7 +1133,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `CreateLevel(userId, gameId, name, description)` — add level with auto-incremented order
   - `DeleteLevel(userId, gameId, gameLevelId)` — owner check, cascade delete content
 
-- [ ] **8.1.2** `app/services/api/course_content_service.go`:
+- [x] **8.1.2** `app/services/api/course_content_service.go`:
   - `SaveMetadataBatch(userId, gameId, gameLevelId, metadatas)` — bulk create content_meta with limit validation (MAX_SENTENCES, MAX_VOCAB, MAX_ITEMS_PER_META)
   - `ReorderMetadata(userId, gameId, gameLevelId, orderedIds)` — reorder content_meta
   - `GetContentItemsByMeta(userId, gameId, gameLevelId)` — content items grouped by metadata
@@ -1143,23 +1143,23 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `DeleteContentItem(userId, gameId, itemId)` — single delete
   - `DeleteAllLevelContent(userId, gameId, gameLevelId)` — delete all content from level
 
-- [ ] **8.1.3** `app/http/requests/api/course_game_request.go`:
+- [x] **8.1.3** `app/http/requests/api/course_game_request.go`:
   - Validation for each endpoint
   - Ownership verification helper (game belongs to user)
   - Status guard helper (reject edits to published games)
 
-- [ ] **8.1.4** `app/http/controllers/api/course_game_controller.go`
+- [x] **8.1.4** `app/http/controllers/api/course_game_controller.go`
 
-- [ ] **8.1.5** Routes — all protected
+- [x] **8.1.5** Routes — all protected
 
 - [ ] **8.1.6** Tests
 
 ### 8.2 Frontend (dx-web)
 
-- [ ] **8.2.1** Create course game API functions
-- [ ] **8.2.2** Update AI custom game creation pages → API calls
-- [ ] **8.2.3** Remove `src/features/web/ai-custom/actions/course-game.action.ts`
-- [ ] **8.2.4** Remove `src/features/web/ai-custom/services/course-game.service.ts`
+- [x] **8.2.1** Create course game API functions
+- [x] **8.2.2** Update AI custom game creation pages → API calls
+- [x] **8.2.3** Rewritten `course-game.action.ts` to use Go API (not removed — still exports action functions)
+- [x] **8.2.4** Removed `src/features/web/ai-custom/services/course-game.service.ts`
 
 ### 8.3 Verification
 

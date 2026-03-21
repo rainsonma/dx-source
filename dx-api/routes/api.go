@@ -165,6 +165,29 @@ func Api() {
 			// Content Seek
 			protected.Get("/content-seek", communityController.GetContentSeeks)
 			protected.Post("/content-seek", communityController.SubmitContentSeek)
+
+			// Course game management routes
+			courseGameController := apicontrollers.NewCourseGameController()
+			protected.Prefix("/course-games").Group(func(cg route.Router) {
+				cg.Get("/", courseGameController.List)
+				cg.Get("/counts", courseGameController.Counts)
+				cg.Post("/", courseGameController.Create)
+				cg.Get("/{id}", courseGameController.Detail)
+				cg.Put("/{id}", courseGameController.Update)
+				cg.Delete("/{id}", courseGameController.Delete)
+				cg.Post("/{id}/publish", courseGameController.Publish)
+				cg.Post("/{id}/withdraw", courseGameController.Withdraw)
+				cg.Post("/{id}/levels", courseGameController.CreateLevel)
+				cg.Delete("/{id}/levels/{levelId}", courseGameController.DeleteLevel)
+				cg.Post("/{id}/levels/{levelId}/metadata", courseGameController.SaveMetadata)
+				cg.Put("/{id}/metadata/reorder", courseGameController.ReorderMetadata)
+				cg.Get("/{id}/levels/{levelId}/content-items", courseGameController.GetContentItems)
+				cg.Post("/{id}/levels/{levelId}/content-items", courseGameController.InsertContentItem)
+				cg.Put("/{id}/content-items/{itemId}", courseGameController.UpdateContentItemText)
+				cg.Put("/{id}/content-items/reorder", courseGameController.ReorderContentItems)
+				cg.Delete("/{id}/content-items/{itemId}", courseGameController.DeleteContentItem)
+				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
+			})
 		})
 	})
 }
