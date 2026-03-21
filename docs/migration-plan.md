@@ -25,9 +25,11 @@
 
 ---
 
-## Phase 0: Infrastructure & Config
+## Phase 0: Infrastructure & Config [COMPLETED]
 
 > **Goal:** A running Go API server with DB, Redis, middleware, response/pagination helpers, all constants, all ORM models, and a health check. No business logic yet — just the skeleton every phase depends on.
+>
+> **Status:** All tasks completed. `go build` and `go vet` pass clean. 8 helpers, 5 middleware, 19 constants, 46 models, 2 route files created. Frontend API client created.
 
 ### Architecture
 

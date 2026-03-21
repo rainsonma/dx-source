@@ -1,0 +1,30 @@
+package models
+
+import (
+	"github.com/goravel/framework/database/orm"
+	"github.com/lib/pq"
+)
+
+type ContentItem struct {
+	orm.Timestamps
+	ID            string         `gorm:"column:id;primaryKey" json:"id"`
+	GameLevelID   string         `gorm:"column:game_level_id" json:"game_level_id"`
+	ContentMetaID *string        `gorm:"column:content_meta_id" json:"content_meta_id"`
+	Content       string         `gorm:"column:content" json:"content"`
+	ContentType   string         `gorm:"column:content_type" json:"content_type"`
+	UkAudioID     *string        `gorm:"column:uk_audio_id" json:"uk_audio_id"`
+	UsAudioID     *string        `gorm:"column:us_audio_id" json:"us_audio_id"`
+	Definition    *string        `gorm:"column:definition" json:"definition"`
+	Translation   *string        `gorm:"column:translation" json:"translation"`
+	Explanation   *string        `gorm:"column:explanation" json:"explanation"`
+	Items         *string        `gorm:"column:items;type:jsonb" json:"items"`
+	Structure     *string        `gorm:"column:structure;type:jsonb" json:"structure"`
+	Order         float64        `gorm:"column:order" json:"order"`
+	Tags          pq.StringArray `gorm:"column:tags;type:text[]" json:"tags"`
+	IsActive      bool           `gorm:"column:is_active" json:"is_active"`
+}
+
+// TableName returns the database table name.
+func (c *ContentItem) TableName() string {
+	return "content_items"
+}
