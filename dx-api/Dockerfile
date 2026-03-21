@@ -17,7 +17,7 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /www
 
 COPY --from=builder /build/main /www/
-COPY --from=builder /build/storage/ /www/storage/
+RUN mkdir -p /www/storage/app/uploads
 
 EXPOSE 3001
 
