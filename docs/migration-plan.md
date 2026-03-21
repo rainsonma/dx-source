@@ -28,9 +28,10 @@
 | P2: User Profile & Settings | COMPLETED |
 | P3: Games & Content (Read-Only) | COMPLETED |
 | P4: Game Sessions & Gameplay | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
-| P5-P11 | Not started |
+| P5: User Tracking & Favorites | **IN PROGRESS** (backend done, frontend wired, old files pending removal) |
+| P6-P11 | Not started |
 
-**Next step:** Remove old dx-web server-side files (4.2.4-4.2.6), then verify (4.3), then start Phase 5.
+**Next step:** Remove old dx-web files (P4: 4.2.4-4.2.6, P5: 5.2.4-5.2.5), verify, then start Phase 6.
 
 ## Progress Legend
 
@@ -908,7 +909,7 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
 
 **Tasks:**
 
-- [ ] **5.1.1** `app/services/api/tracking_service.go`:
+- [x] **5.1.1** `app/services/api/tracking_service.go`:
   - `MarkAsMastered(userId, contentItemId, gameId, gameLevelId)` — upsert user_master, remove from user_unknown
   - `ListMastered(userId, cursor, limit)` — paginated mastered items with content details
   - `GetMasterStats(userId)` — count mastered items
@@ -925,19 +926,19 @@ Define all Goravel model structs mapping to existing Prisma tables. Each model i
   - `DeleteReview(userId, id)` — remove single entry
   - `BulkDeleteReviews(userId, ids)` — remove multiple entries
 
-- [ ] **5.1.2** `app/services/api/favorite_service.go`:
+- [x] **5.1.2** `app/services/api/favorite_service.go`:
   - `ToggleFavorite(userId, gameId)` — insert or delete
   - `ListFavorites(userId)` — user's favorite games with details
 
-- [ ] **5.1.3** Controllers, requests, routes
+- [x] **5.1.3** Controllers, requests, routes
 
 - [ ] **5.1.4** Tests
 
 ### 5.2 Frontend (dx-web)
 
-- [ ] **5.2.1** Create tracking/favorite API functions
-- [ ] **5.2.2** Update play page tracking buttons → API calls
-- [ ] **5.2.3** Update favorites page → API calls
+- [x] **5.2.1** Create tracking/favorite API functions
+- [x] **5.2.2** Update play page tracking buttons → API calls
+- [x] **5.2.3** Update favorites page → API calls
 - [ ] **5.2.4** Remove migrated server actions and services
 - [ ] **5.2.5** Remove related model files
 

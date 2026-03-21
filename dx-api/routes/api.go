@@ -100,6 +100,35 @@ func Api() {
 				sessions.Get("/{id}/restore", sessionController.Restore)
 				sessions.Put("/{id}/content-item", sessionController.UpdateContentItem)
 			})
+
+			// Tracking routes (mastered / unknown / review)
+			trackingController := apicontrollers.NewTrackingController()
+			protected.Prefix("/tracking").Group(func(tracking route.Router) {
+				// Mastered
+				tracking.Post("/master", trackingController.MarkMastered)
+				tracking.Get("/master", trackingController.ListMastered)
+				tracking.Get("/master/stats", trackingController.MasterStats)
+				tracking.Delete("/master/{id}", trackingController.DeleteMastered)
+				tracking.Delete("/master", trackingController.BulkDeleteMastered)
+
+				// Unknown
+				tracking.Post("/unknown", trackingController.MarkUnknown)
+				tracking.Get("/unknown", trackingController.ListUnknown)
+				tracking.Get("/unknown/stats", trackingController.UnknownStats)
+				tracking.Delete("/unknown/{id}", trackingController.DeleteUnknown)
+				tracking.Delete("/unknown", trackingController.BulkDeleteUnknown)
+
+				// Review
+				tracking.Post("/review", trackingController.MarkReview)
+				tracking.Get("/review", trackingController.ListReviews)
+				tracking.Get("/review/stats", trackingController.ReviewStats)
+				tracking.Delete("/review/{id}", trackingController.DeleteReview)
+				tracking.Delete("/review", trackingController.BulkDeleteReviews)
+			})
+
+			// Favorites routes
+			protected.Post("/favorites/toggle", trackingController.ToggleFavorite)
+			protected.Get("/favorites", trackingController.ListFavorites)
 		})
 	})
 }
