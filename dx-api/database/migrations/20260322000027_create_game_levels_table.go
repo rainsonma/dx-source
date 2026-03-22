@@ -24,6 +24,9 @@ func (r *M20260322000027CreateGameLevelsTable) Up() error {
 			table.Integer("passing_score").Default(0)
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.Index("game_id")
+			table.Index("order")
+			table.Index("is_active")
 		})
 	}
 	return nil

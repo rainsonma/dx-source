@@ -25,6 +25,9 @@ func (r *M20260322000023CreateAdmLoginsTable) Up() error {
 			table.String("city").Nullable()
 			table.String("isp").Nullable()
 			table.TimestampsTz()
+			table.Index("adm_user_id")
+			table.Index("ip")
+			table.Index("created_at")
 		})
 	}
 	return nil

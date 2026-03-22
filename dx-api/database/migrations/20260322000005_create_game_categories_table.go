@@ -25,6 +25,11 @@ func (r *M20260322000005CreateGameCategoriesTable) Up() error {
 			table.Double("order").Default(0)
 			table.Boolean("is_enabled").Default(true)
 			table.TimestampsTz()
+			table.Unique("name")
+			table.Index("cover_id")
+			table.Index("alias")
+			table.Index("parent_id")
+			table.Index("order")
 		})
 	}
 	return nil

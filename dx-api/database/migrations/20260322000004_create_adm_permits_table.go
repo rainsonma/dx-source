@@ -22,6 +22,8 @@ func (r *M20260322000004CreateAdmPermitsTable) Up() error {
 			table.Column("http_methods", "text[]").Nullable()
 			table.Column("http_paths", "text[]").Nullable()
 			table.TimestampsTz()
+			table.Unique("slug")
+			table.Unique("name")
 		})
 	}
 	return nil

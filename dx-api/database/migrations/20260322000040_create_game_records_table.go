@@ -29,6 +29,13 @@ func (r *M20260322000040CreateGameRecordsTable) Up() error {
 			table.Integer("combo_score").Default(0)
 			table.Integer("duration").Default(0)
 			table.TimestampsTz()
+			table.Unique("game_session_level_id", "content_item_id")
+			table.Index("user_id")
+			table.Index("game_session_total_id")
+			table.Index("game_session_level_id")
+			table.Index("game_level_id")
+			table.Index("content_item_id")
+			table.Index("is_correct")
 		})
 	}
 	return nil

@@ -23,6 +23,7 @@ func (r *M20260322000015CreateUserSettingsTable) Up() error {
 			table.Text("value").Default("")
 			table.String("value_type").Default("")
 			table.TimestampsTz()
+			table.Index("user_id")
 		})
 	}
 	return nil

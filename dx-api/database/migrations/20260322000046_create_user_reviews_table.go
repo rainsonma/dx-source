@@ -25,6 +25,13 @@ func (r *M20260322000046CreateUserReviewsTable) Up() error {
 			table.TimestampTz("next_review_at").Nullable()
 			table.Integer("review_count").Default(0)
 			table.TimestampsTz()
+			table.Unique("user_id", "content_item_id")
+			table.Index("user_id")
+			table.Index("content_item_id")
+			table.Index("game_id")
+			table.Index("game_level_id")
+			table.Index("next_review_at")
+			table.Index("created_at")
 		})
 	}
 	return nil

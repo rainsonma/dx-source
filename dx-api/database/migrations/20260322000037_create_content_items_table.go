@@ -32,6 +32,14 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Column("tags", "text[]").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.Index("game_level_id")
+			table.Index("content_meta_id")
+			table.Index("uk_audio_id")
+			table.Index("us_audio_id")
+			table.Index("content_type")
+			table.Index("order")
+			table.Index("is_active")
+			table.Index("created_at")
 		})
 	}
 	return nil

@@ -37,6 +37,14 @@ func (r *M20260322000001CreateUsersTable) Up() error {
 			table.TimestampTz("vip_due_at").Nullable()
 			table.TimestampTz("last_read_notice_at").Nullable()
 			table.TimestampsTz()
+			table.Unique("username")
+			table.Unique("email")
+			table.Unique("phone")
+			table.Unique("invite_code")
+			table.Index("avatar_id")
+			table.Index("nickname")
+			table.Index("created_at")
+			table.Index("last_played_at")
 		})
 	}
 	return nil

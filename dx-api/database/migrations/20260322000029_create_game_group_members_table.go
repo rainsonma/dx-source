@@ -21,6 +21,9 @@ func (r *M20260322000029CreateGameGroupMembersTable) Up() error {
 			table.String("user_id")
 			table.String("role").Default("")
 			table.TimestampsTz()
+			table.Unique("game_group_id", "user_id")
+			table.Index("game_group_id")
+			table.Index("user_id")
 		})
 	}
 	return nil

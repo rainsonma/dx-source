@@ -25,6 +25,12 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.String("invite_code").Default("")
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.Unique("invite_code")
+			table.Index("owner_id")
+			table.Index("cover_id")
+			table.Index("current_game_id")
+			table.Index("is_active")
+			table.Index("created_at")
 		})
 	}
 	return nil

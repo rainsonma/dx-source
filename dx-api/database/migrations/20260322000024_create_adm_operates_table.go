@@ -23,6 +23,8 @@ func (r *M20260322000024CreateAdmOperatesTable) Up() error {
 			table.String("ip").Default("")
 			table.Text("input").Default("")
 			table.TimestampsTz()
+			table.Index("adm_user_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

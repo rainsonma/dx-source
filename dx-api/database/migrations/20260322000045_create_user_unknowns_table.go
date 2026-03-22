@@ -22,6 +22,12 @@ func (r *M20260322000045CreateUserUnknownsTable) Up() error {
 			table.String("game_id")
 			table.String("game_level_id")
 			table.TimestampsTz()
+			table.Unique("user_id", "content_item_id")
+			table.Index("user_id")
+			table.Index("content_item_id")
+			table.Index("game_id")
+			table.Index("game_level_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

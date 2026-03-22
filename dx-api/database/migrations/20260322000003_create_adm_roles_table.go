@@ -20,6 +20,8 @@ func (r *M20260322000003CreateAdmRolesTable) Up() error {
 			table.String("slug").Default("")
 			table.String("name").Default("")
 			table.TimestampsTz()
+			table.Unique("slug")
+			table.Unique("name")
 		})
 	}
 	return nil

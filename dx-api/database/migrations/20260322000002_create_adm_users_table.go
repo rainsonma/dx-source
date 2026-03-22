@@ -23,6 +23,10 @@ func (r *M20260322000002CreateAdmUsersTable) Up() error {
 			table.String("avatar_id").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.Unique("username")
+			table.Index("avatar_id")
+			table.Index("nickname")
+			table.Index("created_at")
 		})
 	}
 	return nil

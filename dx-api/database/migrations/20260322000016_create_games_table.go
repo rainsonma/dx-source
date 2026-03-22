@@ -29,6 +29,14 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Boolean("is_active").Default(true)
 			table.String("status").Default("")
 			table.TimestampsTz()
+			table.Unique("name")
+			table.Index("user_id")
+			table.Index("mode")
+			table.Index("game_category_id")
+			table.Index("game_press_id")
+			table.Index("order")
+			table.Index("is_active")
+			table.Index("cover_id")
 		})
 	}
 	return nil

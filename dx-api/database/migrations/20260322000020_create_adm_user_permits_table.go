@@ -20,6 +20,7 @@ func (r *M20260322000020CreateAdmUserPermitsTable) Up() error {
 			table.String("adm_user_id")
 			table.String("adm_permit_id")
 			table.TimestampsTz()
+			table.Unique("adm_user_id", "adm_permit_id")
 		})
 	}
 	return nil

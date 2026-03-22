@@ -20,6 +20,7 @@ func (r *M20260322000019CreateAdmUserRolesTable) Up() error {
 			table.String("adm_role_id")
 			table.String("adm_user_id")
 			table.TimestampsTz()
+			table.Unique("adm_role_id", "adm_user_id")
 		})
 	}
 	return nil

@@ -25,6 +25,10 @@ func (r *M20260322000017CreateImagesTable) Up() error {
 			table.Integer("size").Default(0)
 			table.String("role").Default("")
 			table.TimestampsTz()
+			table.Index("adm_user_id")
+			table.Index("user_id")
+			table.Index("url")
+			table.Index("created_at")
 		})
 	}
 	return nil

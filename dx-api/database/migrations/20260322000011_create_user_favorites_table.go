@@ -20,6 +20,9 @@ func (r *M20260322000011CreateUserFavoritesTable) Up() error {
 			table.String("user_id")
 			table.String("game_id")
 			table.TimestampTz("created_at").Nullable()
+			table.Unique("user_id", "game_id")
+			table.Index("user_id")
+			table.Index("game_id")
 		})
 	}
 	return nil

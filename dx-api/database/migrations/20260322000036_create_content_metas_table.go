@@ -25,6 +25,11 @@ func (r *M20260322000036CreateContentMetasTable) Up() error {
 			table.Boolean("is_break_done").Default(false)
 			table.Double("order").Default(0)
 			table.TimestampsTz()
+			table.Index("game_level_id")
+			table.Index("source_from")
+			table.Index("source_type")
+			table.Index("order")
+			table.Index("created_at")
 		})
 	}
 	return nil

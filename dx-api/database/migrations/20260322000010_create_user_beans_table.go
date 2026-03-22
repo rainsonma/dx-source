@@ -25,6 +25,9 @@ func (r *M20260322000010CreateUserBeansTable) Up() error {
 			table.String("reason").Default("")
 			table.Text("data").Nullable()
 			table.TimestampsTz()
+			table.Index("user_id")
+			table.Index("user_id", "slug")
+			table.Index("created_at")
 		})
 	}
 	return nil

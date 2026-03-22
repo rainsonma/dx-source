@@ -28,6 +28,7 @@ func (r *M20260322000008CreateSettingsTable) Up() error {
 			table.Double("order").Default(0)
 			table.Boolean("is_enabled").Default(true)
 			table.TimestampsTz()
+			table.Index("order")
 		})
 	}
 	return nil

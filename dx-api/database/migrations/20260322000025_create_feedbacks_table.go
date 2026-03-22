@@ -22,6 +22,9 @@ func (r *M20260322000025CreateFeedbacksTable) Up() error {
 			table.Text("description").Default("")
 			table.Integer("count").Default(0)
 			table.TimestampsTz()
+			table.Unique("type", "description")
+			table.Index("user_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

@@ -26,6 +26,10 @@ func (r *M20260322000018CreateAudiosTable) Up() error {
 			table.Integer("duration").Default(0)
 			table.String("role").Default("")
 			table.TimestampsTz()
+			table.Index("adm_user_id")
+			table.Index("user_id")
+			table.Index("url")
+			table.Index("created_at")
 		})
 	}
 	return nil

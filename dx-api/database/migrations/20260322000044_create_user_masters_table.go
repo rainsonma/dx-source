@@ -23,6 +23,12 @@ func (r *M20260322000044CreateUserMastersTable) Up() error {
 			table.String("game_level_id")
 			table.TimestampTz("mastered_at").Nullable()
 			table.TimestampsTz()
+			table.Unique("user_id", "content_item_id")
+			table.Index("user_id")
+			table.Index("content_item_id")
+			table.Index("game_id")
+			table.Index("game_level_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

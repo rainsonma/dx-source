@@ -30,6 +30,10 @@ func (r *M20260322000041CreateGameStatsTotalsTable) Up() error {
 			table.TimestampTz("last_completed_at").Nullable()
 			table.Integer("completion_count").Default(0)
 			table.TimestampsTz()
+			table.Unique("user_id", "game_id")
+			table.Index("user_id")
+			table.Index("game_id")
+			table.Index("first_completed_at")
 		})
 	}
 	return nil

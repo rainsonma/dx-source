@@ -23,6 +23,9 @@ func (r *M20260322000026CreateContentSeeksTable) Up() error {
 			table.String("disk_url").Default("")
 			table.Integer("count").Default(0)
 			table.TimestampsTz()
+			table.Unique("course_name")
+			table.Index("user_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

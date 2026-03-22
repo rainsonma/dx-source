@@ -20,6 +20,9 @@ func (r *M20260322000012CreateUserFollowsTable) Up() error {
 			table.String("follower_id")
 			table.String("following_id")
 			table.TimestampTz("created_at").Nullable()
+			table.Unique("follower_id", "following_id")
+			table.Index("follower_id")
+			table.Index("following_id")
 		})
 	}
 	return nil

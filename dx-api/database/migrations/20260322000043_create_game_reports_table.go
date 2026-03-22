@@ -25,6 +25,10 @@ func (r *M20260322000043CreateGameReportsTable) Up() error {
 			table.Text("note").Nullable()
 			table.Integer("count").Default(0)
 			table.TimestampsTz()
+			table.Unique("user_id", "content_item_id", "reason")
+			table.Index("user_id")
+			table.Index("game_id")
+			table.Index("content_item_id")
 		})
 	}
 	return nil

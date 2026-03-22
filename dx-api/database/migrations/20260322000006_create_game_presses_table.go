@@ -22,6 +22,9 @@ func (r *M20260322000006CreateGamePressesTable) Up() error {
 			table.String("cover_id").Nullable()
 			table.Double("order").Default(0)
 			table.TimestampsTz()
+			table.Unique("name")
+			table.Index("cover_id")
+			table.Index("order")
 		})
 	}
 	return nil

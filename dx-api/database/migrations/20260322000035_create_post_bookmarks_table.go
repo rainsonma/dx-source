@@ -20,6 +20,9 @@ func (r *M20260322000035CreatePostBookmarksTable) Up() error {
 			table.String("post_id")
 			table.String("user_id")
 			table.TimestampTz("created_at").Nullable()
+			table.Unique("post_id", "user_id")
+			table.Index("post_id")
+			table.Index("user_id")
 		})
 	}
 	return nil

@@ -26,6 +26,10 @@ func (r *M20260322000032CreatePostsTable) Up() error {
 			table.Integer("share_count").Default(0)
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.Index("user_id")
+			table.Index("image_id")
+			table.Index("is_active")
+			table.Index("created_at")
 		})
 	}
 	return nil

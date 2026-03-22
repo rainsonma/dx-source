@@ -24,6 +24,7 @@ func (r *M20260322000022CreateAdmMenusTable) Up() error {
 			table.String("uri").Nullable()
 			table.Double("order").Default(0)
 			table.TimestampsTz()
+			table.Index("parent_id", "order")
 		})
 	}
 	return nil

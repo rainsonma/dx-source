@@ -22,6 +22,9 @@ func (r *M20260322000013CreateUserRedeemsTable) Up() error {
 			table.String("user_id").Nullable()
 			table.TimestampTz("redeemed_at").Nullable()
 			table.TimestampsTz()
+			table.Unique("code")
+			table.Index("user_id")
+			table.Index("created_at")
 		})
 	}
 	return nil

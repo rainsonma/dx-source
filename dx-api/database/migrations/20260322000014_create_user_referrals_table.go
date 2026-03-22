@@ -23,6 +23,10 @@ func (r *M20260322000014CreateUserReferralsTable) Up() error {
 			table.Double("reward_amount").Default(0)
 			table.TimestampTz("rewarded_at").Nullable()
 			table.TimestampsTz()
+			table.Index("referrer_id")
+			table.Index("invitee_id")
+			table.Index("status")
+			table.Index("created_at")
 		})
 	}
 	return nil
