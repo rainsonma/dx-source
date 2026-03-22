@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000036_CreateContentMetasTable struct{}
+type M20260322000036CreateContentMetasTable struct{}
 
-func (r *M20260322000036_CreateContentMetasTable) Signature() string {
+func (r *M20260322000036CreateContentMetasTable) Signature() string {
 	return "20260322000036_create_content_metas_table"
 }
 
-func (r *M20260322000036_CreateContentMetasTable) Up() error {
+func (r *M20260322000036CreateContentMetasTable) Up() error {
 	if !facades.Schema().HasTable("content_metas") {
 		return facades.Schema().Create("content_metas", func(table schema.Blueprint) {
 			table.String("id")
@@ -30,6 +30,6 @@ func (r *M20260322000036_CreateContentMetasTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000036_CreateContentMetasTable) Down() error {
+func (r *M20260322000036CreateContentMetasTable) Down() error {
 	return facades.Schema().DropIfExists("content_metas")
 }

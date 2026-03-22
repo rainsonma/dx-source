@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000012_CreateUserFollowsTable struct{}
+type M20260322000012CreateUserFollowsTable struct{}
 
-func (r *M20260322000012_CreateUserFollowsTable) Signature() string {
+func (r *M20260322000012CreateUserFollowsTable) Signature() string {
 	return "20260322000012_create_user_follows_table"
 }
 
-func (r *M20260322000012_CreateUserFollowsTable) Up() error {
+func (r *M20260322000012CreateUserFollowsTable) Up() error {
 	if !facades.Schema().HasTable("user_follows") {
 		return facades.Schema().Create("user_follows", func(table schema.Blueprint) {
 			table.String("id")
@@ -25,6 +25,6 @@ func (r *M20260322000012_CreateUserFollowsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000012_CreateUserFollowsTable) Down() error {
+func (r *M20260322000012CreateUserFollowsTable) Down() error {
 	return facades.Schema().DropIfExists("user_follows")
 }

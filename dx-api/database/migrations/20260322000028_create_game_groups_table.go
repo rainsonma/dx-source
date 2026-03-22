@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000028_CreateGameGroupsTable struct{}
+type M20260322000028CreateGameGroupsTable struct{}
 
-func (r *M20260322000028_CreateGameGroupsTable) Signature() string {
+func (r *M20260322000028CreateGameGroupsTable) Signature() string {
 	return "20260322000028_create_game_groups_table"
 }
 
-func (r *M20260322000028_CreateGameGroupsTable) Up() error {
+func (r *M20260322000028CreateGameGroupsTable) Up() error {
 	if !facades.Schema().HasTable("game_groups") {
 		return facades.Schema().Create("game_groups", func(table schema.Blueprint) {
 			table.String("id")
@@ -30,6 +30,6 @@ func (r *M20260322000028_CreateGameGroupsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000028_CreateGameGroupsTable) Down() error {
+func (r *M20260322000028CreateGameGroupsTable) Down() error {
 	return facades.Schema().DropIfExists("game_groups")
 }

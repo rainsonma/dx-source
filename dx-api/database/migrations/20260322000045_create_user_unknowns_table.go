@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000045_CreateUserUnknownsTable struct{}
+type M20260322000045CreateUserUnknownsTable struct{}
 
-func (r *M20260322000045_CreateUserUnknownsTable) Signature() string {
+func (r *M20260322000045CreateUserUnknownsTable) Signature() string {
 	return "20260322000045_create_user_unknowns_table"
 }
 
-func (r *M20260322000045_CreateUserUnknownsTable) Up() error {
+func (r *M20260322000045CreateUserUnknownsTable) Up() error {
 	if !facades.Schema().HasTable("user_unknowns") {
 		return facades.Schema().Create("user_unknowns", func(table schema.Blueprint) {
 			table.String("id")
@@ -27,6 +27,6 @@ func (r *M20260322000045_CreateUserUnknownsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000045_CreateUserUnknownsTable) Down() error {
+func (r *M20260322000045CreateUserUnknownsTable) Down() error {
 	return facades.Schema().DropIfExists("user_unknowns")
 }

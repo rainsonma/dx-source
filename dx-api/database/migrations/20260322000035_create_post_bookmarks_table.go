@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000035_CreatePostBookmarksTable struct{}
+type M20260322000035CreatePostBookmarksTable struct{}
 
-func (r *M20260322000035_CreatePostBookmarksTable) Signature() string {
+func (r *M20260322000035CreatePostBookmarksTable) Signature() string {
 	return "20260322000035_create_post_bookmarks_table"
 }
 
-func (r *M20260322000035_CreatePostBookmarksTable) Up() error {
+func (r *M20260322000035CreatePostBookmarksTable) Up() error {
 	if !facades.Schema().HasTable("post_bookmarks") {
 		return facades.Schema().Create("post_bookmarks", func(table schema.Blueprint) {
 			table.String("id")
@@ -25,6 +25,6 @@ func (r *M20260322000035_CreatePostBookmarksTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000035_CreatePostBookmarksTable) Down() error {
+func (r *M20260322000035CreatePostBookmarksTable) Down() error {
 	return facades.Schema().DropIfExists("post_bookmarks")
 }

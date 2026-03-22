@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000046_CreateUserReviewsTable struct{}
+type M20260322000046CreateUserReviewsTable struct{}
 
-func (r *M20260322000046_CreateUserReviewsTable) Signature() string {
+func (r *M20260322000046CreateUserReviewsTable) Signature() string {
 	return "20260322000046_create_user_reviews_table"
 }
 
-func (r *M20260322000046_CreateUserReviewsTable) Up() error {
+func (r *M20260322000046CreateUserReviewsTable) Up() error {
 	if !facades.Schema().HasTable("user_reviews") {
 		return facades.Schema().Create("user_reviews", func(table schema.Blueprint) {
 			table.String("id")
@@ -30,6 +30,6 @@ func (r *M20260322000046_CreateUserReviewsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000046_CreateUserReviewsTable) Down() error {
+func (r *M20260322000046CreateUserReviewsTable) Down() error {
 	return facades.Schema().DropIfExists("user_reviews")
 }

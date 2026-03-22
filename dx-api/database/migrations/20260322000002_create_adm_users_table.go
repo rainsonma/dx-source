@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000002_CreateAdmUsersTable struct{}
+type M20260322000002CreateAdmUsersTable struct{}
 
-func (r *M20260322000002_CreateAdmUsersTable) Signature() string {
+func (r *M20260322000002CreateAdmUsersTable) Signature() string {
 	return "20260322000002_create_adm_users_table"
 }
 
-func (r *M20260322000002_CreateAdmUsersTable) Up() error {
+func (r *M20260322000002CreateAdmUsersTable) Up() error {
 	if !facades.Schema().HasTable("adm_users") {
 		return facades.Schema().Create("adm_users", func(table schema.Blueprint) {
 			table.String("id")
@@ -28,6 +28,6 @@ func (r *M20260322000002_CreateAdmUsersTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000002_CreateAdmUsersTable) Down() error {
+func (r *M20260322000002CreateAdmUsersTable) Down() error {
 	return facades.Schema().DropIfExists("adm_users")
 }

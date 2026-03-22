@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000011_CreateUserFavoritesTable struct{}
+type M20260322000011CreateUserFavoritesTable struct{}
 
-func (r *M20260322000011_CreateUserFavoritesTable) Signature() string {
+func (r *M20260322000011CreateUserFavoritesTable) Signature() string {
 	return "20260322000011_create_user_favorites_table"
 }
 
-func (r *M20260322000011_CreateUserFavoritesTable) Up() error {
+func (r *M20260322000011CreateUserFavoritesTable) Up() error {
 	if !facades.Schema().HasTable("user_favorites") {
 		return facades.Schema().Create("user_favorites", func(table schema.Blueprint) {
 			table.String("id")
@@ -25,6 +25,6 @@ func (r *M20260322000011_CreateUserFavoritesTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000011_CreateUserFavoritesTable) Down() error {
+func (r *M20260322000011CreateUserFavoritesTable) Down() error {
 	return facades.Schema().DropIfExists("user_favorites")
 }

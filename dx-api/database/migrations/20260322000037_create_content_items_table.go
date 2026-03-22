@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000037_CreateContentItemsTable struct{}
+type M20260322000037CreateContentItemsTable struct{}
 
-func (r *M20260322000037_CreateContentItemsTable) Signature() string {
+func (r *M20260322000037CreateContentItemsTable) Signature() string {
 	return "20260322000037_create_content_items_table"
 }
 
-func (r *M20260322000037_CreateContentItemsTable) Up() error {
+func (r *M20260322000037CreateContentItemsTable) Up() error {
 	if !facades.Schema().HasTable("content_items") {
 		return facades.Schema().Create("content_items", func(table schema.Blueprint) {
 			table.String("id")
@@ -37,6 +37,6 @@ func (r *M20260322000037_CreateContentItemsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000037_CreateContentItemsTable) Down() error {
+func (r *M20260322000037CreateContentItemsTable) Down() error {
 	return facades.Schema().DropIfExists("content_items")
 }

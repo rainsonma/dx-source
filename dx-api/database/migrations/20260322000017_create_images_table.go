@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000017_CreateImagesTable struct{}
+type M20260322000017CreateImagesTable struct{}
 
-func (r *M20260322000017_CreateImagesTable) Signature() string {
+func (r *M20260322000017CreateImagesTable) Signature() string {
 	return "20260322000017_create_images_table"
 }
 
-func (r *M20260322000017_CreateImagesTable) Up() error {
+func (r *M20260322000017CreateImagesTable) Up() error {
 	if !facades.Schema().HasTable("images") {
 		return facades.Schema().Create("images", func(table schema.Blueprint) {
 			table.String("id")
@@ -30,6 +30,6 @@ func (r *M20260322000017_CreateImagesTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000017_CreateImagesTable) Down() error {
+func (r *M20260322000017CreateImagesTable) Down() error {
 	return facades.Schema().DropIfExists("images")
 }

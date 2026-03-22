@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000018_CreateAudiosTable struct{}
+type M20260322000018CreateAudiosTable struct{}
 
-func (r *M20260322000018_CreateAudiosTable) Signature() string {
+func (r *M20260322000018CreateAudiosTable) Signature() string {
 	return "20260322000018_create_audios_table"
 }
 
-func (r *M20260322000018_CreateAudiosTable) Up() error {
+func (r *M20260322000018CreateAudiosTable) Up() error {
 	if !facades.Schema().HasTable("audios") {
 		return facades.Schema().Create("audios", func(table schema.Blueprint) {
 			table.String("id")
@@ -31,6 +31,6 @@ func (r *M20260322000018_CreateAudiosTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000018_CreateAudiosTable) Down() error {
+func (r *M20260322000018CreateAudiosTable) Down() error {
 	return facades.Schema().DropIfExists("audios")
 }

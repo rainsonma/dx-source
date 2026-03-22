@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000020_CreateAdmUserPermitsTable struct{}
+type M20260322000020CreateAdmUserPermitsTable struct{}
 
-func (r *M20260322000020_CreateAdmUserPermitsTable) Signature() string {
+func (r *M20260322000020CreateAdmUserPermitsTable) Signature() string {
 	return "20260322000020_create_adm_user_permits_table"
 }
 
-func (r *M20260322000020_CreateAdmUserPermitsTable) Up() error {
+func (r *M20260322000020CreateAdmUserPermitsTable) Up() error {
 	if !facades.Schema().HasTable("adm_user_permits") {
 		return facades.Schema().Create("adm_user_permits", func(table schema.Blueprint) {
 			table.String("id")
@@ -25,6 +25,6 @@ func (r *M20260322000020_CreateAdmUserPermitsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000020_CreateAdmUserPermitsTable) Down() error {
+func (r *M20260322000020CreateAdmUserPermitsTable) Down() error {
 	return facades.Schema().DropIfExists("adm_user_permits")
 }

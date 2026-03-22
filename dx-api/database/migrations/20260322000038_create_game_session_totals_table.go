@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000038_CreateGameSessionTotalsTable struct{}
+type M20260322000038CreateGameSessionTotalsTable struct{}
 
-func (r *M20260322000038_CreateGameSessionTotalsTable) Signature() string {
+func (r *M20260322000038CreateGameSessionTotalsTable) Signature() string {
 	return "20260322000038_create_game_session_totals_table"
 }
 
-func (r *M20260322000038_CreateGameSessionTotalsTable) Up() error {
+func (r *M20260322000038CreateGameSessionTotalsTable) Up() error {
 	if !facades.Schema().HasTable("game_session_totals") {
 		return facades.Schema().Create("game_session_totals", func(table schema.Blueprint) {
 			table.String("id")
@@ -41,6 +41,6 @@ func (r *M20260322000038_CreateGameSessionTotalsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000038_CreateGameSessionTotalsTable) Down() error {
+func (r *M20260322000038CreateGameSessionTotalsTable) Down() error {
 	return facades.Schema().DropIfExists("game_session_totals")
 }

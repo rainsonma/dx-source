@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000010_CreateUserBeansTable struct{}
+type M20260322000010CreateUserBeansTable struct{}
 
-func (r *M20260322000010_CreateUserBeansTable) Signature() string {
+func (r *M20260322000010CreateUserBeansTable) Signature() string {
 	return "20260322000010_create_user_beans_table"
 }
 
-func (r *M20260322000010_CreateUserBeansTable) Up() error {
+func (r *M20260322000010CreateUserBeansTable) Up() error {
 	if !facades.Schema().HasTable("user_beans") {
 		return facades.Schema().Create("user_beans", func(table schema.Blueprint) {
 			table.String("id")
@@ -30,6 +30,6 @@ func (r *M20260322000010_CreateUserBeansTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000010_CreateUserBeansTable) Down() error {
+func (r *M20260322000010CreateUserBeansTable) Down() error {
 	return facades.Schema().DropIfExists("user_beans")
 }

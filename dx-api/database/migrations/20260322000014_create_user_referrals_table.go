@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000014_CreateUserReferralsTable struct{}
+type M20260322000014CreateUserReferralsTable struct{}
 
-func (r *M20260322000014_CreateUserReferralsTable) Signature() string {
+func (r *M20260322000014CreateUserReferralsTable) Signature() string {
 	return "20260322000014_create_user_referrals_table"
 }
 
-func (r *M20260322000014_CreateUserReferralsTable) Up() error {
+func (r *M20260322000014CreateUserReferralsTable) Up() error {
 	if !facades.Schema().HasTable("user_referrals") {
 		return facades.Schema().Create("user_referrals", func(table schema.Blueprint) {
 			table.String("id")
@@ -28,6 +28,6 @@ func (r *M20260322000014_CreateUserReferralsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000014_CreateUserReferralsTable) Down() error {
+func (r *M20260322000014CreateUserReferralsTable) Down() error {
 	return facades.Schema().DropIfExists("user_referrals")
 }

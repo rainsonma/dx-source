@@ -6,13 +6,13 @@ import (
 	"dx-api/app/facades"
 )
 
-type M20260322000039_CreateGameSessionLevelsTable struct{}
+type M20260322000039CreateGameSessionLevelsTable struct{}
 
-func (r *M20260322000039_CreateGameSessionLevelsTable) Signature() string {
+func (r *M20260322000039CreateGameSessionLevelsTable) Signature() string {
 	return "20260322000039_create_game_session_levels_table"
 }
 
-func (r *M20260322000039_CreateGameSessionLevelsTable) Up() error {
+func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 	if !facades.Schema().HasTable("game_session_levels") {
 		return facades.Schema().Create("game_session_levels", func(table schema.Blueprint) {
 			table.String("id")
@@ -40,6 +40,6 @@ func (r *M20260322000039_CreateGameSessionLevelsTable) Up() error {
 	return nil
 }
 
-func (r *M20260322000039_CreateGameSessionLevelsTable) Down() error {
+func (r *M20260322000039CreateGameSessionLevelsTable) Down() error {
 	return facades.Schema().DropIfExists("game_session_levels")
 }
