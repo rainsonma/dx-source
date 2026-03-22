@@ -58,13 +58,13 @@ func Api() {
 			auth.Post("/signup", authController.SignUp)
 			auth.Post("/signin/send-code", authController.SendSignInCode)
 			auth.Post("/signin", authController.SignIn)
+			auth.Post("/refresh", authController.Refresh)
+			auth.Post("/logout", authController.Logout)
 		})
 
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
-			auth.Post("/refresh", authController.Refresh)
 			auth.Get("/me", authController.Me)
-			auth.Post("/logout", authController.Logout)
 		})
 
 		// Protected routes (user JWT required)
