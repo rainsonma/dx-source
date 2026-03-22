@@ -45,6 +45,37 @@ type AuthResult struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// issueSession generates auth_id, invalidates old sessions, issues tokens.
+func issueSession(userID string) (*AuthResult, error) {
+	authID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+
+	// Set current auth_id in Redis (invalidates previous device instantly)
+	ttl := time.Duration(facades.Config().GetInt("refresh_token.ttl", 10080)) * time.Minute
+	if err := helpers.RedisSet(fmt.Sprintf("user_auth:%s:user", userID), authID, ttl); err != nil {
+		return nil, fmt.Errorf("failed to store auth_id: %w", err)
+	}
+
+	// Delete all old refresh tokens
+	_ = helpers.DeleteUserRefreshTokens(userID, "user")
+
+	// Issue JWT with auth_id
+	accessToken, err := helpers.IssueAccessToken(userID, authID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to issue access token: %w", err)
+	}
+
+	// Generate and store refresh token with auth_id
+	refreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(refreshToken, userID, "user", authID); err != nil {
+		return nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
 // SignUp registers a new user with the given email, verification code, username, and password.
 func SignUp(ctx contractshttp.Context, email, code, username, password string) (*AuthResult, *models.User, error) {
 	// Verify code
@@ -97,20 +128,11 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 		return nil, nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	token, err := facades.Auth(ctx).Guard("user").Login(&user)
+	result, err := issueSession(user.ID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, err
 	}
-
-	refreshToken, err := helpers.GenerateRefreshToken()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
-		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
-	}
-
-	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
+	return result, &user, nil
 }
 
 // SendSignInCode generates and sends a signin verification code to the given email.
@@ -182,20 +204,11 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (*AuthResult, 
 		}
 	}
 
-	token, err := facades.Auth(ctx).Guard("user").Login(&user)
+	result, err := issueSession(user.ID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, err
 	}
-
-	refreshToken, err := helpers.GenerateRefreshToken()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
-		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
-	}
-
-	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
+	return result, &user, nil
 }
 
 // SignInByAccount authenticates a user via account (username, email, or phone) and password.
@@ -215,20 +228,11 @@ func SignInByAccount(ctx contractshttp.Context, account, password string) (*Auth
 		return nil, nil, ErrInvalidPassword
 	}
 
-	token, err := facades.Auth(ctx).Guard("user").Login(&user)
+	result, err := issueSession(user.ID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, err
 	}
-
-	refreshToken, err := helpers.GenerateRefreshToken()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
-		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
-	}
-
-	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
+	return result, &user, nil
 }
 
 // RefreshToken validates an opaque refresh token, issues a new JWT access token,
@@ -243,23 +247,31 @@ func RefreshToken(ctx contractshttp.Context, oldRefreshToken string) (*AuthResul
 		return nil, ErrInvalidRefreshToken
 	}
 
+	// Check if this session is still the active one
+	currentAuthID, err := helpers.RedisGet(fmt.Sprintf("user_auth:%s:user", data.UserID))
+	if err != nil || currentAuthID != data.AuthID {
+		return nil, ErrSessionReplaced
+	}
+
 	var user models.User
 	if err := facades.Orm().Query().Where("id", data.UserID).First(&user); err != nil || user.ID == "" {
 		return nil, ErrUserNotFound
 	}
 
-	accessToken, err := facades.Auth(ctx).Guard("user").Login(&user)
+	// Issue new JWT with same auth_id
+	accessToken, err := helpers.IssueAccessToken(data.UserID, data.AuthID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to issue access token: %w", err)
 	}
 
+	// Rotate refresh token (keep same auth_id)
 	_ = helpers.DeleteRefreshToken(oldRefreshToken, data.UserID, "user")
 
 	newRefreshToken, err := helpers.GenerateRefreshToken()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "user"); err != nil {
+	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "user", data.AuthID); err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
@@ -274,6 +286,12 @@ func Logout(refreshToken string) error {
 	}
 	if data.Guard != "user" {
 		return nil
+	}
+	// Only clear session key if this is the active session
+	key := fmt.Sprintf("user_auth:%s:%s", data.UserID, data.Guard)
+	currentAuthID, _ := helpers.RedisGet(key)
+	if currentAuthID == data.AuthID {
+		_ = helpers.RedisDel(key)
 	}
 	return helpers.DeleteRefreshToken(refreshToken, data.UserID, data.Guard)
 }

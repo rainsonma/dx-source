@@ -14,6 +14,7 @@ import (
 type RefreshTokenData struct {
 	UserID string `json:"user_id"`
 	Guard  string `json:"guard"`
+	AuthID string `json:"auth_id"`
 }
 
 // GenerateRefreshToken returns a cryptographically random 64-char hex string.
@@ -26,12 +27,12 @@ func GenerateRefreshToken() (string, error) {
 }
 
 // StoreRefreshToken stores a refresh token in Redis with TTL and adds it to the user index.
-func StoreRefreshToken(token, userID, guard string) error {
+func StoreRefreshToken(token, userID, guard, authID string) error {
 	ctx := context.Background()
 	rdb := GetRedis()
 	ttl := time.Duration(facades.Config().GetInt("refresh_token.ttl", 10080)) * time.Minute
 
-	data, err := json.Marshal(RefreshTokenData{UserID: userID, Guard: guard})
+	data, err := json.Marshal(RefreshTokenData{UserID: userID, Guard: guard, AuthID: authID})
 	if err != nil {
 		return fmt.Errorf("failed to marshal refresh token data: %w", err)
 	}

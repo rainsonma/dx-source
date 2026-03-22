@@ -45,7 +45,7 @@ func AdminSignIn(ctx contractshttp.Context, username, password string) (*AuthRes
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	if err := helpers.StoreRefreshToken(refreshToken, admUser.ID, "admin"); err != nil {
+	if err := helpers.StoreRefreshToken(refreshToken, admUser.ID, "admin", ""); err != nil {
 		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
@@ -82,7 +82,7 @@ func RefreshToken(ctx contractshttp.Context, oldRefreshToken string) (*AuthResul
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "admin"); err != nil {
+	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "admin", ""); err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
