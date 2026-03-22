@@ -19,12 +19,13 @@ func Adm() {
 		// Admin auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
 			auth.Post("/login", admAuthController.Login)
+			auth.Post("/refresh", admAuthController.Refresh)
+			auth.Post("/logout", admAuthController.Logout)
 		})
 
 		// Admin auth routes (protected, admin JWT required)
 		router.Prefix("/auth").Middleware(middleware.AdmJwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", admAuthController.Me)
-			auth.Post("/logout", admAuthController.Logout)
 		})
 
 		// Protected admin routes (admin JWT + RBAC + operation log)
