@@ -39,13 +39,19 @@ func SendSignUpCode(email string) error {
 	return nil
 }
 
+// AuthResult holds the tokens returned after login/signup/refresh.
+type AuthResult struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 // SignUp registers a new user with the given email, verification code, username, and password.
-func SignUp(ctx contractshttp.Context, email, code, username, password string) (string, *models.User, error) {
+func SignUp(ctx contractshttp.Context, email, code, username, password string) (*AuthResult, *models.User, error) {
 	// Verify code
 	key := fmt.Sprintf("signup_code:%s", email)
 	storedCode, err := helpers.RedisGet(key)
 	if err != nil || storedCode != code {
-		return "", nil, ErrInvalidCode
+		return nil, nil, ErrInvalidCode
 	}
 	_ = helpers.RedisDel(key)
 
@@ -53,7 +59,7 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 	var existing models.User
 	err = facades.Orm().Query().Where("email", email).First(&existing)
 	if err == nil && existing.ID != "" {
-		return "", nil, ErrDuplicateEmail
+		return nil, nil, ErrDuplicateEmail
 	}
 
 	// Derive username from email prefix if empty
@@ -64,7 +70,7 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 	// Check duplicate username
 	err = facades.Orm().Query().Where("username", username).First(&existing)
 	if err == nil && existing.ID != "" {
-		return "", nil, ErrDuplicateUsername
+		return nil, nil, ErrDuplicateUsername
 	}
 
 	// Auto-generate password if empty
@@ -74,7 +80,7 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 
 	hashedPassword, err := helpers.HashPassword(password)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to hash password: %w", err)
+		return nil, nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
 	emailStr := email
@@ -88,15 +94,23 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 	}
 
 	if err := facades.Orm().Query().Create(&user); err != nil {
-		return "", nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	token, err := facades.Auth(ctx).Guard("user").Login(&user)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
 	}
 
-	return token, &user, nil
+	refreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
+		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
 }
 
 // SendSignInCode generates and sends a signin verification code to the given email.
@@ -125,12 +139,12 @@ func SendSignInCode(email string) error {
 
 // SignInByEmail authenticates a user via email and verification code.
 // If the user does not exist, a new account is created automatically.
-func SignInByEmail(ctx contractshttp.Context, email, code string) (string, *models.User, error) {
+func SignInByEmail(ctx contractshttp.Context, email, code string) (*AuthResult, *models.User, error) {
 	// Verify code
 	key := fmt.Sprintf("signin_code:%s", email)
 	storedCode, err := helpers.RedisGet(key)
 	if err != nil || storedCode != code {
-		return "", nil, ErrInvalidCode
+		return nil, nil, ErrInvalidCode
 	}
 	_ = helpers.RedisDel(key)
 
@@ -150,7 +164,7 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (string, *mode
 		pw := helpers.GenerateInviteCode(16)
 		hashedPw, hashErr := helpers.HashPassword(pw)
 		if hashErr != nil {
-			return "", nil, fmt.Errorf("failed to hash password: %w", hashErr)
+			return nil, nil, fmt.Errorf("failed to hash password: %w", hashErr)
 		}
 
 		emailStr := email
@@ -164,20 +178,28 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (string, *mode
 		}
 
 		if createErr := facades.Orm().Query().Create(&user); createErr != nil {
-			return "", nil, fmt.Errorf("failed to create user: %w", createErr)
+			return nil, nil, fmt.Errorf("failed to create user: %w", createErr)
 		}
 	}
 
 	token, err := facades.Auth(ctx).Guard("user").Login(&user)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
 	}
 
-	return token, &user, nil
+	refreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
+		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
 }
 
 // SignInByAccount authenticates a user via account (username, email, or phone) and password.
-func SignInByAccount(ctx contractshttp.Context, account, password string) (string, *models.User, error) {
+func SignInByAccount(ctx contractshttp.Context, account, password string) (*AuthResult, *models.User, error) {
 	var user models.User
 
 	err := facades.Orm().Query().
@@ -186,28 +208,74 @@ func SignInByAccount(ctx contractshttp.Context, account, password string) (strin
 		OrWhere("phone", account).
 		First(&user)
 	if err != nil || user.ID == "" {
-		return "", nil, ErrUserNotFound
+		return nil, nil, ErrUserNotFound
 	}
 
 	if !helpers.CheckPassword(password, user.Password) {
-		return "", nil, ErrInvalidPassword
+		return nil, nil, ErrInvalidPassword
 	}
 
 	token, err := facades.Auth(ctx).Guard("user").Login(&user)
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to issue token: %w", err)
+		return nil, nil, fmt.Errorf("failed to issue token: %w", err)
 	}
 
-	return token, &user, nil
+	refreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(refreshToken, user.ID, "user"); err != nil {
+		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &user, nil
 }
 
-// RefreshToken refreshes the JWT token for the current authenticated user.
-func RefreshToken(ctx contractshttp.Context) (string, error) {
-	token, err := facades.Auth(ctx).Guard("user").Refresh()
+// RefreshToken validates an opaque refresh token, issues a new JWT access token,
+// and rotates the refresh token.
+func RefreshToken(ctx contractshttp.Context, oldRefreshToken string) (*AuthResult, error) {
+	data, err := helpers.LookupRefreshToken(oldRefreshToken)
 	if err != nil {
-		return "", fmt.Errorf("failed to refresh token: %w", err)
+		return nil, ErrInvalidRefreshToken
 	}
-	return token, nil
+
+	if data.Guard != "user" {
+		return nil, ErrInvalidRefreshToken
+	}
+
+	var user models.User
+	if err := facades.Orm().Query().Where("id", data.UserID).First(&user); err != nil || user.ID == "" {
+		return nil, ErrUserNotFound
+	}
+
+	accessToken, err := facades.Auth(ctx).Guard("user").Login(&user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to issue access token: %w", err)
+	}
+
+	_ = helpers.DeleteRefreshToken(oldRefreshToken, data.UserID, "user")
+
+	newRefreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "user"); err != nil {
+		return nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: accessToken, RefreshToken: newRefreshToken}, nil
+}
+
+// Logout deletes the given refresh token from Redis.
+func Logout(refreshToken string) error {
+	data, err := helpers.LookupRefreshToken(refreshToken)
+	if err != nil {
+		return nil
+	}
+	if data.Guard != "user" {
+		return nil
+	}
+	return helpers.DeleteRefreshToken(refreshToken, data.UserID, data.Guard)
 }
 
 // GetCurrentUser retrieves the user profile by ID (password excluded via json tag).
