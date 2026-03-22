@@ -94,12 +94,9 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 	}
 
 	if cursor != "" {
-		// Cursor-based pagination: skip past the cursor game by excluding games
-		// with created_at newer than or equal to the cursor, unless their id differs.
 		var cursorGame models.Game
 		if err := facades.Orm().Query().Where("id", cursor).First(&cursorGame); err == nil && cursorGame.ID != "" {
-			query = query.Where("created_at <= ?", cursorGame.CreatedAt).
-				Where("id != ?", cursor)
+			query = query.Where("(created_at < ? OR (created_at = ? AND id < ?))", cursorGame.CreatedAt, cursorGame.CreatedAt, cursor)
 		}
 	}
 
