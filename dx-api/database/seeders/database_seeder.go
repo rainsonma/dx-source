@@ -3,7 +3,7 @@ package seeders
 import (
 	"github.com/goravel/framework/contracts/database/seeder"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 type DatabaseSeeder struct{}

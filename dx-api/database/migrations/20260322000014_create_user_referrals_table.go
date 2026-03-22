@@ -3,7 +3,7 @@ package migrations
 import (
 	"github.com/goravel/framework/contracts/database/schema"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 type M20260322000014CreateUserReferralsTable struct{}

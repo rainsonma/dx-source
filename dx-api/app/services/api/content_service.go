@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"dx-api/app/constants"
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 )
 

@@ -4,7 +4,7 @@ import (
 	"github.com/goravel/framework/support/path"
 	"github.com/goravel/framework/support/str"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 func init() {

@@ -8,7 +8,7 @@ import (
 	"github.com/goravel/framework/foundation"
 
 	"dx-api/app/console/commands"
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/jobs"
 	"dx-api/config"
 	"dx-api/routes"

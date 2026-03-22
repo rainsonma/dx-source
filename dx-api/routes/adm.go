@@ -4,7 +4,7 @@ import (
 	adm "dx-api/app/http/controllers/adm"
 	"dx-api/app/http/middleware"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 
 	"github.com/goravel/framework/contracts/route"
 )

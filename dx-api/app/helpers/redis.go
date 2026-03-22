@@ -8,7 +8,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 var (

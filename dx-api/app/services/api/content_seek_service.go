@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 )
 

@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/oklog/ulid/v2"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 )
 

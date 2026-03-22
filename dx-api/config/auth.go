@@ -1,7 +1,7 @@
 package config
 
 import (
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 func init() {

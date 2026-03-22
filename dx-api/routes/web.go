@@ -5,7 +5,7 @@ import (
 	"github.com/goravel/framework/support"
 
 	"dx-api/app/http/controllers"
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 func Web() {

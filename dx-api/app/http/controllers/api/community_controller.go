@@ -9,7 +9,7 @@ import (
 	contractshttp "github.com/goravel/framework/contracts/http"
 
 	"dx-api/app/constants"
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 
 	"github.com/goravel/framework/contracts/console"
 	"github.com/goravel/framework/contracts/console/command"

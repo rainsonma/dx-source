@@ -9,7 +9,7 @@ import (
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/oklog/ulid/v2"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/services/shared"

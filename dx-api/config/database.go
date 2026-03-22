@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/goravel/framework/contracts/database/driver"
 	postgresfacades "github.com/goravel/postgres/facades"
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 func init() {

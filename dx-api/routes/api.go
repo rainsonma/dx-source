@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	apicontrollers "dx-api/app/http/controllers/api"
 	"dx-api/app/http/middleware"

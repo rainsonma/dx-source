@@ -3,7 +3,7 @@ package jobs
 import (
 	"fmt"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 
 	"github.com/goravel/framework/contracts/mail"
 	"github.com/goravel/framework/contracts/queue"

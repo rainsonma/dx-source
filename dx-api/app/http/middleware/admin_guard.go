@@ -6,8 +6,6 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
-
-	appfacades "dx-api/app/facades"
 )
 
 // AdminGuard checks that the authenticated user is an admin.
@@ -15,7 +13,7 @@ import (
 // The check is a simple username comparison against the hardcoded admin name.
 func AdminGuard() contractshttp.Middleware {
 	return func(ctx contractshttp.Context) {
-		userID, err := appfacades.Auth(ctx).Guard("user").ID()
+		userID, err := facades.Auth(ctx).Guard("user").ID()
 		if err != nil || userID == "" {
 			_ = ctx.Response().Json(401, helpers.Response{
 				Code:    40100,

@@ -3,7 +3,7 @@ package config
 import (
 	"github.com/goravel/framework/support/carbon"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 )
 
 // Boot Start all init methods of the current folder to bootstrap all config.

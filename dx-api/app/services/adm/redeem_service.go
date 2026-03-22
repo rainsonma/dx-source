@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"dx-api/app/facades"
+	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
 	"github.com/oklog/ulid/v2"
