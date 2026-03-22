@@ -51,8 +51,8 @@ type GameSearchResultData struct {
 	CategoryName *string `json:"categoryName"`
 }
 
-// RecentGameData represents a recently played game.
-type RecentGameData struct {
+// PlayedGameData represents a game the user has played.
+type PlayedGameData struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`
 	Mode         string  `json:"mode"`
@@ -267,8 +267,8 @@ func SearchGames(queryStr string, limit int) ([]GameSearchResultData, error) {
 	return result, nil
 }
 
-// GetRecentGames returns a user's recently played games.
-func GetRecentGames(userID string) ([]RecentGameData, error) {
+// GetPlayedGames returns all games the user has played.
+func GetPlayedGames(userID string) ([]PlayedGameData, error) {
 	var stats []models.GameStatsTotal
 	if err := facades.Orm().Query().
 		Where("user_id", userID).
@@ -279,7 +279,7 @@ func GetRecentGames(userID string) ([]RecentGameData, error) {
 	}
 
 	if len(stats) == 0 {
-		return []RecentGameData{}, nil
+		return []PlayedGameData{}, nil
 	}
 
 	// Collect game IDs
@@ -319,13 +319,13 @@ func GetRecentGames(userID string) ([]RecentGameData, error) {
 	}
 
 	// Build result preserving order from stats (last_played_at DESC)
-	result := make([]RecentGameData, 0, len(stats))
+	result := make([]PlayedGameData, 0, len(stats))
 	for _, s := range stats {
 		g, ok := gameMap[s.GameID]
 		if !ok {
 			continue
 		}
-		item := RecentGameData{
+		item := PlayedGameData{
 			ID:   g.ID,
 			Name: g.Name,
 			Mode: g.Mode,

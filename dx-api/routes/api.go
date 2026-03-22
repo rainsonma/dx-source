@@ -74,7 +74,7 @@ func Api() {
 
 			// Protected game routes
 			contentController := &apicontrollers.ContentController{}
-			protected.Get("/games/recent", gameController.Recent)
+			protected.Get("/games/played", gameController.Played)
 			protected.Get("/games/{id}/levels/{levelId}/content", contentController.LevelContent)
 
 			// User profile routes

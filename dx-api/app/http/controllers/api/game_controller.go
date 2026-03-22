@@ -60,16 +60,16 @@ func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Respons
 	return helpers.Success(ctx, games)
 }
 
-// Recent returns the authenticated user's recently played games.
-func (c *GameController) Recent(ctx contractshttp.Context) contractshttp.Response {
+// Played returns all games the authenticated user has played.
+func (c *GameController) Played(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	games, err := services.GetRecentGames(userID)
+	games, err := services.GetPlayedGames(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get recent games")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get played games")
 	}
 
 	return helpers.Success(ctx, games)
