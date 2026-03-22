@@ -1,0 +1,29 @@
+package seeders
+
+import (
+	"github.com/goravel/framework/contracts/database/seeder"
+
+	"dx-api/app/facades"
+)
+
+type DatabaseSeeder struct{}
+
+func (s *DatabaseSeeder) Signature() string {
+	return "DatabaseSeeder"
+}
+
+func (s *DatabaseSeeder) Run() error {
+	return facades.Seeder().Call([]seeder.Seeder{
+		&AdmUserSeeder{},
+		&AdmPermitSeeder{},
+		&AdmRoleSeeder{},
+		&AdmMenuSeeder{},
+		&GameCategorySeeder{},
+		&GamePressSeeder{},
+		&UserSeeder{},
+		&GameSeeder{},
+		&GameLevelSeeder{},
+		&ContentMetaSeeder{},
+		&ContentItemSeeder{},
+	})
+}
