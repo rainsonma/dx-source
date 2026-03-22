@@ -15,11 +15,11 @@ func (r *M20260322000013CreateUserRedeemsTable) Signature() string {
 func (r *M20260322000013CreateUserRedeemsTable) Up() error {
 	if !facades.Schema().HasTable("user_redeems") {
 		return facades.Schema().Create("user_redeems", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("code").Default("")
 			table.Text("grade").Default("")
-			table.Text("user_id").Nullable()
+			table.Uuid("user_id").Nullable()
 			table.TimestampTz("redeemed_at").Nullable()
 			table.TimestampsTz()
 			table.Unique("code")

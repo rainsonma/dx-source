@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type GameCategorySeeder struct{}
@@ -64,7 +62,7 @@ func (s *GameCategorySeeder) Run() error {
 
 		var existing models.GameCategory
 		if err := query.Where("name", p.Name).WhereNull("parent_id").First(&existing); err != nil || existing.ID == "" {
-			id := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+			id := uuid.Must(uuid.NewV7()).String()
 			if err := query.Create(&models.GameCategory{
 				ID:          id,
 				Name:        p.Name,
@@ -100,7 +98,7 @@ func (s *GameCategorySeeder) Run() error {
 		var existing models.GameCategory
 		if err := query.Where("name", c.Name).Where("parent_id", parentID).First(&existing); err != nil || existing.ID == "" {
 			if err := query.Create(&models.GameCategory{
-				ID:          ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+				ID:          uuid.Must(uuid.NewV7()).String(),
 				ParentID:    &parentID,
 				Name:        c.Name,
 				Alias:       &alias,

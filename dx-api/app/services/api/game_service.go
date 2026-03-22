@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 )
 
 // GameCardData represents a published game in list views.
@@ -23,17 +24,17 @@ type GameCardData struct {
 
 // GameDetailData represents a full game detail with levels.
 type GameDetailData struct {
-	ID           string            `json:"id"`
-	Name         string            `json:"name"`
-	Description  *string           `json:"description"`
-	Mode         string            `json:"mode"`
-	CreatedAt    any               `json:"createdAt"`
-	CoverURL     *string           `json:"coverUrl"`
-	Author       *string           `json:"author"`
-	CategoryName *string           `json:"categoryName"`
-	PressName    *string           `json:"pressName"`
-	Levels       []GameLevelData   `json:"levels"`
-	LevelCount   int               `json:"levelCount"`
+	ID           string          `json:"id"`
+	Name         string          `json:"name"`
+	Description  *string         `json:"description"`
+	Mode         string          `json:"mode"`
+	CreatedAt    any             `json:"createdAt"`
+	CoverURL     *string         `json:"coverUrl"`
+	Author       *string         `json:"author"`
+	CategoryName *string         `json:"categoryName"`
+	PressName    *string         `json:"pressName"`
+	Levels       []GameLevelData `json:"levels"`
+	LevelCount   int             `json:"levelCount"`
 }
 
 // GameLevelData represents a game level in detail views.

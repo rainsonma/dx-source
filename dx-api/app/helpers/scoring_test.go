@@ -51,12 +51,12 @@ func TestProcessAnswer_Incorrect(t *testing.T) {
 
 func TestProcessAnswer_ComboThresholds(t *testing.T) {
 	tests := []struct {
-		name          string
-		streak        int
-		cyclePos      int
-		wantBonus     int
-		wantPoints    int
-		wantCyclePos  int
+		name         string
+		streak       int
+		cyclePos     int
+		wantBonus    int
+		wantPoints   int
+		wantCyclePos int
 	}{
 		{"streak 1 — no bonus", 0, 0, 0, 1, 1},
 		{"streak 2 — no bonus", 1, 1, 0, 1, 2},

@@ -15,10 +15,10 @@ func (r *M20260322000017CreateImagesTable) Signature() string {
 func (r *M20260322000017CreateImagesTable) Up() error {
 	if !facades.Schema().HasTable("images") {
 		return facades.Schema().Create("images", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("adm_user_id").Nullable()
-			table.Text("user_id").Nullable()
+			table.Uuid("adm_user_id").Nullable()
+			table.Uuid("user_id").Nullable()
 			table.Text("url").Default("")
 			table.Text("name").Default("")
 			table.Text("mime").Default("")

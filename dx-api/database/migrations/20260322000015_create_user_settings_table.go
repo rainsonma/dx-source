@@ -15,9 +15,9 @@ func (r *M20260322000015CreateUserSettingsTable) Signature() string {
 func (r *M20260322000015CreateUserSettingsTable) Up() error {
 	if !facades.Schema().HasTable("user_settings") {
 		return facades.Schema().Create("user_settings", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("user_id")
+			table.Uuid("user_id")
 			table.Text("group").Default("")
 			table.Text("key").Default("")
 			table.Text("value").Default("")

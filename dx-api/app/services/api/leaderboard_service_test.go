@@ -28,9 +28,9 @@ func TestWindowStartSQL(t *testing.T) {
 
 func TestSafeUID(t *testing.T) {
 	tests := []struct {
-		name   string
-		input  string
-		want   string
+		name  string
+		input string
+		want  string
 	}{
 		{"empty returns placeholder", "", "___none___"},
 		{"non-empty returns as-is", "user123", "user123"},

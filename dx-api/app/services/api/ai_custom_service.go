@@ -1,21 +1,19 @@
 package api
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 // AI generation cost consts.
@@ -420,7 +418,6 @@ func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 	}
 
 	// Parse and create content items
-	now := time.Now()
 	baseOrder := meta.Order + 10
 
 	for i, raw := range items {
@@ -433,7 +430,7 @@ func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 			continue
 		}
 
-		id := ulid.MustNew(ulid.Timestamp(now), rand.Reader).String()
+		id := uuid.Must(uuid.NewV7()).String()
 		metaID := meta.ID
 		var translation *string
 		if unit.Translation != "" {
@@ -809,4 +806,3 @@ func writeSSEError(writer *helpers.SSEWriter, err error) {
 	_ = writer.WriteError(msg)
 	writer.Close()
 }
-

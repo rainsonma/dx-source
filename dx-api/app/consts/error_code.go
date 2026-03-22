@@ -6,19 +6,19 @@ const (
 	CodeSuccess = 0
 
 	// 400xx: Validation
-	CodeValidationError  = 40000
-	CodeInvalidEmail     = 40001
-	CodeInvalidPassword  = 40002
-	CodeDuplicateEmail   = 40003
+	CodeValidationError   = 40000
+	CodeInvalidEmail      = 40001
+	CodeInvalidPassword   = 40002
+	CodeDuplicateEmail    = 40003
 	CodeDuplicateUsername = 40004
-	CodeInvalidCode      = 40005
-	CodeCodeExpired      = 40006
+	CodeInvalidCode       = 40005
+	CodeCodeExpired       = 40006
 	CodeInsufficientBeans = 40007
 	CodeNicknameTaken     = 40008
 
 	// 401xx: Auth
-	CodeUnauthorized = 40100
-	CodeTokenExpired = 40101
+	CodeUnauthorized        = 40100
+	CodeTokenExpired        = 40101
 	CodeInvalidToken        = 40102
 	CodeInvalidRefreshToken = 40103
 	CodeSessionReplaced     = 40104

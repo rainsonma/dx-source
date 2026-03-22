@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 )
 
 // DashboardData aggregates user stats for the hall dashboard.
@@ -20,17 +21,17 @@ type DashboardData struct {
 
 // DashboardProfile is the user profile subset shown on the dashboard.
 type DashboardProfile struct {
-	ID               string  `json:"id"`
-	Username         string  `json:"username"`
-	Nickname         *string `json:"nickname"`
-	Grade            string  `json:"grade"`
-	Exp              int     `json:"exp"`
-	Beans            int     `json:"beans"`
-	AvatarURL        *string `json:"avatarUrl"`
-	CurrentPlayStreak int    `json:"currentPlayStreak"`
-	InviteCode       string  `json:"inviteCode"`
-	LastReadNoticeAt any     `json:"lastReadNoticeAt"`
-	CreatedAt        any     `json:"createdAt"`
+	ID                string  `json:"id"`
+	Username          string  `json:"username"`
+	Nickname          *string `json:"nickname"`
+	Grade             string  `json:"grade"`
+	Exp               int     `json:"exp"`
+	Beans             int     `json:"beans"`
+	AvatarURL         *string `json:"avatarUrl"`
+	CurrentPlayStreak int     `json:"currentPlayStreak"`
+	InviteCode        string  `json:"inviteCode"`
+	LastReadNoticeAt  any     `json:"lastReadNoticeAt"`
+	CreatedAt         any     `json:"createdAt"`
 }
 
 // MasterStats holds mastered content statistics.

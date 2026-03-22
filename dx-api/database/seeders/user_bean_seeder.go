@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
-
-	"github.com/oklog/ulid/v2"
 
 	"dx-api/app/consts"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
 	"github.com/goravel/framework/facades"
 )
 
@@ -47,7 +45,7 @@ func (s *UserBeanSeeder) Run() error {
 		}
 
 		if err := query.Create(&models.UserBean{
-			ID:     ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+			ID:     uuid.Must(uuid.NewV7()).String(),
 			UserID: user.ID,
 			Beans:  grantAmount,
 			Origin: user.Beans,

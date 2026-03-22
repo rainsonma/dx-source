@@ -15,13 +15,13 @@ func (r *M20260322000040CreateGameRecordsTable) Signature() string {
 func (r *M20260322000040CreateGameRecordsTable) Up() error {
 	if !facades.Schema().HasTable("game_records") {
 		return facades.Schema().Create("game_records", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("user_id")
-			table.Text("game_session_total_id")
-			table.Text("game_session_level_id")
-			table.Text("game_level_id")
-			table.Text("content_item_id")
+			table.Uuid("user_id")
+			table.Uuid("game_session_total_id")
+			table.Uuid("game_session_level_id")
+			table.Uuid("game_level_id")
+			table.Uuid("content_item_id")
 			table.Boolean("is_correct").Default(false)
 			table.Text("source_answer").Default("")
 			table.Text("user_answer").Default("")

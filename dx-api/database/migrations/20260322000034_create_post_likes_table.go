@@ -15,10 +15,10 @@ func (r *M20260322000034CreatePostLikesTable) Signature() string {
 func (r *M20260322000034CreatePostLikesTable) Up() error {
 	if !facades.Schema().HasTable("post_likes") {
 		return facades.Schema().Create("post_likes", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("post_id")
-			table.Text("user_id")
+			table.Uuid("post_id")
+			table.Uuid("user_id")
 			table.TimestampTz("created_at").Nullable()
 			table.Unique("post_id", "user_id")
 			table.Index("post_id")

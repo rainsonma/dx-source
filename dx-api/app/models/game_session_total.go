@@ -13,7 +13,7 @@ type GameSessionTotal struct {
 	GameID               string     `gorm:"column:game_id" json:"game_id"`
 	Degree               string     `gorm:"column:degree" json:"degree"`
 	Pattern              *string    `gorm:"column:pattern" json:"pattern"`
-	CurrentLevelID       string     `gorm:"column:current_level_id" json:"current_level_id"`
+	CurrentLevelID       *string    `gorm:"column:current_level_id" json:"current_level_id"`
 	CurrentContentItemID *string    `gorm:"column:current_content_item_id" json:"current_content_item_id"`
 	StartedAt            time.Time  `gorm:"column:started_at" json:"started_at"`
 	LastPlayedAt         time.Time  `gorm:"column:last_played_at" json:"last_played_at"`

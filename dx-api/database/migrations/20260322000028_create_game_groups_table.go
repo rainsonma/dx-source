@@ -15,13 +15,13 @@ func (r *M20260322000028CreateGameGroupsTable) Signature() string {
 func (r *M20260322000028CreateGameGroupsTable) Up() error {
 	if !facades.Schema().HasTable("game_groups") {
 		return facades.Schema().Create("game_groups", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("name").Default("")
 			table.Text("description").Nullable()
-			table.Text("owner_id")
-			table.Text("cover_id").Nullable()
-			table.Text("current_game_id").Nullable()
+			table.Uuid("owner_id")
+			table.Uuid("cover_id").Nullable()
+			table.Uuid("current_game_id").Nullable()
 			table.Text("invite_code").Default("")
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()

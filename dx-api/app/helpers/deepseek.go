@@ -43,11 +43,11 @@ type deepseekResponse struct {
 }
 
 var (
-	ErrDeepSeekEmpty      = errors.New("deepseek: empty response")
-	ErrDeepSeekAuth       = errors.New("deepseek: invalid API key")
-	ErrDeepSeekQuota      = errors.New("deepseek: quota exceeded")
-	ErrDeepSeekRateLimit  = errors.New("deepseek: rate limited")
-	ErrDeepSeekUnavail    = errors.New("deepseek: service unavailable")
+	ErrDeepSeekEmpty         = errors.New("deepseek: empty response")
+	ErrDeepSeekAuth          = errors.New("deepseek: invalid API key")
+	ErrDeepSeekQuota         = errors.New("deepseek: quota exceeded")
+	ErrDeepSeekRateLimit     = errors.New("deepseek: rate limited")
+	ErrDeepSeekUnavail       = errors.New("deepseek: service unavailable")
 	ErrDeepSeekNotConfigured = errors.New("deepseek: API key not configured")
 )
 

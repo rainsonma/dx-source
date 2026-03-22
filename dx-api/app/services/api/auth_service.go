@@ -1,18 +1,18 @@
 package api
 
 import (
-	"crypto/rand"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	contractshttp "github.com/goravel/framework/contracts/http"
-	"github.com/oklog/ulid/v2"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/services/com"
+
+	"github.com/goravel/framework/facades"
 )
 
 // SendSignUpCode generates and sends a signup verification code to the given email.
@@ -47,7 +47,7 @@ type AuthResult struct {
 
 // issueSession generates auth_id, invalidates old sessions, issues tokens.
 func issueSession(userID string) (*AuthResult, error) {
-	authID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	authID := uuid.Must(uuid.NewV7()).String()
 
 	// Set current auth_id in Redis (invalidates previous device instantly)
 	ttl := time.Duration(facades.Config().GetInt("refresh_token.ttl", 10080)) * time.Minute
@@ -116,7 +116,7 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 
 	emailStr := email
 	user := models.User{
-		ID:         ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+		ID:         uuid.Must(uuid.NewV7()).String(),
 		Username:   username,
 		Email:      &emailStr,
 		Password:   hashedPassword,
@@ -191,7 +191,7 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (*AuthResult, 
 
 		emailStr := email
 		user = models.User{
-			ID:         ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+			ID:         uuid.Must(uuid.NewV7()).String(),
 			Username:   username,
 			Email:      &emailStr,
 			Password:   hashedPw,
@@ -312,7 +312,7 @@ func GetCurrentUser(userID string) (*models.User, error) {
 func RecordLogin(userID, ip, userAgent string) {
 	agent := userAgent
 	login := models.UserLogin{
-		ID:     ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+		ID:     uuid.Must(uuid.NewV7()).String(),
 		UserID: userID,
 		IP:     ip,
 		Agent:  &agent,

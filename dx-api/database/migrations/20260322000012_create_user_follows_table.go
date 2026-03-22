@@ -15,10 +15,10 @@ func (r *M20260322000012CreateUserFollowsTable) Signature() string {
 func (r *M20260322000012CreateUserFollowsTable) Up() error {
 	if !facades.Schema().HasTable("user_follows") {
 		return facades.Schema().Create("user_follows", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("follower_id")
-			table.Text("following_id")
+			table.Uuid("follower_id")
+			table.Uuid("following_id")
 			table.TimestampTz("created_at").Nullable()
 			table.Unique("follower_id", "following_id")
 			table.Index("follower_id")

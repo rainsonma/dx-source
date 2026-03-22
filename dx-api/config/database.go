@@ -2,8 +2,8 @@ package config
 
 import (
 	"github.com/goravel/framework/contracts/database/driver"
-	postgresfacades "github.com/goravel/postgres/facades"
 	"github.com/goravel/framework/facades"
+	postgresfacades "github.com/goravel/postgres/facades"
 )
 
 func init() {

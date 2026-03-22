@@ -15,11 +15,11 @@ func (r *M20260322000006CreateGamePressesTable) Signature() string {
 func (r *M20260322000006CreateGamePressesTable) Up() error {
 	if !facades.Schema().HasTable("game_presses") {
 		return facades.Schema().Create("game_presses", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("name").Default("")
 			table.Text("alias").Nullable()
-			table.Text("cover_id").Nullable()
+			table.Uuid("cover_id").Nullable()
 			table.Double("order").Default(0)
 			table.TimestampsTz()
 			table.Unique("name")

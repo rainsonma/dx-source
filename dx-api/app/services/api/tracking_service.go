@@ -5,18 +5,19 @@ import (
 	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 
 	"github.com/goravel/framework/support/carbon"
 )
 
 const (
-	rateLimitMasterKey  = "ratelimit:mark-mastered:%s"
-	rateLimitUnknownKey = "ratelimit:mark-unknown:%s"
-	rateLimitReviewKey  = "ratelimit:mark-review:%s"
-	rateLimitTracking   = 30
+	rateLimitMasterKey   = "ratelimit:mark-mastered:%s"
+	rateLimitUnknownKey  = "ratelimit:mark-unknown:%s"
+	rateLimitReviewKey   = "ratelimit:mark-review:%s"
+	rateLimitTracking    = 30
 	rateLimitTrackingSec = 60
 )
 
@@ -24,11 +25,11 @@ const (
 
 // TrackingItemData represents a mastered/unknown/review item with content details.
 type TrackingItemData struct {
-	ID          string  `json:"id"`
+	ID          string               `json:"id"`
 	ContentItem *TrackingContentData `json:"contentItem"`
-	GameName    *string `json:"gameName"`
-	MasteredAt  any     `json:"masteredAt,omitempty"`
-	CreatedAt   any     `json:"createdAt"`
+	GameName    *string              `json:"gameName"`
+	MasteredAt  any                  `json:"masteredAt,omitempty"`
+	CreatedAt   any                  `json:"createdAt"`
 }
 
 // TrackingContentData holds content item details for tracking lists.

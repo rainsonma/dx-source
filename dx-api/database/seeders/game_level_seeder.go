@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type GameLevelSeeder struct{}
@@ -48,7 +46,7 @@ func (s *GameLevelSeeder) Run() error {
 			var existing models.GameLevel
 			if err := query.Where("name", l.Name).Where("game_id", game.ID).First(&existing); err != nil || existing.ID == "" {
 				if err := query.Create(&models.GameLevel{
-					ID:           ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+					ID:           uuid.Must(uuid.NewV7()).String(),
 					GameID:       game.ID,
 					Name:         l.Name,
 					Order:        l.Order,

@@ -2,12 +2,12 @@ package consts
 
 // Scoring consts for game score calculation.
 const (
-	CorrectAnswer       = 1
-	Combo3Bonus         = 3
-	Combo5Bonus         = 5
-	Combo10Bonus        = 10
-	ComboCycleLength    = 10
-	LevelCompleteExp    = 10
+	CorrectAnswer        = 1
+	Combo3Bonus          = 3
+	Combo5Bonus          = 5
+	Combo10Bonus         = 10
+	ComboCycleLength     = 10
+	LevelCompleteExp     = 10
 	ExpAccuracyThreshold = 0.6
 )
 

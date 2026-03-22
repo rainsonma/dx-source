@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type ContentMetaSeeder struct{}
@@ -73,7 +71,7 @@ func (s *ContentMetaSeeder) Run() error {
 			var existing models.ContentMeta
 			if err := query.Where("source_data", m.SourceData).Where("game_level_id", levelID).First(&existing); err != nil || existing.ID == "" {
 				if err := query.Create(&models.ContentMeta{
-					ID:          ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+					ID:          uuid.Must(uuid.NewV7()).String(),
 					GameLevelID: levelID,
 					SourceFrom:  "manual",
 					SourceType:  "sentence",

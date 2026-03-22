@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type AdmRoleSeeder struct{}
@@ -25,7 +23,7 @@ func (s *AdmRoleSeeder) Run() error {
 	var role models.AdmRole
 	if err := query.Where("slug", "admin").First(&role); err != nil || role.ID == "" {
 		role = models.AdmRole{
-			ID:   ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+			ID:   uuid.Must(uuid.NewV7()).String(),
 			Slug: "admin",
 			Name: "Admin",
 		}
@@ -48,7 +46,7 @@ func (s *AdmRoleSeeder) Run() error {
 	var existing models.AdmRolePermit
 	if err := query.Where("adm_role_id", role.ID).Where("adm_permit_id", permit.ID).First(&existing); err != nil || existing.ID == "" {
 		if err := query.Create(&models.AdmRolePermit{
-			ID:          ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+			ID:          uuid.Must(uuid.NewV7()).String(),
 			AdmRoleID:   role.ID,
 			AdmPermitID: permit.ID,
 		}); err != nil {

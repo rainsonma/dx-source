@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/goravel/framework/facades"
 	"github.com/goravel/framework/contracts/cache"
+	"github.com/goravel/framework/facades"
 	redisfacades "github.com/goravel/redis/facades"
 )
 

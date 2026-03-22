@@ -1,18 +1,18 @@
 package commands
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 
 	"github.com/goravel/framework/contracts/console"
 	"github.com/goravel/framework/contracts/console/command"
-	"github.com/oklog/ulid/v2"
 )
 
 type ResetEnergyBeans struct {
@@ -201,7 +201,7 @@ func resetBeansForUser(userID string, beans, grantedBeans int, grade string, gra
 }
 
 func newID() string {
-	return ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	return uuid.Must(uuid.NewV7()).String()
 }
 
 func marshalJSON(v any) *string {

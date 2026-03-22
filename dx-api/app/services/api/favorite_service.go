@@ -3,8 +3,9 @@ package api
 import (
 	"fmt"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 )
 
 // FavoriteGameData represents a favorited game in list views.

@@ -12,7 +12,7 @@ type ComboState struct {
 
 // ProcessAnswerResult holds the scoring outcome of a single answer.
 type ProcessAnswerResult struct {
-	State       ComboState
+	State        ComboState
 	PointsEarned int
 	ComboBonus   int
 }

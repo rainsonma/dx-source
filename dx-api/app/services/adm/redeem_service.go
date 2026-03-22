@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"time"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 // AdminRedeemItem represents a redeem code in the admin list.
@@ -37,7 +36,7 @@ func GenerateCodes(grade string, count int) (int, error) {
 		}
 		codes[code] = true
 		redeems = append(redeems, models.UserRedeem{
-			ID:    ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+			ID:    uuid.Must(uuid.NewV7()).String(),
 			Code:  code,
 			Grade: grade,
 		})

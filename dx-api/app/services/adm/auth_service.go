@@ -1,16 +1,16 @@
 package adm
 
 import (
-	"crypto/rand"
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	contractshttp "github.com/goravel/framework/contracts/http"
-	"github.com/oklog/ulid/v2"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 )
 
 type AuthResult struct {
@@ -19,7 +19,7 @@ type AuthResult struct {
 }
 
 func issueAdminSession(userID string) (*AuthResult, error) {
-	authID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	authID := uuid.Must(uuid.NewV7()).String()
 
 	ttl := time.Duration(facades.Config().GetInt("refresh_token.ttl", 10080)) * time.Minute
 	if err := helpers.RedisSet(fmt.Sprintf("user_auth:%s:admin", userID), authID, ttl); err != nil {
@@ -147,7 +147,7 @@ func GetAdminUser(userID string) (*models.AdmUser, error) {
 func RecordAdminLogin(admUserID, ip, userAgent string) {
 	agent := userAgent
 	login := models.AdmLogin{
-		ID:        ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+		ID:        uuid.Must(uuid.NewV7()).String(),
 		AdmUserID: admUserID,
 		Ip:        ip,
 		Agent:     &agent,

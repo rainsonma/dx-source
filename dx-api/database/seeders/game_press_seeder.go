@@ -1,15 +1,13 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type GamePressSeeder struct{}
@@ -53,7 +51,7 @@ func (s *GamePressSeeder) Run() error {
 		var existing models.GamePress
 		if err := query.Where("name", p.Name).First(&existing); err != nil || existing.ID == "" {
 			if err := query.Create(&models.GamePress{
-				ID:    ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+				ID:    uuid.Must(uuid.NewV7()).String(),
 				Name:  p.Name,
 				Order: p.Order,
 			}); err != nil {

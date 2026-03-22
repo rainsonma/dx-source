@@ -15,10 +15,10 @@ func (r *M20260322000031CreateGameSubgroupMembersTable) Signature() string {
 func (r *M20260322000031CreateGameSubgroupMembersTable) Up() error {
 	if !facades.Schema().HasTable("game_subgroup_members") {
 		return facades.Schema().Create("game_subgroup_members", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("game_subgroup_id")
-			table.Text("user_id")
+			table.Uuid("game_subgroup_id")
+			table.Uuid("user_id")
 			table.Text("role").Default("")
 			table.TimestampsTz()
 			table.Unique("game_subgroup_id", "user_id")

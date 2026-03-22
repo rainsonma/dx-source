@@ -15,17 +15,17 @@ type mockFile struct {
 	name     string
 }
 
-func (f *mockFile) Disk(disk string) filesystem.File                { return f }
-func (f *mockFile) Extension() (string, error)                     { return "", nil }
-func (f *mockFile) File() string                                   { return "" }
-func (f *mockFile) GetClientOriginalName() string                  { return f.name }
-func (f *mockFile) GetClientOriginalExtension() string             { return "" }
-func (f *mockFile) HashName(path ...string) string                 { return "" }
-func (f *mockFile) LastModified() (time.Time, error)               { return time.Time{}, nil }
-func (f *mockFile) MimeType() (string, error)                      { return f.mimeType, nil }
-func (f *mockFile) Size() (int64, error)                           { return f.size, nil }
-func (f *mockFile) Store(path string) (string, error)              { return "", nil }
-func (f *mockFile) StoreAs(path, name string) (string, error)      { return "", nil }
+func (f *mockFile) Disk(disk string) filesystem.File          { return f }
+func (f *mockFile) Extension() (string, error)                { return "", nil }
+func (f *mockFile) File() string                              { return "" }
+func (f *mockFile) GetClientOriginalName() string             { return f.name }
+func (f *mockFile) GetClientOriginalExtension() string        { return "" }
+func (f *mockFile) HashName(path ...string) string            { return "" }
+func (f *mockFile) LastModified() (time.Time, error)          { return time.Time{}, nil }
+func (f *mockFile) MimeType() (string, error)                 { return f.mimeType, nil }
+func (f *mockFile) Size() (int64, error)                      { return f.size, nil }
+func (f *mockFile) Store(path string) (string, error)         { return "", nil }
+func (f *mockFile) StoreAs(path, name string) (string, error) { return "", nil }
 
 func TestValidateUploadFile(t *testing.T) {
 	tests := []struct {

@@ -1,16 +1,15 @@
 package api
 
 import (
-	"crypto/rand"
 	"fmt"
-	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
+
 	"github.com/goravel/framework/contracts/database/orm"
-	"github.com/oklog/ulid/v2"
 )
 
 // Content limits for course games.
@@ -164,7 +163,7 @@ func getCourseGameOwned(userID, gameID string) (*models.Game, error) {
 
 // CreateGame creates a new course game in draft status.
 func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverID *string) (string, error) {
-	id := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	id := uuid.Must(uuid.NewV7()).String()
 
 	game := models.Game{
 		ID:             id,
@@ -337,7 +336,7 @@ func CreateLevel(userID, gameID, name string, description *string) (string, erro
 		maxLevel.Order = 0
 	}
 
-	id := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	id := uuid.Must(uuid.NewV7()).String()
 	level := models.GameLevel{
 		ID:           id,
 		GameID:       gameID,

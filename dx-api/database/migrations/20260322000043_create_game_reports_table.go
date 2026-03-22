@@ -15,12 +15,12 @@ func (r *M20260322000043CreateGameReportsTable) Signature() string {
 func (r *M20260322000043CreateGameReportsTable) Up() error {
 	if !facades.Schema().HasTable("game_reports") {
 		return facades.Schema().Create("game_reports", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("user_id")
-			table.Text("game_id")
-			table.Text("game_level_id")
-			table.Text("content_item_id")
+			table.Uuid("user_id")
+			table.Uuid("game_id")
+			table.Uuid("game_level_id")
+			table.Uuid("content_item_id")
 			table.Text("reason").Default("")
 			table.Text("note").Nullable()
 			table.Integer("count").Default(0)

@@ -15,9 +15,9 @@ func (r *M20260322000024CreateAdmOperatesTable) Signature() string {
 func (r *M20260322000024CreateAdmOperatesTable) Up() error {
 	if !facades.Schema().HasTable("adm_operates") {
 		return facades.Schema().Create("adm_operates", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("adm_user_id")
+			table.Uuid("adm_user_id")
 			table.Text("path").Default("")
 			table.Text("method").Default("")
 			table.Text("ip").Default("")

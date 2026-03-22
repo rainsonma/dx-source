@@ -1,16 +1,14 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type UserSeeder struct{}
@@ -47,7 +45,7 @@ func (s *UserSeeder) Run() error {
 		var existing models.User
 		if err := query.Where("username", u.Username).First(&existing); err != nil || existing.ID == "" {
 			if err := query.Create(&models.User{
-				ID:         ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+				ID:         uuid.Must(uuid.NewV7()).String(),
 				Username:   u.Username,
 				Nickname:   &nickname,
 				Grade:      u.Grade,
@@ -78,7 +76,7 @@ func (s *UserSeeder) Run() error {
 		var existing models.User
 		if err := query.Where("username", username).First(&existing); err != nil || existing.ID == "" {
 			if err := query.Create(&models.User{
-				ID:         ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+				ID:         uuid.Must(uuid.NewV7()).String(),
 				Username:   username,
 				Nickname:   &nickname,
 				Password:   hashedPw,

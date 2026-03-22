@@ -15,7 +15,7 @@ func (r *M20260322000003CreateAdmRolesTable) Signature() string {
 func (r *M20260322000003CreateAdmRolesTable) Up() error {
 	if !facades.Schema().HasTable("adm_roles") {
 		return facades.Schema().Create("adm_roles", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("slug").Default("")
 			table.Text("name").Default("")

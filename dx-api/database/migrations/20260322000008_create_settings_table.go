@@ -15,7 +15,7 @@ func (r *M20260322000008CreateSettingsTable) Signature() string {
 func (r *M20260322000008CreateSettingsTable) Up() error {
 	if !facades.Schema().HasTable("settings") {
 		return facades.Schema().Create("settings", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("group").Default("")
 			table.Text("label").Nullable()

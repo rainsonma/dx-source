@@ -1,16 +1,15 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"fmt"
 	"log"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/oklog/ulid/v2"
+
+	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
-	"dx-api/app/models"
 )
 
 type AdmPermitSeeder struct{}
@@ -40,7 +39,7 @@ func (s *AdmPermitSeeder) Run() error {
 		var existing models.AdmPermit
 		if err := query.Where("slug", p.Slug).First(&existing); err != nil || existing.ID == "" {
 			if err := query.Create(&models.AdmPermit{
-				ID:          ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+				ID:          uuid.Must(uuid.NewV7()).String(),
 				Slug:        p.Slug,
 				Name:        p.Name,
 				HttpMethods: p.HttpMethods,

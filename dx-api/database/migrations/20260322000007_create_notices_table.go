@@ -15,7 +15,7 @@ func (r *M20260322000007CreateNoticesTable) Signature() string {
 func (r *M20260322000007CreateNoticesTable) Up() error {
 	if !facades.Schema().HasTable("notices") {
 		return facades.Schema().Create("notices", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("title").Default("")
 			table.Text("content").Nullable()

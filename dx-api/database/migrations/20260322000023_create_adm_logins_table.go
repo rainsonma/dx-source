@@ -15,9 +15,9 @@ func (r *M20260322000023CreateAdmLoginsTable) Signature() string {
 func (r *M20260322000023CreateAdmLoginsTable) Up() error {
 	if !facades.Schema().HasTable("adm_logins") {
 		return facades.Schema().Create("adm_logins", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("adm_user_id")
+			table.Uuid("adm_user_id")
 			table.Text("ip").Default("")
 			table.Text("agent").Nullable()
 			table.Text("country").Nullable()

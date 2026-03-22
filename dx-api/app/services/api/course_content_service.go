@@ -1,16 +1,15 @@
 package api
 
 import (
-	"crypto/rand"
 	"fmt"
-	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
+
 	"github.com/goravel/framework/contracts/database/orm"
-	"github.com/oklog/ulid/v2"
 )
 
 // MetadataEntry represents a single entry in a batch metadata creation request.
@@ -33,7 +32,7 @@ type CourseContentItemData struct {
 
 // LevelContentData groups content items by their metadata.
 type LevelContentData struct {
-	Meta  ContentMetaData   `json:"meta"`
+	Meta  ContentMetaData         `json:"meta"`
 	Items []CourseContentItemData `json:"items"`
 }
 
@@ -115,9 +114,8 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 	}
 
 	// Create metas in batch
-	now := time.Now()
 	for i, e := range entries {
-		id := ulid.MustNew(ulid.Timestamp(now), rand.Reader).String()
+		id := uuid.Must(uuid.NewV7()).String()
 		meta := models.ContentMeta{
 			ID:          id,
 			GameLevelID: gameLevelID,
@@ -290,7 +288,7 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 		return nil, err
 	}
 
-	id := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	id := uuid.Must(uuid.NewV7()).String()
 	item := models.ContentItem{
 		ID:            id,
 		GameLevelID:   gameLevelID,

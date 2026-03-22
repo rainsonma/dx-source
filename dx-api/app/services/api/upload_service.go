@@ -1,15 +1,14 @@
 package api
 
 import (
-	"crypto/rand"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/goravel/framework/contracts/filesystem"
 	"github.com/goravel/framework/facades"
-	"github.com/oklog/ulid/v2"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
@@ -75,7 +74,7 @@ func UploadImage(userID string, file filesystem.File, role string) (*UploadImage
 
 	// Generate date-based path with ULID filename
 	now := time.Now()
-	id := ulid.MustNew(ulid.Timestamp(now), rand.Reader).String()
+	id := uuid.Must(uuid.NewV7()).String()
 	filename := fmt.Sprintf("%s.%s", id, ext)
 	datePath := fmt.Sprintf("uploads/images/%d/%02d/%02d", now.Year(), now.Month(), now.Day())
 	relativePath := fmt.Sprintf("/%s/%s", datePath, filename)

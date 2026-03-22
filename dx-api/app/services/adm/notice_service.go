@@ -1,20 +1,18 @@
 package adm
 
 import (
-	"crypto/rand"
 	"fmt"
-	"time"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
-	"github.com/oklog/ulid/v2"
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 // CreateNotice creates a new system notice.
 func CreateNotice(title string, content, icon *string) (*models.Notice, error) {
 	notice := models.Notice{
-		ID:       ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+		ID:       uuid.Must(uuid.NewV7()).String(),
 		Title:    title,
 		Content:  content,
 		Icon:     icon,

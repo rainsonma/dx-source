@@ -15,10 +15,10 @@ func (r *M20260322000019CreateAdmUserRolesTable) Signature() string {
 func (r *M20260322000019CreateAdmUserRolesTable) Up() error {
 	if !facades.Schema().HasTable("adm_user_roles") {
 		return facades.Schema().Create("adm_user_roles", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("adm_role_id")
-			table.Text("adm_user_id")
+			table.Uuid("adm_role_id")
+			table.Uuid("adm_user_id")
 			table.TimestampsTz()
 			table.Unique("adm_role_id", "adm_user_id")
 		})

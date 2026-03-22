@@ -15,7 +15,7 @@ func (r *M20260322000001CreateUsersTable) Signature() string {
 func (r *M20260322000001CreateUsersTable) Up() error {
 	if !facades.Schema().HasTable("users") {
 		return facades.Schema().Create("users", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
 			table.Text("grade").Default("")
 			table.Text("username").Default("")
@@ -23,7 +23,7 @@ func (r *M20260322000001CreateUsersTable) Up() error {
 			table.Text("email").Nullable()
 			table.Text("phone").Nullable()
 			table.Text("password").Default("")
-			table.Text("avatar_id").Nullable()
+			table.Uuid("avatar_id").Nullable()
 			table.Text("city").Nullable()
 			table.Text("introduction").Nullable()
 			table.Boolean("is_active").Default(true)

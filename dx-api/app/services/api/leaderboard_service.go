@@ -3,8 +3,9 @@ package api
 import (
 	"fmt"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
+
+	"github.com/goravel/framework/facades"
 )
 
 // LeaderboardEntry represents a single user row in the leaderboard.

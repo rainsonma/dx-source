@@ -5,37 +5,38 @@ import (
 	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/services/com"
+
+	"github.com/goravel/framework/facades"
 )
 
 // ProfileData holds the user profile with computed fields.
 type ProfileData struct {
-	ID               string `json:"id"`
-	Grade            string `json:"grade"`
-	Username         string `json:"username"`
-	Nickname         *string `json:"nickname"`
-	Email            *string `json:"email"`
-	Phone            *string `json:"phone"`
-	AvatarID         *string `json:"avatar_id"`
-	AvatarURL        *string `json:"avatar_url"`
-	City             *string `json:"city"`
-	Introduction     *string `json:"introduction"`
-	IsActive         bool   `json:"is_active"`
-	Beans            int    `json:"beans"`
-	GrantedBeans     int    `json:"granted_beans"`
-	Exp              int    `json:"exp"`
-	Level            int    `json:"level"`
-	InviteCode       string `json:"invite_code"`
-	CurrentPlayStreak int   `json:"current_play_streak"`
-	MaxPlayStreak    int    `json:"max_play_streak"`
-	LastPlayedAt     any    `json:"last_played_at"`
-	VipDueAt         any    `json:"vip_due_at"`
-	LastReadNoticeAt any    `json:"last_read_notice_at"`
-	CreatedAt        any    `json:"created_at"`
-	UpdatedAt        any    `json:"updated_at"`
+	ID                string  `json:"id"`
+	Grade             string  `json:"grade"`
+	Username          string  `json:"username"`
+	Nickname          *string `json:"nickname"`
+	Email             *string `json:"email"`
+	Phone             *string `json:"phone"`
+	AvatarID          *string `json:"avatar_id"`
+	AvatarURL         *string `json:"avatar_url"`
+	City              *string `json:"city"`
+	Introduction      *string `json:"introduction"`
+	IsActive          bool    `json:"is_active"`
+	Beans             int     `json:"beans"`
+	GrantedBeans      int     `json:"granted_beans"`
+	Exp               int     `json:"exp"`
+	Level             int     `json:"level"`
+	InviteCode        string  `json:"invite_code"`
+	CurrentPlayStreak int     `json:"current_play_streak"`
+	MaxPlayStreak     int     `json:"max_play_streak"`
+	LastPlayedAt      any     `json:"last_played_at"`
+	VipDueAt          any     `json:"vip_due_at"`
+	LastReadNoticeAt  any     `json:"last_read_notice_at"`
+	CreatedAt         any     `json:"created_at"`
+	UpdatedAt         any     `json:"updated_at"`
 }
 
 // GetProfile retrieves a user profile by ID with computed level and avatar URL.

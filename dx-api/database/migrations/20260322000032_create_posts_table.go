@@ -15,11 +15,11 @@ func (r *M20260322000032CreatePostsTable) Signature() string {
 func (r *M20260322000032CreatePostsTable) Up() error {
 	if !facades.Schema().HasTable("posts") {
 		return facades.Schema().Create("posts", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("user_id")
+			table.Uuid("user_id")
 			table.Text("content").Default("")
-			table.Text("image_id").Nullable()
+			table.Uuid("image_id").Nullable()
 			table.Column("tags", "text[]").Nullable()
 			table.Integer("like_count").Default(0)
 			table.Integer("comment_count").Default(0)

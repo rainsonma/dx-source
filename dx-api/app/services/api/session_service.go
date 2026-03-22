@@ -1,21 +1,21 @@
 package api
 
 import (
-	"crypto/rand"
 	"fmt"
 	"time"
 
 	"dx-api/app/consts"
-	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
+
 	"github.com/goravel/framework/contracts/database/orm"
-	"github.com/oklog/ulid/v2"
 )
 
 func newID() string {
-	return ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+	return uuid.Must(uuid.NewV7()).String()
 }
 
 const (
@@ -30,17 +30,17 @@ const (
 
 // StartSessionResult is returned after starting or resuming a session.
 type StartSessionResult struct {
-	ID                   string     `json:"id"`
-	Degree               string     `json:"degree"`
-	Pattern              *string    `json:"pattern"`
-	Score                int        `json:"score"`
-	Exp                  int        `json:"exp"`
-	MaxCombo             int        `json:"maxCombo"`
-	CorrectCount         int        `json:"correctCount"`
-	WrongCount           int        `json:"wrongCount"`
-	StartedAt            time.Time  `json:"startedAt"`
-	LevelID              string     `json:"levelId"`
-	CurrentContentItemID *string    `json:"currentContentItemId"`
+	ID                   string    `json:"id"`
+	Degree               string    `json:"degree"`
+	Pattern              *string   `json:"pattern"`
+	Score                int       `json:"score"`
+	Exp                  int       `json:"exp"`
+	MaxCombo             int       `json:"maxCombo"`
+	CorrectCount         int       `json:"correctCount"`
+	WrongCount           int       `json:"wrongCount"`
+	StartedAt            time.Time `json:"startedAt"`
+	LevelID              *string   `json:"levelId"`
+	CurrentContentItemID *string   `json:"currentContentItemId"`
 }
 
 // ActiveSessionData is returned when checking for an active session.
@@ -48,7 +48,7 @@ type ActiveSessionData struct {
 	ID                   string  `json:"id"`
 	Degree               string  `json:"degree"`
 	Pattern              *string `json:"pattern"`
-	CurrentLevelID       string  `json:"currentLevelId"`
+	CurrentLevelID       *string `json:"currentLevelId"`
 	CurrentContentItemID *string `json:"currentContentItemId"`
 }
 
@@ -156,7 +156,7 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 		resolvedLevelID := existing.CurrentLevelID
 		contentItemID := existing.CurrentContentItemID
 
-		if levelID != nil && *levelID != existing.CurrentLevelID {
+		if levelID != nil && (existing.CurrentLevelID == nil || *levelID != *existing.CurrentLevelID) {
 			if _, err := query.Model(&models.GameSessionTotal{}).Where("id", existing.ID).
 				Update(map[string]any{
 					"current_level_id":        *levelID,
@@ -164,7 +164,7 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 				}); err != nil {
 				return nil, fmt.Errorf("failed to update resume point: %w", err)
 			}
-			resolvedLevelID = *levelID
+			resolvedLevelID = levelID
 			contentItemID = nil
 		}
 
@@ -184,9 +184,9 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 	}
 
 	// Create new session
-	resolvedLevelID := firstLevel.ID
+	resolvedLevelID := &firstLevel.ID
 	if levelID != nil {
-		resolvedLevelID = *levelID
+		resolvedLevelID = levelID
 	}
 
 	totalLevelsCount, err := query.Model(&models.GameLevel{}).Where("game_id", gameID).Where("is_active", true).Count()

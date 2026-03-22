@@ -1,16 +1,14 @@
 package seeders
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/oklog/ulid/v2"
-
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
 )
 
 type ContentItemSeeder struct{}
@@ -309,7 +307,7 @@ func (s *ContentItemSeeder) Run() error {
 			var existing models.ContentItem
 			if err := query.Where("content", item.Content).Where("content_type", item.ContentType).Where("content_meta_id", metaID).First(&existing); err != nil || existing.ID == "" {
 				if err := query.Create(&models.ContentItem{
-					ID:            ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String(),
+					ID:            uuid.Must(uuid.NewV7()).String(),
 					GameLevelID:   levelID,
 					ContentMetaID: &metaID,
 					Content:       item.Content,

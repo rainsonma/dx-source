@@ -8,12 +8,12 @@ import (
 
 func TestParseFormattedLines(t *testing.T) {
 	tests := []struct {
-		name            string
-		input           string
-		wantFormatted   string
-		wantTypeCount   int
-		wantSentences   int
-		wantVocabs      int
+		name          string
+		input         string
+		wantFormatted string
+		wantTypeCount int
+		wantSentences int
+		wantVocabs    int
 	}{
 		{
 			"sentence and vocab lines",

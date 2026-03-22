@@ -15,11 +15,11 @@ func (r *M20260322000039CreateGameSessionLevelsTable) Signature() string {
 func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 	if !facades.Schema().HasTable("game_session_levels") {
 		return facades.Schema().Create("game_session_levels", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("game_session_total_id")
-			table.Text("game_level_id")
-			table.Text("current_content_item_id").Nullable()
+			table.Uuid("game_session_total_id")
+			table.Uuid("game_level_id")
+			table.Uuid("current_content_item_id").Nullable()
 			table.Text("degree").Default("")
 			table.Text("pattern").Nullable()
 			table.TimestampTz("started_at")

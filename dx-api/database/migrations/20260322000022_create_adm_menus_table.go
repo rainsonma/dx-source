@@ -15,9 +15,9 @@ func (r *M20260322000022CreateAdmMenusTable) Signature() string {
 func (r *M20260322000022CreateAdmMenusTable) Up() error {
 	if !facades.Schema().HasTable("adm_menus") {
 		return facades.Schema().Create("adm_menus", func(table schema.Blueprint) {
-			table.Text("id")
+			table.Uuid("id")
 			table.Primary("id")
-			table.Text("parent_id").Nullable()
+			table.Uuid("parent_id").Nullable()
 			table.Text("name").Default("")
 			table.Text("alias").Nullable()
 			table.Text("icon").Nullable()

@@ -3,16 +3,17 @@ package api
 import (
 	"fmt"
 
-	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
 )
 
 // InviteData contains invite URL, stats, and first page of referrals.
 type InviteData struct {
-	InviteCode     string          `json:"inviteCode"`
-	Stats          InviteStats     `json:"stats"`
-	Referrals      []ReferralItem  `json:"referrals"`
-	TotalReferrals int64           `json:"totalReferrals"`
+	InviteCode     string         `json:"inviteCode"`
+	Stats          InviteStats    `json:"stats"`
+	Referrals      []ReferralItem `json:"referrals"`
+	TotalReferrals int64          `json:"totalReferrals"`
 }
 
 // InviteStats holds aggregated referral statistics.
@@ -25,11 +26,11 @@ type InviteStats struct {
 
 // ReferralItem represents a single referral record with invitee info.
 type ReferralItem struct {
-	ID           string  `json:"id"`
-	Status       string  `json:"status"`
-	RewardAmount float64 `json:"rewardAmount"`
-	RewardedAt   any     `json:"rewardedAt"`
-	CreatedAt    any     `json:"createdAt"`
+	ID           string           `json:"id"`
+	Status       string           `json:"status"`
+	RewardAmount float64          `json:"rewardAmount"`
+	RewardedAt   any              `json:"rewardedAt"`
+	CreatedAt    any              `json:"createdAt"`
 	Invitee      *ReferralInvitee `json:"invitee"`
 }
 
