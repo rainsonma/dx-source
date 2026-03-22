@@ -15,4 +15,5 @@ const (
 	BeanReasonAIBreakRefund           = "分解失败退还"
 	BeanReasonAIGenItemsConsume       = "生成消耗"
 	BeanReasonAIGenItemsRefund        = "生成失败退还"
+	BeanReasonSeederGrant             = "种子数据赠送能量豆"
 )

@@ -25,5 +25,6 @@ func (s *DatabaseSeeder) Run() error {
 		&GameLevelSeeder{},
 		&ContentMetaSeeder{},
 		&ContentItemSeeder{},
+		&UserBeanSeeder{},
 	})
 }

@@ -20,5 +20,6 @@ func Seeders() []seeder.Seeder {
 		&seeders.GameLevelSeeder{},
 		&seeders.ContentMetaSeeder{},
 		&seeders.ContentItemSeeder{},
+		&seeders.UserBeanSeeder{},
 	}
 }

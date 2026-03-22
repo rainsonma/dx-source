@@ -15,6 +15,7 @@ const (
 	BeanSlugAIBreakRefund           = "ai-break-refund"
 	BeanSlugAIGenItemsConsume       = "ai-gen-items-consume"
 	BeanSlugAIGenItemsRefund        = "ai-gen-items-refund"
+	BeanSlugSeederGrant             = "seeder-grant"
 )
 
 // BeanSlugLabels maps each bean slug to its Chinese label.
@@ -32,4 +33,5 @@ var BeanSlugLabels = map[string]string{
 	BeanSlugAIBreakRefund:           "分解失败退还",
 	BeanSlugAIGenItemsConsume:       "生成消耗",
 	BeanSlugAIGenItemsRefund:        "生成失败退还",
+	BeanSlugSeederGrant:             "种子数据赠送",
 }
