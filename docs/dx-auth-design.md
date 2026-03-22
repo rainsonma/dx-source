@@ -403,6 +403,85 @@ Wraps protected page content. On mount:
 
 ---
 
+## Single-Device Login Enforcement
+
+Each user/admin account can only be signed in on **one device at a time**. Logging in on a new device instantly kicks out the previous device.
+
+### Mechanism: `auth_id` in JWT
+
+JWTs are generated using `golang-jwt/jwt/v5` directly (not Goravel's `Login()`), embedding a unique `auth_id` claim alongside the standard `key` (user ID) claim. Goravel's `Parse()` and `ID()` remain compatible because Go's JSON unmarshaling silently ignores the extra `auth_id` field.
+
+```go
+// JWT payload structure
+type Claims struct {
+    jwt.RegisteredClaims
+    Key    string `json:"key"`     // user ID (Goravel compatible)
+    AuthID string `json:"auth_id"` // session identifier (ULID)
+}
+```
+
+### Session Lifecycle
+
+**On login/signup:**
+1. Generate a new `auth_id` (ULID)
+2. Store in Redis: `SET user_auth:{userId}:{guard}` → `auth_id` (TTL = 7 days)
+3. Delete all previous refresh tokens for this user via `DeleteUserRefreshTokens()`
+4. Issue JWT with `auth_id` claim + store refresh token with `auth_id` in its data
+
+**Per-request check (middleware):**
+1. Goravel's `Parse()` validates JWT signature and expiry
+2. `ExtractAuthID()` reads the `auth_id` from the JWT payload (base64 decode, no re-verification needed)
+3. `GET user_auth:{userId}:{guard}` from Redis
+4. If mismatch → return 401 with `CodeSessionReplaced` (40104) and message "您的账号已在其他设备登录"
+5. If match → proceed normally
+
+**On refresh:**
+- Same `auth_id` check — if the refresh token's `auth_id` doesn't match Redis, return 40104
+- Valid refresh: issue new JWT with **same** `auth_id`, rotate refresh token (preserving `auth_id`)
+
+**On logout:**
+- Only delete the `user_auth:{userId}:{guard}` key if the token's `auth_id` matches the current active session (prevents a stale logout from invalidating the current active session on another device)
+
+### Kick-Out Flow
+
+```
+Device A is logged in (auth_id = AAA)
+        ↓
+User logs in on Device B
+        ↓
+Redis: user_auth:{userId}:user = BBB (overwrites AAA)
+All Device A's refresh tokens deleted
+        ↓
+Device A makes any API request
+        ↓
+Middleware: JWT auth_id (AAA) ≠ Redis auth_id (BBB)
+        ↓
+401 { code: 40104, message: "您的账号已在其他设备登录" }
+        ↓
+Frontend: alert("您的账号已在其他设备登录") → redirect to /auth/signin
+```
+
+### Redis Key
+
+| Key | Value | TTL | Description |
+|-----|-------|-----|-------------|
+| `user_auth:{userId}:{guard}` | `auth_id` string (ULID) | 7 days | Current valid session identifier |
+
+### Frontend Detection
+
+The frontend checks for error code `40104` in three places:
+1. **`apiFetch` 401 handler** — before attempting refresh, reads response body to check for 40104
+2. **`refreshAccessToken`** — detects 40104 in the refresh response itself
+3. **`uploadApi.uploadImage`** — same check in its independent 401 handler
+
+On detection: `alert("您的账号已在其他设备登录")` → clear access token → redirect to `/auth/signin`
+
+### Cost
+
+One additional Redis `GET` per authenticated request (~0.5ms). Negligible compared to typical DB query times.
+
+---
+
 ## Error Codes
 
 | Code | HTTP Status | Meaning |
@@ -416,6 +495,7 @@ Wraps protected page content. On mount:
 | `40005` | 400 | Invalid/expired verification code |
 | `40100` | 401 | Unauthorized (missing/invalid JWT) |
 | `40103` | 401 | Invalid/expired refresh token |
+| `40104` | 401 | Session replaced (kicked by another device) |
 | `40300` | 403 | Forbidden (not admin) |
 | `42900` | 429 | Rate limited |
 | `50000` | 500 | Internal server error |
@@ -430,7 +510,8 @@ All responses follow the envelope format: `{ "code": N, "message": "...", "data"
 | Measure | Implementation |
 |---------|---------------|
 | Password hashing | bcrypt, cost factor 12 |
-| JWT signing | HS256 with `JWT_SECRET` from environment |
+| JWT signing | HS256 via `golang-jwt/jwt/v5` with `JWT_SECRET` from environment |
+| Single-device login | `auth_id` in JWT + Redis per-request check, instant kick-out |
 | Token rotation | Each refresh deletes old token, issues new one |
 | XSS protection | Refresh token in httpOnly cookie (JS can't access) |
 | CSRF mitigation | `SameSite=Lax` cookie attribute |
@@ -485,6 +566,7 @@ The refresh and logout endpoints accept the refresh token from **either** the `d
 |------|---------------|
 | `config/jwt.go` | JWT + refresh token configuration |
 | `config/auth.go` | Guard definitions (user, admin) |
+| `app/helpers/jwt.go` | Custom JWT generation with `auth_id` claim + `ExtractAuthID` parser |
 | `app/helpers/refresh_token.go` | Refresh token generation, Redis CRUD, user index |
 | `app/helpers/hash.go` | bcrypt password hashing |
 | `app/helpers/rate_limit.go` | Redis sliding window rate limiter |
@@ -494,8 +576,8 @@ The refresh and logout endpoints accept the refresh token from **either** the `d
 | `app/services/adm/auth_service.go` | Admin auth logic |
 | `app/http/controllers/api/auth_controller.go` | User auth HTTP handlers + cookie helpers |
 | `app/http/controllers/adm/auth_controller.go` | Admin auth HTTP handlers + cookie helpers |
-| `app/http/middleware/jwt_auth.go` | User JWT validation middleware |
-| `app/http/middleware/adm_jwt_auth.go` | Admin JWT validation middleware |
+| `app/http/middleware/jwt_auth.go` | User JWT validation + single-device auth_id check |
+| `app/http/middleware/adm_jwt_auth.go` | Admin JWT validation + single-device auth_id check |
 | `app/http/middleware/admin_guard.go` | User-facing admin check (username == "rainson") |
 | `app/consts/error_code.go` | Numeric error code constants |
 | `app/services/api/errors.go` | User auth error sentinels |
