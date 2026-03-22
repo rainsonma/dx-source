@@ -96,6 +96,10 @@ func (c *AuthController) Refresh(ctx contractshttp.Context) contractshttp.Respon
 			clearAdmRefreshCookie(ctx)
 			return helpers.Error(ctx, 401, consts.CodeInvalidRefreshToken, "invalid or expired refresh token")
 		}
+		if errors.Is(err, admservice.ErrSessionReplaced) {
+			clearAdmRefreshCookie(ctx)
+			return helpers.Error(ctx, 401, consts.CodeSessionReplaced, "您的账号已在其他设备登录")
+		}
 		return helpers.Error(ctx, 500, consts.CodeInternalError, "failed to refresh token")
 	}
 

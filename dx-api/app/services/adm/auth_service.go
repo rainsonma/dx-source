@@ -18,6 +18,32 @@ type AuthResult struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+func issueAdminSession(userID string) (*AuthResult, error) {
+	authID := ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String()
+
+	ttl := time.Duration(facades.Config().GetInt("refresh_token.ttl", 10080)) * time.Minute
+	if err := helpers.RedisSet(fmt.Sprintf("user_auth:%s:admin", userID), authID, ttl); err != nil {
+		return nil, fmt.Errorf("failed to store auth_id: %w", err)
+	}
+
+	_ = helpers.DeleteUserRefreshTokens(userID, "admin")
+
+	accessToken, err := helpers.IssueAccessToken(userID, authID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to issue access token: %w", err)
+	}
+
+	refreshToken, err := helpers.GenerateRefreshToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+	if err := helpers.StoreRefreshToken(refreshToken, userID, "admin", authID); err != nil {
+		return nil, fmt.Errorf("failed to store refresh token: %w", err)
+	}
+
+	return &AuthResult{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+}
+
 // AdminSignIn authenticates an admin user via username and password.
 // It verifies credentials, issues a JWT token using the "admin" guard,
 // and records the login for audit purposes.
@@ -36,24 +62,16 @@ func AdminSignIn(ctx contractshttp.Context, username, password string) (*AuthRes
 		return nil, nil, ErrInvalidPassword
 	}
 
-	token, err := facades.Auth(ctx).Guard("admin").Login(&admUser)
+	result, err := issueAdminSession(admUser.ID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to issue admin token: %w", err)
-	}
-
-	refreshToken, err := helpers.GenerateRefreshToken()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate refresh token: %w", err)
-	}
-	if err := helpers.StoreRefreshToken(refreshToken, admUser.ID, "admin", ""); err != nil {
-		return nil, nil, fmt.Errorf("failed to store refresh token: %w", err)
+		return nil, nil, err
 	}
 
 	ip := ctx.Request().Ip()
 	userAgent := ctx.Request().Header("User-Agent", "")
 	go RecordAdminLogin(admUser.ID, ip, userAgent)
 
-	return &AuthResult{AccessToken: token, RefreshToken: refreshToken}, &admUser, nil
+	return result, &admUser, nil
 }
 
 // RefreshToken rotates the admin refresh token and issues a new access token.
@@ -66,12 +84,18 @@ func RefreshToken(ctx contractshttp.Context, oldRefreshToken string) (*AuthResul
 		return nil, ErrInvalidRefreshToken
 	}
 
+	// Check if this session is still the active one
+	currentAuthID, err := helpers.RedisGet(fmt.Sprintf("user_auth:%s:admin", data.UserID))
+	if err != nil || currentAuthID != data.AuthID {
+		return nil, ErrSessionReplaced
+	}
+
 	var admUser models.AdmUser
 	if err := facades.Orm().Query().Where("id", data.UserID).First(&admUser); err != nil || admUser.ID == "" {
 		return nil, ErrAdminNotFound
 	}
 
-	accessToken, err := facades.Auth(ctx).Guard("admin").Login(&admUser)
+	accessToken, err := helpers.IssueAccessToken(data.UserID, data.AuthID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to issue access token: %w", err)
 	}
@@ -82,7 +106,7 @@ func RefreshToken(ctx contractshttp.Context, oldRefreshToken string) (*AuthResul
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
-	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "admin", ""); err != nil {
+	if err := helpers.StoreRefreshToken(newRefreshToken, data.UserID, "admin", data.AuthID); err != nil {
 		return nil, fmt.Errorf("failed to store refresh token: %w", err)
 	}
 
@@ -97,6 +121,11 @@ func Logout(refreshToken string) error {
 	}
 	if data.Guard != "admin" {
 		return nil
+	}
+	key := fmt.Sprintf("user_auth:%s:%s", data.UserID, data.Guard)
+	currentAuthID, _ := helpers.RedisGet(key)
+	if currentAuthID == data.AuthID {
+		_ = helpers.RedisDel(key)
 	}
 	return helpers.DeleteRefreshToken(refreshToken, data.UserID, data.Guard)
 }
