@@ -203,7 +203,7 @@ func ListUnknown(userID, cursor string, limit int) ([]TrackingItemData, string, 
 	if cursor != "" {
 		var cursorItem models.UserUnknown
 		if err := query.Where("id", cursor).First(&cursorItem); err == nil && cursorItem.ID != "" {
-			q = q.Where("created_at <= ?", cursorItem.CreatedAt).Where("id != ?", cursor)
+			q = q.Where("(created_at < ? OR (created_at = ? AND id < ?))", cursorItem.CreatedAt, cursorItem.CreatedAt, cursor)
 		}
 	}
 	if err := q.Get(&unknowns); err != nil {

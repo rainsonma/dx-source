@@ -75,7 +75,7 @@ func ListUserGames(userID string, status string, cursor string, limit int) ([]Co
 	if cursor != "" {
 		var cursorGame models.Game
 		if err := facades.Orm().Query().Where("id", cursor).First(&cursorGame); err == nil && cursorGame.ID != "" {
-			query = query.Where("created_at <= ?", cursorGame.CreatedAt).Where("id != ?", cursor)
+			query = query.Where("(created_at < ? OR (created_at = ? AND id < ?))", cursorGame.CreatedAt, cursorGame.CreatedAt, cursor)
 		}
 	}
 
