@@ -6,7 +6,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
@@ -23,7 +23,7 @@ func NewCourseGameController() *CourseGameController {
 func (c *CourseGameController) List(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	status := ctx.Request().Query("status", "")
@@ -31,7 +31,7 @@ func (c *CourseGameController) List(ctx contractshttp.Context) contractshttp.Res
 
 	games, nextCursor, hasMore, err := services.ListUserGames(userID, status, cursor, limit)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to list games")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list games")
 	}
 
 	return helpers.Paginated(ctx, games, nextCursor, hasMore)
@@ -41,12 +41,12 @@ func (c *CourseGameController) List(ctx contractshttp.Context) contractshttp.Res
 func (c *CourseGameController) Counts(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	counts, err := services.GetUserGameCounts(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get counts")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get counts")
 	}
 
 	return helpers.Success(ctx, counts)
@@ -56,25 +56,25 @@ func (c *CourseGameController) Counts(ctx contractshttp.Context) contractshttp.R
 func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.CreateGameRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "name is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
 	}
 	if req.GameMode == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "gameMode is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameMode is required")
 	}
 	if req.GameCategoryID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "gameCategoryId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameCategoryId is required")
 	}
 	if req.GamePressID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "gamePressId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gamePressId is required")
 	}
 
 	var categoryID *string
@@ -88,7 +88,7 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 
 	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to create game")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to create game")
 	}
 
 	return helpers.Success(ctx, map[string]string{"id": gameID})
@@ -98,21 +98,21 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 func (c *CourseGameController) Update(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	var req requests.UpdateGameRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "name is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
 	}
 
 	var categoryID *string
@@ -136,12 +136,12 @@ func (c *CourseGameController) Update(ctx contractshttp.Context) contractshttp.R
 func (c *CourseGameController) Delete(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	if err := services.DeleteGame(userID, gameID); err != nil {
@@ -155,12 +155,12 @@ func (c *CourseGameController) Delete(ctx contractshttp.Context) contractshttp.R
 func (c *CourseGameController) Publish(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	if err := services.PublishGame(userID, gameID); err != nil {
@@ -174,12 +174,12 @@ func (c *CourseGameController) Publish(ctx contractshttp.Context) contractshttp.
 func (c *CourseGameController) Withdraw(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	if err := services.WithdrawGame(userID, gameID); err != nil {
@@ -193,12 +193,12 @@ func (c *CourseGameController) Withdraw(ctx contractshttp.Context) contractshttp
 func (c *CourseGameController) Detail(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	detail, err := services.GetCourseGameDetail(userID, gameID)
@@ -213,21 +213,21 @@ func (c *CourseGameController) Detail(ctx contractshttp.Context) contractshttp.R
 func (c *CourseGameController) CreateLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	var req requests.CreateLevelRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "name is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
 	}
 
 	levelID, err := services.CreateLevel(userID, gameID, req.Name, req.Description)
@@ -242,13 +242,13 @@ func (c *CourseGameController) CreateLevel(ctx contractshttp.Context) contractsh
 func (c *CourseGameController) DeleteLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 	if gameID == "" || levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and level id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and level id are required")
 	}
 
 	if err := services.DeleteLevel(userID, gameID, levelID); err != nil {
@@ -262,22 +262,22 @@ func (c *CourseGameController) DeleteLevel(ctx contractshttp.Context) contractsh
 func (c *CourseGameController) SaveMetadata(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 	if gameID == "" || levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and level id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and level id are required")
 	}
 
 	var req requests.SaveMetadataBatchRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if len(req.Entries) == 0 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "entries are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "entries are required")
 	}
 
 	// Convert request entries to service entries
@@ -302,21 +302,21 @@ func (c *CourseGameController) SaveMetadata(ctx contractshttp.Context) contracts
 func (c *CourseGameController) ReorderMetadata(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	var req requests.ReorderMetadataRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.MetaID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "metaId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "metaId is required")
 	}
 
 	if err := services.ReorderMetadata(userID, gameID, req.MetaID, req.NewOrder); err != nil {
@@ -330,13 +330,13 @@ func (c *CourseGameController) ReorderMetadata(ctx contractshttp.Context) contra
 func (c *CourseGameController) GetContentItems(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 	if gameID == "" || levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and level id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and level id are required")
 	}
 
 	data, err := services.GetContentItemsByMeta(userID, gameID, levelID)
@@ -351,25 +351,25 @@ func (c *CourseGameController) GetContentItems(ctx contractshttp.Context) contra
 func (c *CourseGameController) InsertContentItem(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 	if gameID == "" || levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and level id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and level id are required")
 	}
 
 	var req requests.InsertContentItemRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Content == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "content is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "content is required")
 	}
 	if req.ContentMetaID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "contentMetaId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "contentMetaId is required")
 	}
 
 	item, err := services.InsertContentItem(userID, gameID, levelID, req.ContentMetaID, req.Content, req.ContentType, req.Translation, req.ReferenceItemID, req.Direction)
@@ -384,18 +384,18 @@ func (c *CourseGameController) InsertContentItem(ctx contractshttp.Context) cont
 func (c *CourseGameController) UpdateContentItemText(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	itemID := ctx.Request().Route("itemId")
 	if gameID == "" || itemID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and item id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and item id are required")
 	}
 
 	var req requests.UpdateContentItemTextRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if err := services.UpdateContentItemText(userID, gameID, itemID, req.Content, req.Translation); err != nil {
@@ -409,21 +409,21 @@ func (c *CourseGameController) UpdateContentItemText(ctx contractshttp.Context) 
 func (c *CourseGameController) ReorderContentItems(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	var req requests.ReorderContentItemRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.ItemID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "itemId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "itemId is required")
 	}
 
 	if err := services.ReorderContentItems(userID, gameID, req.ItemID, req.NewOrder); err != nil {
@@ -437,13 +437,13 @@ func (c *CourseGameController) ReorderContentItems(ctx contractshttp.Context) co
 func (c *CourseGameController) DeleteContentItem(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	itemID := ctx.Request().Route("itemId")
 	if gameID == "" || itemID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and item id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and item id are required")
 	}
 
 	if err := services.DeleteContentItem(userID, gameID, itemID); err != nil {
@@ -457,13 +457,13 @@ func (c *CourseGameController) DeleteContentItem(ctx contractshttp.Context) cont
 func (c *CourseGameController) DeleteAllLevelContent(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 	if gameID == "" || levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id and level id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and level id are required")
 	}
 
 	if err := services.DeleteAllLevelContent(userID, gameID, levelID); err != nil {
@@ -477,35 +477,35 @@ func (c *CourseGameController) DeleteAllLevelContent(ctx contractshttp.Context) 
 func mapCourseGameError(ctx contractshttp.Context, err error) contractshttp.Response {
 	switch {
 	case errors.Is(err, services.ErrGameNotFound):
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeGameNotFound, "游戏不存在")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "游戏不存在")
 	case errors.Is(err, services.ErrForbidden):
-		return helpers.Error(ctx, http.StatusForbidden, constants.CodeForbidden, "游戏不存在或无权操作")
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "游戏不存在或无权操作")
 	case errors.Is(err, services.ErrGamePublished):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "已发布的游戏不可编辑，请先撤回")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "已发布的游戏不可编辑，请先撤回")
 	case errors.Is(err, services.ErrGameAlreadyPublished):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "游戏已经是发布状态")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游戏已经是发布状态")
 	case errors.Is(err, services.ErrGameNotPublished):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "只有已发布的游戏可以撤回")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "只有已发布的游戏可以撤回")
 	case errors.Is(err, services.ErrNoGameLevels):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "游戏至少需要一个关卡才能发布")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游戏至少需要一个关卡才能发布")
 	case errors.Is(err, services.ErrLevelNotFound):
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeLevelNotFound, "关卡不存在")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡不存在")
 	case errors.Is(err, services.ErrMetaNotFound):
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeContentNotFound, "元数据不存在或无权操作")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeContentNotFound, "元数据不存在或无权操作")
 	case errors.Is(err, services.ErrContentItemNotFound):
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeContentNotFound, "练习单元不存在或无权操作")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeContentNotFound, "练习单元不存在或无权操作")
 	case errors.Is(err, services.ErrCapacityExceeded):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "超出关卡内容上限")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "超出关卡内容上限")
 	case errors.Is(err, services.ErrItemLimitExceeded):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "每条元数据练习单元数量已达上限")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "每条元数据练习单元数量已达上限")
 	default:
 		// Pass through Chinese validation messages (e.g. publish: level has no content);
 		// hide raw internal errors from clients.
 		msg := err.Error()
 		if len(msg) > 0 && msg[0] > 127 {
 			// Starts with a multibyte char — likely a Chinese user-facing message
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, msg)
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, msg)
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "操作失败")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}
 }

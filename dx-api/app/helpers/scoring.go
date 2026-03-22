@@ -1,6 +1,6 @@
 package helpers
 
-import "dx-api/app/constants"
+import "dx-api/app/consts"
 
 // ComboState tracks the player's combo streak within a level.
 type ComboState struct {
@@ -30,18 +30,18 @@ func ProcessAnswer(state ComboState, isCorrect bool) ProcessAnswerResult {
 		}
 	}
 
-	points := constants.CorrectAnswer
+	points := consts.CorrectAnswer
 	bonus := 0
 	newStreak := state.Streak + 1
 	newCyclePosition := state.CyclePosition + 1
 
-	for _, threshold := range constants.ComboThresholds {
+	for _, threshold := range consts.ComboThresholds {
 		if newCyclePosition == threshold.Streak {
 			bonus += threshold.Bonus
 		}
 	}
 
-	if newCyclePosition >= constants.ComboCycleLength {
+	if newCyclePosition >= consts.ComboCycleLength {
 		newCyclePosition = 0
 	}
 

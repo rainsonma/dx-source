@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Game mode values.
 const (

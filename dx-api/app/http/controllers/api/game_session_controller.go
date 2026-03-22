@@ -6,7 +6,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
@@ -23,16 +23,16 @@ func NewGameSessionController() *GameSessionController {
 func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.StartSessionRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
 	}
 	if req.Degree == "" {
 		req.Degree = "intermediate"
@@ -41,9 +41,9 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID)
 	if err != nil {
 		if errors.Is(err, services.ErrNoGameLevels) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeLevelNotFound, "game has no levels")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "game has no levels")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to start session")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start session")
 	}
 
 	return helpers.Success(ctx, result)
@@ -53,18 +53,18 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 func (c *GameSessionController) End(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.EndSessionRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
 	}
 
 	err = services.EndSession(userID, sessionID, services.EndSessionInput{
@@ -88,7 +88,7 @@ func (c *GameSessionController) End(ctx contractshttp.Context) contractshttp.Res
 func (c *GameSessionController) ForceComplete(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
@@ -104,18 +104,18 @@ func (c *GameSessionController) ForceComplete(ctx contractshttp.Context) contrac
 func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.StartLevelRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_level_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
 	}
 	if req.Degree == "" {
 		req.Degree = "intermediate"
@@ -123,7 +123,7 @@ func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractsh
 
 	result, err := services.StartLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to start level")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start level")
 	}
 
 	return helpers.Success(ctx, result)
@@ -133,7 +133,7 @@ func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractsh
 func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
@@ -141,18 +141,18 @@ func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contrac
 
 	var req requests.CompleteLevelRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	result, err := services.CompleteLevel(userID, sessionID, gameLevelID, req.Score, req.MaxCombo, req.TotalItems)
 	if err != nil {
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
 		}
 		if errors.Is(err, services.ErrSessionNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeSessionNotFound, "session not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "session not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to complete level")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to complete level")
 	}
 
 	return helpers.Success(ctx, result)
@@ -162,7 +162,7 @@ func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contrac
 func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
@@ -174,7 +174,7 @@ func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contract
 		if gameLevelID != "" {
 			req.NextLevelID = gameLevelID
 		} else {
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "next_level_id is required")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "next_level_id is required")
 		}
 	}
 
@@ -189,7 +189,7 @@ func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contract
 func (c *GameSessionController) RestartLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
@@ -206,18 +206,18 @@ func (c *GameSessionController) RestartLevel(ctx contractshttp.Context) contract
 func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.RecordAnswerRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameSessionLevelID == "" || req.ContentItemID == "" || req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_session_level_id, game_level_id, and content_item_id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_session_level_id, game_level_id, and content_item_id are required")
 	}
 
 	err = services.RecordAnswer(userID, services.RecordAnswerInput{
@@ -238,12 +238,12 @@ func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contract
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, constants.CodeRateLimited, "操作过于频繁，请稍后再试")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 		}
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to record answer")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record answer")
 	}
 
 	return helpers.Success(ctx, nil)
@@ -253,18 +253,18 @@ func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contract
 func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.RecordSkipRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_level_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
 	}
 
 	err = services.RecordSkip(userID, services.RecordSkipInput{
@@ -275,12 +275,12 @@ func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractsh
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, constants.CodeRateLimited, "操作过于频繁，请稍后再试")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 		}
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to record skip")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record skip")
 	}
 
 	return helpers.Success(ctx, nil)
@@ -290,23 +290,23 @@ func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractsh
 func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.SyncPlayTimeRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_level_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
 	}
 
 	if err := services.SyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
 		if errors.Is(err, services.ErrInvalidPlayTime) {
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "play_time must be between 0 and 86400")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "play_time must be between 0 and 86400")
 		}
 		return mapSessionError(ctx, err)
 	}
@@ -318,7 +318,7 @@ func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contract
 func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Query("game_id", "")
@@ -326,7 +326,7 @@ func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contracts
 	patternStr := ctx.Request().Query("pattern", "")
 
 	if gameID == "" || degree == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id and degree are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id and degree are required")
 	}
 
 	var pattern *string
@@ -336,7 +336,7 @@ func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contracts
 
 	result, err := services.CheckActiveSession(userID, gameID, degree, pattern)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to check active session")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active session")
 	}
 
 	return helpers.Success(ctx, result)
@@ -346,7 +346,7 @@ func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contracts
 func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Query("game_id", "")
@@ -355,7 +355,7 @@ func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) cont
 	gameLevelID := ctx.Request().Query("game_level_id", "")
 
 	if gameID == "" || degree == "" || gameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id, degree, and game_level_id are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id, degree, and game_level_id are required")
 	}
 
 	var pattern *string
@@ -365,7 +365,7 @@ func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) cont
 
 	result, err := services.CheckActiveLevelSession(userID, gameID, degree, pattern, gameLevelID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to check active level session")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active level session")
 	}
 
 	return helpers.Success(ctx, result)
@@ -375,17 +375,17 @@ func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) cont
 func (c *GameSessionController) CheckAnyActive(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	gameID := ctx.Request().Query("game_id", "")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
 	}
 
 	result, err := services.CheckAnyActiveSession(userID, gameID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to check active session")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active session")
 	}
 
 	return helpers.Success(ctx, result)
@@ -395,14 +395,14 @@ func (c *GameSessionController) CheckAnyActive(ctx contractshttp.Context) contra
 func (c *GameSessionController) Restore(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 	gameLevelID := ctx.Request().Query("game_level_id", "")
 
 	if gameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_level_id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
 	}
 
 	result, err := services.RestoreSessionData(userID, sessionID, gameLevelID)
@@ -417,14 +417,14 @@ func (c *GameSessionController) Restore(ctx contractshttp.Context) contractshttp
 func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.UpdateContentItemRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if err := services.UpdateCurrentContentItem(userID, sessionID, req.ContentItemID); err != nil {
@@ -437,13 +437,13 @@ func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) con
 // mapSessionError maps common session errors to HTTP responses.
 func mapSessionError(ctx contractshttp.Context, err error) contractshttp.Response {
 	if errors.Is(err, services.ErrSessionNotFound) {
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeSessionNotFound, "session not found")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "session not found")
 	}
 	if errors.Is(err, services.ErrForbidden) {
-		return helpers.Error(ctx, http.StatusForbidden, constants.CodeForbidden, "forbidden")
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "forbidden")
 	}
 	if errors.Is(err, services.ErrRateLimited) {
-		return helpers.Error(ctx, http.StatusTooManyRequests, constants.CodeRateLimited, "操作过于频繁，请稍后再试")
+		return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 	}
-	return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "internal server error")
+	return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "internal server error")
 }

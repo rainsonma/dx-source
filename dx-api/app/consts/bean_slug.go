@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Bean slug values identify specific bean transaction types.
 const (

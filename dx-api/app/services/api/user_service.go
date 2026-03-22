@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
-	"dx-api/app/services/shared"
+	"dx-api/app/services/com"
 )
 
 // ProfileData holds the user profile with computed fields.
@@ -48,7 +48,7 @@ func GetProfile(userID string) (*ProfileData, error) {
 		return nil, ErrUserNotFound
 	}
 
-	level, err := constants.GetLevel(user.Exp)
+	level, err := consts.GetLevel(user.Exp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to compute level: %w", err)
 	}
@@ -183,7 +183,7 @@ func SendChangeEmailCode(userID, email string) error {
 		return fmt.Errorf("failed to store verification code: %w", err)
 	}
 
-	if err := shared.SendVerificationEmail(email, code); err != nil {
+	if err := com.SendVerificationEmail(email, code); err != nil {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 

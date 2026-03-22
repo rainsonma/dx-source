@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // ScoreRating holds the label for a score accuracy range.
 type ScoreRating struct {

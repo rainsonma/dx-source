@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Difficulty level values.
 const (

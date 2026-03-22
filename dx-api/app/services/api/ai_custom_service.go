@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
@@ -18,7 +18,7 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-// AI generation cost constants.
+// AI generation cost consts.
 const aiGenerateCost = 5
 
 // Concurrency limits for SSE batch operations.
@@ -71,7 +71,7 @@ type SSEProgressEvent struct {
 // GenerateMetadata generates an English story from keywords using DeepSeek AI.
 // Consumes 5 beans. Refunds on AI failure.
 func GenerateMetadata(userID string, difficulty string, keywords []string) (*GenerateMetadataResult, error) {
-	if err := ConsumeBeans(userID, aiGenerateCost, constants.BeanSlugAIGenerateConsume, constants.BeanReasonAIGenerateConsume); err != nil {
+	if err := ConsumeBeans(userID, aiGenerateCost, consts.BeanSlugAIGenerateConsume, consts.BeanReasonAIGenerateConsume); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func GenerateMetadata(userID string, difficulty string, keywords []string) (*Gen
 		Temperature: 0.7,
 	})
 	if err != nil {
-		_ = RefundBeans(userID, aiGenerateCost, constants.BeanSlugAIGenerateRefund, constants.BeanReasonAIGenerateRefund)
+		_ = RefundBeans(userID, aiGenerateCost, consts.BeanSlugAIGenerateRefund, consts.BeanReasonAIGenerateRefund)
 		return nil, err
 	}
 
@@ -184,11 +184,11 @@ func FormatMetadata(userID string, content string, formatType string) (*FormatMe
 
 func formatBeanSlugs(formatType string) (consumeSlug, consumeReason, refundSlug, refundReason string) {
 	if formatType == SourceTypeSentence {
-		return constants.BeanSlugAIFormatSentenceConsume, constants.BeanReasonAIFormatSentenceConsume,
-			constants.BeanSlugAIFormatSentenceRefund, constants.BeanReasonAIFormatSentenceRefund
+		return consts.BeanSlugAIFormatSentenceConsume, consts.BeanReasonAIFormatSentenceConsume,
+			consts.BeanSlugAIFormatSentenceRefund, consts.BeanReasonAIFormatSentenceRefund
 	}
-	return constants.BeanSlugAIFormatVocabConsume, constants.BeanReasonAIFormatVocabConsume,
-		constants.BeanSlugAIFormatVocabRefund, constants.BeanReasonAIFormatVocabRefund
+	return consts.BeanSlugAIFormatVocabConsume, consts.BeanReasonAIFormatVocabConsume,
+		consts.BeanSlugAIFormatVocabRefund, consts.BeanReasonAIFormatVocabRefund
 }
 
 func buildFormatPrompt(formatType string) string {
@@ -305,7 +305,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 		writeSSEError(writer, err)
 		return
 	}
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		writeSSEError(writer, ErrGamePublished)
 		return
 	}
@@ -342,7 +342,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 		return
 	}
 
-	if err := ConsumeBeans(userID, totalCost, constants.BeanSlugAIBreakConsume, constants.BeanReasonAIBreakConsume); err != nil {
+	if err := ConsumeBeans(userID, totalCost, consts.BeanSlugAIBreakConsume, consts.BeanReasonAIBreakConsume); err != nil {
 		writeSSEError(writer, err)
 		return
 	}
@@ -384,7 +384,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 	// Refund failed words
 	fw := int(atomic.LoadInt64(&failedWords))
 	if fw > 0 {
-		_ = RefundBeans(userID, fw, constants.BeanSlugAIBreakRefund, constants.BeanReasonAIBreakRefund)
+		_ = RefundBeans(userID, fw, consts.BeanSlugAIBreakRefund, consts.BeanReasonAIBreakRefund)
 	}
 
 	_ = writer.Write(SSEProgressEvent{
@@ -537,7 +537,7 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter)
 		writeSSEError(writer, err)
 		return
 	}
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		writeSSEError(writer, ErrGamePublished)
 		return
 	}
@@ -614,7 +614,7 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter)
 		return
 	}
 
-	if err := ConsumeBeans(userID, totalCost, constants.BeanSlugAIGenItemsConsume, constants.BeanReasonAIGenItemsConsume); err != nil {
+	if err := ConsumeBeans(userID, totalCost, consts.BeanSlugAIGenItemsConsume, consts.BeanReasonAIGenItemsConsume); err != nil {
 		writeSSEError(writer, err)
 		return
 	}
@@ -656,7 +656,7 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter)
 
 	fw := int(atomic.LoadInt64(&failedWords))
 	if fw > 0 {
-		_ = RefundBeans(userID, fw, constants.BeanSlugAIGenItemsRefund, constants.BeanReasonAIGenItemsRefund)
+		_ = RefundBeans(userID, fw, consts.BeanSlugAIGenItemsRefund, consts.BeanReasonAIGenItemsRefund)
 	}
 
 	_ = writer.Write(SSEProgressEvent{

@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Feedback type values.
 const (

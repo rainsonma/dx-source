@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
@@ -120,7 +120,7 @@ func RedeemCode(userID, code string) (*RedeemCodeResult, error) {
 
 	// Grant beans
 	beanAmount := 10000
-	if redeem.Grade == constants.UserGradeLifetime {
+	if redeem.Grade == consts.UserGradeLifetime {
 		beanAmount = 15000
 	}
 
@@ -137,8 +137,8 @@ func RedeemCode(userID, code string) (*RedeemCodeResult, error) {
 		Beans:  beanAmount,
 		Origin: user.Beans,
 		Result: newBalance,
-		Slug:   constants.BeanSlugMembershipGrant,
-		Reason: constants.BeanReasonMembershipGrant,
+		Slug:   consts.BeanSlugMembershipGrant,
+		Reason: consts.BeanReasonMembershipGrant,
 	}
 	if err := tx.Create(&ledger); err != nil {
 		_ = tx.Rollback()
@@ -154,11 +154,11 @@ func RedeemCode(userID, code string) (*RedeemCodeResult, error) {
 
 // calcVipDueAt computes the new VIP expiration date.
 func calcVipDueAt(grade string, currentDueAt *carbon.DateTime) *time.Time {
-	if grade == constants.UserGradeLifetime {
+	if grade == consts.UserGradeLifetime {
 		return nil
 	}
 
-	months := constants.UserGradeMonths[grade]
+	months := consts.UserGradeMonths[grade]
 	if months == 0 {
 		return nil
 	}

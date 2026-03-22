@@ -6,7 +6,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	services "dx-api/app/services/api"
@@ -22,7 +22,7 @@ func NewAiCustomController() *AiCustomController {
 func (c *AiCustomController) GenerateMetadata(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req struct {
@@ -30,14 +30,14 @@ func (c *AiCustomController) GenerateMetadata(ctx contractshttp.Context) contrac
 		Keywords   []string `json:"keywords"`
 	}
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "无效的请求")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	if req.Difficulty == "" {
 		req.Difficulty = "a1-a2"
 	}
 	if len(req.Keywords) == 0 || len(req.Keywords) > 5 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "请提供1-5个关键词")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请提供1-5个关键词")
 	}
 
 	result, err := services.GenerateMetadata(userID, req.Difficulty, req.Keywords)
@@ -59,7 +59,7 @@ func (c *AiCustomController) GenerateMetadata(ctx contractshttp.Context) contrac
 func (c *AiCustomController) FormatMetadata(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req struct {
@@ -67,14 +67,14 @@ func (c *AiCustomController) FormatMetadata(ctx contractshttp.Context) contracts
 		FormatType string `json:"formatType"`
 	}
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "无效的请求")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	if req.Content == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "content is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "content is required")
 	}
 	if req.FormatType != "sentence" && req.FormatType != "vocab" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "formatType must be sentence or vocab")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "formatType must be sentence or vocab")
 	}
 
 	result, err := services.FormatMetadata(userID, req.Content, req.FormatType)
@@ -96,18 +96,18 @@ func (c *AiCustomController) FormatMetadata(ctx contractshttp.Context) contracts
 func (c *AiCustomController) BreakMetadata(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req struct {
 		GameLevelID string `json:"gameLevelId"`
 	}
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "无效的请求")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "gameLevelId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameLevelId is required")
 	}
 
 	w := ctx.Response().Writer()
@@ -123,18 +123,18 @@ func (c *AiCustomController) BreakMetadata(ctx contractshttp.Context) contractsh
 func (c *AiCustomController) GenerateContentItems(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req struct {
 		GameLevelID string `json:"gameLevelId"`
 	}
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "无效的请求")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "gameLevelId is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameLevelId is required")
 	}
 
 	w := ctx.Response().Writer()
@@ -149,9 +149,9 @@ func (c *AiCustomController) GenerateContentItems(ctx contractshttp.Context) con
 func mapAIServiceError(ctx contractshttp.Context, err error, serviceLabel string) contractshttp.Response {
 	switch {
 	case errors.Is(err, services.ErrInsufficientBeans):
-		return helpers.Error(ctx, http.StatusPaymentRequired, constants.CodeInsufficientBeans, "能量豆不足")
+		return helpers.Error(ctx, http.StatusPaymentRequired, consts.CodeInsufficientBeans, "能量豆不足")
 	case errors.Is(err, services.ErrEmptyContent):
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "内容为空")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "内容为空")
 	case errors.Is(err, helpers.ErrDeepSeekEmpty),
 		errors.Is(err, helpers.ErrDeepSeekAuth),
 		errors.Is(err, helpers.ErrDeepSeekQuota),
@@ -159,9 +159,9 @@ func mapAIServiceError(ctx contractshttp.Context, err error, serviceLabel string
 		errors.Is(err, helpers.ErrDeepSeekNotConfigured),
 		errors.Is(err, helpers.ErrDeepSeekUnavail):
 		msg, status := helpers.MapDeepSeekError(err, serviceLabel)
-		return helpers.Error(ctx, status, constants.CodeAIServiceError, msg)
+		return helpers.Error(ctx, status, consts.CodeAIServiceError, msg)
 	default:
 		msg, status := helpers.MapDeepSeekError(err, serviceLabel)
-		return helpers.Error(ctx, status, constants.CodeAIServiceError, msg)
+		return helpers.Error(ctx, status, consts.CodeAIServiceError, msg)
 	}
 }

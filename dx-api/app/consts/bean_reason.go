@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Bean reason values describe why a bean transaction occurred.
 const (

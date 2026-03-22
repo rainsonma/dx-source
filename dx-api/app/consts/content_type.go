@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Content type values.
 const (

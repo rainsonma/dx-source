@@ -12,7 +12,7 @@ import (
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
-	"dx-api/app/services/shared"
+	"dx-api/app/services/com"
 )
 
 // SendSignUpCode generates and sends a signup verification code to the given email.
@@ -32,7 +32,7 @@ func SendSignUpCode(email string) error {
 		return fmt.Errorf("failed to store verification code: %w", err)
 	}
 
-	if err := shared.SendVerificationEmail(email, code); err != nil {
+	if err := com.SendVerificationEmail(email, code); err != nil {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 
@@ -116,7 +116,7 @@ func SendSignInCode(email string) error {
 		return fmt.Errorf("failed to store verification code: %w", err)
 	}
 
-	if err := shared.SendVerificationEmail(email, code); err != nil {
+	if err := com.SendVerificationEmail(email, code); err != nil {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 

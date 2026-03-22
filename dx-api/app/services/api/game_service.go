@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 )
@@ -80,7 +80,7 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 	}
 
 	query := facades.Orm().Query().
-		Where("status", constants.GameStatusPublished).
+		Where("status", consts.GameStatusPublished).
 		Where("is_active", true)
 
 	if len(categoryIDs) > 0 {
@@ -223,7 +223,7 @@ func SearchGames(queryStr string, limit int) ([]GameSearchResultData, error) {
 
 	var games []models.Game
 	if err := facades.Orm().Query().
-		Where("status", constants.GameStatusPublished).
+		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
 		Where("name ILIKE ?", "%"+queryStr+"%").
 		Order("created_at DESC").
@@ -292,7 +292,7 @@ func GetRecentGames(userID string) ([]RecentGameData, error) {
 	var games []models.Game
 	if err := facades.Orm().Query().
 		Where("id IN ?", gameIDs).
-		Where("status", constants.GameStatusPublished).
+		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
 		Get(&games); err != nil {
 		return nil, fmt.Errorf("failed to load games: %w", err)
@@ -346,7 +346,7 @@ func GetGameDetail(gameID string) (*GameDetailData, error) {
 	var game models.Game
 	if err := facades.Orm().Query().
 		Where("id", gameID).
-		Where("status", constants.GameStatusPublished).
+		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
 		First(&game); err != nil {
 		return nil, fmt.Errorf("failed to find game: %w", err)

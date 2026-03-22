@@ -8,7 +8,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
@@ -29,15 +29,15 @@ func (c *CommunityController) GetLeaderboard(ctx contractshttp.Context) contract
 	period := ctx.Request().Query("period", "all")
 
 	if lbType != "exp" && lbType != "playtime" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "type must be exp or playtime")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "type must be exp or playtime")
 	}
 	if period != "all" && period != "day" && period != "week" && period != "month" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "period must be all, day, week, or month")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "period must be all, day, week, or month")
 	}
 
 	result, err := services.GetLeaderboard(lbType, period, userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get leaderboard")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get leaderboard")
 	}
 
 	return helpers.Success(ctx, result)
@@ -47,15 +47,15 @@ func (c *CommunityController) GetLeaderboard(ctx contractshttp.Context) contract
 func (c *CommunityController) GetDashboard(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	data, err := services.GetDashboard(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get dashboard")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get dashboard")
 	}
 
 	return helpers.Success(ctx, data)
@@ -65,7 +65,7 @@ func (c *CommunityController) GetDashboard(ctx contractshttp.Context) contractsh
 func (c *CommunityController) GetHeatmap(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	yearStr := ctx.Request().Query("year", "")
@@ -73,7 +73,7 @@ func (c *CommunityController) GetHeatmap(ctx contractshttp.Context) contractshtt
 	if yearStr != "" {
 		parsed, err := strconv.Atoi(yearStr)
 		if err != nil || parsed < 2000 || parsed > 2100 {
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid year")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid year")
 		}
 		year = parsed
 	}
@@ -84,9 +84,9 @@ func (c *CommunityController) GetHeatmap(ctx contractshttp.Context) contractshtt
 	data, err := services.GetHeatmap(userID, year)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get heatmap")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get heatmap")
 	}
 
 	return helpers.Success(ctx, data)
@@ -96,15 +96,15 @@ func (c *CommunityController) GetHeatmap(ctx contractshttp.Context) contractshtt
 func (c *CommunityController) GetInviteData(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	data, err := services.GetInviteData(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get invite data")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get invite data")
 	}
 
 	return helpers.Success(ctx, data)
@@ -114,19 +114,19 @@ func (c *CommunityController) GetInviteData(ctx contractshttp.Context) contracts
 func (c *CommunityController) GetReferrals(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	page, pageSize, _ := helpers.ParseOffsetParams(ctx, 15)
 
 	referrals, err := services.GetReferrals(userID, page, pageSize)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get referrals")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get referrals")
 	}
 
 	total, err := services.CountReferrals(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to count referrals")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to count referrals")
 	}
 
 	return helpers.PaginatedOffset(ctx, referrals, total, page, pageSize)
@@ -138,7 +138,7 @@ func (c *CommunityController) GetNotices(ctx contractshttp.Context) contractshtt
 
 	items, nextCursor, hasMore, err := services.GetNotices(cursor, limit)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get notices")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get notices")
 	}
 
 	return helpers.Paginated(ctx, items, nextCursor, hasMore)
@@ -148,11 +148,11 @@ func (c *CommunityController) GetNotices(ctx contractshttp.Context) contractshtt
 func (c *CommunityController) MarkNoticesRead(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	if err := services.MarkNoticesRead(userID); err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to mark notices read")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to mark notices read")
 	}
 
 	return helpers.Success(ctx, nil)
@@ -162,24 +162,24 @@ func (c *CommunityController) MarkNoticesRead(ctx contractshttp.Context) contrac
 func (c *CommunityController) SubmitFeedback(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.SubmitFeedbackRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Type == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "type is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "type is required")
 	}
 	if req.Description == "" || len(req.Description) > 200 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "description must be 1-200 characters")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "description must be 1-200 characters")
 	}
 
 	result, err := services.SubmitFeedback(userID, req.Type, req.Description)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to submit feedback")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to submit feedback")
 	}
 
 	return helpers.Success(ctx, result)
@@ -189,24 +189,24 @@ func (c *CommunityController) SubmitFeedback(ctx contractshttp.Context) contract
 func (c *CommunityController) SubmitReport(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.SubmitReportRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.GameID == "" || req.GameLevelID == "" || req.ContentItemID == "" || req.Reason == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game_id, game_level_id, content_item_id, and reason are required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id, game_level_id, content_item_id, and reason are required")
 	}
 
 	result, err := services.SubmitReport(userID, req.GameID, req.GameLevelID, req.ContentItemID, req.Reason, req.Note)
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, constants.CodeRateLimited, "too many reports, please try again later")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "too many reports, please try again later")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to submit report")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to submit report")
 	}
 
 	return helpers.Success(ctx, result)
@@ -216,14 +216,14 @@ func (c *CommunityController) SubmitReport(ctx contractshttp.Context) contractsh
 func (c *CommunityController) GetRedeems(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	page, pageSize, _ := helpers.ParseOffsetParams(ctx, 15)
 
 	items, total, err := services.GetRedeems(userID, page, pageSize)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get redeems")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get redeems")
 	}
 
 	return helpers.PaginatedOffset(ctx, items, total, page, pageSize)
@@ -233,27 +233,27 @@ func (c *CommunityController) GetRedeems(ctx contractshttp.Context) contractshtt
 func (c *CommunityController) RedeemCode(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.RedeemCodeRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.Code == "" || len(req.Code) != 19 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid redeem code format")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid redeem code format")
 	}
 
 	result, err := services.RedeemCode(userID, req.Code)
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrRedeemNotFound):
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeNotFound, "redeem code not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeNotFound, "redeem code not found")
 		case errors.Is(err, services.ErrRedeemAlreadyUsed):
-			return helpers.Error(ctx, http.StatusConflict, constants.CodeValidationError, "redeem code already used")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeValidationError, "redeem code already used")
 		default:
-			return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to redeem code")
+			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to redeem code")
 		}
 	}
 
@@ -264,12 +264,12 @@ func (c *CommunityController) RedeemCode(ctx contractshttp.Context) contractshtt
 func (c *CommunityController) GetContentSeeks(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	items, err := services.GetContentSeeks(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get content seeks")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get content seeks")
 	}
 
 	return helpers.Success(ctx, items)
@@ -279,27 +279,27 @@ func (c *CommunityController) GetContentSeeks(ctx contractshttp.Context) contrac
 func (c *CommunityController) SubmitContentSeek(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	var req requests.SubmitContentSeekRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	if req.CourseName == "" || len(req.CourseName) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "course_name must be 1-30 characters")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "course_name must be 1-30 characters")
 	}
 	if req.Description == "" || len(req.Description) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "description must be 1-30 characters")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "description must be 1-30 characters")
 	}
 	if req.DiskUrl == "" || len(req.DiskUrl) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "disk_url must be 1-30 characters")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "disk_url must be 1-30 characters")
 	}
 
 	result, err := services.SubmitContentSeek(userID, req.CourseName, req.Description, req.DiskUrl)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to submit content seek")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to submit content seek")
 	}
 
 	return helpers.Success(ctx, result)

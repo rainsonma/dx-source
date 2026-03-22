@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 )
@@ -25,7 +25,7 @@ type ContentItemData struct {
 // GetLevelContent returns content items for a game level, filtered by degree.
 func GetLevelContent(gameLevelID string, degree string) ([]ContentItemData, error) {
 	// Determine allowed content types from degree
-	allowedTypes, hasDegree := constants.DegreeContentTypes[degree]
+	allowedTypes, hasDegree := consts.DegreeContentTypes[degree]
 
 	query := facades.Orm().Query().
 		Where("game_level_id", gameLevelID).

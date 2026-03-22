@@ -8,7 +8,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	services "dx-api/app/services/api"
@@ -31,7 +31,7 @@ func (c *GameController) List(ctx contractshttp.Context) contractshttp.Response 
 
 	games, nextCursor, hasMore, err := services.ListPublishedGames(cursor, limit, categoryIDs, pressID, mode)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to list games")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list games")
 	}
 
 	return helpers.Paginated(ctx, games, nextCursor, hasMore)
@@ -54,7 +54,7 @@ func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Respons
 
 	games, err := services.SearchGames(strings.TrimSpace(query), limit)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to search games")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to search games")
 	}
 
 	return helpers.Success(ctx, games)
@@ -64,12 +64,12 @@ func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Respons
 func (c *GameController) Recent(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	games, err := services.GetRecentGames(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get recent games")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get recent games")
 	}
 
 	return helpers.Success(ctx, games)
@@ -79,15 +79,15 @@ func (c *GameController) Recent(ctx contractshttp.Context) contractshttp.Respons
 func (c *GameController) Detail(ctx contractshttp.Context) contractshttp.Response {
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "game id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
 	detail, err := services.GetGameDetail(gameID)
 	if err != nil {
 		if errors.Is(err, services.ErrGameNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeGameNotFound, "game not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "game not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get game detail")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get game detail")
 	}
 
 	return helpers.Success(ctx, detail)
@@ -97,7 +97,7 @@ func (c *GameController) Detail(ctx contractshttp.Context) contractshttp.Respons
 func (c *GameController) Categories(ctx contractshttp.Context) contractshttp.Response {
 	categories, err := services.ListCategories()
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to list categories")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list categories")
 	}
 
 	return helpers.Success(ctx, categories)
@@ -107,7 +107,7 @@ func (c *GameController) Categories(ctx contractshttp.Context) contractshttp.Res
 func (c *GameController) Presses(ctx contractshttp.Context) contractshttp.Response {
 	presses, err := services.ListPresses()
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to list presses")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list presses")
 	}
 
 	return helpers.Success(ctx, presses)

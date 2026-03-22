@@ -1,6 +1,6 @@
-package constants
+package consts
 
-// Scoring constants for game score calculation.
+// Scoring consts for game score calculation.
 const (
 	CorrectAnswer       = 1
 	Combo3Bonus         = 3

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
@@ -55,7 +55,7 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		return 0, err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return 0, ErrGamePublished
 	}
 
@@ -143,7 +143,7 @@ func ReorderMetadata(userID, gameID, metaID string, newOrder float64) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -250,7 +250,7 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 		return nil, err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return nil, ErrGamePublished
 	}
 
@@ -324,7 +324,7 @@ func UpdateContentItemText(userID, gameID, itemID, content string, translation *
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -349,7 +349,7 @@ func ReorderContentItems(userID, gameID, itemID string, newOrder float64) error 
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -371,7 +371,7 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -393,7 +393,7 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 

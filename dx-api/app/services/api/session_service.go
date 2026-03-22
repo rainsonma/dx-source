@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
@@ -546,7 +546,7 @@ func StartLevel(userID, sessionID, gameLevelID, degree string, pattern *string) 
 	}
 
 	// Count content items for this level with degree-based filtering
-	contentTypes := constants.DegreeContentTypes[degree]
+	contentTypes := consts.DegreeContentTypes[degree]
 	totalItemsCount, err := countActiveContentItems(gameLevelID, contentTypes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count content items: %w", err)
@@ -635,10 +635,10 @@ func CompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, total
 	if totalItems > 0 {
 		accuracy = float64(sessionLevel.CorrectCount) / float64(totalItems)
 	}
-	meetsThreshold := accuracy >= constants.ExpAccuracyThreshold
+	meetsThreshold := accuracy >= consts.ExpAccuracyThreshold
 	expAmount := 0
 	if meetsThreshold {
-		expAmount = constants.LevelCompleteExp
+		expAmount = consts.LevelCompleteExp
 	}
 
 	// 1. Complete session level

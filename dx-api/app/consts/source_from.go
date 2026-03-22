@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Source origin values.
 const (

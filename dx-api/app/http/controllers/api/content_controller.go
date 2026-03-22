@@ -5,7 +5,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	services "dx-api/app/services/api"
@@ -17,19 +17,19 @@ type ContentController struct{}
 func (c *ContentController) LevelContent(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	levelID := ctx.Request().Route("levelId")
 	if levelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "level id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "level id is required")
 	}
 
-	degree := ctx.Request().Query("degree", constants.GameDegreePractice)
+	degree := ctx.Request().Query("degree", consts.GameDegreePractice)
 
 	items, err := services.GetLevelContent(levelID, degree)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get level content")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get level content")
 	}
 
 	return helpers.Success(ctx, items)

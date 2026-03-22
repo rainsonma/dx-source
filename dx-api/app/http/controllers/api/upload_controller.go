@@ -7,7 +7,7 @@ import (
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	services "dx-api/app/services/api"
@@ -23,39 +23,39 @@ func NewUploadController() *UploadController {
 func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, constants.CodeUnauthorized, "unauthorized")
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
 	// Get the uploaded file via Goravel's request
 	file, err := ctx.Request().File("file")
 	if err != nil || file == nil {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "file is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "file is required")
 	}
 
 	// Get role from form data
 	role := ctx.Request().Input("role")
 	if role == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "role is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "role is required")
 	}
 
 	// Validate file
 	if err := services.ValidateUploadFile(file, role); err != nil {
 		switch {
 		case errors.Is(err, services.ErrFileTooLarge):
-			return helpers.Error(ctx, http.StatusRequestEntityTooLarge, constants.CodeFileTooLarge, "file size exceeds 2MB limit")
+			return helpers.Error(ctx, http.StatusRequestEntityTooLarge, consts.CodeFileTooLarge, "file size exceeds 2MB limit")
 		case errors.Is(err, services.ErrInvalidFileType):
-			return helpers.Error(ctx, http.StatusUnsupportedMediaType, constants.CodeInvalidFileType, "only JPEG and PNG files are allowed")
+			return helpers.Error(ctx, http.StatusUnsupportedMediaType, consts.CodeInvalidFileType, "only JPEG and PNG files are allowed")
 		case errors.Is(err, services.ErrInvalidImageRole):
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeInvalidImageRole, "invalid image role")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidImageRole, "invalid image role")
 		default:
-			return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, err.Error())
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, err.Error())
 		}
 	}
 
 	// Upload
 	result, err := services.UploadImage(userID, file, role)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to upload image")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to upload image")
 	}
 
 	return helpers.Success(ctx, result)
@@ -65,20 +65,20 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 func (c *UploadController) ServeImage(ctx contractshttp.Context) contractshttp.Response {
 	imageID := ctx.Request().Route("id")
 	if imageID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, constants.CodeValidationError, "image id is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "image id is required")
 	}
 
 	absPath, contentType, err := services.GetImagePath(imageID)
 	if err != nil {
 		if errors.Is(err, services.ErrImageNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, constants.CodeImageNotFound, "image not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "image not found")
 		}
-		return helpers.Error(ctx, http.StatusInternalServerError, constants.CodeInternalError, "failed to get image")
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get image")
 	}
 
 	// Check file exists on disk
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-		return helpers.Error(ctx, http.StatusNotFound, constants.CodeImageNotFound, "image file not found")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "image file not found")
 	}
 
 	// Serve the file with caching headers (images are immutable — ULID names never change)

@@ -1,11 +1,11 @@
-package constants
+package consts
 
 import (
 	"fmt"
 	"math"
 )
 
-// Level progression constants.
+// Level progression consts.
 const (
 	MaxLevel   = 100
 	baseExp    = 1000

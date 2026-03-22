@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
@@ -77,7 +77,7 @@ func (c *ResetEnergyBeans) Handle(ctx console.Context) error {
 				AND ? = ?
 			)
 		  )
-	`, constants.BeanSlugMembershipGrant, todayDay, lastDayOfMonth, todayDay, lastDayOfMonth).Scan(&users); err != nil {
+	`, consts.BeanSlugMembershipGrant, todayDay, lastDayOfMonth, todayDay, lastDayOfMonth).Scan(&users); err != nil {
 		ctx.Error(fmt.Sprintf("failed to query eligible users: %v", err))
 		return err
 	}
@@ -148,8 +148,8 @@ func resetBeansForUser(userID string, beans, grantedBeans int, grade string, gra
 			Beans:  debitAmount,
 			Origin: currentBeans,
 			Result: debitResult,
-			Slug:   constants.BeanSlugMonthlyResetDebit,
-			Reason: constants.BeanReasonMonthlyResetDebit,
+			Slug:   consts.BeanSlugMonthlyResetDebit,
+			Reason: consts.BeanReasonMonthlyResetDebit,
 			Data:   dataJSON,
 		}
 		if err := tx.Create(&ledger); err != nil {
@@ -172,8 +172,8 @@ func resetBeansForUser(userID string, beans, grantedBeans int, grade string, gra
 			Beans:  grantAmount,
 			Origin: currentBeans,
 			Result: creditResult,
-			Slug:   constants.BeanSlugMonthlyResetCredit,
-			Reason: constants.BeanReasonMonthlyResetCredit,
+			Slug:   consts.BeanSlugMonthlyResetCredit,
+			Reason: consts.BeanReasonMonthlyResetCredit,
 			Data:   dataJSON,
 		}
 		if err := tx.Create(&ledger); err != nil {

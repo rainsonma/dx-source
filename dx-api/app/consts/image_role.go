@@ -1,4 +1,4 @@
-package constants
+package consts
 
 // Image role values identify what an uploaded image is used for.
 const (

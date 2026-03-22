@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/models"
 
@@ -177,7 +177,7 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 		CoverID:        coverID,
 		Order:          1000,
 		IsActive:       true,
-		Status:         constants.GameStatusDraft,
+		Status:         consts.GameStatusDraft,
 	}
 
 	if err := facades.Orm().Query().Create(&game); err != nil {
@@ -194,7 +194,7 @@ func UpdateGame(userID, gameID, name string, description *string, mode string, c
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -219,7 +219,7 @@ func DeleteGame(userID, gameID string) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -266,7 +266,7 @@ func PublishGame(userID, gameID string) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGameAlreadyPublished
 	}
 
@@ -295,7 +295,7 @@ func PublishGame(userID, gameID string) error {
 		}
 	}
 
-	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", constants.GameStatusPublished); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", consts.GameStatusPublished); err != nil {
 		return fmt.Errorf("failed to publish game: %w", err)
 	}
 
@@ -309,11 +309,11 @@ func WithdrawGame(userID, gameID string) error {
 		return err
 	}
 
-	if game.Status != constants.GameStatusPublished {
+	if game.Status != consts.GameStatusPublished {
 		return ErrGameNotPublished
 	}
 
-	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", constants.GameStatusWithdraw); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", consts.GameStatusWithdraw); err != nil {
 		return fmt.Errorf("failed to withdraw game: %w", err)
 	}
 
@@ -327,7 +327,7 @@ func CreateLevel(userID, gameID, name string, description *string) (string, erro
 		return "", err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return "", ErrGamePublished
 	}
 
@@ -362,7 +362,7 @@ func DeleteLevel(userID, gameID, levelID string) error {
 		return err
 	}
 
-	if game.Status == constants.GameStatusPublished {
+	if game.Status == consts.GameStatusPublished {
 		return ErrGamePublished
 	}
 
@@ -407,9 +407,9 @@ func GetUserGameCounts(userID string) (*CourseGameCounts, error) {
 		return nil, fmt.Errorf("failed to count games: %w", err)
 	}
 
-	draft, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", constants.GameStatusDraft).Count()
-	published, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", constants.GameStatusPublished).Count()
-	withdraw, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", constants.GameStatusWithdraw).Count()
+	draft, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", consts.GameStatusDraft).Count()
+	published, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", consts.GameStatusPublished).Count()
+	withdraw, _ := facades.Orm().Query().Model(&models.Game{}).Where("user_id", userID).Where("status", consts.GameStatusWithdraw).Count()
 
 	return &CourseGameCounts{
 		All:       all,

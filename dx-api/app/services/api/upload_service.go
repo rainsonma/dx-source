@@ -11,7 +11,7 @@ import (
 	"github.com/goravel/framework/facades"
 	"github.com/oklog/ulid/v2"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 )
@@ -26,14 +26,14 @@ var allowedMIMETypes = map[string]string{
 }
 
 var validRoles = map[string]bool{
-	constants.ImageRoleAdmUserAvatar:  true,
-	constants.ImageRoleUserAvatar:     true,
-	constants.ImageRoleCategoryCover:  true,
-	constants.ImageRoleTemplateCover:  true,
-	constants.ImageRoleGameCover:      true,
-	constants.ImageRolePressCover:     true,
-	constants.ImageRoleGameGroupCover: true,
-	constants.ImageRolePostImage:      true,
+	consts.ImageRoleAdmUserAvatar:  true,
+	consts.ImageRoleUserAvatar:     true,
+	consts.ImageRoleCategoryCover:  true,
+	consts.ImageRoleTemplateCover:  true,
+	consts.ImageRoleGameCover:      true,
+	consts.ImageRolePressCover:     true,
+	consts.ImageRoleGameGroupCover: true,
+	consts.ImageRolePostImage:      true,
 }
 
 // UploadImageResult holds the response data after a successful upload.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"dx-api/app/constants"
+	"dx-api/app/consts"
 	"github.com/goravel/framework/facades"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
@@ -270,7 +270,7 @@ func MarkAsReview(userID, contentItemID, gameID, gameLevelID string) error {
 		return ErrRateLimited
 	}
 
-	nextReview := constants.GetNextReviewAt(0)
+	nextReview := consts.GetNextReviewAt(0)
 	nextReviewCarbon := carbon.FromStdTime(nextReview)
 
 	_, err = facades.Orm().Query().Exec(
