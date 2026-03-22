@@ -365,9 +365,6 @@ func (c *CourseGameController) InsertContentItem(ctx contractshttp.Context) cont
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
-	if req.Content == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "content is required")
-	}
 	if req.ContentMetaID == "" {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "contentMetaId is required")
 	}
