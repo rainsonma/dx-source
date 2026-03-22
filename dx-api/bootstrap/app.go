@@ -31,8 +31,8 @@ func Boot() contractsfoundation.Application {
 		}).
 		WithSchedule(func() []schedule.Event {
 			return []schedule.Event{
-				facades.Schedule().Command("app:reset-energy-beans").DailyAt("01:00").Name("reset-energy-beans"),
-				facades.Schedule().Command("app:update-play-streaks").DailyAt("02:00").Name("update-play-streaks"),
+				facades.Schedule().Command("app:reset-energy-beans").DailyAt("01:00").SkipIfStillRunning().Name("reset-energy-beans"),
+				facades.Schedule().Command("app:update-play-streaks").DailyAt("02:00").SkipIfStillRunning().Name("update-play-streaks"),
 			}
 		}).
 		WithProviders(Providers).
