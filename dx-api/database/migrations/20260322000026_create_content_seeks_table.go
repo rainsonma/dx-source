@@ -15,12 +15,12 @@ func (r *M20260322000026CreateContentSeeksTable) Signature() string {
 func (r *M20260322000026CreateContentSeeksTable) Up() error {
 	if !facades.Schema().HasTable("content_seeks") {
 		return facades.Schema().Create("content_seeks", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("course_name").Default("")
+			table.Text("user_id")
+			table.Text("course_name").Default("")
 			table.Text("description").Default("")
-			table.String("disk_url").Default("")
+			table.Text("disk_url").Default("")
 			table.Integer("count").Default(0)
 			table.TimestampsTz()
 			table.Unique("course_name")

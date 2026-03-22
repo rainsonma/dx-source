@@ -15,13 +15,13 @@ func (r *M20260322000022CreateAdmMenusTable) Signature() string {
 func (r *M20260322000022CreateAdmMenusTable) Up() error {
 	if !facades.Schema().HasTable("adm_menus") {
 		return facades.Schema().Create("adm_menus", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("parent_id").Nullable()
-			table.String("name").Default("")
-			table.String("alias").Nullable()
-			table.String("icon").Nullable()
-			table.String("uri").Nullable()
+			table.Text("parent_id").Nullable()
+			table.Text("name").Default("")
+			table.Text("alias").Nullable()
+			table.Text("icon").Nullable()
+			table.Text("uri").Nullable()
 			table.Double("order").Default(0)
 			table.TimestampsTz()
 			table.Index("parent_id", "order")

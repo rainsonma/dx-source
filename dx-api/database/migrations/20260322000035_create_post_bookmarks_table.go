@@ -15,10 +15,10 @@ func (r *M20260322000035CreatePostBookmarksTable) Signature() string {
 func (r *M20260322000035CreatePostBookmarksTable) Up() error {
 	if !facades.Schema().HasTable("post_bookmarks") {
 		return facades.Schema().Create("post_bookmarks", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("post_id")
-			table.String("user_id")
+			table.Text("post_id")
+			table.Text("user_id")
 			table.TimestampTz("created_at").Nullable()
 			table.Unique("post_id", "user_id")
 			table.Index("post_id")

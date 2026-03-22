@@ -15,10 +15,10 @@ func (r *M20260322000027CreateGameLevelsTable) Signature() string {
 func (r *M20260322000027CreateGameLevelsTable) Up() error {
 	if !facades.Schema().HasTable("game_levels") {
 		return facades.Schema().Create("game_levels", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("game_id")
-			table.String("name").Default("")
+			table.Text("game_id")
+			table.Text("name").Default("")
 			table.Text("description").Nullable()
 			table.Double("order").Default(0)
 			table.Integer("passing_score").Default(0)

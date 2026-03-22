@@ -15,10 +15,10 @@ func (r *M20260322000041CreateGameStatsTotalsTable) Signature() string {
 func (r *M20260322000041CreateGameStatsTotalsTable) Up() error {
 	if !facades.Schema().HasTable("game_stats_totals") {
 		return facades.Schema().Create("game_stats_totals", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("game_id")
+			table.Text("user_id")
+			table.Text("game_id")
 			table.Integer("total_sessions").Default(0)
 			table.Integer("total_exp").Default(0)
 			table.Integer("highest_score").Default(0)

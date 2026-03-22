@@ -15,12 +15,12 @@ func (r *M20260322000046CreateUserReviewsTable) Signature() string {
 func (r *M20260322000046CreateUserReviewsTable) Up() error {
 	if !facades.Schema().HasTable("user_reviews") {
 		return facades.Schema().Create("user_reviews", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("content_item_id")
-			table.String("game_id")
-			table.String("game_level_id")
+			table.Text("user_id")
+			table.Text("content_item_id")
+			table.Text("game_id")
+			table.Text("game_level_id")
 			table.TimestampTz("last_review_at").Nullable()
 			table.TimestampTz("next_review_at").Nullable()
 			table.Integer("review_count").Default(0)

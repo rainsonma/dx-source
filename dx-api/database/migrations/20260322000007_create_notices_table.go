@@ -15,11 +15,11 @@ func (r *M20260322000007CreateNoticesTable) Signature() string {
 func (r *M20260322000007CreateNoticesTable) Up() error {
 	if !facades.Schema().HasTable("notices") {
 		return facades.Schema().Create("notices", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("title").Default("")
+			table.Text("title").Default("")
 			table.Text("content").Nullable()
-			table.String("icon").Nullable()
+			table.Text("icon").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
 		})

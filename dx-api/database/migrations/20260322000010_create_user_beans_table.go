@@ -15,14 +15,14 @@ func (r *M20260322000010CreateUserBeansTable) Signature() string {
 func (r *M20260322000010CreateUserBeansTable) Up() error {
 	if !facades.Schema().HasTable("user_beans") {
 		return facades.Schema().Create("user_beans", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
+			table.Text("user_id")
 			table.Integer("beans").Default(0)
 			table.Integer("origin").Default(0)
 			table.Integer("result").Default(0)
-			table.String("slug").Default("")
-			table.String("reason").Default("")
+			table.Text("slug").Default("")
+			table.Text("reason").Default("")
 			table.Text("data").Nullable()
 			table.TimestampsTz()
 			table.Index("user_id")

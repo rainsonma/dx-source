@@ -15,10 +15,10 @@ func (r *M20260322000011CreateUserFavoritesTable) Signature() string {
 func (r *M20260322000011CreateUserFavoritesTable) Up() error {
 	if !facades.Schema().HasTable("user_favorites") {
 		return facades.Schema().Create("user_favorites", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("game_id")
+			table.Text("user_id")
+			table.Text("game_id")
 			table.TimestampTz("created_at").Nullable()
 			table.Unique("user_id", "game_id")
 			table.Index("user_id")

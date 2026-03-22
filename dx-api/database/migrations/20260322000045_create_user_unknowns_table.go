@@ -15,12 +15,12 @@ func (r *M20260322000045CreateUserUnknownsTable) Signature() string {
 func (r *M20260322000045CreateUserUnknownsTable) Up() error {
 	if !facades.Schema().HasTable("user_unknowns") {
 		return facades.Schema().Create("user_unknowns", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("content_item_id")
-			table.String("game_id")
-			table.String("game_level_id")
+			table.Text("user_id")
+			table.Text("content_item_id")
+			table.Text("game_id")
+			table.Text("game_level_id")
 			table.TimestampsTz()
 			table.Unique("user_id", "content_item_id")
 			table.Index("user_id")

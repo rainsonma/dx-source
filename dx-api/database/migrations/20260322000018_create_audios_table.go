@@ -15,16 +15,16 @@ func (r *M20260322000018CreateAudiosTable) Signature() string {
 func (r *M20260322000018CreateAudiosTable) Up() error {
 	if !facades.Schema().HasTable("audios") {
 		return facades.Schema().Create("audios", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("adm_user_id").Nullable()
-			table.String("user_id").Nullable()
-			table.String("url").Default("")
-			table.String("name").Default("")
-			table.String("mime").Default("")
+			table.Text("adm_user_id").Nullable()
+			table.Text("user_id").Nullable()
+			table.Text("url").Default("")
+			table.Text("name").Default("")
+			table.Text("mime").Default("")
 			table.Integer("size").Default(0)
 			table.Integer("duration").Default(0)
-			table.String("role").Default("")
+			table.Text("role").Default("")
 			table.TimestampsTz()
 			table.Index("adm_user_id")
 			table.Index("user_id")

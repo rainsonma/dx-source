@@ -15,10 +15,10 @@ func (r *M20260322000020CreateAdmUserPermitsTable) Signature() string {
 func (r *M20260322000020CreateAdmUserPermitsTable) Up() error {
 	if !facades.Schema().HasTable("adm_user_permits") {
 		return facades.Schema().Create("adm_user_permits", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("adm_user_id")
-			table.String("adm_permit_id")
+			table.Text("adm_user_id")
+			table.Text("adm_permit_id")
 			table.TimestampsTz()
 			table.Unique("adm_user_id", "adm_permit_id")
 		})

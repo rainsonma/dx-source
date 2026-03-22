@@ -15,12 +15,12 @@ func (r *M20260322000002CreateAdmUsersTable) Signature() string {
 func (r *M20260322000002CreateAdmUsersTable) Up() error {
 	if !facades.Schema().HasTable("adm_users") {
 		return facades.Schema().Create("adm_users", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("username").Default("")
-			table.String("nickname").Nullable()
-			table.String("password").Default("")
-			table.String("avatar_id").Nullable()
+			table.Text("username").Default("")
+			table.Text("nickname").Nullable()
+			table.Text("password").Default("")
+			table.Text("avatar_id").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
 			table.Unique("username")

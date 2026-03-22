@@ -15,12 +15,12 @@ func (r *M20260322000024CreateAdmOperatesTable) Signature() string {
 func (r *M20260322000024CreateAdmOperatesTable) Up() error {
 	if !facades.Schema().HasTable("adm_operates") {
 		return facades.Schema().Create("adm_operates", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("adm_user_id")
-			table.String("path").Default("")
-			table.String("method").Default("")
-			table.String("ip").Default("")
+			table.Text("adm_user_id")
+			table.Text("path").Default("")
+			table.Text("method").Default("")
+			table.Text("ip").Default("")
 			table.Text("input").Default("")
 			table.TimestampsTz()
 			table.Index("adm_user_id")

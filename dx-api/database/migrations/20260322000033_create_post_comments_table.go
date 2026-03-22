@@ -15,10 +15,10 @@ func (r *M20260322000033CreatePostCommentsTable) Signature() string {
 func (r *M20260322000033CreatePostCommentsTable) Up() error {
 	if !facades.Schema().HasTable("post_comments") {
 		return facades.Schema().Create("post_comments", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("post_id")
-			table.String("user_id")
+			table.Text("post_id")
+			table.Text("user_id")
 			table.Text("content").Default("")
 			table.Integer("like_count").Default(0)
 			table.TimestampsTz()

@@ -15,14 +15,14 @@ func (r *M20260322000008CreateSettingsTable) Signature() string {
 func (r *M20260322000008CreateSettingsTable) Up() error {
 	if !facades.Schema().HasTable("settings") {
 		return facades.Schema().Create("settings", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("group").Default("")
-			table.String("label").Nullable()
-			table.String("key").Default("")
+			table.Text("group").Default("")
+			table.Text("label").Nullable()
+			table.Text("key").Default("")
 			table.Text("value").Default("")
-			table.String("value_type").Default("")
-			table.String("value_from").Default("")
+			table.Text("value_type").Default("")
+			table.Text("value_from").Default("")
 			table.Json("value_options").Default("{}")
 			table.Text("description").Default("")
 			table.Double("order").Default(0)

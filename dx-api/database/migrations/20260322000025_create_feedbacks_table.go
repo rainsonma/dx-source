@@ -15,10 +15,10 @@ func (r *M20260322000025CreateFeedbacksTable) Signature() string {
 func (r *M20260322000025CreateFeedbacksTable) Up() error {
 	if !facades.Schema().HasTable("feedbacks") {
 		return facades.Schema().Create("feedbacks", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("user_id")
-			table.String("type").Default("")
+			table.Text("user_id")
+			table.Text("type").Default("")
 			table.Text("description").Default("")
 			table.Integer("count").Default(0)
 			table.TimestampsTz()

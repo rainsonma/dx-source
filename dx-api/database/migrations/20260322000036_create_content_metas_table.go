@@ -15,11 +15,11 @@ func (r *M20260322000036CreateContentMetasTable) Signature() string {
 func (r *M20260322000036CreateContentMetasTable) Up() error {
 	if !facades.Schema().HasTable("content_metas") {
 		return facades.Schema().Create("content_metas", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("game_level_id")
-			table.String("source_from").Default("")
-			table.String("source_type").Default("")
+			table.Text("game_level_id")
+			table.Text("source_from").Default("")
+			table.Text("source_type").Default("")
 			table.Text("source_data").Default("")
 			table.Text("translation").Nullable()
 			table.Boolean("is_break_done").Default(false)

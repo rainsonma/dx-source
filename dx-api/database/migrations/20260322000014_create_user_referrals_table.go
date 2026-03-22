@@ -15,11 +15,11 @@ func (r *M20260322000014CreateUserReferralsTable) Signature() string {
 func (r *M20260322000014CreateUserReferralsTable) Up() error {
 	if !facades.Schema().HasTable("user_referrals") {
 		return facades.Schema().Create("user_referrals", func(table schema.Blueprint) {
-			table.String("id")
+			table.Text("id")
 			table.Primary("id")
-			table.String("referrer_id")
-			table.String("invitee_id").Nullable()
-			table.String("status").Default("")
+			table.Text("referrer_id")
+			table.Text("invitee_id").Nullable()
+			table.Text("status").Default("")
 			table.Double("reward_amount").Default(0)
 			table.TimestampTz("rewarded_at").Nullable()
 			table.TimestampsTz()
