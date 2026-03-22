@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  bin = "./tmp/main.exe"
+  entrypoint = "./tmp/main.exe"
   cmd = "go build -o ./tmp/main.exe ."
   delay = 1000
   exclude_dir = ["storage", "database", "tmp"]
