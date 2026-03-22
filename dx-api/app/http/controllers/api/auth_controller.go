@@ -210,7 +210,7 @@ func setRefreshCookie(ctx contractshttp.Context, token string) {
 	ctx.Response().Cookie(contractshttp.Cookie{
 		Name:     "dx_refresh",
 		Value:    token,
-		Path:     "/api/auth",
+		Path:     "/",
 		MaxAge:   ttl * 60,
 		Secure:   secure,
 		HttpOnly: true,
@@ -223,7 +223,7 @@ func clearRefreshCookie(ctx contractshttp.Context) {
 	ctx.Response().Cookie(contractshttp.Cookie{
 		Name:     "dx_refresh",
 		Value:    "",
-		Path:     "/api/auth",
+		Path:     "/",
 		MaxAge:   -1,
 		Secure:   facades.Config().GetBool("refresh_token.cookie_secure", true),
 		HttpOnly: true,

@@ -24,7 +24,7 @@ func setAdmRefreshCookie(ctx contractshttp.Context, token string) {
 	ctx.Response().Cookie(contractshttp.Cookie{
 		Name:     "dx_adm_refresh",
 		Value:    token,
-		Path:     "/adm/auth",
+		Path:     "/",
 		MaxAge:   ttl * 60,
 		Secure:   secure,
 		HttpOnly: true,
@@ -36,7 +36,7 @@ func clearAdmRefreshCookie(ctx contractshttp.Context) {
 	ctx.Response().Cookie(contractshttp.Cookie{
 		Name:     "dx_adm_refresh",
 		Value:    "",
-		Path:     "/adm/auth",
+		Path:     "/",
 		MaxAge:   -1,
 		Secure:   facades.Config().GetBool("refresh_token.cookie_secure", true),
 		HttpOnly: true,
