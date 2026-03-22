@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
+	ErrSessionReplaced     = errors.New("session replaced by another device")
 	ErrRateLimited         = errors.New("rate limited")
 	ErrInvalidCode       = errors.New("invalid or expired verification code")
 	ErrDuplicateEmail    = errors.New("email already registered")

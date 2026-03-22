@@ -21,6 +21,7 @@ const (
 	CodeTokenExpired = 40101
 	CodeInvalidToken        = 40102
 	CodeInvalidRefreshToken = 40103
+	CodeSessionReplaced     = 40104
 
 	// 403xx: Permission
 	CodeForbidden = 40300
