@@ -3,7 +3,8 @@ package adm
 import "errors"
 
 var (
-	ErrAdminNotFound   = errors.New("admin user not found")
+	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
+	ErrAdminNotFound       = errors.New("admin user not found")
 	ErrAdminInactive   = errors.New("admin account is inactive")
 	ErrInvalidPassword = errors.New("invalid password")
 	ErrNoticeNotFound  = errors.New("notice not found")

@@ -3,7 +3,8 @@ package api
 import "errors"
 
 var (
-	ErrRateLimited       = errors.New("rate limited")
+	ErrInvalidRefreshToken = errors.New("invalid or expired refresh token")
+	ErrRateLimited         = errors.New("rate limited")
 	ErrInvalidCode       = errors.New("invalid or expired verification code")
 	ErrDuplicateEmail    = errors.New("email already registered")
 	ErrDuplicateUsername = errors.New("username already taken")

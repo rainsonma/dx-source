@@ -19,7 +19,8 @@ const (
 	// 401xx: Auth
 	CodeUnauthorized = 40100
 	CodeTokenExpired = 40101
-	CodeInvalidToken = 40102
+	CodeInvalidToken        = 40102
+	CodeInvalidRefreshToken = 40103
 
 	// 403xx: Permission
 	CodeForbidden = 40300
