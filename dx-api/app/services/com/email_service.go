@@ -26,13 +26,12 @@ func SendVerificationEmail(to string, code string) error {
 </body>
 </html>`, code)
 
-	err := facades.Mail().
+	if err := facades.Mail().
 		To([]string{to}).
 		Content(mail.Content{Html: html}).
 		Subject("Douxue 验证码").
-		Send()
-	if err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
+		Queue(); err != nil {
+		return fmt.Errorf("failed to queue verification email: %w", err)
 	}
 
 	return nil
