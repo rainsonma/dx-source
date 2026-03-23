@@ -2,7 +2,6 @@ package api
 
 import "github.com/goravel/framework/contracts/http"
 
-// SubmitReportRequest validates game report submission data.
 type SubmitReportRequest struct {
 	GameID        string  `form:"game_id" json:"game_id"`
 	GameLevelID   string  `form:"game_level_id" json:"game_level_id"`
@@ -14,9 +13,29 @@ type SubmitReportRequest struct {
 func (r *SubmitReportRequest) Authorize(ctx http.Context) error { return nil }
 func (r *SubmitReportRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_id":         "required",
-		"game_level_id":   "required",
-		"content_item_id": "required",
-		"reason":          "required",
+		"game_id":         "required|uuid",
+		"game_level_id":   "required|uuid",
+		"content_item_id": "required|uuid",
+		"reason":          "required|max_len:200",
+		"note":            "max_len:500",
+	}
+}
+func (r *SubmitReportRequest) Filters(ctx http.Context) map[string]string {
+	return map[string]string{
+		"reason": "trim",
+		"note":   "trim",
+	}
+}
+func (r *SubmitReportRequest) Messages(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_id.required":         "请指定游戏",
+		"game_id.uuid":             "无效的游戏ID",
+		"game_level_id.required":   "请指定关卡",
+		"game_level_id.uuid":       "无效的关卡ID",
+		"content_item_id.required": "请指定内容项",
+		"content_item_id.uuid":     "无效的内容项ID",
+		"reason.required":          "请选择举报原因",
+		"reason.max_len":           "举报原因不能超过200个字符",
+		"note.max_len":             "备注不能超过500个字符",
 	}
 }
