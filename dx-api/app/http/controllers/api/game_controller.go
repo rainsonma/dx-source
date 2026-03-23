@@ -3,14 +3,13 @@ package api
 import (
 	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
+	requests "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"
 )
 
@@ -18,18 +17,17 @@ type GameController struct{}
 
 // List returns published games with cursor pagination and optional filters.
 func (c *GameController) List(ctx contractshttp.Context) contractshttp.Response {
-	cursor, limit := helpers.ParseCursorParams(ctx, helpers.DefaultCursorLimit)
-
-	categoryIDsRaw := ctx.Request().Query("categoryIds", "")
-	var categoryIDs []string
-	if categoryIDsRaw != "" {
-		categoryIDs = strings.Split(categoryIDsRaw, ",")
+	var req requests.ListGamesRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	pressID := ctx.Request().Query("pressId", "")
-	mode := ctx.Request().Query("mode", "")
+	limit := req.Limit
+	if limit == 0 {
+		limit = helpers.DefaultCursorLimit
+	}
 
-	games, nextCursor, hasMore, err := services.ListPublishedGames(cursor, limit, categoryIDs, pressID, mode)
+	games, nextCursor, hasMore, err := services.ListPublishedGames(req.Cursor, limit, req.CategoryIDs, req.PressID, req.Mode)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list games")
 	}
@@ -39,20 +37,17 @@ func (c *GameController) List(ctx contractshttp.Context) contractshttp.Response 
 
 // Search returns published games matching a name query.
 func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Response {
-	query := ctx.Request().Query("q", "")
-	if strings.TrimSpace(query) == "" {
-		return helpers.Success(ctx, []any{})
+	var req requests.SearchGamesRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	limitStr := ctx.Request().Query("limit", "")
-	limit := 10
-	if limitStr != "" {
-		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 && parsed <= 50 {
-			limit = parsed
-		}
+	limit := req.Limit
+	if limit == 0 {
+		limit = 10
 	}
 
-	games, err := services.SearchGames(strings.TrimSpace(query), limit)
+	games, err := services.SearchGames(req.Query, limit)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to search games")
 	}

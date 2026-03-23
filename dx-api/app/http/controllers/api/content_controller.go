@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
+	requests "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"
-
-	"github.com/goravel/framework/facades"
 )
 
 type ContentController struct{}
@@ -26,9 +26,12 @@ func (c *ContentController) LevelContent(ctx contractshttp.Context) contractshtt
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "level id is required")
 	}
 
-	degree := ctx.Request().Query("degree", consts.GameDegreePractice)
+	var req requests.LevelContentRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 
-	items, err := services.GetLevelContent(levelID, degree)
+	items, err := services.GetLevelContent(levelID, req.Degree)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get level content")
 	}
