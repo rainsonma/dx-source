@@ -46,18 +46,8 @@ func (c *UserController) UpdateProfile(ctx contractshttp.Context) contractshttp.
 	}
 
 	var req requests.UpdateProfileRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Nickname != "" && len(req.Nickname) > 20 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "nickname must be at most 20 characters")
-	}
-	if req.City != "" && len(req.City) > 50 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "city must be at most 50 characters")
-	}
-	if req.Introduction != "" && len(req.Introduction) > 200 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "introduction must be at most 200 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.UpdateProfile(userID, req.Nickname, req.City, req.Introduction); err != nil {
@@ -78,12 +68,8 @@ func (c *UserController) UpdateAvatar(ctx contractshttp.Context) contractshttp.R
 	}
 
 	var req requests.UpdateAvatarRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.ImageID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "image_id is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.UpdateAvatar(userID, req.ImageID); err != nil {
@@ -108,12 +94,8 @@ func (c *UserController) SendEmailCode(ctx contractshttp.Context) contractshttp.
 	}
 
 	var req requests.SendEmailCodeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Email == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidEmail, "email is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.SendChangeEmailCode(userID, req.Email); err != nil {
@@ -138,15 +120,8 @@ func (c *UserController) ChangeEmail(ctx contractshttp.Context) contractshttp.Re
 	}
 
 	var req requests.ChangeEmailRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Email == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidEmail, "email is required")
-	}
-	if req.Code == "" || len(req.Code) != 6 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "a 6-digit verification code is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.ChangeEmail(userID, req.Email, req.Code); err != nil {
@@ -171,15 +146,8 @@ func (c *UserController) ChangePassword(ctx contractshttp.Context) contractshttp
 	}
 
 	var req requests.ChangePasswordRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.CurrentPassword == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "current_password is required")
-	}
-	if req.NewPassword == "" || len(req.NewPassword) < 8 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "new_password must be at least 8 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.ChangePassword(userID, req.CurrentPassword, req.NewPassword); err != nil {
