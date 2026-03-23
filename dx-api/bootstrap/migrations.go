@@ -55,5 +55,6 @@ func Migrations() []schema.Migration {
 		&migrations.M20260322000044CreateUserMastersTable{},
 		&migrations.M20260322000045CreateUserUnknownsTable{},
 		&migrations.M20260322000046CreateUserReviewsTable{},
+		&migrations.M20260323000001AddUniqueActiveSessionIndex{},
 	}
 }

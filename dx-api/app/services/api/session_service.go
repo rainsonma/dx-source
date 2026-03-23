@@ -194,11 +194,6 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 		return nil, fmt.Errorf("failed to count levels: %w", err)
 	}
 
-	// Upsert game stats
-	if err := UpsertGameStats(userID, gameID); err != nil {
-		return nil, fmt.Errorf("failed to upsert game stats: %w", err)
-	}
-
 	now := time.Now()
 	session := models.GameSessionTotal{
 		ID:               newID(),
@@ -213,7 +208,29 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 	}
 
 	if err := query.Create(&session); err != nil {
-		return nil, fmt.Errorf("failed to create session: %w", err)
+		// Unique constraint violation: concurrent request already created the session.
+		existing, findErr := findActiveSession(query, userID, gameID, degree, pattern)
+		if findErr != nil || existing == nil {
+			return nil, fmt.Errorf("failed to create session: %w", err)
+		}
+		return &StartSessionResult{
+			ID:                   existing.ID,
+			Degree:               existing.Degree,
+			Pattern:              existing.Pattern,
+			Score:                existing.Score,
+			Exp:                  existing.Exp,
+			MaxCombo:             existing.MaxCombo,
+			CorrectCount:         existing.CorrectCount,
+			WrongCount:           existing.WrongCount,
+			StartedAt:            existing.StartedAt,
+			LevelID:              existing.CurrentLevelID,
+			CurrentContentItemID: existing.CurrentContentItemID,
+		}, nil
+	}
+
+	// Upsert game stats only after successful session creation
+	if err := UpsertGameStats(userID, gameID); err != nil {
+		return nil, fmt.Errorf("failed to upsert game stats: %w", err)
 	}
 
 	return &StartSessionResult{
