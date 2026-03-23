@@ -112,18 +112,23 @@ func UpdateProfile(userID, nickname, city, introduction string) error {
 				return ErrNicknameTaken
 			}
 		}
-		user.Nickname = &nickname
 	}
 
+	updates := map[string]any{}
+	if nickname != "" {
+		updates["nickname"] = nickname
+	}
 	if city != "" {
-		user.City = &city
+		updates["city"] = city
 	}
-
 	if introduction != "" {
-		user.Introduction = &introduction
+		updates["introduction"] = introduction
+	}
+	if len(updates) == 0 {
+		return nil
 	}
 
-	if err := facades.Orm().Query().Save(&user); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update(updates); err != nil {
 		return fmt.Errorf("failed to update profile: %w", err)
 	}
 
@@ -144,16 +149,7 @@ func UpdateAvatar(userID, imageID string) error {
 		return ErrImageNotOwned
 	}
 
-	var user models.User
-	if err := facades.Orm().Query().Where("id", userID).First(&user); err != nil {
-		return fmt.Errorf("failed to find user: %w", err)
-	}
-	if user.ID == "" {
-		return ErrUserNotFound
-	}
-
-	user.AvatarID = &imageID
-	if err := facades.Orm().Query().Save(&user); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("avatar_id", imageID); err != nil {
 		return fmt.Errorf("failed to update avatar: %w", err)
 	}
 
@@ -206,16 +202,7 @@ func ChangeEmail(userID, email, code string) error {
 		return ErrDuplicateEmail
 	}
 
-	var user models.User
-	if err := facades.Orm().Query().Where("id", userID).First(&user); err != nil {
-		return fmt.Errorf("failed to find user: %w", err)
-	}
-	if user.ID == "" {
-		return ErrUserNotFound
-	}
-
-	user.Email = &email
-	if err := facades.Orm().Query().Save(&user); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("email", email); err != nil {
 		return fmt.Errorf("failed to update email: %w", err)
 	}
 
@@ -243,8 +230,7 @@ func ChangePassword(userID, currentPassword, newPassword string) error {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user.Password = hashedPassword
-	if err := facades.Orm().Query().Save(&user); err != nil {
+	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("password", hashedPassword); err != nil {
 		return fmt.Errorf("failed to update password: %w", err)
 	}
 
