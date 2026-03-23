@@ -156,7 +156,7 @@ Client                          dx-api                        Redis
 If refresh token is also expired → redirect to /auth/signin
 ```
 
-**Client-side cookie cleanup:** When `refreshAccessToken()` fails for any reason (expired token, network error, wrong server, fresh database), the client clears the `dx_refresh` cookie via JavaScript (`document.cookie = "dx_refresh=; path=/; max-age=0"`). This prevents a stale cookie from causing repeated failed refresh attempts on every page load. The Go API also clears the cookie via `Set-Cookie` header on 401, but the client-side cleanup acts as a safety net when the server response doesn't reach the browser.
+**Server-side cookie cleanup:** The `dx_refresh` cookie is HttpOnly, so JavaScript cannot clear it. On any refresh failure (invalid token, user not found, session replaced, or unexpected error), the Go API clears the cookie via `Set-Cookie` header with `Max-Age=-1`. This ensures stale cookies are always removed regardless of the failure reason.
 
 ---
 
@@ -331,7 +331,7 @@ The cookie must be sent with **all** requests so the Next.js proxy middleware (`
 │  lib/token.ts            Set by dx-api response     │
 │  getAccessToken()        Cannot be read by JS       │
 │  setAccessToken()        Auto-sent via credentials  │
-│  clearAccessToken()      Cleared by server or JS    │
+│  clearAccessToken()      Cleared by server only      │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -521,7 +521,7 @@ All responses follow the envelope format: `{ "code": N, "message": "...", "data"
 | Guard isolation | Refresh tokens tagged with guard (`"user"` or `"admin"`), validated on use |
 | Audit logging | Login records with IP + User-Agent stored in `user_logins` / `adm_logins` |
 | Short-lived access | JWT expires in 10 minutes, limiting exposure window |
-| Stale cookie cleanup | Client clears `dx_refresh` cookie on any refresh failure; prevents retry loops |
+| Stale cookie cleanup | Server clears `dx_refresh` cookie on all refresh error paths (HttpOnly — JS cannot clear it) |
 | Bulk revocation | `DeleteUserRefreshTokens()` can invalidate all sessions for a user |
 
 ---
