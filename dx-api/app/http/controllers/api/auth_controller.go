@@ -25,12 +25,8 @@ func NewAuthController() *AuthController {
 // SendSignUpCode sends a verification code for signup.
 func (c *AuthController) SendSignUpCode(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SendCodeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Email == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidEmail, "email is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.SendSignUpCode(req.Email); err != nil {
@@ -46,15 +42,8 @@ func (c *AuthController) SendSignUpCode(ctx contractshttp.Context) contractshttp
 // SignUp registers a new user.
 func (c *AuthController) SignUp(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SignUpRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Email == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidEmail, "email is required")
-	}
-	if req.Code == "" || len(req.Code) != 6 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "a 6-digit verification code is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, user, err := services.SignUp(ctx, req.Email, req.Code, req.Username, req.Password)
@@ -82,12 +71,8 @@ func (c *AuthController) SignUp(ctx contractshttp.Context) contractshttp.Respons
 // SendSignInCode sends a verification code for signin.
 func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SendCodeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Email == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidEmail, "email is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.SendSignInCode(req.Email); err != nil {
@@ -103,8 +88,8 @@ func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp
 // SignIn authenticates a user via email+code or account+password.
 func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SignInRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	var (
@@ -113,14 +98,10 @@ func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Respons
 		err    error
 	)
 
-	if req.Email != "" && req.Code != "" {
-		// Email + code flow
+	if req.Email != "" {
 		result, user, err = services.SignInByEmail(ctx, req.Email, req.Code)
-	} else if req.Account != "" && req.Password != "" {
-		// Account + password flow
-		result, user, err = services.SignInByAccount(ctx, req.Account, req.Password)
 	} else {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "provide email+code or account+password")
+		result, user, err = services.SignInByAccount(ctx, req.Account, req.Password)
 	}
 
 	if err != nil {
