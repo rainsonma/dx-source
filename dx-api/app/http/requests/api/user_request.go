@@ -17,6 +17,13 @@ func (r *UpdateProfileRequest) Rules(ctx http.Context) map[string]string {
 		"introduction": "max_len:200",
 	}
 }
+func (r *UpdateProfileRequest) Filters(ctx http.Context) map[string]string {
+	return map[string]string{
+		"nickname":     "trim",
+		"city":         "trim",
+		"introduction": "trim",
+	}
+}
 func (r *UpdateProfileRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
 		"nickname.max_len":     "昵称不能超过20个字符",
@@ -33,7 +40,13 @@ type UpdateAvatarRequest struct {
 func (r *UpdateAvatarRequest) Authorize(ctx http.Context) error { return nil }
 func (r *UpdateAvatarRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"image_id": "required",
+		"image_id": "required|uuid",
+	}
+}
+func (r *UpdateAvatarRequest) Messages(ctx http.Context) map[string]string {
+	return map[string]string{
+		"image_id.required": "请选择头像",
+		"image_id.uuid":     "无效的图片ID",
 	}
 }
 
@@ -45,7 +58,18 @@ type SendEmailCodeRequest struct {
 func (r *SendEmailCodeRequest) Authorize(ctx http.Context) error { return nil }
 func (r *SendEmailCodeRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"email": "required",
+		"email": "required|email",
+	}
+}
+func (r *SendEmailCodeRequest) Filters(ctx http.Context) map[string]string {
+	return map[string]string{
+		"email": "trim",
+	}
+}
+func (r *SendEmailCodeRequest) Messages(ctx http.Context) map[string]string {
+	return map[string]string{
+		"email.required": "请输入邮箱地址",
+		"email.email":    "邮箱地址格式不正确",
 	}
 }
 
@@ -58,14 +82,21 @@ type ChangeEmailRequest struct {
 func (r *ChangeEmailRequest) Authorize(ctx http.Context) error { return nil }
 func (r *ChangeEmailRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"email": "required",
+		"email": "required|email",
 		"code":  "required|len:6",
+	}
+}
+func (r *ChangeEmailRequest) Filters(ctx http.Context) map[string]string {
+	return map[string]string{
+		"email": "trim",
 	}
 }
 func (r *ChangeEmailRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"code.required": "请输入6位验证码",
-		"code.len":      "请输入6位验证码",
+		"email.required": "请输入邮箱地址",
+		"email.email":    "邮箱地址格式不正确",
+		"code.required":  "请输入6位验证码",
+		"code.len":       "请输入6位验证码",
 	}
 }
 
@@ -79,11 +110,14 @@ func (r *ChangePasswordRequest) Authorize(ctx http.Context) error { return nil }
 func (r *ChangePasswordRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
 		"current_password": "required",
-		"new_password":     "required|min_len:8",
+		"new_password":     "required|min_len:8|strong_password",
 	}
 }
 func (r *ChangePasswordRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"new_password.min_len": "新密码至少需要8个字符",
+		"current_password.required":    "请输入当前密码",
+		"new_password.required":        "请输入新密码",
+		"new_password.min_len":         "新密码至少需要8个字符",
+		"new_password.strong_password": "新密码必须包含大写字母、小写字母、数字和特殊字符",
 	}
 }
