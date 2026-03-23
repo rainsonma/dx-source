@@ -28,11 +28,8 @@ func (c *UserUnknownController) MarkUnknown(ctx contractshttp.Context) contracts
 	}
 
 	var req requests.MarkUnknownRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-	if req.ContentItemID == "" || req.GameID == "" || req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "content_item_id, game_id, and game_level_id are required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.MarkAsUnknown(userID, req.ContentItemID, req.GameID, req.GameLevelID); err != nil {
@@ -99,8 +96,8 @@ func (c *UserUnknownController) BulkDeleteUnknown(ctx contractshttp.Context) con
 	}
 
 	var req requests.BulkDeleteRequest
-	if err := ctx.Request().Bind(&req); err != nil || len(req.IDs) == 0 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "ids are required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.BulkDeleteUnknown(userID, req.IDs); err != nil {

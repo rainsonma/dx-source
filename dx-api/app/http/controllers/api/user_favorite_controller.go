@@ -27,11 +27,8 @@ func (c *UserFavoriteController) ToggleFavorite(ctx contractshttp.Context) contr
 	}
 
 	var req requests.ToggleFavoriteRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-	if req.GameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.ToggleFavorite(userID, req.GameID)

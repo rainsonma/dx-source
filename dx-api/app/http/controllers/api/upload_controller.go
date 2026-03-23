@@ -9,6 +9,7 @@ import (
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
+	requests "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"
 
 	"github.com/goravel/framework/facades"
@@ -27,20 +28,19 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
+	var req requests.UploadImageRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+
 	// Get the uploaded file via Goravel's request
 	file, err := ctx.Request().File("file")
 	if err != nil || file == nil {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "file is required")
 	}
 
-	// Get role from form data
-	role := ctx.Request().Input("role")
-	if role == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "role is required")
-	}
-
 	// Validate file
-	if err := services.ValidateUploadFile(file, role); err != nil {
+	if err := services.ValidateUploadFile(file, req.Role); err != nil {
 		switch {
 		case errors.Is(err, services.ErrFileTooLarge):
 			return helpers.Error(ctx, http.StatusRequestEntityTooLarge, consts.CodeFileTooLarge, "file size exceeds 2MB limit")
@@ -54,7 +54,7 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 	}
 
 	// Upload
-	result, err := services.UploadImage(userID, file, role)
+	result, err := services.UploadImage(userID, file, req.Role)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to upload image")
 	}

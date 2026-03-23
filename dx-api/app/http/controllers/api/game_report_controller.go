@@ -27,12 +27,8 @@ func (c *GameReportController) SubmitReport(ctx contractshttp.Context) contracts
 	}
 
 	var req requests.SubmitReportRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameID == "" || req.GameLevelID == "" || req.ContentItemID == "" || req.Reason == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id, game_level_id, content_item_id, and reason are required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.SubmitReport(userID, req.GameID, req.GameLevelID, req.ContentItemID, req.Reason, req.Note)
