@@ -43,11 +43,11 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 	if err := services.ValidateUploadFile(file, req.Role); err != nil {
 		switch {
 		case errors.Is(err, services.ErrFileTooLarge):
-			return helpers.Error(ctx, http.StatusRequestEntityTooLarge, consts.CodeFileTooLarge, "file size exceeds 2MB limit")
+			return helpers.Error(ctx, http.StatusRequestEntityTooLarge, consts.CodeFileTooLarge, "文件大小不能超过2MB")
 		case errors.Is(err, services.ErrInvalidFileType):
-			return helpers.Error(ctx, http.StatusUnsupportedMediaType, consts.CodeInvalidFileType, "only JPEG and PNG files are allowed")
+			return helpers.Error(ctx, http.StatusUnsupportedMediaType, consts.CodeInvalidFileType, "仅支持JPEG和PNG格式")
 		case errors.Is(err, services.ErrInvalidImageRole):
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidImageRole, "invalid image role")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidImageRole, "无效的图片类型")
 		default:
 			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, err.Error())
 		}
@@ -72,14 +72,14 @@ func (c *UploadController) ServeImage(ctx contractshttp.Context) contractshttp.R
 	absPath, contentType, err := services.GetImagePath(imageID)
 	if err != nil {
 		if errors.Is(err, services.ErrImageNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "image not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get image")
 	}
 
 	// Check file exists on disk
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
-		return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "image file not found")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片文件不存在")
 	}
 
 	// Serve the file with caching headers (images are immutable — ULID names never change)

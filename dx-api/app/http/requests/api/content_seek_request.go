@@ -21,8 +21,8 @@ func (r *SubmitContentSeekRequest) Rules(ctx http.Context) map[string]string {
 
 func (r *SubmitContentSeekRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"course_name.max_len": "course name must be at most 30 characters",
-		"description.max_len": "description must be at most 30 characters",
-		"disk_url.max_len":    "disk url must be at most 30 characters",
+		"course_name.max_len": "课程名称不能超过30个字符",
+		"description.max_len": "描述不能超过30个字符",
+		"disk_url.max_len":    "网盘链接不能超过30个字符",
 	}
 }

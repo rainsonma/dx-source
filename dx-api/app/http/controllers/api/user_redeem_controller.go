@@ -52,9 +52,9 @@ func (c *UserRedeemController) RedeemCode(ctx contractshttp.Context) contractsht
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrRedeemNotFound):
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeNotFound, "redeem code not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeNotFound, "兑换码不存在")
 		case errors.Is(err, services.ErrRedeemAlreadyUsed):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeValidationError, "redeem code already used")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeValidationError, "兑换码已使用")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to redeem code")
 		}

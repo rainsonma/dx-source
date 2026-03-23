@@ -30,7 +30,7 @@ func (c *UserController) GetProfile(ctx contractshttp.Context) contractshttp.Res
 	profile, err := services.GetProfile(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get profile")
 	}
@@ -52,7 +52,7 @@ func (c *UserController) UpdateProfile(ctx contractshttp.Context) contractshttp.
 
 	if err := services.UpdateProfile(userID, req.Nickname, req.City, req.Introduction); err != nil {
 		if errors.Is(err, services.ErrNicknameTaken) {
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeNicknameTaken, "nickname already taken")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeNicknameTaken, "昵称已被使用")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to update profile")
 	}
@@ -75,9 +75,9 @@ func (c *UserController) UpdateAvatar(ctx contractshttp.Context) contractshttp.R
 	if err := services.UpdateAvatar(userID, req.ImageID); err != nil {
 		switch {
 		case errors.Is(err, services.ErrImageNotFound):
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "image not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
 		case errors.Is(err, services.ErrImageNotOwned):
-			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "image does not belong to you")
+			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "该图片不属于您")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to update avatar")
 		}
@@ -101,9 +101,9 @@ func (c *UserController) SendEmailCode(ctx contractshttp.Context) contractshttp.
 	if err := services.SendChangeEmailCode(userID, req.Email); err != nil {
 		switch {
 		case errors.Is(err, services.ErrRateLimited):
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "please wait before requesting another code")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
 		case errors.Is(err, services.ErrDuplicateEmail):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "email already registered")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "该邮箱已注册")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
 		}
@@ -127,9 +127,9 @@ func (c *UserController) ChangeEmail(ctx contractshttp.Context) contractshttp.Re
 	if err := services.ChangeEmail(userID, req.Email, req.Code); err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidCode):
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "invalid or expired verification code")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "验证码无效或已过期")
 		case errors.Is(err, services.ErrDuplicateEmail):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "email already registered")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "该邮箱已注册")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to change email")
 		}
@@ -152,7 +152,7 @@ func (c *UserController) ChangePassword(ctx contractshttp.Context) contractshttp
 
 	if err := services.ChangePassword(userID, req.CurrentPassword, req.NewPassword); err != nil {
 		if errors.Is(err, services.ErrInvalidPassword) {
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidPassword, "current password is incorrect")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidPassword, "当前密码错误")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to change password")
 	}

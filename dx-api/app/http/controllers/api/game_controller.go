@@ -85,7 +85,7 @@ func (c *GameController) Detail(ctx contractshttp.Context) contractshttp.Respons
 	detail, err := services.GetGameDetail(gameID)
 	if err != nil {
 		if errors.Is(err, services.ErrGameNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "game not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "游戏不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get game detail")
 	}

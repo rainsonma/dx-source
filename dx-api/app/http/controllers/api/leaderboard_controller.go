@@ -25,10 +25,10 @@ func (c *LeaderboardController) GetLeaderboard(ctx contractshttp.Context) contra
 	period := ctx.Request().Query("period", "all")
 
 	if lbType != "exp" && lbType != "playtime" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "type must be exp or playtime")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "类型必须是经验值或游玩时长")
 	}
 	if period != "all" && period != "day" && period != "week" && period != "month" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "period must be all, day, week, or month")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "时间范围必须是全部、日、周或月")
 	}
 
 	result, err := services.GetLeaderboard(lbType, period, userID)

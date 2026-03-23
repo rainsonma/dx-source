@@ -17,6 +17,6 @@ func (r *RedeemCodeRequest) Rules(ctx http.Context) map[string]string {
 
 func (r *RedeemCodeRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"code.len": "invalid redeem code format",
+		"code.len": "兑换码格式不正确",
 	}
 }

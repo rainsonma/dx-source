@@ -72,10 +72,10 @@ func (c *AiCustomController) FormatMetadata(ctx contractshttp.Context) contracts
 	}
 
 	if req.Content == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "content is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请输入内容")
 	}
 	if req.FormatType != "sentence" && req.FormatType != "vocab" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "formatType must be sentence or vocab")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "格式类型必须是句子或词汇")
 	}
 
 	result, err := services.FormatMetadata(userID, req.Content, req.FormatType)

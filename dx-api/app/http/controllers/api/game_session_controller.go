@@ -35,7 +35,7 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID)
 	if err != nil {
 		if errors.Is(err, services.ErrNoGameLevels) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "game has no levels")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start session")
 	}
@@ -124,16 +124,16 @@ func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contrac
 
 	var req requests.CompleteLevelRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	result, err := services.CompleteLevel(userID, sessionID, gameLevelID, req.Score, req.MaxCombo, req.TotalItems)
 	if err != nil {
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
 		}
 		if errors.Is(err, services.ErrSessionNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "session not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "会话不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to complete level")
 	}
@@ -220,7 +220,7 @@ func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contract
 			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 		}
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record answer")
 	}
@@ -253,7 +253,7 @@ func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractsh
 			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 		}
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "session level not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record skip")
 	}
@@ -277,7 +277,7 @@ func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contract
 
 	if err := services.SyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
 		if errors.Is(err, services.ErrInvalidPlayTime) {
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "play_time must be between 0 and 86400")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游玩时长必须在0到86400秒之间")
 		}
 		return mapSessionError(ctx, err)
 	}
@@ -395,7 +395,7 @@ func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) con
 
 	var req requests.UpdateContentItemRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	if err := services.UpdateCurrentContentItem(userID, sessionID, req.ContentItemID); err != nil {
@@ -408,7 +408,7 @@ func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) con
 // mapSessionError maps common session errors to HTTP responses.
 func mapSessionError(ctx contractshttp.Context, err error) contractshttp.Response {
 	if errors.Is(err, services.ErrSessionNotFound) {
-		return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "session not found")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "会话不存在")
 	}
 	if errors.Is(err, services.ErrForbidden) {
 		return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "forbidden")

@@ -28,7 +28,7 @@ func (c *UserReferralController) GetInviteData(ctx contractshttp.Context) contra
 	data, err := services.GetInviteData(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get invite data")
 	}

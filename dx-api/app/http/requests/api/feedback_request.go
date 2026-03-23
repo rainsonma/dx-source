@@ -19,6 +19,6 @@ func (r *SubmitFeedbackRequest) Rules(ctx http.Context) map[string]string {
 
 func (r *SubmitFeedbackRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"description.max_len": "description must be at most 200 characters",
+		"description.max_len": "描述不能超过200个字符",
 	}
 }

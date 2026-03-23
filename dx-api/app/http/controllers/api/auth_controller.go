@@ -31,7 +31,7 @@ func (c *AuthController) SendSignUpCode(ctx contractshttp.Context) contractshttp
 
 	if err := services.SendSignUpCode(req.Email); err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "please wait before requesting another code")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
 	}
@@ -50,11 +50,11 @@ func (c *AuthController) SignUp(ctx contractshttp.Context) contractshttp.Respons
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidCode):
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "invalid or expired verification code")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "验证码无效或已过期")
 		case errors.Is(err, services.ErrDuplicateEmail):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "email already registered")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "该邮箱已注册")
 		case errors.Is(err, services.ErrDuplicateUsername):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateUsername, "username already taken")
+			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateUsername, "用户名已被使用")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to sign up")
 		}
@@ -77,7 +77,7 @@ func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp
 
 	if err := services.SendSignInCode(req.Email); err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "please wait before requesting another code")
+			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
 	}
@@ -89,7 +89,7 @@ func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp
 func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SignInRequest
 	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
 	}
 
 	var (
@@ -103,17 +103,17 @@ func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Respons
 	} else if req.Account != "" {
 		result, user, err = services.SignInByAccount(ctx, req.Account, req.Password)
 	} else {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "email or account is required")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请输入邮箱或账号")
 	}
 
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidCode):
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "invalid or expired verification code")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidCode, "验证码无效或已过期")
 		case errors.Is(err, services.ErrUserNotFound):
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 		case errors.Is(err, services.ErrInvalidPassword):
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidPassword, "invalid password")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeInvalidPassword, "密码错误")
 		default:
 			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to sign in")
 		}
@@ -137,7 +137,7 @@ func (c *AuthController) Refresh(ctx contractshttp.Context) contractshttp.Respon
 	ip := ctx.Request().Ip()
 	allowed, err := helpers.CheckRateLimit(fmt.Sprintf("rate:refresh:%s", ip), 10, 60)
 	if err != nil || !allowed {
-		return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "too many refresh requests")
+		return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "刷新请求过于频繁")
 	}
 
 	oldToken := getRefreshToken(ctx)
@@ -179,7 +179,7 @@ func (c *AuthController) Me(ctx contractshttp.Context) contractshttp.Response {
 
 	user, err := services.GetCurrentUser(userID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 	}
 
 	return helpers.Success(ctx, user)

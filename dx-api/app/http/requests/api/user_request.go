@@ -19,9 +19,9 @@ func (r *UpdateProfileRequest) Rules(ctx http.Context) map[string]string {
 }
 func (r *UpdateProfileRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"nickname.max_len":     "nickname must be at most 20 characters",
-		"city.max_len":         "city must be at most 50 characters",
-		"introduction.max_len": "introduction must be at most 200 characters",
+		"nickname.max_len":     "昵称不能超过20个字符",
+		"city.max_len":         "城市不能超过50个字符",
+		"introduction.max_len": "简介不能超过200个字符",
 	}
 }
 
@@ -64,8 +64,8 @@ func (r *ChangeEmailRequest) Rules(ctx http.Context) map[string]string {
 }
 func (r *ChangeEmailRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"code.required": "a 6-digit verification code is required",
-		"code.len":      "a 6-digit verification code is required",
+		"code.required": "请输入6位验证码",
+		"code.len":      "请输入6位验证码",
 	}
 }
 
@@ -84,6 +84,6 @@ func (r *ChangePasswordRequest) Rules(ctx http.Context) map[string]string {
 }
 func (r *ChangePasswordRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"new_password.min_len": "new password must be at least 8 characters",
+		"new_password.min_len": "新密码至少需要8个字符",
 	}
 }

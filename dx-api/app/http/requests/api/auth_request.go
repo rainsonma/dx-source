@@ -31,8 +31,8 @@ func (r *SignUpRequest) Rules(ctx http.Context) map[string]string {
 }
 func (r *SignUpRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"code.required": "a 6-digit verification code is required",
-		"code.len":      "a 6-digit verification code is required",
+		"code.required": "请输入6位验证码",
+		"code.len":      "请输入6位验证码",
 	}
 }
 

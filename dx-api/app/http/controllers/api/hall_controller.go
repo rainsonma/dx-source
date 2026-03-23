@@ -30,7 +30,7 @@ func (c *HallController) GetDashboard(ctx contractshttp.Context) contractshttp.R
 	data, err := services.GetDashboard(userID)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get dashboard")
 	}
@@ -50,7 +50,7 @@ func (c *HallController) GetHeatmap(ctx contractshttp.Context) contractshttp.Res
 	if yearStr != "" {
 		parsed, err := strconv.Atoi(yearStr)
 		if err != nil || parsed < 2000 || parsed > 2100 {
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid year")
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的年份")
 		}
 		year = parsed
 	}
@@ -61,7 +61,7 @@ func (c *HallController) GetHeatmap(ctx contractshttp.Context) contractshttp.Res
 	data, err := services.GetHeatmap(userID, year)
 	if err != nil {
 		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "user not found")
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get heatmap")
 	}
