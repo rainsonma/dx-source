@@ -88,8 +88,8 @@ func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp
 // SignIn authenticates a user via email+code or account+password.
 func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SignInRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
+	if err := ctx.Request().Bind(&req); err != nil {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
 
 	var (
@@ -100,8 +100,10 @@ func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Respons
 
 	if req.Email != "" {
 		result, user, err = services.SignInByEmail(ctx, req.Email, req.Code)
-	} else {
+	} else if req.Account != "" {
 		result, user, err = services.SignInByAccount(ctx, req.Account, req.Password)
+	} else {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "email or account is required")
 	}
 
 	if err != nil {
