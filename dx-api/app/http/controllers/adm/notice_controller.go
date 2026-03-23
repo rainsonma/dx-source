@@ -21,12 +21,8 @@ func NewNoticeController() *NoticeController {
 // CreateNotice creates a new system notice.
 func (c *NoticeController) CreateNotice(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.CreateNoticeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Title == "" || len(req.Title) > 200 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "title must be 1-200 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	notice, err := services.CreateNotice(req.Title, req.Content, req.Icon)
@@ -45,12 +41,8 @@ func (c *NoticeController) UpdateNotice(ctx contractshttp.Context) contractshttp
 	}
 
 	var req requests.UpdateNoticeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Title == "" || len(req.Title) > 200 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "title must be 1-200 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	notice, err := services.UpdateNotice(id, req.Title, req.Content, req.Icon)

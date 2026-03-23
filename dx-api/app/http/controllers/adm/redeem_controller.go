@@ -20,23 +20,8 @@ func NewRedeemController() *RedeemController {
 // GenerateCodes generates a batch of redeem codes.
 func (c *RedeemController) GenerateCodes(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.GenerateCodesRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	validGrades := map[string]bool{
-		consts.UserGradeMonth:    true,
-		consts.UserGradeSeason:   true,
-		consts.UserGradeYear:     true,
-		consts.UserGradeLifetime: true,
-	}
-	if !validGrades[req.Grade] {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid grade")
-	}
-
-	validCounts := map[int]bool{10: true, 50: true, 100: true, 500: true}
-	if !validCounts[req.Count] {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "count must be 10, 50, 100, or 500")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	count, err := services.GenerateCodes(req.Grade, req.Count)
