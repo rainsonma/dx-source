@@ -44,12 +44,8 @@ func (c *UserRedeemController) RedeemCode(ctx contractshttp.Context) contractsht
 	}
 
 	var req requests.RedeemCodeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Code == "" || len(req.Code) != 19 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid redeem code format")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.RedeemCode(userID, req.Code)

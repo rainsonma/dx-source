@@ -41,18 +41,8 @@ func (c *ContentSeekController) SubmitContentSeek(ctx contractshttp.Context) con
 	}
 
 	var req requests.SubmitContentSeekRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.CourseName == "" || len(req.CourseName) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "course_name must be 1-30 characters")
-	}
-	if req.Description == "" || len(req.Description) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "description must be 1-30 characters")
-	}
-	if req.DiskUrl == "" || len(req.DiskUrl) > 30 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "disk_url must be 1-30 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.SubmitContentSeek(userID, req.CourseName, req.Description, req.DiskUrl)

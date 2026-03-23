@@ -26,15 +26,8 @@ func (c *FeedbackController) SubmitFeedback(ctx contractshttp.Context) contracts
 	}
 
 	var req requests.SubmitFeedbackRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Type == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "type is required")
-	}
-	if req.Description == "" || len(req.Description) > 200 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "description must be 1-200 characters")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.SubmitFeedback(userID, req.Type, req.Description)
