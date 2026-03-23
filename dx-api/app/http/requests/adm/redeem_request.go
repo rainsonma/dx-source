@@ -2,7 +2,6 @@ package adm
 
 import "github.com/goravel/framework/contracts/http"
 
-// GenerateCodesRequest validates redeem code generation data.
 // Count is string because Goravel validation operates on raw parsed data
 // where JSON numbers become float64 — the in rule cannot compare float64.
 type GenerateCodesRequest struct {
@@ -19,7 +18,9 @@ func (r *GenerateCodesRequest) Rules(ctx http.Context) map[string]string {
 }
 func (r *GenerateCodesRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"grade.in": "invalid grade",
-		"count.in": "count must be 10, 50, 100, or 500",
+		"grade.required": "Grade is required",
+		"grade.in":       "Grade must be one of: month, season, year, lifetime",
+		"count.required": "Count is required",
+		"count.in":       "Count must be one of: 10, 50, 100, 500",
 	}
 }
