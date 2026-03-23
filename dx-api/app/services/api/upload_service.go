@@ -72,7 +72,7 @@ func UploadImage(userID string, file filesystem.File, role string) (*UploadImage
 	ext := allowedMIMETypes[mimeType]
 	size, _ := file.Size()
 
-	// Generate date-based path with ULID filename
+	// Generate date-based path with UUID v7 filename
 	now := time.Now()
 	id := uuid.Must(uuid.NewV7()).String()
 	filename := fmt.Sprintf("%s.%s", id, ext)
