@@ -35,6 +35,7 @@ func Boot() contractsfoundation.Application {
 				facades.Schedule().Command("app:update-play-streaks").DailyAt("02:00").SkipIfStillRunning().Name("update-play-streaks"),
 			}
 		}).
+		WithRules(Rules).
 		WithProviders(Providers).
 		WithConfig(config.Boot).
 		Create()
