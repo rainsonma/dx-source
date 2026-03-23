@@ -1,0 +1,28 @@
+package helpers
+
+import (
+	"strings"
+
+	"dx-api/app/consts"
+)
+
+var enumValues = map[string][]string{
+	"degree":        {consts.GameDegreePractice, consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
+	"pattern":       {consts.GamePatternListen, consts.GamePatternSpeak, consts.GamePatternRead, consts.GamePatternWrite},
+	"mode":          {consts.GameModeLSRW, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination, consts.GameModeListeningChallenge},
+	"feedback_type": {consts.FeedbackTypeFeature, consts.FeedbackTypeContent, consts.FeedbackTypeUX, consts.FeedbackTypeBug, consts.FeedbackTypeOther},
+	"content_type":  {consts.ContentTypeWord, consts.ContentTypeBlock, consts.ContentTypePhrase, consts.ContentTypeSentence},
+	"image_role":    {consts.ImageRoleAdmUserAvatar, consts.ImageRoleUserAvatar, consts.ImageRoleCategoryCover, consts.ImageRoleTemplateCover, consts.ImageRoleGameCover, consts.ImageRolePressCover, consts.ImageRoleGameGroupCover, consts.ImageRolePostImage},
+	"source_from":   {consts.SourceFromManual, consts.SourceFromAI},
+	"source_type":   {consts.SourceTypeSentence, consts.SourceTypeVocab},
+}
+
+// InEnum returns an "in:val1,val2,..." rule string for the named enum.
+// Panics on unknown enum names to catch typos at startup.
+func InEnum(name string) string {
+	vals, ok := enumValues[name]
+	if !ok {
+		panic("unknown enum: " + name)
+	}
+	return "in:" + strings.Join(vals, ",")
+}
