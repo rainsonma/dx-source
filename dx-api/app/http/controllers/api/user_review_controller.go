@@ -27,7 +27,7 @@ func (c *UserReviewController) MarkReview(ctx contractshttp.Context) contractsht
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	var req requests.MarkTrackingRequest
+	var req requests.MarkReviewRequest
 	if err := ctx.Request().Bind(&req); err != nil {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}

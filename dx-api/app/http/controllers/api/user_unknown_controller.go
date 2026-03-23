@@ -27,7 +27,7 @@ func (c *UserUnknownController) MarkUnknown(ctx contractshttp.Context) contracts
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	var req requests.MarkTrackingRequest
+	var req requests.MarkUnknownRequest
 	if err := ctx.Request().Bind(&req); err != nil {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
 	}
