@@ -2,6 +2,7 @@ package adm
 
 import (
 	"net/http"
+	"strconv"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 
@@ -24,7 +25,8 @@ func (c *RedeemController) GenerateCodes(ctx contractshttp.Context) contractshtt
 		return resp
 	}
 
-	count, err := services.GenerateCodes(req.Grade, req.Count)
+	cnt, _ := strconv.Atoi(req.Count) // safe: validated by in rule
+	count, err := services.GenerateCodes(req.Grade, cnt)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to generate codes")
 	}

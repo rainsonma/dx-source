@@ -3,9 +3,11 @@ package adm
 import "github.com/goravel/framework/contracts/http"
 
 // GenerateCodesRequest validates redeem code generation data.
+// Count is string because Goravel validation operates on raw parsed data
+// where JSON numbers become float64 — the in rule cannot compare float64.
 type GenerateCodesRequest struct {
 	Grade string `form:"grade" json:"grade"`
-	Count int    `form:"count" json:"count"`
+	Count string `form:"count" json:"count"`
 }
 
 func (r *GenerateCodesRequest) Authorize(ctx http.Context) error { return nil }

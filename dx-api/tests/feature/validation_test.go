@@ -205,24 +205,28 @@ func (s *ValidationTestSuite) TestGenerateCodesRequest_GradeIn() {
 	s.True(fails, "empty grade should fail")
 }
 
-func (s *ValidationTestSuite) TestGenerateCodesRequest_CountInWithInt() {
+func (s *ValidationTestSuite) TestGenerateCodesRequest_CountIn() {
 	rules := map[string]string{
 		"count": "required|in:10,50,100,500",
 	}
 
-	// With int values (ValidateRequest binds to struct int field, so this is the real case)
-	fails, _ := s.validate(map[string]any{"count": 10}, rules)
-	s.False(fails, "count=10 (int) should pass")
+	// Count is string in the request struct because Goravel validation
+	// operates on raw parsed data. JSON numbers become float64 in
+	// map[string]any, and gookit/validate's in rule cannot compare
+	// float64 values. Using string type sidesteps the issue.
 
-	fails, _ = s.validate(map[string]any{"count": 500}, rules)
-	s.False(fails, "count=500 (int) should pass")
+	// String values (what the validator sees after JSON → map parse with string field)
+	fails, _ := s.validate(map[string]any{"count": "10"}, rules)
+	s.False(fails, "count=\"10\" should pass")
 
-	fails, _ = s.validate(map[string]any{"count": 25}, rules)
-	s.True(fails, "count=25 (int) should fail (not in list)")
+	fails, _ = s.validate(map[string]any{"count": "500"}, rules)
+	s.False(fails, "count=\"500\" should pass")
 
-	// Note: JSON decodes numbers as float64 when using Make() with raw data,
-	// but ValidateRequest() binds to struct first (int type preserved).
-	// The float64 case is only relevant for Make(), not actual controller flow.
+	fails, _ = s.validate(map[string]any{"count": "25"}, rules)
+	s.True(fails, "count=\"25\" should fail (not in list)")
+
+	fails, _ = s.validate(map[string]any{"count": ""}, rules)
+	s.True(fails, "empty count should fail")
 }
 
 // ── Slice validation (BulkDelete, SaveMetadataBatch) ──────────
