@@ -1,11 +1,32 @@
 package api
 
+import (
+	"github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/contracts/validation"
+
+	"dx-api/app/consts"
+)
+
 // StartSessionRequest validates session start data.
 type StartSessionRequest struct {
 	GameID  string  `form:"game_id" json:"game_id"`
 	Degree  string  `form:"degree" json:"degree"`
 	Pattern *string `form:"pattern" json:"pattern"`
 	LevelID *string `form:"level_id" json:"level_id"`
+}
+
+func (r *StartSessionRequest) Authorize(ctx http.Context) error { return nil }
+func (r *StartSessionRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_id": "required",
+	}
+}
+func (r *StartSessionRequest) PrepareForValidation(ctx http.Context, data validation.Data) error {
+	degree, _ := data.Get("degree")
+	if degree == nil || degree == "" {
+		data.Set("degree", consts.GameDegreeIntermediate)
+	}
+	return nil
 }
 
 // CheckActiveSessionRequest validates active session check data.
@@ -28,6 +49,20 @@ type StartLevelRequest struct {
 	GameLevelID string  `form:"game_level_id" json:"game_level_id"`
 	Degree      string  `form:"degree" json:"degree"`
 	Pattern     *string `form:"pattern" json:"pattern"`
+}
+
+func (r *StartLevelRequest) Authorize(ctx http.Context) error { return nil }
+func (r *StartLevelRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_level_id": "required",
+	}
+}
+func (r *StartLevelRequest) PrepareForValidation(ctx http.Context, data validation.Data) error {
+	degree, _ := data.Get("degree")
+	if degree == nil || degree == "" {
+		data.Set("degree", consts.GameDegreeIntermediate)
+	}
+	return nil
 }
 
 // CompleteLevelRequest validates level completion data.
@@ -65,6 +100,15 @@ type RecordAnswerRequest struct {
 	Duration           int     `form:"duration" json:"duration"`
 }
 
+func (r *RecordAnswerRequest) Authorize(ctx http.Context) error { return nil }
+func (r *RecordAnswerRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_session_level_id": "required",
+		"game_level_id":         "required",
+		"content_item_id":       "required",
+	}
+}
+
 // RecordSkipRequest validates skip recording data.
 type RecordSkipRequest struct {
 	GameLevelID       string  `form:"game_level_id" json:"game_level_id"`
@@ -72,10 +116,24 @@ type RecordSkipRequest struct {
 	NextContentItemID *string `form:"next_content_item_id" json:"next_content_item_id"`
 }
 
+func (r *RecordSkipRequest) Authorize(ctx http.Context) error { return nil }
+func (r *RecordSkipRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_level_id": "required",
+	}
+}
+
 // SyncPlayTimeRequest validates playtime sync data.
 type SyncPlayTimeRequest struct {
 	GameLevelID string `form:"game_level_id" json:"game_level_id"`
 	PlayTime    int    `form:"play_time" json:"play_time"`
+}
+
+func (r *SyncPlayTimeRequest) Authorize(ctx http.Context) error { return nil }
+func (r *SyncPlayTimeRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_level_id": "required",
+	}
 }
 
 // UpdateContentItemRequest validates content item update data.
@@ -93,6 +151,13 @@ type EndSessionRequest struct {
 	WrongCount         int    `form:"wrong_count" json:"wrong_count"`
 	SkipCount          int    `form:"skip_count" json:"skip_count"`
 	AllLevelsCompleted bool   `form:"all_levels_completed" json:"all_levels_completed"`
+}
+
+func (r *EndSessionRequest) Authorize(ctx http.Context) error { return nil }
+func (r *EndSessionRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"game_id": "required",
+	}
 }
 
 // RestoreSessionRequest validates restore data query params.

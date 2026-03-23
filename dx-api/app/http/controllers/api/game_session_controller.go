@@ -28,15 +28,8 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 	}
 
 	var req requests.StartSessionRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
-	}
-	if req.Degree == "" {
-		req.Degree = "intermediate"
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID)
@@ -60,12 +53,8 @@ func (c *GameSessionController) End(ctx contractshttp.Context) contractshttp.Res
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.EndSessionRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	err = services.EndSession(userID, sessionID, services.EndSessionInput{
@@ -111,15 +100,8 @@ func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractsh
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.StartLevelRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
-	}
-	if req.Degree == "" {
-		req.Degree = "intermediate"
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.StartLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
@@ -213,12 +195,8 @@ func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contract
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.RecordAnswerRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameSessionLevelID == "" || req.ContentItemID == "" || req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_session_level_id, game_level_id, and content_item_id are required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	err = services.RecordAnswer(userID, services.RecordAnswerInput{
@@ -260,12 +238,8 @@ func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractsh
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.RecordSkipRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	err = services.RecordSkip(userID, services.RecordSkipInput{
@@ -297,12 +271,8 @@ func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contract
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.SyncPlayTimeRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.GameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.SyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
