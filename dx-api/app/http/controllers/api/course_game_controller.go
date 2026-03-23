@@ -61,21 +61,8 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 	}
 
 	var req requests.CreateGameRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
-	}
-	if req.GameMode == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameMode is required")
-	}
-	if req.GameCategoryID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gameCategoryId is required")
-	}
-	if req.GamePressID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "gamePressId is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	var categoryID *string
@@ -108,12 +95,8 @@ func (c *CourseGameController) Update(ctx contractshttp.Context) contractshttp.R
 	}
 
 	var req requests.UpdateGameRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	var categoryID *string
@@ -223,12 +206,8 @@ func (c *CourseGameController) CreateLevel(ctx contractshttp.Context) contractsh
 	}
 
 	var req requests.CreateLevelRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.Name == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "name is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	levelID, err := services.CreateLevel(userID, gameID, req.Name, req.Description)
@@ -273,12 +252,8 @@ func (c *CourseGameController) SaveMetadata(ctx contractshttp.Context) contracts
 	}
 
 	var req requests.SaveMetadataBatchRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if len(req.Entries) == 0 {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "entries are required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	// Convert request entries to service entries
@@ -312,12 +287,8 @@ func (c *CourseGameController) ReorderMetadata(ctx contractshttp.Context) contra
 	}
 
 	var req requests.ReorderMetadataRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.MetaID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "metaId is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.ReorderMetadata(userID, gameID, req.MetaID, req.NewOrder); err != nil {
@@ -362,12 +333,8 @@ func (c *CourseGameController) InsertContentItem(ctx contractshttp.Context) cont
 	}
 
 	var req requests.InsertContentItemRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.ContentMetaID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "contentMetaId is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	item, err := services.InsertContentItem(userID, gameID, levelID, req.ContentMetaID, req.Content, req.ContentType, req.Translation, req.ReferenceItemID, req.Direction)
@@ -416,12 +383,8 @@ func (c *CourseGameController) ReorderContentItems(ctx contractshttp.Context) co
 	}
 
 	var req requests.ReorderContentItemRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	if req.ItemID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "itemId is required")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.ReorderContentItems(userID, gameID, req.ItemID, req.NewOrder); err != nil {
