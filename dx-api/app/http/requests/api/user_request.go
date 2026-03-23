@@ -50,29 +50,6 @@ func (r *UpdateAvatarRequest) Messages(ctx http.Context) map[string]string {
 	}
 }
 
-// SendEmailCodeRequest validates email code sending data.
-type SendEmailCodeRequest struct {
-	Email string `form:"email" json:"email"`
-}
-
-func (r *SendEmailCodeRequest) Authorize(ctx http.Context) error { return nil }
-func (r *SendEmailCodeRequest) Rules(ctx http.Context) map[string]string {
-	return map[string]string{
-		"email": "required|email",
-	}
-}
-func (r *SendEmailCodeRequest) Filters(ctx http.Context) map[string]string {
-	return map[string]string{
-		"email": "trim",
-	}
-}
-func (r *SendEmailCodeRequest) Messages(ctx http.Context) map[string]string {
-	return map[string]string{
-		"email.required": "请输入邮箱地址",
-		"email.email":    "邮箱地址格式不正确",
-	}
-}
-
 // ChangeEmailRequest validates email change data.
 type ChangeEmailRequest struct {
 	Email string `form:"email" json:"email"`

@@ -10,34 +10,9 @@ import (
 
 	"dx-api/app/helpers"
 	"dx-api/app/models"
-	"dx-api/app/services/com"
 
 	"github.com/goravel/framework/facades"
 )
-
-// SendSignUpCode generates and sends a signup verification code to the given email.
-func SendSignUpCode(email string) error {
-	key := fmt.Sprintf("signup_code:%s", email)
-
-	allowed, err := helpers.CheckRateLimit(fmt.Sprintf("rate:signup_code:%s", email), 1, 60)
-	if err != nil {
-		return fmt.Errorf("failed to check rate limit: %w", err)
-	}
-	if !allowed {
-		return ErrRateLimited
-	}
-
-	code := helpers.GenerateCode(6)
-	if err := helpers.RedisSet(key, code, 300*time.Second); err != nil {
-		return fmt.Errorf("failed to store verification code: %w", err)
-	}
-
-	if err := com.SendVerificationEmail(email, code); err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
-	}
-
-	return nil
-}
 
 // AuthResult holds the tokens returned after login/signup/refresh.
 type AuthResult struct {
@@ -133,30 +108,6 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 		return nil, nil, err
 	}
 	return result, &user, nil
-}
-
-// SendSignInCode generates and sends a signin verification code to the given email.
-func SendSignInCode(email string) error {
-	key := fmt.Sprintf("signin_code:%s", email)
-
-	allowed, err := helpers.CheckRateLimit(fmt.Sprintf("rate:signin_code:%s", email), 1, 60)
-	if err != nil {
-		return fmt.Errorf("failed to check rate limit: %w", err)
-	}
-	if !allowed {
-		return ErrRateLimited
-	}
-
-	code := helpers.GenerateCode(6)
-	if err := helpers.RedisSet(key, code, 300*time.Second); err != nil {
-		return fmt.Errorf("failed to store verification code: %w", err)
-	}
-
-	if err := com.SendVerificationEmail(email, code); err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
-	}
-
-	return nil
 }
 
 // SignInByEmail authenticates a user via email and verification code.

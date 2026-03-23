@@ -2,12 +2,10 @@ package api
 
 import (
 	"fmt"
-	"time"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
-	"dx-api/app/services/com"
 
 	"github.com/goravel/framework/facades"
 )
@@ -151,37 +149,6 @@ func UpdateAvatar(userID, imageID string) error {
 
 	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("avatar_id", imageID); err != nil {
 		return fmt.Errorf("failed to update avatar: %w", err)
-	}
-
-	return nil
-}
-
-// SendChangeEmailCode sends a verification code for changing email.
-func SendChangeEmailCode(userID, email string) error {
-	key := fmt.Sprintf("change_email_code:%s", userID)
-
-	allowed, err := helpers.CheckRateLimit(fmt.Sprintf("rate:change_email_code:%s", userID), 1, 60)
-	if err != nil {
-		return fmt.Errorf("failed to check rate limit: %w", err)
-	}
-	if !allowed {
-		return ErrRateLimited
-	}
-
-	// Check email not already taken by another user
-	var existing models.User
-	err = facades.Orm().Query().Where("email", email).Where("id != ?", userID).First(&existing)
-	if err == nil && existing.ID != "" {
-		return ErrDuplicateEmail
-	}
-
-	code := helpers.GenerateCode(6)
-	if err := helpers.RedisSet(key, code, 300*time.Second); err != nil {
-		return fmt.Errorf("failed to store verification code: %w", err)
-	}
-
-	if err := com.SendVerificationEmail(email, code); err != nil {
-		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 
 	return nil

@@ -22,23 +22,6 @@ func NewAuthController() *AuthController {
 	return &AuthController{}
 }
 
-// SendSignUpCode sends a verification code for signup.
-func (c *AuthController) SendSignUpCode(ctx contractshttp.Context) contractshttp.Response {
-	var req requests.SendCodeRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	if err := services.SendSignUpCode(req.Email); err != nil {
-		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
-		}
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
-	}
-
-	return helpers.Success(ctx, nil)
-}
-
 // SignUp registers a new user.
 func (c *AuthController) SignUp(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.SignUpRequest
@@ -66,23 +49,6 @@ func (c *AuthController) SignUp(ctx contractshttp.Context) contractshttp.Respons
 		"refresh_token": result.RefreshToken,
 		"user":          user,
 	})
-}
-
-// SendSignInCode sends a verification code for signin.
-func (c *AuthController) SendSignInCode(ctx contractshttp.Context) contractshttp.Response {
-	var req requests.SendCodeRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	if err := services.SendSignInCode(req.Email); err != nil {
-		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
-		}
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
-	}
-
-	return helpers.Success(ctx, nil)
 }
 
 // SignIn authenticates a user via email+code or account+password.

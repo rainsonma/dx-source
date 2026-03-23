@@ -86,32 +86,6 @@ func (c *UserController) UpdateAvatar(ctx contractshttp.Context) contractshttp.R
 	return helpers.Success(ctx, nil)
 }
 
-// SendEmailCode sends a verification code for changing email.
-func (c *UserController) SendEmailCode(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	var req requests.SendEmailCodeRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	if err := services.SendChangeEmailCode(userID, req.Email); err != nil {
-		switch {
-		case errors.Is(err, services.ErrRateLimited):
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "请稍后再请求验证码")
-		case errors.Is(err, services.ErrDuplicateEmail):
-			return helpers.Error(ctx, http.StatusConflict, consts.CodeDuplicateEmail, "该邮箱已注册")
-		default:
-			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeEmailSendError, "failed to send verification code")
-		}
-	}
-
-	return helpers.Success(ctx, nil)
-}
-
 // ChangeEmail changes the authenticated user's email with a verification code.
 func (c *UserController) ChangeEmail(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()

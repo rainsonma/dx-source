@@ -16,6 +16,7 @@ func Api() {
 	r := facades.Route()
 
 	authController := apicontrollers.NewAuthController()
+	emailController := apicontrollers.NewEmailController()
 
 	uploadController := apicontrollers.NewUploadController()
 
@@ -58,12 +59,16 @@ func Api() {
 
 		// Auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
-			auth.Post("/signup/send-code", authController.SendSignUpCode)
 			auth.Post("/signup", authController.SignUp)
-			auth.Post("/signin/send-code", authController.SendSignInCode)
 			auth.Post("/signin", authController.SignIn)
 			auth.Post("/refresh", authController.Refresh)
 			auth.Post("/logout", authController.Logout)
+		})
+
+		// Email verification code routes (public)
+		router.Prefix("/email").Group(func(email route.Router) {
+			email.Post("/send-signup-code", emailController.SendSignUpCode)
+			email.Post("/send-signin-code", emailController.SendSignInCode)
 		})
 
 		// Auth routes (protected, JWT required)
@@ -91,10 +96,12 @@ func Api() {
 				user.Get("/profile", userController.GetProfile)
 				user.Put("/profile", userController.UpdateProfile)
 				user.Put("/avatar", userController.UpdateAvatar)
-				user.Post("/email/send-code", userController.SendEmailCode)
 				user.Put("/email", userController.ChangeEmail)
 				user.Put("/password", userController.ChangePassword)
 			})
+
+			// Email verification code route (protected)
+			protected.Post("/email/send-change-code", emailController.SendChangeCode)
 
 			// Game session routes
 			sessionController := apicontrollers.NewGameSessionController()
