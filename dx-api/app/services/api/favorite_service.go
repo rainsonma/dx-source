@@ -162,3 +162,14 @@ func ListFavorites(userID string) ([]FavoriteGameData, error) {
 
 	return results, nil
 }
+
+// IsGameFavorited checks whether the user has favorited a specific game.
+func IsGameFavorited(userID, gameID string) (bool, error) {
+	var fav models.UserFavorite
+	if err := facades.Orm().Query().
+		Where("user_id", userID).Where("game_id", gameID).
+		First(&fav); err != nil || fav.ID == "" {
+		return false, nil
+	}
+	return true, nil
+}

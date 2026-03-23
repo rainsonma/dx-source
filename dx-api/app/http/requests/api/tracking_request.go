@@ -11,8 +11,3 @@ type MarkTrackingRequest struct {
 type BulkDeleteRequest struct {
 	IDs []string `form:"ids" json:"ids"`
 }
-
-// ToggleFavoriteRequest validates favorite toggle data.
-type ToggleFavoriteRequest struct {
-	GameID string `form:"game_id" json:"game_id"`
-}

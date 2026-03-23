@@ -4,8 +4,6 @@ import (
 	"github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/support"
 
-	"dx-api/app/http/controllers"
-
 	"github.com/goravel/framework/facades"
 )
 
@@ -17,7 +15,4 @@ func Web() {
 	})
 
 	facades.Route().Static("public", "./public")
-
-	userController := controllers.NewUserController()
-	facades.Route().Get("/users", userController.Index)
 }

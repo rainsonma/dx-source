@@ -34,16 +34,17 @@ func Adm() {
 			middleware.AdmRbac(),
 			middleware.AdmOperateLog(),
 		).Group(func(protected route.Router) {
-			communityController := adm.NewCommunityController()
+			noticeController := adm.NewNoticeController()
+			redeemController := adm.NewRedeemController()
 
 			// Notices
-			protected.Post("/notices", communityController.CreateNotice)
-			protected.Put("/notices/{id}", communityController.UpdateNotice)
-			protected.Delete("/notices/{id}", communityController.DeleteNotice)
+			protected.Post("/notices", noticeController.CreateNotice)
+			protected.Put("/notices/{id}", noticeController.UpdateNotice)
+			protected.Delete("/notices/{id}", noticeController.DeleteNotice)
 
 			// Redeems
-			protected.Post("/redeems/generate", communityController.GenerateCodes)
-			protected.Get("/redeems", communityController.GetAllRedeems)
+			protected.Post("/redeems/generate", redeemController.GenerateCodes)
+			protected.Get("/redeems", redeemController.GetAllRedeems)
 		})
 	})
 }

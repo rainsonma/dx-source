@@ -7,12 +7,11 @@ import (
 	"strings"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	services "dx-api/app/services/api"
-
-	"github.com/goravel/framework/facades"
 )
 
 type GameController struct{}
@@ -92,84 +91,4 @@ func (c *GameController) Detail(ctx contractshttp.Context) contractshttp.Respons
 	}
 
 	return helpers.Success(ctx, detail)
-}
-
-// ActiveSession checks for any active session for a game (per user).
-func (c *GameController) ActiveSession(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	gameID := ctx.Request().Route("id")
-	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
-	}
-
-	result, err := services.CheckAnyActiveSession(userID, gameID)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active session")
-	}
-
-	return helpers.Success(ctx, result)
-}
-
-// Stats returns the user's stats for a specific game.
-func (c *GameController) Stats(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	gameID := ctx.Request().Route("id")
-	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
-	}
-
-	stats, err := services.GetGameStats(userID, gameID)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get game stats")
-	}
-
-	return helpers.Success(ctx, stats)
-}
-
-// Favorited checks whether the user has favorited a specific game.
-func (c *GameController) Favorited(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	gameID := ctx.Request().Route("id")
-	if gameID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
-	}
-
-	favorited, err := services.IsGameFavorited(userID, gameID)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check favorite status")
-	}
-
-	return helpers.Success(ctx, map[string]bool{"favorited": favorited})
-}
-
-// Categories returns all enabled categories in hierarchical order.
-func (c *GameController) Categories(ctx contractshttp.Context) contractshttp.Response {
-	categories, err := services.ListCategories()
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list categories")
-	}
-
-	return helpers.Success(ctx, categories)
-}
-
-// Presses returns all game publishers.
-func (c *GameController) Presses(ctx contractshttp.Context) contractshttp.Response {
-	presses, err := services.ListPresses()
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list presses")
-	}
-
-	return helpers.Success(ctx, presses)
 }

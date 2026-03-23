@@ -12,14 +12,14 @@ import (
 	services "dx-api/app/services/adm"
 )
 
-type CommunityController struct{}
+type NoticeController struct{}
 
-func NewCommunityController() *CommunityController {
-	return &CommunityController{}
+func NewNoticeController() *NoticeController {
+	return &NoticeController{}
 }
 
 // CreateNotice creates a new system notice.
-func (c *CommunityController) CreateNotice(ctx contractshttp.Context) contractshttp.Response {
+func (c *NoticeController) CreateNotice(ctx contractshttp.Context) contractshttp.Response {
 	var req requests.CreateNoticeRequest
 	if err := ctx.Request().Bind(&req); err != nil {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
@@ -38,7 +38,7 @@ func (c *CommunityController) CreateNotice(ctx contractshttp.Context) contractsh
 }
 
 // UpdateNotice updates an existing notice.
-func (c *CommunityController) UpdateNotice(ctx contractshttp.Context) contractshttp.Response {
+func (c *NoticeController) UpdateNotice(ctx contractshttp.Context) contractshttp.Response {
 	id := ctx.Request().Route("id")
 	if id == "" {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "notice id is required")
@@ -65,7 +65,7 @@ func (c *CommunityController) UpdateNotice(ctx contractshttp.Context) contractsh
 }
 
 // DeleteNotice soft-deletes a notice.
-func (c *CommunityController) DeleteNotice(ctx contractshttp.Context) contractshttp.Response {
+func (c *NoticeController) DeleteNotice(ctx contractshttp.Context) contractshttp.Response {
 	id := ctx.Request().Route("id")
 	if id == "" {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "notice id is required")
@@ -79,46 +79,4 @@ func (c *CommunityController) DeleteNotice(ctx contractshttp.Context) contractsh
 	}
 
 	return helpers.Success(ctx, nil)
-}
-
-// GenerateCodes generates a batch of redeem codes.
-func (c *CommunityController) GenerateCodes(ctx contractshttp.Context) contractshttp.Response {
-	var req requests.GenerateCodesRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid request")
-	}
-
-	validGrades := map[string]bool{
-		consts.UserGradeMonth:    true,
-		consts.UserGradeSeason:   true,
-		consts.UserGradeYear:     true,
-		consts.UserGradeLifetime: true,
-	}
-	if !validGrades[req.Grade] {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid grade")
-	}
-
-	validCounts := map[int]bool{10: true, 50: true, 100: true, 500: true}
-	if !validCounts[req.Count] {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "count must be 10, 50, 100, or 500")
-	}
-
-	count, err := services.GenerateCodes(req.Grade, req.Count)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to generate codes")
-	}
-
-	return helpers.Success(ctx, map[string]int{"count": count})
-}
-
-// GetAllRedeems returns all redeem codes (admin view, paginated).
-func (c *CommunityController) GetAllRedeems(ctx contractshttp.Context) contractshttp.Response {
-	page, pageSize, _ := helpers.ParseOffsetParams(ctx, 15)
-
-	items, total, err := services.GetAllRedeems(page, pageSize)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get redeems")
-	}
-
-	return helpers.PaginatedOffset(ctx, items, total, page, pageSize)
 }

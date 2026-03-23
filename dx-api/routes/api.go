@@ -2,6 +2,7 @@ package routes
 
 import (
 	"dx-api/app/helpers"
+	admcontrollers "dx-api/app/http/controllers/adm"
 	apicontrollers "dx-api/app/http/controllers/api"
 	"dx-api/app/http/middleware"
 
@@ -47,8 +48,10 @@ func Api() {
 			games.Get("/search", gameController.Search)
 			games.Get("/{id}", gameController.Detail)
 		})
-		router.Get("/game-categories", gameController.Categories)
-		router.Get("/game-presses", gameController.Presses)
+		gameCategoryController := apicontrollers.NewGameCategoryController()
+		router.Get("/game-categories", gameCategoryController.Categories)
+		gamePressController := apicontrollers.NewGamePressController()
+		router.Get("/game-presses", gamePressController.Presses)
 
 		// Public upload serving (no auth required)
 		router.Get("/uploads/images/{id}", uploadController.ServeImage)
@@ -75,10 +78,11 @@ func Api() {
 
 			// Protected game routes
 			contentController := &apicontrollers.ContentController{}
+			gameStatsController := apicontrollers.NewGameStatsController()
+			userFavoriteController := apicontrollers.NewUserFavoriteController()
 			protected.Get("/games/played", gameController.Played)
-			protected.Get("/games/{id}/active-session", gameController.ActiveSession)
-			protected.Get("/games/{id}/stats", gameController.Stats)
-			protected.Get("/games/{id}/favorited", gameController.Favorited)
+			protected.Get("/games/{id}/stats", gameStatsController.Stats)
+			protected.Get("/games/{id}/favorited", userFavoriteController.Favorited)
 			protected.Get("/games/{id}/levels/{levelId}/content", contentController.LevelContent)
 
 			// User profile routes
@@ -114,61 +118,70 @@ func Api() {
 			})
 
 			// Tracking routes (mastered / unknown / review)
-			trackingController := apicontrollers.NewTrackingController()
+			userMasterController := apicontrollers.NewUserMasterController()
+			userUnknownController := apicontrollers.NewUserUnknownController()
+			userReviewController := apicontrollers.NewUserReviewController()
 			protected.Prefix("/tracking").Group(func(tracking route.Router) {
 				// Mastered
-				tracking.Post("/master", trackingController.MarkMastered)
-				tracking.Get("/master", trackingController.ListMastered)
-				tracking.Get("/master/stats", trackingController.MasterStats)
-				tracking.Delete("/master/{id}", trackingController.DeleteMastered)
-				tracking.Delete("/master", trackingController.BulkDeleteMastered)
+				tracking.Post("/master", userMasterController.MarkMastered)
+				tracking.Get("/master", userMasterController.ListMastered)
+				tracking.Get("/master/stats", userMasterController.MasterStats)
+				tracking.Delete("/master/{id}", userMasterController.DeleteMastered)
+				tracking.Delete("/master", userMasterController.BulkDeleteMastered)
 
 				// Unknown
-				tracking.Post("/unknown", trackingController.MarkUnknown)
-				tracking.Get("/unknown", trackingController.ListUnknown)
-				tracking.Get("/unknown/stats", trackingController.UnknownStats)
-				tracking.Delete("/unknown/{id}", trackingController.DeleteUnknown)
-				tracking.Delete("/unknown", trackingController.BulkDeleteUnknown)
+				tracking.Post("/unknown", userUnknownController.MarkUnknown)
+				tracking.Get("/unknown", userUnknownController.ListUnknown)
+				tracking.Get("/unknown/stats", userUnknownController.UnknownStats)
+				tracking.Delete("/unknown/{id}", userUnknownController.DeleteUnknown)
+				tracking.Delete("/unknown", userUnknownController.BulkDeleteUnknown)
 
 				// Review
-				tracking.Post("/review", trackingController.MarkReview)
-				tracking.Get("/review", trackingController.ListReviews)
-				tracking.Get("/review/stats", trackingController.ReviewStats)
-				tracking.Delete("/review/{id}", trackingController.DeleteReview)
-				tracking.Delete("/review", trackingController.BulkDeleteReviews)
+				tracking.Post("/review", userReviewController.MarkReview)
+				tracking.Get("/review", userReviewController.ListReviews)
+				tracking.Get("/review/stats", userReviewController.ReviewStats)
+				tracking.Delete("/review/{id}", userReviewController.DeleteReview)
+				tracking.Delete("/review", userReviewController.BulkDeleteReviews)
 			})
 
 			// Favorites routes
-			protected.Post("/favorites/toggle", trackingController.ToggleFavorite)
-			protected.Get("/favorites", trackingController.ListFavorites)
+			protected.Post("/favorites/toggle", userFavoriteController.ToggleFavorite)
+			protected.Get("/favorites", userFavoriteController.ListFavorites)
 
-			// Community & Social routes
-			communityController := apicontrollers.NewCommunityController()
-			protected.Get("/leaderboard", communityController.GetLeaderboard)
+			// Leaderboard
+			leaderboardController := apicontrollers.NewLeaderboardController()
+			protected.Get("/leaderboard", leaderboardController.GetLeaderboard)
 
 			// Hall routes
-			protected.Get("/hall/dashboard", communityController.GetDashboard)
-			protected.Get("/hall/heatmap", communityController.GetHeatmap)
+			hallController := apicontrollers.NewHallController()
+			protected.Get("/hall/dashboard", hallController.GetDashboard)
+			protected.Get("/hall/heatmap", hallController.GetHeatmap)
 
 			// Invite & Referrals
-			protected.Get("/invite", communityController.GetInviteData)
-			protected.Get("/referrals", communityController.GetReferrals)
+			userReferralController := apicontrollers.NewUserReferralController()
+			protected.Get("/invite", userReferralController.GetInviteData)
+			protected.Get("/referrals", userReferralController.GetReferrals)
 
 			// Notices
-			protected.Get("/notices", communityController.GetNotices)
-			protected.Post("/notices/mark-read", communityController.MarkNoticesRead)
+			noticeController := apicontrollers.NewNoticeController()
+			protected.Get("/notices", noticeController.GetNotices)
+			protected.Post("/notices/mark-read", noticeController.MarkNoticesRead)
 
 			// Feedback & Reports
-			protected.Post("/feedback", communityController.SubmitFeedback)
-			protected.Post("/reports", communityController.SubmitReport)
+			feedbackController := apicontrollers.NewFeedbackController()
+			protected.Post("/feedback", feedbackController.SubmitFeedback)
+			gameReportController := apicontrollers.NewGameReportController()
+			protected.Post("/reports", gameReportController.SubmitReport)
 
 			// Redeems
-			protected.Get("/redeems", communityController.GetRedeems)
-			protected.Post("/redeems", communityController.RedeemCode)
+			userRedeemController := apicontrollers.NewUserRedeemController()
+			protected.Get("/redeems", userRedeemController.GetRedeems)
+			protected.Post("/redeems", userRedeemController.RedeemCode)
 
 			// Content Seek
-			protected.Get("/content-seek", communityController.GetContentSeeks)
-			protected.Post("/content-seek", communityController.SubmitContentSeek)
+			contentSeekController := apicontrollers.NewContentSeekController()
+			protected.Get("/content-seek", contentSeekController.GetContentSeeks)
+			protected.Post("/content-seek", contentSeekController.SubmitContentSeek)
 
 			// AI custom content routes
 			aiCustomController := apicontrollers.NewAiCustomController()
@@ -181,16 +194,17 @@ func Api() {
 
 			// User-facing admin routes (user JWT + admin check)
 			protected.Middleware(middleware.AdminGuard()).Group(func(admin route.Router) {
-				admCommunityController := apicontrollers.NewAdminCommunityController()
+				admNoticeController := admcontrollers.NewNoticeController()
+				admRedeemController := admcontrollers.NewRedeemController()
 
 				// Notice management
-				admin.Post("/admin/notices", admCommunityController.CreateNotice)
-				admin.Put("/admin/notices/{id}", admCommunityController.UpdateNotice)
-				admin.Delete("/admin/notices/{id}", admCommunityController.DeleteNotice)
+				admin.Post("/admin/notices", admNoticeController.CreateNotice)
+				admin.Put("/admin/notices/{id}", admNoticeController.UpdateNotice)
+				admin.Delete("/admin/notices/{id}", admNoticeController.DeleteNotice)
 
 				// Redeem management
-				admin.Post("/admin/redeems/generate", admCommunityController.GenerateCodes)
-				admin.Get("/admin/redeems", admCommunityController.GetAllRedeems)
+				admin.Post("/admin/redeems/generate", admRedeemController.GenerateCodes)
+				admin.Get("/admin/redeems", admRedeemController.GetAllRedeems)
 			})
 
 			// Course game management routes

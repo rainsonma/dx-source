@@ -13,9 +13,3 @@ type UpdateNoticeRequest struct {
 	Content *string `form:"content" json:"content"`
 	Icon    *string `form:"icon" json:"icon"`
 }
-
-// GenerateCodesRequest validates redeem code generation data.
-type GenerateCodesRequest struct {
-	Grade string `form:"grade" json:"grade"`
-	Count int    `form:"count" json:"count"`
-}
