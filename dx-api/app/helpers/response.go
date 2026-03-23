@@ -1,6 +1,10 @@
 package helpers
 
 import (
+	nethttp "net/http"
+
+	"dx-api/app/consts"
+
 	"github.com/goravel/framework/contracts/http"
 )
 
@@ -61,4 +65,17 @@ func PaginatedOffset(ctx http.Context, items any, total int64, page int, pageSiz
 		Page:     page,
 		PageSize: pageSize,
 	})
+}
+
+// Validate runs Goravel form request validation and returns an error response on failure.
+// Returns nil when validation passes (struct populated, proceed with handler logic).
+func Validate(ctx http.Context, req http.FormRequest) http.Response {
+	errors, err := ctx.Request().ValidateRequest(req)
+	if err != nil {
+		return Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
+	}
+	if errors != nil {
+		return Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, errors.One())
+	}
+	return nil
 }
