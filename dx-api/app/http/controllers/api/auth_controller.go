@@ -155,6 +155,11 @@ func (c *AuthController) Refresh(ctx contractshttp.Context) contractshttp.Respon
 			clearRefreshCookie(ctx)
 			return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeSessionReplaced, "您的账号已在其他设备登录")
 		}
+		if errors.Is(err, services.ErrUserNotFound) {
+			clearRefreshCookie(ctx)
+			return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeInvalidRefreshToken, "invalid or expired refresh token")
+		}
+		clearRefreshCookie(ctx)
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to refresh token")
 	}
 
