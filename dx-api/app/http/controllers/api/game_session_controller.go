@@ -123,8 +123,8 @@ func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contrac
 	gameLevelID := ctx.Request().Route("levelId")
 
 	var req requests.CompleteLevelRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	result, err := services.CompleteLevel(userID, sessionID, gameLevelID, req.Score, req.MaxCombo, req.TotalItems)
@@ -152,16 +152,20 @@ func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contract
 	gameLevelID := ctx.Request().Route("levelId")
 
 	var req requests.AdvanceLevelRequest
-	if err := ctx.Request().Bind(&req); err != nil || req.NextLevelID == "" {
-		// If no body, use the levelId from the route as the target
-		if gameLevelID != "" {
-			req.NextLevelID = gameLevelID
-		} else {
-			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "next_level_id is required")
-		}
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	if err := services.AdvanceLevel(userID, sessionID, req.NextLevelID); err != nil {
+	// Fallback to route param if body field is empty
+	nextLevelID := req.NextLevelID
+	if nextLevelID == "" {
+		nextLevelID = gameLevelID
+	}
+	if nextLevelID == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "next_level_id is required")
+	}
+
+	if err := services.AdvanceLevel(userID, sessionID, nextLevelID); err != nil {
 		return mapSessionError(ctx, err)
 	}
 
@@ -292,20 +296,12 @@ func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contracts
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	gameID := ctx.Request().Query("game_id", "")
-	degree := ctx.Request().Query("degree", "")
-	patternStr := ctx.Request().Query("pattern", "")
-
-	if gameID == "" || degree == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id and degree are required")
+	var req requests.CheckActiveSessionRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	var pattern *string
-	if patternStr != "" {
-		pattern = &patternStr
-	}
-
-	result, err := services.CheckActiveSession(userID, gameID, degree, pattern)
+	result, err := services.CheckActiveSession(userID, req.GameID, req.Degree, req.Pattern)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active session")
 	}
@@ -320,21 +316,12 @@ func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) cont
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	gameID := ctx.Request().Query("game_id", "")
-	degree := ctx.Request().Query("degree", "")
-	patternStr := ctx.Request().Query("pattern", "")
-	gameLevelID := ctx.Request().Query("game_level_id", "")
-
-	if gameID == "" || degree == "" || gameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_id, degree, and game_level_id are required")
+	var req requests.CheckActiveLevelSessionRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	var pattern *string
-	if patternStr != "" {
-		pattern = &patternStr
-	}
-
-	result, err := services.CheckActiveLevelSession(userID, gameID, degree, pattern, gameLevelID)
+	result, err := services.CheckActiveLevelSession(userID, req.GameID, req.Degree, req.Pattern, req.GameLevelID)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active level session")
 	}
@@ -370,13 +357,13 @@ func (c *GameSessionController) Restore(ctx contractshttp.Context) contractshttp
 	}
 
 	sessionID := ctx.Request().Route("id")
-	gameLevelID := ctx.Request().Query("game_level_id", "")
 
-	if gameLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game_level_id is required")
+	var req requests.RestoreSessionRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
-	result, err := services.RestoreSessionData(userID, sessionID, gameLevelID)
+	result, err := services.RestoreSessionData(userID, sessionID, req.GameLevelID)
 	if err != nil {
 		return mapSessionError(ctx, err)
 	}
@@ -394,8 +381,8 @@ func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) con
 	sessionID := ctx.Request().Route("id")
 
 	var req requests.UpdateContentItemRequest
-	if err := ctx.Request().Bind(&req); err != nil {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
 	}
 
 	if err := services.UpdateCurrentContentItem(userID, sessionID, req.ContentItemID); err != nil {
