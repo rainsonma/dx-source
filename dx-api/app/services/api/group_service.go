@@ -32,16 +32,19 @@ type GroupListItem struct {
 
 // GroupDetail represents full group detail.
 type GroupDetail struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
-	OwnerID     string  `json:"owner_id"`
-	OwnerName   string  `json:"owner_name"`
-	MemberCount int     `json:"member_count"`
-	InviteCode  string  `json:"invite_code"`
-	IsActive    bool    `json:"is_active"`
-	IsOwner     bool    `json:"is_owner"`
-	CreatedAt   string  `json:"created_at"`
+	ID              string  `json:"id"`
+	Name            string  `json:"name"`
+	Description     *string `json:"description"`
+	OwnerID         string  `json:"owner_id"`
+	OwnerName       string  `json:"owner_name"`
+	MemberCount     int     `json:"member_count"`
+	InviteCode      string  `json:"invite_code"`
+	IsActive        bool    `json:"is_active"`
+	IsOwner         bool    `json:"is_owner"`
+	CreatedAt       string  `json:"created_at"`
+	CurrentGameID   *string `json:"current_game_id"`
+	GameMode        *string `json:"game_mode"`
+	CurrentGameName string  `json:"current_game_name"`
 }
 
 // CreateGroup creates a new group with the given user as owner and first member.
@@ -204,6 +207,14 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		ownerName = *owner.Nickname
 	}
 
+	var currentGameName string
+	if group.CurrentGameID != nil && *group.CurrentGameID != "" {
+		var game models.Game
+		if err := facades.Orm().Query().Select("name").Where("id", *group.CurrentGameID).First(&game); err == nil && game.ID != "" {
+			currentGameName = game.Name
+		}
+	}
+
 	return &GroupDetail{
 		ID:          group.ID,
 		Name:        group.Name,
@@ -212,9 +223,12 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		OwnerName:   ownerName,
 		MemberCount: group.MemberCount,
 		InviteCode:  group.InviteCode,
-		IsActive:    group.IsActive,
-		IsOwner:     group.OwnerID == userID,
-		CreatedAt:   group.CreatedAt.ToDateTimeString(),
+		IsActive:        group.IsActive,
+		IsOwner:         group.OwnerID == userID,
+		CreatedAt:       group.CreatedAt.ToDateTimeString(),
+		CurrentGameID:   group.CurrentGameID,
+		GameMode:        group.GameMode,
+		CurrentGameName: currentGameName,
 	}, nil
 }
 
