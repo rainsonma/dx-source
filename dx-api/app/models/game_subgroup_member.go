@@ -7,7 +7,6 @@ type GameSubgroupMember struct {
 	ID             string `gorm:"column:id;primaryKey" json:"id"`
 	GameSubgroupID string `gorm:"column:game_subgroup_id" json:"game_subgroup_id"`
 	UserID         string `gorm:"column:user_id" json:"user_id"`
-	Role           string `gorm:"column:role" json:"role"`
 }
 
 func (g *GameSubgroupMember) TableName() string {

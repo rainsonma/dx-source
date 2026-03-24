@@ -15,6 +15,8 @@ const (
 	CodeCodeExpired       = 40006
 	CodeInsufficientBeans = 40007
 	CodeNicknameTaken     = 40008
+	CodeAlreadyMember     = 40009
+	CodeAlreadyApplied    = 40010
 
 	// 401xx: Auth
 	CodeUnauthorized        = 40100
@@ -24,7 +26,8 @@ const (
 	CodeSessionReplaced     = 40104
 
 	// 403xx: Permission
-	CodeForbidden = 40300
+	CodeForbidden      = 40300
+	CodeGroupForbidden = 40301
 
 	// 404xx: Not Found
 	CodeNotFound        = 40400
@@ -33,7 +36,9 @@ const (
 	CodeSessionNotFound = 40403
 	CodeLevelNotFound   = 40404
 	CodeContentNotFound = 40405
-	CodeImageNotFound   = 40406
+	CodeImageNotFound       = 40406
+	CodeGroupNotFound       = 40407
+	CodeApplicationNotFound = 40408
 
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900
