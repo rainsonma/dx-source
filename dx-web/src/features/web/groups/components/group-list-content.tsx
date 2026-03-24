@@ -1,12 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { Plus, Loader2 } from "lucide-react";
-import { useGroups } from "../hooks/use-groups";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { swrMutate } from "@/lib/swr";
+import { groupApi } from "../actions/group.action";
+import type { Group } from "../types/group";
 import { GroupCard } from "./group-card";
 import { CreateGroupDialog } from "./create-group-dialog";
 
 type Tab = "all" | "created" | "joined";
+
+interface GroupListResponse {
+  items: Group[];
+  nextCursor: string;
+  hasMore: boolean;
+}
 
 const tabs: { label: string; value: Tab }[] = [
   { label: "全部", value: "all" },
@@ -15,12 +35,34 @@ const tabs: { label: string; value: Tab }[] = [
 ];
 
 export function GroupListContent() {
-  const { groups, isLoading, tab, hasMore, fetchGroups, changeTab, loadMore } = useGroups();
+  const [tab, setTab] = useState<Tab>("all");
   const [createOpen, setCreateOpen] = useState(false);
+  const [applyTarget, setApplyTarget] = useState<Group | null>(null);
+  const [applying, setApplying] = useState(false);
 
-  useEffect(() => {
-    fetchGroups();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const swrKey = `/api/groups?tab=${tab}`;
+  const { data, isLoading } = useSWR<GroupListResponse>(swrKey);
+
+  const groups = data?.items ?? [];
+
+  function changeTab(newTab: Tab) {
+    setTab(newTab);
+  }
+
+  async function handleApplyConfirm() {
+    if (!applyTarget) return;
+    setApplying(true);
+    const res = await groupApi.apply(applyTarget.id);
+    setApplying(false);
+    if (res.code !== 0) {
+      toast.error(res.message);
+      setApplyTarget(null);
+      return;
+    }
+    toast.success("申请已提交，等待群主审核");
+    setApplyTarget(null);
+    await swrMutate("/api/groups");
+  }
 
   return (
     <>
@@ -72,23 +114,13 @@ export function GroupListContent() {
       {groups.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => (
-            <GroupCard key={group.id} group={group} isMember />
+            <GroupCard
+              key={group.id}
+              group={group}
+              isMember={group.is_member}
+              onJoin={() => setApplyTarget(group)}
+            />
           ))}
-        </div>
-      )}
-
-      {/* Load more */}
-      {hasMore && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted disabled:opacity-50"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            加载更多
-          </button>
         </div>
       )}
 
@@ -96,8 +128,27 @@ export function GroupListContent() {
       <CreateGroupDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
-        onCreated={() => fetchGroups()}
+        onCreated={() => swrMutate("/api/groups")}
       />
+
+      {/* Apply confirm dialog */}
+      <AlertDialog open={!!applyTarget} onOpenChange={(open) => { if (!open) setApplyTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>申请加入群组</AlertDialogTitle>
+            <AlertDialogDescription>
+              确认申请加入「{applyTarget?.name}」群？需等待群主确认！
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={applying}>取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyConfirm} disabled={applying}>
+              {applying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              确认申请
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

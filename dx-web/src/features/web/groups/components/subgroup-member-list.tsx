@@ -23,10 +23,11 @@ function getAvatarColor(name: string) {
 interface SubgroupMemberListProps {
   members: SubgroupMember[];
   isOwner: boolean;
-  onRemove: (userId: string) => void;
+  onRemove?: (userId: string) => void;
+  emptyText?: string;
 }
 
-export function SubgroupMemberList({ members, isOwner, onRemove }: SubgroupMemberListProps) {
+export function SubgroupMemberList({ members, isOwner, onRemove, emptyText = "暂无成员" }: SubgroupMemberListProps) {
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[14px] border border-border bg-card">
       <div className="border-b border-border px-5 py-3.5">
@@ -34,7 +35,7 @@ export function SubgroupMemberList({ members, isOwner, onRemove }: SubgroupMembe
       </div>
       <div className="flex-1 overflow-y-auto">
         {members.length === 0 && (
-          <div className="px-5 py-6 text-center text-xs text-muted-foreground">暂无成员</div>
+          <div className="px-5 py-6 text-center text-xs text-muted-foreground">{emptyText}</div>
         )}
         {members.map((m, i) => {
           const color = getAvatarColor(m.user_name);
@@ -48,7 +49,7 @@ export function SubgroupMemberList({ members, isOwner, onRemove }: SubgroupMembe
                 <div className="flex flex-1 flex-col gap-0.5">
                   <span className="text-[13px] font-semibold text-foreground">{m.user_name}</span>
                 </div>
-                {isOwner && (
+                {isOwner && onRemove && (
                   <button
                     type="button"
                     onClick={() => onRemove(m.user_id)}

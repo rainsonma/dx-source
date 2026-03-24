@@ -6,6 +6,7 @@ export type Group = {
   owner_name: string;
   member_count: number;
   invite_code: string;
+  is_member: boolean;
   is_owner: boolean;
   created_at: string;
 };

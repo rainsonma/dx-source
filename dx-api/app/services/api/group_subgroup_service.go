@@ -203,10 +203,18 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 				return ErrNotGroupMember
 			}
 
-			// Skip if already in subgroup
+			// Skip if already in this subgroup
 			var existing models.GameSubgroupMember
 			if err := tx.Where("game_subgroup_id", subgroupID).Where("user_id", targetID).First(&existing); err == nil && existing.ID != "" {
 				continue
+			}
+
+			// Remove from any other subgroup in this group (one user = one subgroup)
+			if _, err := tx.Exec(
+				`DELETE FROM game_subgroup_members WHERE user_id = ? AND game_subgroup_id IN (SELECT id FROM game_subgroups WHERE game_group_id = ?)`,
+				targetID, groupID,
+			); err != nil {
+				return fmt.Errorf("failed to remove from previous subgroup: %w", err)
 			}
 
 			sm := models.GameSubgroupMember{

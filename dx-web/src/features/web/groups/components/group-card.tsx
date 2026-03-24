@@ -37,8 +37,13 @@ export function GroupCard({ group, isMember = true, highlighted = false, onJoin 
   const v = variantClasses[variant];
   const letter = group.name[0];
 
+  const Wrapper = isMember ? Link : "div";
+  const wrapperProps = isMember
+    ? { href: `/hall/groups/${group.id}`, className: "block" }
+    : { className: "block" };
+
   return (
-    <Link href={`/hall/groups/${group.id}`} className="block">
+    <Wrapper {...(wrapperProps as any)}>
       <div
         className={`flex flex-col gap-3.5 rounded-[14px] p-5 transition-colors hover:shadow-sm ${
           highlighted
@@ -88,6 +93,6 @@ export function GroupCard({ group, isMember = true, highlighted = false, onJoin 
           </div>
         </div>
       </div>
-    </Link>
+    </Wrapper>
   );
 }

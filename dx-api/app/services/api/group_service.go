@@ -25,6 +25,7 @@ type GroupListItem struct {
 	OwnerName   string  `json:"owner_name"`
 	MemberCount int     `json:"member_count"`
 	InviteCode  string  `json:"invite_code"`
+	IsMember    bool    `json:"is_member"`
 	IsOwner     bool    `json:"is_owner"`
 	CreatedAt   string  `json:"created_at"`
 }
@@ -88,31 +89,55 @@ type groupRow struct {
 	OwnerName   string  `gorm:"column:owner_name"`
 	MemberCount int     `gorm:"column:member_count"`
 	InviteCode  string  `gorm:"column:invite_code"`
+	IsMember    bool    `gorm:"column:is_member"`
 	CreatedAt   string  `gorm:"column:created_at"`
 }
 
-// ListGroups returns a paginated list of groups the user belongs to.
-// tab: "" = all, "created" = owned by user, "joined" = not owned by user.
+// ListGroups returns a paginated list of groups.
+// tab "" (all) = all active groups; "created" = user's own; "joined" = user joined but not owned.
 func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string, bool, error) {
-	base := `
-		SELECT g.id, g.name, g.description, g.owner_id,
-		       COALESCE(u.nickname, u.username) AS owner_name,
-		       g.member_count, g.invite_code,
-		       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
-		FROM game_groups g
-		JOIN game_group_members m ON m.game_group_id = g.id
-		JOIN users u ON u.id = g.owner_id
-		WHERE m.user_id = ? AND g.is_active = true`
-
-	args := []any{userID}
+	var base string
+	var args []any
 
 	switch tab {
 	case "created":
-		base += " AND g.owner_id = ?"
-		args = append(args, userID)
+		// Only groups owned by this user
+		base = `
+			SELECT g.id, g.name, g.description, g.owner_id,
+			       COALESCE(u.nickname, u.username) AS owner_name,
+			       g.member_count, g.invite_code,
+			       true AS is_member,
+			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
+			FROM game_groups g
+			JOIN users u ON u.id = g.owner_id
+			WHERE g.owner_id = ? AND g.is_active = true`
+		args = []any{userID}
 	case "joined":
-		base += " AND g.owner_id != ?"
-		args = append(args, userID)
+		// Groups user is a member of but did not create
+		base = `
+			SELECT g.id, g.name, g.description, g.owner_id,
+			       COALESCE(u.nickname, u.username) AS owner_name,
+			       g.member_count, g.invite_code,
+			       true AS is_member,
+			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
+			FROM game_groups g
+			JOIN game_group_members m ON m.game_group_id = g.id
+			JOIN users u ON u.id = g.owner_id
+			WHERE m.user_id = ? AND g.owner_id != ? AND g.is_active = true`
+		args = []any{userID, userID}
+	default:
+		// All active groups — use LEFT JOIN so non-members can see groups too
+		base = `
+			SELECT g.id, g.name, g.description, g.owner_id,
+			       COALESCE(u.nickname, u.username) AS owner_name,
+			       g.member_count, g.invite_code,
+			       (m.id IS NOT NULL) AS is_member,
+			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
+			FROM game_groups g
+			JOIN users u ON u.id = g.owner_id
+			LEFT JOIN game_group_members m ON m.game_group_id = g.id AND m.user_id = ?
+			WHERE g.is_active = true`
+		args = []any{userID}
 	}
 
 	if cursor != "" {
@@ -143,6 +168,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			OwnerName:   r.OwnerName,
 			MemberCount: r.MemberCount,
 			InviteCode:  r.InviteCode,
+			IsMember:    r.IsMember,
 			IsOwner:     r.OwnerID == userID,
 			CreatedAt:   r.CreatedAt,
 		})

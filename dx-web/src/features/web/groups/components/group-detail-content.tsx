@@ -1,18 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import useSWR from "swr";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
-  ChevronRight,
   Link2,
   Copy,
   Loader2,
   Pencil,
   Trash2,
 } from "lucide-react";
+import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,8 +23,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useGroupDetail } from "../hooks/use-group-detail";
-import { useGroupMembers } from "../hooks/use-group-members";
+import { swrMutate } from "@/lib/swr";
+import { groupApi } from "../actions/group.action";
+import { groupMemberApi } from "../actions/group-member.action";
+import { groupSubgroupApi } from "../actions/group-subgroup.action";
+import type { GroupDetail, GroupMember, Subgroup, SubgroupMember, GroupApplication } from "../types/group";
 import { MemberList } from "./member-list";
 import { SubgroupList } from "./subgroup-list";
 import { SubgroupMemberList } from "./subgroup-member-list";
@@ -36,6 +39,18 @@ interface GroupDetailContentProps {
   id: string;
 }
 
+interface MembersResponse {
+  items: GroupMember[];
+  nextCursor: string;
+  hasMore: boolean;
+}
+
+interface ApplicationsResponse {
+  items: GroupApplication[];
+  nextCursor: string;
+  hasMore: boolean;
+}
+
 function daysSince(dateStr: string) {
   const created = new Date(dateStr);
   const now = new Date();
@@ -44,53 +59,122 @@ function daysSince(dateStr: string) {
 
 export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const router = useRouter();
-  const {
-    group, applications, isLoading,
-    fetchDetail, fetchApplications, handleApplication,
-    updateGroup, deleteGroup,
-  } = useGroupDetail(id);
-  const {
-    members, subgroups, selectedSubgroup, subgroupMembers,
-    fetchMembers, fetchSubgroups, fetchSubgroupMembers,
-    kickMember, leaveGroup,
-    createSubgroup, deleteSubgroup,
-    removeSubgroupMember,
-  } = useGroupMembers(id);
 
+  // SWR data fetching
+  const { data: group, isLoading } = useSWR<GroupDetail>(`/api/groups/${id}`);
+  const { data: membersData } = useSWR<MembersResponse>(`/api/groups/${id}/members`);
+  const { data: subgroups } = useSWR<Subgroup[]>(`/api/groups/${id}/subgroups`);
+  const { data: appsData } = useSWR<ApplicationsResponse>(
+    group?.is_owner ? `/api/groups/${id}/applications` : null
+  );
+
+  const members = membersData?.items ?? [];
+  const subgroupList = subgroups ?? [];
+  const applications = appsData?.items ?? [];
+
+  // Local UI state
+  const [selectedSubgroup, setSelectedSubgroup] = useState<string | null>(null);
+  const [subgroupMembers, setSubgroupMembers] = useState<SubgroupMember[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [createSubgroupOpen, setCreateSubgroupOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchDetail();
-    fetchMembers();
-    fetchSubgroups();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  function invalidateAll() {
+    swrMutate(`/api/groups/${id}`, "/api/groups");
+  }
 
-  useEffect(() => {
-    if (group?.is_owner) {
-      fetchApplications();
-    }
-  }, [group?.is_owner]); // eslint-disable-line react-hooks/exhaustive-deps
+  function toggleSelectUser(userId: string) {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  }
+
+  async function handleAssignToSubgroup(subgroupId: string) {
+    if (selectedUserIds.size === 0) return;
+    const res = await groupSubgroupApi.assign(id, subgroupId, Array.from(selectedUserIds));
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已分配到小组");
+    setSelectedUserIds(new Set());
+    await swrMutate(`/api/groups/${id}`);
+    if (selectedSubgroup === subgroupId) fetchSubgroupMembers(subgroupId);
+  }
+
+  async function fetchSubgroupMembers(subgroupId: string) {
+    setSelectedSubgroup(subgroupId);
+    const res = await groupSubgroupApi.listMembers(id, subgroupId);
+    if (res.code === 0) setSubgroupMembers(res.data);
+  }
+
+  async function handleKick(userId: string) {
+    const res = await groupMemberApi.kick(id, userId);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已移除");
+    invalidateAll();
+  }
 
   async function handleLeave() {
-    const ok = await leaveGroup();
-    if (ok) {
-      toast.success("已退出群组");
-      router.push("/hall/groups");
-    }
+    const res = await groupMemberApi.leave(id);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已退出群组");
+    router.push("/hall/groups");
   }
 
   async function handleDelete() {
     setDeleting(true);
-    const ok = await deleteGroup();
+    const res = await groupApi.delete(id);
     setDeleting(false);
-    if (ok) {
-      toast.success("群组已删除");
-      setDeleteOpen(false);
-      router.push("/hall/groups");
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("群组已删除");
+    setDeleteOpen(false);
+    await swrMutate("/api/groups");
+    router.push("/hall/groups");
+  }
+
+  async function handleUpdateGroup(name: string, description?: string) {
+    const res = await groupApi.update(id, { name, description });
+    if (res.code !== 0) { toast.error(res.message); return false; }
+    toast.success("更新成功");
+    invalidateAll();
+    return true;
+  }
+
+  async function handleCreateSubgroup(name: string) {
+    const res = await groupSubgroupApi.create(id, { name });
+    if (res.code !== 0) { toast.error(res.message); return false; }
+    toast.success("小组创建成功");
+    await swrMutate(`/api/groups/${id}`);
+    return true;
+  }
+
+  async function handleDeleteSubgroup(subgroupId: string) {
+    const res = await groupSubgroupApi.delete(id, subgroupId);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已删除小组");
+    await swrMutate(`/api/groups/${id}`);
+    if (selectedSubgroup === subgroupId) {
+      setSelectedSubgroup(null);
+      setSubgroupMembers([]);
     }
+  }
+
+  async function handleRemoveSubgroupMember(subgroupId: string, userId: string) {
+    const res = await groupSubgroupApi.removeMember(id, subgroupId, userId);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已移除");
+    await swrMutate(`/api/groups/${id}`);
+    if (selectedSubgroup === subgroupId) fetchSubgroupMembers(subgroupId);
+  }
+
+  async function handleApplication(appId: string, action: "accept" | "reject") {
+    const res = await groupApi.handleApplication(id, appId, action);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success(action === "accept" ? "已通过" : "已拒绝");
+    invalidateAll();
   }
 
   async function handleCopyInvite() {
@@ -120,49 +204,20 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const isOwner = group.is_owner;
   const stats = [
     { value: String(group.member_count), label: "成员" },
-    { value: String(subgroups.length), label: "小组" },
+    { value: String(subgroupList.length), label: "小组" },
     { value: `${daysSince(group.created_at)}天`, label: "已创建" },
   ];
 
   return (
     <>
       {/* Top bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/hall/groups"
-            aria-label="返回"
-            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border bg-card"
-          >
-            <ArrowLeft className="h-[18px] w-[18px] text-muted-foreground" />
-          </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-muted-foreground">学习群</span>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-sm font-semibold text-foreground">{group.name}</span>
-          </div>
-        </div>
-        {isOwner && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-              编辑
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              删除群组
-            </button>
-          </div>
-        )}
-      </div>
+      <BreadcrumbTopBar
+        backHref="/hall/groups"
+        items={[
+          { label: "学习群", href: "/hall/groups", maxChars: 10 },
+          { label: group.name, maxChars: 20 },
+        ]}
+      />
 
       {/* Multi-column layout */}
       <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
@@ -210,35 +265,64 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               </button>
             </div>
           </div>
+
+          {/* Owner actions */}
+          {isOwner && (
+            <>
+              <div className="h-px bg-border" />
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeleteOpen(true)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 text-xs font-medium text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  删除群组
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Members list */}
         <MemberList
-          groupId={id}
           isOwner={isOwner}
           members={members}
-          onKick={kickMember}
+          subgroups={subgroupList}
+          selectedUserIds={selectedUserIds}
+          onToggleSelect={toggleSelectUser}
+          onAssignToSubgroup={handleAssignToSubgroup}
+          onKick={handleKick}
           onLeave={handleLeave}
         />
 
         {/* Sub-groups */}
         <SubgroupList
-          subgroups={subgroups}
+          subgroups={subgroupList}
           isOwner={isOwner}
           selectedId={selectedSubgroup}
           onSelect={fetchSubgroupMembers}
           onCreate={() => setCreateSubgroupOpen(true)}
-          onDelete={deleteSubgroup}
+          onDelete={handleDeleteSubgroup}
         />
 
         {/* Sub-group members */}
-        {selectedSubgroup && (
-          <SubgroupMemberList
-            members={subgroupMembers}
-            isOwner={isOwner}
-            onRemove={(userId) => removeSubgroupMember(selectedSubgroup, userId)}
-          />
-        )}
+        <SubgroupMemberList
+          members={subgroupMembers}
+          isOwner={isOwner}
+          onRemove={selectedSubgroup
+            ? (userId) => handleRemoveSubgroupMember(selectedSubgroup, userId)
+            : undefined}
+          emptyText={selectedSubgroup ? "暂无组成员" : "请选择一个小组查看成员"}
+        />
 
         {/* Applications (owner only) */}
         {isOwner && applications.length > 0 && (
@@ -254,7 +338,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
       <CreateSubgroupDialog
         open={createSubgroupOpen}
         onOpenChange={setCreateSubgroupOpen}
-        onCreated={createSubgroup}
+        onCreated={handleCreateSubgroup}
       />
 
       {/* Edit group dialog */}
@@ -264,7 +348,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           onOpenChange={setEditOpen}
           name={group.name}
           description={group.description}
-          onSave={updateGroup}
+          onSave={handleUpdateGroup}
         />
       )}
 
