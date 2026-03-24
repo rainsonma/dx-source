@@ -236,6 +236,40 @@ func Api() {
 				cg.Delete("/{id}/content-items/{itemId}", courseGameController.DeleteContentItem)
 				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
 			})
+
+			// Group routes
+			groupController := apicontrollers.NewGroupController()
+			groupMemberController := apicontrollers.NewGroupMemberController()
+			groupSubgroupController := apicontrollers.NewGroupSubgroupController()
+
+			protected.Post("/groups/join/{code}", groupMemberController.JoinByCode)
+			protected.Prefix("/groups").Group(func(groups route.Router) {
+				groups.Get("/", groupController.List)
+				groups.Post("/", groupController.Create)
+				groups.Get("/{id}", groupController.Detail)
+				groups.Put("/{id}", groupController.Update)
+				groups.Delete("/{id}", groupController.Delete)
+
+				// Applications
+				groups.Post("/{id}/apply", groupController.Apply)
+				groups.Delete("/{id}/apply", groupController.CancelApply)
+				groups.Get("/{id}/applications", groupController.ListApplications)
+				groups.Put("/{id}/applications/{appId}", groupController.HandleApplication)
+
+				// Members
+				groups.Get("/{id}/members", groupMemberController.List)
+				groups.Delete("/{id}/members/{userId}", groupMemberController.Kick)
+				groups.Post("/{id}/leave", groupMemberController.Leave)
+
+				// Subgroups
+				groups.Get("/{id}/subgroups", groupSubgroupController.List)
+				groups.Post("/{id}/subgroups", groupSubgroupController.Create)
+				groups.Put("/{id}/subgroups/{sid}", groupSubgroupController.Update)
+				groups.Delete("/{id}/subgroups/{sid}", groupSubgroupController.Delete)
+				groups.Get("/{id}/subgroups/{sid}/members", groupSubgroupController.ListMembers)
+				groups.Post("/{id}/subgroups/{sid}/members", groupSubgroupController.Assign)
+				groups.Delete("/{id}/subgroups/{sid}/members/{userId}", groupSubgroupController.RemoveMember)
+			})
 		})
 	})
 }
