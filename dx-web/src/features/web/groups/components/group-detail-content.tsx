@@ -11,6 +11,9 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  Gamepad2,
+  User,
+  Users,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
@@ -34,6 +37,7 @@ import { SubgroupMemberList } from "./subgroup-member-list";
 import { ApplicationList } from "./application-list";
 import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
+import { SetGameDialog } from "./set-game-dialog";
 
 interface GroupDetailContentProps {
   id: string;
@@ -80,6 +84,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [setGameOpen, setSetGameOpen] = useState(false);
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");
@@ -184,6 +189,13 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
     toast.success("已复制邀请链接");
   }
 
+  async function handleClearGame() {
+    const res = await groupApi.clearGame(id);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("已清除课程游戏");
+    await swrMutate(`/api/groups/${id}`);
+  }
+
   if (isLoading && !group) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -244,6 +256,68 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                 <span className="text-[10px] text-muted-foreground">{stat.label}</span>
               </div>
             ))}
+          </div>
+
+          <div className="h-px bg-border" />
+
+          {/* Current game section */}
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-muted-foreground">当前课程游戏</span>
+              {isOwner && group.current_game_id && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSetGameOpen(true)}
+                    className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-medium text-teal-600 hover:bg-teal-100"
+                  >
+                    更换
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearGame}
+                    className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-100"
+                  >
+                    清除
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {group.current_game_id ? (
+              <div className="flex items-center gap-3 rounded-[10px] border border-border bg-muted px-3 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100">
+                  <span className="text-xs font-bold text-teal-600">
+                    {group.current_game_name?.[0] ?? "G"}
+                  </span>
+                </div>
+                <span className="flex-1 truncate text-[13px] font-medium text-foreground">
+                  {group.current_game_name}
+                </span>
+                {group.game_mode === "group" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                    <Users className="h-3 w-3" />
+                    小组
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                    <User className="h-3 w-3" />
+                    单人
+                  </span>
+                )}
+              </div>
+            ) : isOwner ? (
+              <button
+                type="button"
+                onClick={() => setSetGameOpen(true)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-teal-200 py-2.5 text-xs font-medium text-teal-600 hover:bg-teal-50"
+              >
+                <Gamepad2 className="h-3.5 w-3.5" />
+                设置课程游戏
+              </button>
+            ) : (
+              <span className="text-xs text-muted-foreground">暂未设置课程游戏</span>
+            )}
           </div>
 
           <div className="h-px bg-border" />
@@ -349,6 +423,17 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           name={group.name}
           description={group.description}
           onSave={handleUpdateGroup}
+        />
+      )}
+
+      {/* Set game dialog */}
+      {isOwner && (
+        <SetGameDialog
+          open={setGameOpen}
+          onOpenChange={setSetGameOpen}
+          groupId={id}
+          currentGameId={group.current_game_id}
+          currentGameMode={group.game_mode}
         />
       )}
 
