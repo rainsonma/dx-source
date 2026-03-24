@@ -13,6 +13,7 @@ type GameGroup struct {
 	InviteCode    string  `gorm:"column:invite_code" json:"invite_code"`
 	IsActive      bool    `gorm:"column:is_active" json:"is_active"`
 	MemberCount   int     `gorm:"column:member_count" json:"member_count"`
+	GameMode      *string `gorm:"column:game_mode" json:"game_mode"`
 }
 
 func (g *GameGroup) TableName() string {
