@@ -14,7 +14,9 @@ type GameGroup struct {
 	InviteQrcodeID   *string `gorm:"column:invite_qrcode_id" json:"invite_qrcode_id"`
 	IsActive      bool    `gorm:"column:is_active" json:"is_active"`
 	MemberCount   int     `gorm:"column:member_count" json:"member_count"`
-	GameMode      *string `gorm:"column:game_mode" json:"game_mode"`
+	GameMode        *string `gorm:"column:game_mode" json:"game_mode"`
+	AnswerTimeLimit  int     `gorm:"column:answer_time_limit" json:"answer_time_limit"`
+	IsPlaying        bool    `gorm:"column:is_playing" json:"is_playing"`
 }
 
 func (g *GameGroup) TableName() string {

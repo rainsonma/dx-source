@@ -27,6 +27,8 @@ type GameSessionTotal struct {
 	PlayTime             int        `gorm:"column:play_time" json:"play_time"`
 	TotalLevelsCount     int        `gorm:"column:total_levels_count" json:"total_levels_count"`
 	PlayedLevelsCount    int        `gorm:"column:played_levels_count" json:"played_levels_count"`
+	GameGroupID          *string    `gorm:"column:game_group_id" json:"game_group_id"`
+	GameSubgroupID       *string    `gorm:"column:game_subgroup_id" json:"game_subgroup_id"`
 }
 
 func (g *GameSessionTotal) TableName() string {
