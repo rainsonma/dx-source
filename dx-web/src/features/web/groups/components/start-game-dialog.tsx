@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { groupApi } from "../actions/group.action";
 
 const DEGREES = [
-  { value: "practice", label: "练习" },
   { value: "beginner", label: "初级" },
   { value: "intermediate", label: "中级" },
   { value: "advanced", label: "高级" },
