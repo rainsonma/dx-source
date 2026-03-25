@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { groupMemberApi } from "../actions/group-member.action";
 
@@ -83,6 +83,14 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
 
   return (
     <div className="w-full max-w-md rounded-[14px] border border-border bg-card p-8">
+      {/* Logo */}
+      <div className="mb-4 flex items-center justify-center gap-2">
+        <GraduationCap className="h-7 w-7 text-teal-600" />
+        <span className="text-lg font-semibold text-slate-900">斗学</span>
+      </div>
+      <div className="h-px bg-border" />
+      <div className="mt-6" />
+
       {/* Avatar + name */}
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-16 w-16 items-center justify-center rounded-[18px] bg-teal-100">
