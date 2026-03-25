@@ -10,6 +10,7 @@ const (
 	ImageRolePressCover     = "press-cover"
 	ImageRoleGameGroupCover = "game-group-cover"
 	ImageRolePostImage      = "post-image"
+	ImageRoleGroupQrcode    = "group_qrcode"
 )
 
 // ImageRoleLabels maps each image role to its Chinese label.

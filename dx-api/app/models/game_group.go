@@ -10,7 +10,8 @@ type GameGroup struct {
 	OwnerID       string  `gorm:"column:owner_id" json:"owner_id"`
 	CoverID       *string `gorm:"column:cover_id" json:"cover_id"`
 	CurrentGameID *string `gorm:"column:current_game_id" json:"current_game_id"`
-	InviteCode    string  `gorm:"column:invite_code" json:"invite_code"`
+	InviteCode       string  `gorm:"column:invite_code" json:"invite_code"`
+	InviteQrcodeID   *string `gorm:"column:invite_qrcode_id" json:"invite_qrcode_id"`
 	IsActive      bool    `gorm:"column:is_active" json:"is_active"`
 	MemberCount   int     `gorm:"column:member_count" json:"member_count"`
 	GameMode      *string `gorm:"column:game_mode" json:"game_mode"`

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 
 	"dx-api/app/helpers"
 	"dx-api/app/models"
@@ -46,6 +47,7 @@ type GroupDetail struct {
 	CurrentGameID   *string `json:"current_game_id"`
 	GameMode        *string `json:"game_mode"`
 	CurrentGameName string  `json:"current_game_name"`
+	InviteQrcodeURL string  `json:"invite_qrcode_url"`
 }
 
 // CreateGroup creates a new group with the given user as owner and first member.
@@ -79,6 +81,18 @@ func CreateGroup(userID, name string, description *string) (*CreateGroupResult, 
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	// Generate QR code after the transaction succeeds — non-fatal if it fails
+	origin := facades.Config().Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000").(string)
+	if idx := strings.Index(origin, ","); idx > 0 {
+		origin = origin[:idx]
+	}
+	inviteURL := fmt.Sprintf("%s/g/%s", strings.TrimRight(origin, "/"), inviteCode)
+
+	qrcodeID, err := helpers.GenerateGroupQRCode(userID, inviteURL)
+	if err == nil && qrcodeID != "" {
+		facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("invite_qrcode_id", qrcodeID)
 	}
 
 	return &CreateGroupResult{ID: groupID, InviteCode: inviteCode}, nil
@@ -220,6 +234,11 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		}
 	}
 
+	var inviteQrcodeURL string
+	if group.InviteQrcodeID != nil && *group.InviteQrcodeID != "" {
+		inviteQrcodeURL = helpers.ImageServeURL(*group.InviteQrcodeID)
+	}
+
 	return &GroupDetail{
 		ID:          group.ID,
 		Name:        group.Name,
@@ -234,6 +253,7 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		CurrentGameID:   group.CurrentGameID,
 		GameMode:        group.GameMode,
 		CurrentGameName: currentGameName,
+		InviteQrcodeURL: inviteQrcodeURL,
 	}, nil
 }
 
