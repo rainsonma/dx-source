@@ -59,8 +59,8 @@ export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: Star
           <DialogDescription>选择难度和模式后开始群组游戏</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">难度</span>
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">难度</span>
             <div className="flex flex-wrap gap-2">
               {DEGREES.map((d) => (
                 <button
@@ -78,8 +78,8 @@ export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: Star
               ))}
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">模式</span>
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 text-xs font-medium text-muted-foreground">模式</span>
             <div className="flex flex-wrap gap-2">
               {PATTERNS.map((p) => (
                 <button
