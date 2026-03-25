@@ -1,6 +1,17 @@
 "use client";
 
-import { Check, X, LogOut, Users } from "lucide-react";
+import { useState } from "react";
+import { Check, X, LogOut, Users, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +62,15 @@ export function MemberList({
   onLeave,
 }: MemberListProps) {
   const hasSelection = selectedUserIds.size > 0;
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  async function handleLeave() {
+    setLeaving(true);
+    await onLeave();
+    setLeaving(false);
+    setLeaveOpen(false);
+  }
 
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[14px] border border-border bg-card">
@@ -92,7 +112,7 @@ export function MemberList({
           {!isOwner && (
             <button
               type="button"
-              onClick={onLeave}
+              onClick={() => setLeaveOpen(true)}
               className="flex items-center gap-1 rounded-lg border border-red-200 px-2.5 py-1 text-[11px] font-semibold text-red-500 hover:bg-red-50"
             >
               <LogOut className="h-3 w-3" />
@@ -147,6 +167,25 @@ export function MemberList({
           );
         })}
       </div>
+
+      {/* Leave confirmation */}
+      <AlertDialog open={leaveOpen} onOpenChange={setLeaveOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认退出群组</AlertDialogTitle>
+            <AlertDialogDescription>
+              退出后将无法查看群组内容，需要重新申请加入。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleLeave} disabled={leaving}>
+              {leaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              确认退出
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
