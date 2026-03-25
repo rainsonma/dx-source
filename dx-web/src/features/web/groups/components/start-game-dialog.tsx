@@ -35,7 +35,7 @@ interface StartGameDialogProps {
 
 export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: StartGameDialogProps) {
   const [degree, setDegree] = useState("intermediate");
-  const [pattern, setPattern] = useState<string | undefined>(undefined);
+  const [pattern, setPattern] = useState("write");
   const [loading, setLoading] = useState(false);
 
   async function handleStart() {
@@ -79,13 +79,13 @@ export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: Star
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium text-muted-foreground">模式（可选）</span>
+            <span className="text-xs font-medium text-muted-foreground">模式</span>
             <div className="flex flex-wrap gap-2">
               {PATTERNS.map((p) => (
                 <button
                   key={p.value}
                   type="button"
-                  onClick={() => setPattern(pattern === p.value ? undefined : p.value)}
+                  onClick={() => setPattern(p.value)}
                   className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                     pattern === p.value
                       ? "bg-teal-600 text-white"
