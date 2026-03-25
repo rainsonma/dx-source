@@ -4,6 +4,7 @@ import {
   processAnswer,
   type ComboState,
 } from "@/features/web/play/helpers/scoring";
+import type { GroupLevelCompleteEvent } from "@/features/web/groups/types/group";
 
 export type GamePhase = "loading" | "playing" | "result";
 export type GameOverlay = "paused" | "settings" | "reset" | "report" | "exit" | null;
@@ -42,6 +43,8 @@ interface GameState {
   playTime: number;
   gameGroupId: string | null;
   answerTimeLimit: number | null;
+  groupPhase: "playing" | "waiting" | "result" | null;
+  groupResult: GroupLevelCompleteEvent | null;
 }
 
 interface GameActions {
@@ -74,6 +77,9 @@ interface GameActions {
   closeOverlay: () => void;
   resetGame: () => void;
   exitGame: () => void;
+  setGroupWaiting: () => void;
+  setGroupResult: (result: GroupLevelCompleteEvent) => void;
+  clearGroupPhase: () => void;
 }
 
 const initialGameState: GameState = {
@@ -97,6 +103,8 @@ const initialGameState: GameState = {
   playTime: 0,
   gameGroupId: null,
   answerTimeLimit: null,
+  groupPhase: null,
+  groupResult: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()((set) => ({
@@ -130,6 +138,8 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
       playTime: data.restored?.playTime ?? 0,
       gameGroupId: data.gameGroupId ?? null,
       answerTimeLimit: data.answerTimeLimit ?? null,
+      groupPhase: data.gameGroupId ? "playing" : null,
+      groupResult: null,
     }),
 
   nextItem: () =>
@@ -173,4 +183,8 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
     }),
 
   exitGame: () => set({ ...initialGameState }),
+
+  setGroupWaiting: () => set({ groupPhase: "waiting" }),
+  setGroupResult: (result) => set({ groupPhase: "result", groupResult: result }),
+  clearGroupPhase: () => set({ groupPhase: null, groupResult: null }),
 }));
