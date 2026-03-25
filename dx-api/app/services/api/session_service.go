@@ -744,6 +744,23 @@ func CompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, total
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	// 6. Check for group winner determination
+	if session.GameGroupID != nil {
+		result, err := CheckAndDetermineWinner(*session.GameGroupID, gameLevelID)
+		if err == nil && result != nil {
+			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_level_complete", result)
+
+			// Check if this was the last level — if so, end the round
+			var totalLevels int64
+			totalLevels, _ = facades.Orm().Query().Model(&models.GameLevel{}).
+				Where("game_id", session.GameID).Where("is_active", true).Count()
+			if int64(session.PlayedLevelsCount+1) >= totalLevels {
+				facades.Orm().Query().Model(&models.GameGroup{}).
+					Where("id", *session.GameGroupID).Update("is_playing", false)
+			}
+		}
+	}
+
 	return &CompleteLevelResult{
 		ExpEarned:      expAmount,
 		Accuracy:       accuracy,
