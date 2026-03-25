@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"time"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
@@ -180,4 +181,63 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 	})
 
 	return nil
+}
+
+// ForceEndGroupGame ends all active sessions and determines winners.
+func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+		return nil, ErrGroupNotFound
+	}
+	if group.OwnerID != userID {
+		return nil, ErrNotGroupOwner
+	}
+	if !group.IsPlaying {
+		return nil, ErrGroupNotPlaying
+	}
+
+	now := time.Now()
+
+	// End all active session levels
+	if _, err := facades.Orm().Query().Exec(
+		"UPDATE game_session_levels SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		now, groupID); err != nil {
+		return nil, fmt.Errorf("failed to end session levels: %w", err)
+	}
+
+	// End all active session totals
+	if _, err := facades.Orm().Query().Exec(
+		"UPDATE game_session_totals SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		now, groupID); err != nil {
+		return nil, fmt.Errorf("failed to end session totals: %w", err)
+	}
+
+	// Collect completed level IDs for winner determination
+	type levelIDRow struct {
+		GameLevelID string `gorm:"column:game_level_id"`
+	}
+	var levelIDs []levelIDRow
+	if err := facades.Orm().Query().Raw(
+		"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL",
+		groupID).Scan(&levelIDs); err != nil {
+		return nil, fmt.Errorf("failed to query levels: %w", err)
+	}
+
+	var results []LevelWinnerResult
+	for _, lid := range levelIDs {
+		result, err := DetermineWinnerForLevel(groupID, lid.GameLevelID)
+		if err == nil && result != nil {
+			results = append(results, *result)
+		}
+	}
+
+	// Set is_playing = false
+	facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("is_playing", false)
+
+	// Broadcast force end event
+	helpers.GroupSSEHub.Broadcast(groupID, "group_game_force_end", map[string]any{
+		"results": results,
+	})
+
+	return results, nil
 }

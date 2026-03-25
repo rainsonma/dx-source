@@ -284,6 +284,7 @@ func Api() {
 				groups.Put("/{id}/game", groupGameController.SetGame)
 				groups.Delete("/{id}/game", groupGameController.ClearGame)
 				groups.Post("/{id}/start-game", groupGameController.StartGame)
+				groups.Post("/{id}/force-end", groupGameController.ForceEnd)
 			})
 		})
 	})
