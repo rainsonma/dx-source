@@ -82,6 +82,9 @@ func SetGroupGame(userID, groupID, gameID, gameMode string) error {
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
 	}
+	if group.IsPlaying {
+		return ErrGroupIsPlaying
+	}
 
 	var game models.Game
 	if err := facades.Orm().Query().Where("id", gameID).First(&game); err != nil || game.ID == "" {
@@ -108,6 +111,9 @@ func ClearGroupGame(userID, groupID string) error {
 	}
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
+	}
+	if group.IsPlaying {
+		return ErrGroupIsPlaying
 	}
 
 	if _, err := facades.Orm().Query().Exec(

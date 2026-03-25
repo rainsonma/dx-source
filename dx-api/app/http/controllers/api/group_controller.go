@@ -95,7 +95,7 @@ func (c *GroupController) Update(ctx contractshttp.Context) contractshttp.Respon
 		return resp
 	}
 
-	if err := services.UpdateGroup(userID, id, req.Name, req.Description); err != nil {
+	if err := services.UpdateGroup(userID, id, req.Name, req.Description, req.AnswerTimeLimit); err != nil {
 		return mapGroupError(ctx, err)
 	}
 
