@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -122,5 +123,61 @@ func ClearGroupGame(userID, groupID string) error {
 	); err != nil {
 		return fmt.Errorf("failed to clear group game: %w", err)
 	}
+	return nil
+}
+
+// GroupGameStartEvent is the SSE payload for group_game_start.
+type GroupGameStartEvent struct {
+	GameGroupID     string  `json:"game_group_id"`
+	GameID          string  `json:"game_id"`
+	GameName        string  `json:"game_name"`
+	GameMode        string  `json:"game_mode"`
+	Degree          string  `json:"degree"`
+	Pattern         *string `json:"pattern"`
+	AnswerTimeLimit int     `json:"answer_time_limit"`
+}
+
+// StartGroupGame validates and initiates a group game round, broadcasting via SSE.
+func StartGroupGame(userID, groupID, degree string, pattern *string) error {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+		return ErrGroupNotFound
+	}
+	if group.OwnerID != userID {
+		return ErrNotGroupOwner
+	}
+	if group.IsPlaying {
+		return ErrGroupIsPlaying
+	}
+	if group.CurrentGameID == nil || *group.CurrentGameID == "" {
+		return ErrNoGameSet
+	}
+	if group.GameMode == nil || *group.GameMode == "" {
+		return ErrNoGameModeSet
+	}
+
+	// Fetch game name for SSE payload
+	var game models.Game
+	if err := facades.Orm().Query().Where("id", *group.CurrentGameID).First(&game); err != nil || game.ID == "" {
+		return ErrGameNotFound
+	}
+
+	// Set is_playing = true
+	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).
+		Update("is_playing", true); err != nil {
+		return fmt.Errorf("failed to set is_playing: %w", err)
+	}
+
+	// Broadcast SSE event
+	helpers.GroupSSEHub.Broadcast(groupID, "group_game_start", GroupGameStartEvent{
+		GameGroupID:     groupID,
+		GameID:          *group.CurrentGameID,
+		GameName:        game.Name,
+		GameMode:        *group.GameMode,
+		Degree:          degree,
+		Pattern:         pattern,
+		AnswerTimeLimit: group.AnswerTimeLimit,
+	})
+
 	return nil
 }

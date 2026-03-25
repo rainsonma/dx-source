@@ -90,6 +90,30 @@ func (c *GroupGameController) ClearGame(ctx contractshttp.Context) contractshttp
 	return helpers.Success(ctx, nil)
 }
 
+// StartGame initiates a group game round.
+func (c *GroupGameController) StartGame(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	groupID := ctx.Request().Route("id")
+	if groupID == "" {
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "group id is required")
+	}
+
+	var req requests.StartGroupGameRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+
+	if err := services.StartGroupGame(userID, groupID, req.Degree, req.Pattern); err != nil {
+		return mapGroupGameError(ctx, err)
+	}
+
+	return helpers.Success(ctx, nil)
+}
+
 // Events establishes a persistent SSE connection for group events.
 func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Response {
 	token := ctx.Request().Query("token", "")
@@ -152,6 +176,12 @@ func mapGroupGameError(ctx contractshttp.Context, err error) contractshttp.Respo
 		return helpers.Error(ctx, nethttp.StatusNotFound, consts.CodeNotFound, "游戏不存在")
 	case errors.Is(err, services.ErrGameNotPublished):
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "游戏未发布")
+	case errors.Is(err, services.ErrGroupIsPlaying):
+		return helpers.Error(ctx, nethttp.StatusConflict, consts.CodeValidationError, "游戏正在进行中")
+	case errors.Is(err, services.ErrNoGameSet):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "未设置当前游戏")
+	case errors.Is(err, services.ErrNoGameModeSet):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "未设置游戏模式")
 	default:
 		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}
