@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, CheckCircle2, Users } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { getAccessToken } from "@/lib/token";
 import { groupMemberApi } from "../actions/group-member.action";
 
 interface GroupInfo {
@@ -15,19 +14,17 @@ interface GroupInfo {
   owner_name: string;
 }
 
-type JoinState = "idle" | "loading" | "applied" | "already_applied";
-
 interface Props {
   code: string;
+  isLoggedIn: boolean;
 }
 
-export function GroupInviteContent({ code }: Props) {
+export function GroupInviteContent({ code, isLoggedIn }: Props) {
   const router = useRouter();
   const [group, setGroup] = useState<GroupInfo | null>(null);
   const [fetching, setFetching] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [joinState, setJoinState] = useState<JoinState>("idle");
-  const isLoggedIn = !!getAccessToken();
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     async function loadGroup() {
@@ -42,24 +39,28 @@ export function GroupInviteContent({ code }: Props) {
     loadGroup();
   }, [code]);
 
-  async function handleJoin() {
-    setJoinState("loading");
+  async function handleApply() {
+    setApplying(true);
     const res = await groupMemberApi.joinByCode(code);
+    setApplying(false);
+
     if (res.code === 0) {
-      setJoinState("applied");
+      toast.success("申请已提交，等待群主审核");
+      router.push("/hall/groups");
       return;
     }
+    // Already a member
     if (res.code === 40009) {
-      // Already a member — redirect to group page
-      router.push(`/hall/groups/${res.data?.group_id ?? ""}`);
+      toast.info("您已是该群成员");
+      router.push(`/hall/groups/${group?.id ?? ""}`);
       return;
     }
+    // Already applied
     if (res.code === 40010) {
-      // Already applied
-      setJoinState("already_applied");
+      toast.info("您已提交过申请，请等待群主审核");
+      router.push("/hall/groups");
       return;
     }
-    setJoinState("idle");
     toast.error(res.message);
   }
 
@@ -106,40 +107,23 @@ export function GroupInviteContent({ code }: Props) {
 
       {/* Action button */}
       <div className="mt-6">
-        {!isLoggedIn ? (
+        {isLoggedIn ? (
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={applying}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+          >
+            {applying && <Loader2 className="h-4 w-4 animate-spin" />}
+            申请加入
+          </button>
+        ) : (
           <button
             type="button"
             onClick={() => router.push(`/auth/signin?redirect=/g/${code}`)}
             className="flex w-full items-center justify-center rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-700"
           >
             登录后加入
-          </button>
-        ) : joinState === "applied" ? (
-          <button
-            type="button"
-            disabled
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-100 py-3 text-sm font-semibold text-teal-700"
-          >
-            <CheckCircle2 className="h-4 w-4" />
-            申请已提交，等待群主审核
-          </button>
-        ) : joinState === "already_applied" ? (
-          <button
-            type="button"
-            disabled
-            className="flex w-full items-center justify-center rounded-xl bg-muted py-3 text-sm font-semibold text-muted-foreground"
-          >
-            申请审核中...
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleJoin}
-            disabled={joinState === "loading"}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
-          >
-            {joinState === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
-            加入群组
           </button>
         )}
       </div>
