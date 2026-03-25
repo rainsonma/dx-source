@@ -206,6 +206,12 @@ func mapGroupGameError(ctx contractshttp.Context, err error) contractshttp.Respo
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "未设置当前游戏")
 	case errors.Is(err, services.ErrNoGameModeSet):
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "未设置游戏模式")
+	case errors.Is(err, services.ErrNotEnoughMembers):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
+	case errors.Is(err, services.ErrNotEnoughSubgroups):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
+	case errors.Is(err, services.ErrUnequalSubgroups):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
 	default:
 		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}

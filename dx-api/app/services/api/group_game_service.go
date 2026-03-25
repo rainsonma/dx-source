@@ -157,6 +157,33 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		return ErrNoGameModeSet
 	}
 
+	// Validate member/subgroup requirements
+	memberCount, _ := facades.Orm().Query().Model(&models.GameGroupMember{}).Where("game_group_id", groupID).Count()
+	if memberCount < 2 {
+		return ErrNotEnoughMembers
+	}
+
+	if *group.GameMode == consts.GameModeTeam {
+		type subgroupCount struct {
+			Count int64 `gorm:"column:count"`
+		}
+		var subgroups []subgroupCount
+		if err := facades.Orm().Query().Raw(
+			"SELECT COUNT(*) AS count FROM game_subgroup_members WHERE game_subgroup_id IN (SELECT id FROM game_subgroups WHERE game_group_id = ?) GROUP BY game_subgroup_id",
+			groupID).Scan(&subgroups); err != nil {
+			return fmt.Errorf("failed to check subgroup members: %w", err)
+		}
+		if len(subgroups) < 2 {
+			return ErrNotEnoughSubgroups
+		}
+		first := subgroups[0].Count
+		for _, sg := range subgroups[1:] {
+			if sg.Count != first {
+				return ErrUnequalSubgroups
+			}
+		}
+	}
+
 	// Fetch game name for SSE payload
 	var game models.Game
 	if err := facades.Orm().Query().Where("id", *group.CurrentGameID).First(&game); err != nil || game.ID == "" {

@@ -48,4 +48,7 @@ var (
 	ErrNoGameSet            = errors.New("no game set for group")
 	ErrNoGameModeSet        = errors.New("no game mode set for group")
 	ErrNotInSubgroup        = errors.New("member not in any subgroup")
+	ErrNotEnoughMembers     = errors.New("至少需要2名成员才能开始竞赛")
+	ErrNotEnoughSubgroups   = errors.New("至少需要2个小组才能开始小组竞赛")
+	ErrUnequalSubgroups     = errors.New("每个小组的成员数量必须相等")
 )
