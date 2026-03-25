@@ -14,6 +14,8 @@ import {
   Gamepad2,
   User,
   Users,
+  QrCode,
+  Download,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
@@ -344,6 +346,31 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               </button>
             </div>
           </div>
+
+          <div className="h-px bg-border" />
+
+          {/* QR Code */}
+          {group.invite_qrcode_url && (
+            <div className="flex flex-col items-center gap-3 px-1">
+              <div className="flex items-center gap-1.5">
+                <QrCode className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-muted-foreground">二维码邀请</span>
+              </div>
+              <img
+                src={group.invite_qrcode_url}
+                alt="群组邀请二维码"
+                className="h-[140px] w-[140px] rounded-[10px] border border-border"
+              />
+              <a
+                href={group.invite_qrcode_url}
+                download="group-invite-qrcode.png"
+                className="flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:underline"
+              >
+                <Download className="h-3 w-3" />
+                下载二维码
+              </a>
+            </div>
+          )}
 
           {/* Owner actions */}
           {isOwner && (
