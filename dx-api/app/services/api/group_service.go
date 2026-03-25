@@ -210,7 +210,7 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 	var currentGameName string
 	if group.CurrentGameID != nil && *group.CurrentGameID != "" {
 		var game models.Game
-		if err := facades.Orm().Query().Select("name").Where("id", *group.CurrentGameID).First(&game); err == nil && game.ID != "" {
+		if err := facades.Orm().Query().Select("id", "name").Where("id", *group.CurrentGameID).First(&game); err == nil && game.ID != "" {
 			currentGameName = game.Name
 		}
 	}

@@ -85,6 +85,8 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [setGameOpen, setSetGameOpen] = useState(false);
+  const [clearGameOpen, setClearGameOpen] = useState(false);
+  const [clearingGame, setClearingGame] = useState(false);
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");
@@ -190,9 +192,12 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   }
 
   async function handleClearGame() {
+    setClearingGame(true);
     const res = await groupApi.clearGame(id);
+    setClearingGame(false);
     if (res.code !== 0) { toast.error(res.message); return; }
     toast.success("已清除课程游戏");
+    setClearGameOpen(false);
     await swrMutate(`/api/groups/${id}`);
   }
 
@@ -275,7 +280,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={handleClearGame}
+                    onClick={() => setClearGameOpen(true)}
                     className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-500 hover:bg-red-100"
                   >
                     清除
@@ -286,15 +291,15 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
 
             {group.current_game_id ? (
               <div className="flex items-center gap-3 rounded-[10px] border border-border bg-muted px-3 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100">
-                  <span className="text-xs font-bold text-teal-600">
-                    {group.current_game_name?.[0] ?? "G"}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100">
+                  <Gamepad2 className="h-4 w-4 text-teal-600" />
+                </div>
+                <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                  <span className="truncate text-[13px] font-semibold text-foreground">
+                    {group.current_game_name || "未知游戏"}
                   </span>
                 </div>
-                <span className="flex-1 truncate text-[13px] font-medium text-foreground">
-                  {group.current_game_name}
-                </span>
-                {group.game_mode === "group" ? (
+                {group.game_mode === "team" ? (
                   <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
                     <Users className="h-3 w-3" />
                     小组
@@ -436,6 +441,25 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           currentGameMode={group.game_mode}
         />
       )}
+
+      {/* Clear game confirmation */}
+      <AlertDialog open={clearGameOpen} onOpenChange={setClearGameOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认清除课程游戏</AlertDialogTitle>
+            <AlertDialogDescription>
+              清除后群组将不再关联任何课程游戏。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleClearGame} disabled={clearingGame}>
+              {clearingGame && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              确认清除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

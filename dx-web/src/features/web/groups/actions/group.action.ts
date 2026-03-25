@@ -38,9 +38,10 @@ export const groupApi = {
   async handleApplication(groupId: string, appId: string, action: "accept" | "reject") {
     return apiClient.put<null>(`/api/groups/${groupId}/applications/${appId}`, { action });
   },
-  async searchGamesForGroup(groupId: string, q?: string) {
+  async searchGamesForGroup(groupId: string, q?: string, limit?: number) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
+    if (limit) params.set("limit", String(limit));
     const qs = params.toString();
     return apiClient.get<GroupGameSearchItem[]>(`/api/groups/${groupId}/games/search${qs ? `?${qs}` : ""}`);
   },

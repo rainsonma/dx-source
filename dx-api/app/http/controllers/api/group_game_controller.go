@@ -36,7 +36,8 @@ func (c *GroupGameController) SearchGames(ctx contractshttp.Context) contractsht
 	}
 
 	q := ctx.Request().Query("q", "")
-	items, err := services.SearchGamesForGroup(q, 20)
+	limit := ctx.Request().QueryInt("limit", 20)
+	items, err := services.SearchGamesForGroup(q, limit)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}

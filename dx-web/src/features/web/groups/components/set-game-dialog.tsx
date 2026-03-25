@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Gamepad2, Search, User, Users, Check, X } from "lucide-react";
+import { Gamepad2, Search, User, Users, Check, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { swrMutate } from "@/lib/swr";
 import { groupApi } from "../actions/group.action";
 import type { GroupGameSearchItem } from "../types/group";
@@ -24,37 +24,43 @@ export function SetGameDialog({
   currentGameMode,
 }: SetGameDialogProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [selectedMode, setSelectedMode] = useState<"solo" | "group">("solo");
+  const [selectedMode, setSelectedMode] = useState<"solo" | "team">("solo");
   const [searchQuery, setSearchQuery] = useState("");
   const [games, setGames] = useState<GroupGameSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
   const fetchGames = useCallback(
-    async (q: string) => {
+    async (q: string, limit?: number) => {
       setLoading(true);
-      const res = await groupApi.searchGamesForGroup(groupId, q || undefined);
+      const res = await groupApi.searchGamesForGroup(groupId, q || undefined, limit);
       setLoading(false);
       if (res.code === 0) setGames(res.data);
     },
     [groupId]
   );
 
-  // On open: initialize selections and load games
+  // On open: initialize and load latest 3 games
   useEffect(() => {
     if (open) {
       setSelectedGameId(currentGameId ?? null);
-      setSelectedMode(
-        currentGameMode === "group" ? "group" : "solo"
-      );
+      setSelectedMode(currentGameMode === "team" ? "team" : "solo");
       setSearchQuery("");
-      fetchGames("");
+      setIsSearching(false);
+      fetchGames("", 3);
     }
   }, [open, currentGameId, currentGameMode, fetchGames]);
 
   // Debounced search
   useEffect(() => {
     if (!open) return;
+    if (searchQuery === "") {
+      setIsSearching(false);
+      fetchGames("", 3);
+      return;
+    }
+    setIsSearching(true);
     const timer = setTimeout(() => {
       fetchGames(searchQuery);
     }, 300);
@@ -80,7 +86,8 @@ export function SetGameDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="gap-0 p-0 sm:max-w-sm">
+      <DialogContent showCloseButton={false} className="gap-0 p-0 sm:max-w-lg" aria-describedby={undefined}>
+        <DialogTitle className="sr-only">设置群课程游戏</DialogTitle>
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-5">
           <div className="flex items-center gap-3">
@@ -110,17 +117,31 @@ export function SetGameDialog({
               placeholder="搜索游戏..."
               className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
+          {/* Section label */}
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {isSearching ? "搜索结果" : "最新游戏"}
+          </span>
+
           {/* Game list */}
-          <div className="max-h-60 overflow-y-auto rounded-[10px] border border-border">
+          <div className="h-64 overflow-y-auto rounded-[10px] border border-border">
             {loading ? (
-              <div className="flex items-center justify-center py-6 text-xs text-muted-foreground">
-                加载中...
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-teal-600" />
               </div>
             ) : games.length === 0 ? (
-              <div className="flex items-center justify-center py-6 text-xs text-muted-foreground">
-                暂无游戏
+              <div className="flex items-center justify-center py-8 text-xs text-muted-foreground">
+                {isSearching ? "未找到匹配的游戏" : "暂无游戏"}
               </div>
             ) : (
               games.map((game, idx) => {
@@ -135,29 +156,18 @@ export function SetGameDialog({
                         isSelected ? "bg-teal-50" : "hover:bg-muted/50"
                       }`}
                     >
-                      {/* Avatar */}
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100">
-                        <span className="text-xs font-bold text-teal-600">
-                          {game.name[0]}
-                        </span>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-100">
+                        <span className="text-xs font-bold text-teal-600">{game.name[0]}</span>
                       </div>
-                      {/* Info */}
                       <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                        <span className="truncate text-[13px] font-medium text-foreground">
-                          {game.name}
-                        </span>
+                        <span className="truncate text-[13px] font-medium text-foreground">{game.name}</span>
                         {game.category_name && (
-                          <span className="text-[11px] text-muted-foreground">
-                            {game.category_name}
-                          </span>
+                          <span className="text-[11px] text-muted-foreground">{game.category_name}</span>
                         )}
                       </div>
-                      {/* Radio */}
                       <div
-                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                          isSelected
-                            ? "border-teal-600 bg-teal-600"
-                            : "border-border"
+                        className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border-2 ${
+                          isSelected ? "border-teal-600 bg-teal-600" : "border-border"
                         }`}
                       >
                         {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
@@ -185,9 +195,9 @@ export function SetGameDialog({
             </button>
             <button
               type="button"
-              onClick={() => setSelectedMode("group")}
+              onClick={() => setSelectedMode("team")}
               className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-medium transition-colors ${
-                selectedMode === "group"
+                selectedMode === "team"
                   ? "bg-teal-600 text-white"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -204,7 +214,11 @@ export function SetGameDialog({
             disabled={confirming || !selectedGameId}
             className="flex h-[50px] w-full items-center justify-center gap-2 rounded-[12px] bg-teal-600 text-[14px] font-semibold text-white transition-opacity hover:bg-teal-700 disabled:opacity-50"
           >
-            <Check className="h-4 w-4" />
+            {confirming ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
             确认设置
           </button>
         </div>
