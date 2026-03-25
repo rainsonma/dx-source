@@ -121,9 +121,6 @@ func KickMember(userID, groupID, targetUserID string) error {
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
 	}
-	if targetUserID == userID {
-		return ErrCannotLeaveOwned
-	}
 	return removeMemberFromGroup(groupID, targetUserID)
 }
 
@@ -132,9 +129,6 @@ func LeaveGroup(userID, groupID string) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
-	}
-	if group.OwnerID == userID {
-		return ErrCannotLeaveOwned
 	}
 	return removeMemberFromGroup(groupID, userID)
 }

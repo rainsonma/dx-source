@@ -142,7 +142,7 @@ export function GroupListContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={applying}>取消</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApplyConfirm} disabled={applying}>
+            <AlertDialogAction onClick={handleApplyConfirm} disabled={applying} className="bg-teal-600 hover:bg-teal-700">
               {applying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               确认申请
             </AlertDialogAction>

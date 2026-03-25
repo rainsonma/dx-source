@@ -75,6 +75,10 @@ func Api() {
 		publicGroupMemberController := apicontrollers.NewGroupMemberController()
 		router.Get("/groups/invite/{code}", publicGroupMemberController.GetInviteInfo)
 
+		// Group SSE events (query-param auth, not JWT middleware)
+		groupGameController := apicontrollers.NewGroupGameController()
+		router.Get("/groups/{id}/events", groupGameController.Events)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)
@@ -279,6 +283,8 @@ func Api() {
 				groups.Get("/{id}/games/search", groupGameController.SearchGames)
 				groups.Put("/{id}/game", groupGameController.SetGame)
 				groups.Delete("/{id}/game", groupGameController.ClearGame)
+				groups.Post("/{id}/start-game", groupGameController.StartGame)
+				groups.Post("/{id}/force-end", groupGameController.ForceEnd)
 			})
 		})
 	})

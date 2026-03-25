@@ -287,8 +287,8 @@ func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 	}, nil
 }
 
-// UpdateGroup updates the name and optionally the description of a group.
-func UpdateGroup(userID, groupID, name string, description *string) error {
+// UpdateGroup updates the name, description, and optionally the answer time limit of a group.
+func UpdateGroup(userID, groupID, name string, description *string, answerTimeLimit *int) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -300,6 +300,9 @@ func UpdateGroup(userID, groupID, name string, description *string) error {
 	updates := map[string]any{"name": name}
 	if description != nil {
 		updates["description"] = *description
+	}
+	if answerTimeLimit != nil {
+		updates["answer_time_limit"] = *answerTimeLimit
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(updates); err != nil {
@@ -316,6 +319,9 @@ func DeleteGroup(userID, groupID string) error {
 	}
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
+	}
+	if group.IsPlaying {
+		return ErrGroupIsPlaying
 	}
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {

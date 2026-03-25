@@ -41,6 +41,32 @@ func IssueAccessToken(userID, authID string) (string, error) {
 	return token.SignedString([]byte(secret))
 }
 
+// ParseJWTUserID validates a JWT token string and returns the user ID.
+// Used for SSE endpoints where the token is passed as a query parameter.
+func ParseJWTUserID(tokenString string) (string, error) {
+	secret := facades.Config().GetString("jwt.secret", "")
+	if secret == "" {
+		return "", fmt.Errorf("JWT_SECRET is not configured")
+	}
+
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return "", fmt.Errorf("invalid token: %w", err)
+	}
+
+	claims, ok := token.Claims.(*Claims)
+	if !ok || !token.Valid || claims.Key == "" {
+		return "", fmt.Errorf("invalid token claims")
+	}
+
+	return claims.Key, nil
+}
+
 // ExtractAuthID reads the auth_id claim from a Bearer token without re-verifying
 // the signature. Only call AFTER Goravel's Parse() has validated the token.
 func ExtractAuthID(bearerToken string) string {

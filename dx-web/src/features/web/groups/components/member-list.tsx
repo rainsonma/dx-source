@@ -152,7 +152,7 @@ export function MemberList({
                   <span className="text-[13px] font-semibold text-foreground">{m.user_name}</span>
                   {m.is_owner && <span className="text-[11px] text-muted-foreground">创建者</span>}
                 </div>
-                {isOwner && !m.is_owner && (
+                {isOwner && (
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onKick(m.user_id); }}
