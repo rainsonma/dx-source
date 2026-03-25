@@ -6,6 +6,7 @@ import { Loader2, Play } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -56,6 +57,7 @@ export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: Star
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>开始游戏</DialogTitle>
+          <DialogDescription>选择难度和模式后开始群组游戏</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
