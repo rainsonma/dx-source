@@ -71,6 +71,8 @@ export function GroupCard({ group, isMember = true, highlighted = false, onJoin 
           </div>
           {isMember ? (
             <span className="rounded-md bg-teal-600/10 px-2.5 py-1 text-[11px] font-medium text-teal-600">已加入</span>
+          ) : group.has_applied ? (
+            <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600">申请审核中...</span>
           ) : (
             <button
               type="button"

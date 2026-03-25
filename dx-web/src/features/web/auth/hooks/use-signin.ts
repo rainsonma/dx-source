@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api-client";
 import { setAccessToken } from "@/lib/token";
@@ -23,6 +23,8 @@ const COUNTDOWN_SECONDS = 60;
 
 export function useSignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/hall";
 
   const [activeTab, setActiveTab] = useState<Tab>("account");
 
@@ -53,13 +55,13 @@ export function useSignIn() {
   // Redirect on successful login (either method)
   useEffect(() => {
     if (emailState.success) {
-      router.push("/hall");
+      router.push(redirectTo);
     }
   }, [emailState, router]);
 
   useEffect(() => {
     if (accountState.success) {
-      router.push("/hall");
+      router.push(redirectTo);
     }
   }, [accountState, router]);
 

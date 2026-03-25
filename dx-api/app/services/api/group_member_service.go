@@ -139,33 +139,19 @@ func LeaveGroup(userID, groupID string) error {
 	return removeMemberFromGroup(groupID, userID)
 }
 
-// JoinByCode adds a user to a group via invite code, returning the group ID.
+// JoinByCode submits a join application for a group via invite code, returning the group ID.
 func JoinByCode(userID, code string) (string, error) {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("invite_code", code).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return "", ErrGroupNotFound
 	}
 
-	var member models.GameGroupMember
-	if err := facades.Orm().Query().Where("game_group_id", group.ID).Where("user_id", userID).First(&member); err == nil && member.ID != "" {
+	var existing models.GameGroupMember
+	if err := facades.Orm().Query().Where("game_group_id", group.ID).Where("user_id", userID).First(&existing); err == nil && existing.ID != "" {
 		return "", ErrAlreadyMember
 	}
 
-	err := facades.Orm().Transaction(func(tx orm.Query) error {
-		newMember := models.GameGroupMember{
-			ID:          newID(),
-			GameGroupID: group.ID,
-			UserID:      userID,
-		}
-		if err := tx.Create(&newMember); err != nil {
-			return fmt.Errorf("failed to create member: %w", err)
-		}
-		if _, err := tx.Exec("UPDATE game_groups SET member_count = member_count + 1 WHERE id = ?", group.ID); err != nil {
-			return fmt.Errorf("failed to increment member_count: %w", err)
-		}
-		return nil
-	})
-	if err != nil {
+	if _, err := ApplyToGroup(userID, group.ID); err != nil {
 		return "", err
 	}
 	return group.ID, nil

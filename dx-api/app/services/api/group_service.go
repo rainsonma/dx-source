@@ -26,6 +26,7 @@ type GroupListItem struct {
 	MemberCount int     `json:"member_count"`
 	InviteCode  string  `json:"invite_code"`
 	IsMember    bool    `json:"is_member"`
+	HasApplied  bool    `json:"has_applied"`
 	IsOwner     bool    `json:"is_owner"`
 	CreatedAt   string  `json:"created_at"`
 }
@@ -93,6 +94,7 @@ type groupRow struct {
 	MemberCount int     `gorm:"column:member_count"`
 	InviteCode  string  `gorm:"column:invite_code"`
 	IsMember    bool    `gorm:"column:is_member"`
+	HasApplied  bool    `gorm:"column:has_applied"`
 	CreatedAt   string  `gorm:"column:created_at"`
 }
 
@@ -109,7 +111,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			SELECT g.id, g.name, g.description, g.owner_id,
 			       COALESCE(u.nickname, u.username) AS owner_name,
 			       g.member_count, g.invite_code,
-			       true AS is_member,
+			       true AS is_member, false AS has_applied,
 			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
 			FROM game_groups g
 			JOIN users u ON u.id = g.owner_id
@@ -121,7 +123,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			SELECT g.id, g.name, g.description, g.owner_id,
 			       COALESCE(u.nickname, u.username) AS owner_name,
 			       g.member_count, g.invite_code,
-			       true AS is_member,
+			       true AS is_member, false AS has_applied,
 			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
 			FROM game_groups g
 			JOIN game_group_members m ON m.game_group_id = g.id
@@ -129,18 +131,20 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			WHERE m.user_id = ? AND g.owner_id != ? AND g.is_active = true`
 		args = []any{userID, userID}
 	default:
-		// All active groups — use LEFT JOIN so non-members can see groups too
+		// All active groups — LEFT JOIN members + pending applications
 		base = `
 			SELECT g.id, g.name, g.description, g.owner_id,
 			       COALESCE(u.nickname, u.username) AS owner_name,
 			       g.member_count, g.invite_code,
 			       (m.id IS NOT NULL) AS is_member,
+			       (a.id IS NOT NULL) AS has_applied,
 			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
 			FROM game_groups g
 			JOIN users u ON u.id = g.owner_id
 			LEFT JOIN game_group_members m ON m.game_group_id = g.id AND m.user_id = ?
+			LEFT JOIN game_group_applications a ON a.game_group_id = g.id AND a.user_id = ? AND a.status = 'pending'
 			WHERE g.is_active = true`
-		args = []any{userID}
+		args = []any{userID, userID}
 	}
 
 	if cursor != "" {
@@ -172,6 +176,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			MemberCount: r.MemberCount,
 			InviteCode:  r.InviteCode,
 			IsMember:    r.IsMember,
+			HasApplied:  r.HasApplied,
 			IsOwner:     r.OwnerID == userID,
 			CreatedAt:   r.CreatedAt,
 		})
@@ -229,6 +234,36 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		CurrentGameID:   group.CurrentGameID,
 		GameMode:        group.GameMode,
 		CurrentGameName: currentGameName,
+	}, nil
+}
+
+// GroupInviteInfo holds public info about a group for the invite link preview.
+type GroupInviteInfo struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	MemberCount int     `json:"member_count"`
+	OwnerName   string  `json:"owner_name"`
+}
+
+// GetGroupByInviteCode returns public group info for a given invite code (no auth required).
+func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("invite_code", code).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+		return nil, ErrGroupNotFound
+	}
+	var owner models.User
+	_ = facades.Orm().Query().Where("id", group.OwnerID).First(&owner)
+	ownerName := owner.Username
+	if owner.Nickname != nil && *owner.Nickname != "" {
+		ownerName = *owner.Nickname
+	}
+	return &GroupInviteInfo{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		MemberCount: group.MemberCount,
+		OwnerName:   ownerName,
 	}, nil
 }
 
