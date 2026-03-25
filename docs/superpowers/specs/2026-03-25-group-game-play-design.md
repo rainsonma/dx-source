@@ -42,14 +42,18 @@ Connect the existing game group feature to actual game play. Groups currently se
 
 **Index:** `(game_group_id)` WHERE `game_group_id IS NOT NULL`
 
-**Unique active session index change:** The existing unique index on `(user_id, game_id, degree, COALESCE(pattern, ''))` WHERE `ended_at IS NULL` must be extended to include `COALESCE(game_group_id, '')`. This allows a user to have both a regular solo session and a group session for the same game+degree+pattern simultaneously.
+**Unique active session index change:** The existing unique index on `(user_id, game_id, degree, COALESCE(pattern, ''))` WHERE `ended_at IS NULL` must be replaced with two partial unique indexes to support group sessions:
+1. `(user_id, game_id, degree, COALESCE(pattern, ''))` WHERE `ended_at IS NULL AND game_group_id IS NULL` — for regular (non-group) sessions
+2. `(user_id, game_id, degree, COALESCE(pattern, ''), game_group_id)` WHERE `ended_at IS NULL AND game_group_id IS NOT NULL` — for group sessions
+
+This allows a user to have both a regular session and a group session for the same game+degree+pattern simultaneously, while preventing duplicates within each context.
 
 ### Alter `game_session_levels`
 
 | Column | Type | Default | Description |
 |--------|------|---------|-------------|
-| `game_group_id` | TEXT (FK → game_groups) | NULL | Links level session to group |
-| `game_subgroup_id` | TEXT (FK → game_subgroups) | NULL | Links level session to subgroup (team mode only, NULL in solo) |
+| `game_group_id` | UUID (FK → game_groups) | NULL | Links level session to group |
+| `game_subgroup_id` | UUID (FK → game_subgroups) | NULL | Links level session to subgroup (team mode only, NULL in solo) |
 
 **Index:** `(game_group_id, game_level_id)` WHERE `game_group_id IS NOT NULL`
 
