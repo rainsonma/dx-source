@@ -17,6 +17,7 @@ export type GroupDetail = Group & {
   current_game_id: string | null;
   game_mode: string | null;
   current_game_name: string | null;
+  invite_qrcode_url: string | null;
 };
 
 export type GroupGameSearchItem = {

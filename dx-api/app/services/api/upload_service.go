@@ -33,6 +33,7 @@ var validRoles = map[string]bool{
 	consts.ImageRolePressCover:     true,
 	consts.ImageRoleGameGroupCover: true,
 	consts.ImageRolePostImage:      true,
+	consts.ImageRoleGroupQrcode:    true,
 }
 
 // UploadImageResult holds the response data after a successful upload.

@@ -14,6 +14,8 @@ import {
   Gamepad2,
   User,
   Users,
+  QrCode,
+  Download,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
@@ -188,7 +190,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
     if (!group) return;
     const link = `${window.location.origin}/g/${group.invite_code}`;
     await navigator.clipboard.writeText(link);
-    toast.success("已复制邀请链接");
+    toast.success("已复制群邀请链接");
   }
 
   async function handleClearGame() {
@@ -331,7 +333,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           <div className="flex flex-col gap-1.5 px-1">
             <div className="flex items-center gap-1.5">
               <Link2 className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-[11px] font-semibold text-muted-foreground">邀请链接</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">群邀请链接</span>
             </div>
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
               <span className="flex-1 truncate text-[11px] text-muted-foreground">
@@ -344,6 +346,33 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               </button>
             </div>
           </div>
+
+          <div className="h-px bg-border" />
+
+          {/* QR Code */}
+          {group.invite_qrcode_url && (
+            <div className="flex flex-col gap-3 px-1">
+              <div className="flex items-center gap-1.5">
+                <QrCode className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-[11px] font-semibold text-muted-foreground">群邀请二维码</span>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <img
+                  src={group.invite_qrcode_url}
+                  alt="群组邀请二维码"
+                  className="h-[140px] w-[140px] rounded-[10px] border border-border"
+                />
+                <a
+                  href={group.invite_qrcode_url}
+                  download="group-invite-qrcode.png"
+                  className="flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:underline"
+                >
+                  <Download className="h-3 w-3" />
+                  下载二维码
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Owner actions */}
           {isOwner && (
