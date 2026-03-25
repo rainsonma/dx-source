@@ -32,10 +32,16 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 		return resp
 	}
 
-	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID)
+	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID, req.GameGroupID)
 	if err != nil {
 		if errors.Is(err, services.ErrNoGameLevels) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
+		}
+		if errors.Is(err, services.ErrGroupNotFound) {
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeGroupNotFound, "group not found")
+		}
+		if errors.Is(err, services.ErrNotInSubgroup) {
+			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "member not in any subgroup")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start session")
 	}
