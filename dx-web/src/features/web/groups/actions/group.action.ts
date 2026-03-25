@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { CursorPaginated } from "@/lib/api-client";
-import type { Group, GroupDetail, GroupApplication, GroupGameSearchItem } from "../types/group";
+import type { Group, GroupDetail, GroupApplication, GroupGameSearchItem, GroupLevelCompleteEvent } from "../types/group";
 
 export const groupApi = {
   async list(params?: { tab?: string; cursor?: string; limit?: number }) {
@@ -50,5 +50,11 @@ export const groupApi = {
   },
   async clearGame(groupId: string) {
     return apiClient.delete<null>(`/api/groups/${groupId}/game`);
+  },
+  async startGame(groupId: string, degree: string, pattern?: string) {
+    return apiClient.post<null>(`/api/groups/${groupId}/start-game`, { degree, pattern });
+  },
+  async forceEnd(groupId: string) {
+    return apiClient.post<{ results: GroupLevelCompleteEvent[] }>(`/api/groups/${groupId}/force-end`);
   },
 };

@@ -18,6 +18,41 @@ export type GroupDetail = Group & {
   game_mode: string | null;
   current_game_name: string | null;
   invite_qrcode_url: string | null;
+  answer_time_limit: number;
+  is_playing: boolean;
+};
+
+export type GroupGameStartEvent = {
+  game_group_id: string;
+  game_id: string;
+  game_name: string;
+  game_mode: "solo" | "team";
+  degree: string;
+  pattern: string | null;
+  answer_time_limit: number;
+};
+
+export type SoloWinner = {
+  user_id: string;
+  user_name: string;
+  score: number;
+};
+
+export type TeamWinner = {
+  subgroup_id: string;
+  subgroup_name: string;
+  total_score: number;
+  members: { user_id: string; user_name: string; score: number }[];
+};
+
+export type GroupLevelCompleteEvent = {
+  game_level_id: string;
+  mode: "solo" | "team";
+  winner: SoloWinner | TeamWinner;
+};
+
+export type GroupForceEndEvent = {
+  results: GroupLevelCompleteEvent[];
 };
 
 export type GroupGameSearchItem = {
