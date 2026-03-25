@@ -97,7 +97,7 @@ export function StartGameDialog({ groupId, open, onOpenChange, onStarted }: Star
               ))}
             </div>
           </div>
-          <Button onClick={handleStart} disabled={loading} className="w-full">
+          <Button onClick={handleStart} disabled={loading} className="w-full bg-teal-600 hover:bg-teal-700">
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
             开始游戏
           </Button>
