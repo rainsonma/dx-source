@@ -79,7 +79,20 @@ func (c *GroupMemberController) Leave(ctx contractshttp.Context) contractshttp.R
 	return helpers.Success(ctx, nil)
 }
 
-// JoinByCode adds the user to a group via invite code.
+// GetInviteInfo returns public group info for a given invite code (no auth required).
+func (c *GroupMemberController) GetInviteInfo(ctx contractshttp.Context) contractshttp.Response {
+	code := ctx.Request().Route("code")
+	if code == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invite code is required")
+	}
+	info, err := services.GetGroupByInviteCode(code)
+	if err != nil {
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeGroupNotFound, "邀请链接无效或群组已关闭")
+	}
+	return helpers.Success(ctx, info)
+}
+
+// JoinByCode submits a join application for a group via invite code.
 func (c *GroupMemberController) JoinByCode(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {

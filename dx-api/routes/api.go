@@ -71,6 +71,10 @@ func Api() {
 			email.Post("/send-signin-code", emailController.SendSignInCode)
 		})
 
+		// Public group invite info (no auth required)
+		publicGroupMemberController := apicontrollers.NewGroupMemberController()
+		router.Get("/groups/invite/{code}", publicGroupMemberController.GetInviteInfo)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)

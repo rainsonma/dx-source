@@ -232,6 +232,36 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 	}, nil
 }
 
+// GroupInviteInfo holds public info about a group for the invite link preview.
+type GroupInviteInfo struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Description *string `json:"description"`
+	MemberCount int     `json:"member_count"`
+	OwnerName   string  `json:"owner_name"`
+}
+
+// GetGroupByInviteCode returns public group info for a given invite code (no auth required).
+func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("invite_code", code).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+		return nil, ErrGroupNotFound
+	}
+	var owner models.User
+	_ = facades.Orm().Query().Where("id", group.OwnerID).First(&owner)
+	ownerName := owner.Username
+	if owner.Nickname != nil && *owner.Nickname != "" {
+		ownerName = *owner.Nickname
+	}
+	return &GroupInviteInfo{
+		ID:          group.ID,
+		Name:        group.Name,
+		Description: group.Description,
+		MemberCount: group.MemberCount,
+		OwnerName:   ownerName,
+	}, nil
+}
+
 // UpdateGroup updates the name and optionally the description of a group.
 func UpdateGroup(userID, groupID, name string, description *string) error {
 	var group models.GameGroup
