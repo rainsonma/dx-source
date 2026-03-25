@@ -328,26 +328,27 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                     </span>
                   )}
                 </div>
-                {isOwner && !group.is_playing && (
-                  <button
-                    type="button"
-                    onClick={() => setStartGameOpen(true)}
-                    className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
-                  >
-                    <Play className="h-3.5 w-3.5" />
-                    开始游戏
-                  </button>
-                )}
-                {isOwner && group.is_playing && (
-                  <button
-                    type="button"
-                    onClick={handleForceEnd}
-                    disabled={forceEnding}
-                    className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-red-500 py-2 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {forceEnding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Square className="h-3.5 w-3.5" />}
-                    强制结束
-                  </button>
+                {isOwner && (
+                  group.is_playing ? (
+                    <button
+                      type="button"
+                      onClick={handleForceEnd}
+                      disabled={forceEnding}
+                      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-red-500 py-2 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
+                    >
+                      {forceEnding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Square className="h-3.5 w-3.5" />}
+                      游戏中，强制结束
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setStartGameOpen(true)}
+                      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                      开始游戏
+                    </button>
+                  )
                 )}
               </>
             ) : isOwner ? (
