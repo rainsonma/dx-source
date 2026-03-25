@@ -75,6 +75,10 @@ func Api() {
 		publicGroupMemberController := apicontrollers.NewGroupMemberController()
 		router.Get("/groups/invite/{code}", publicGroupMemberController.GetInviteInfo)
 
+		// Group SSE events (query-param auth, not JWT middleware)
+		groupGameController := apicontrollers.NewGroupGameController()
+		router.Get("/groups/{id}/events", groupGameController.Events)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)
