@@ -5,3 +5,8 @@ const (
 	ApplicationStatusAccepted = "accepted"
 	ApplicationStatusRejected = "rejected"
 )
+
+const (
+	GameModeSolo = "solo"
+	GameModeTeam = "team"
+)

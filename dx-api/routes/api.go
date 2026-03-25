@@ -269,6 +269,12 @@ func Api() {
 				groups.Get("/{id}/subgroups/{sid}/members", groupSubgroupController.ListMembers)
 				groups.Post("/{id}/subgroups/{sid}/members", groupSubgroupController.Assign)
 				groups.Delete("/{id}/subgroups/{sid}/members/{userId}", groupSubgroupController.RemoveMember)
+
+				// Group game
+				groupGameController := apicontrollers.NewGroupGameController()
+				groups.Get("/{id}/games/search", groupGameController.SearchGames)
+				groups.Put("/{id}/game", groupGameController.SetGame)
+				groups.Delete("/{id}/game", groupGameController.ClearGame)
 			})
 		})
 	})

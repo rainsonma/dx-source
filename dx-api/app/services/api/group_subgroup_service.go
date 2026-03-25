@@ -25,8 +25,8 @@ type SubgroupMemberItem struct {
 	UserName string `json:"user_name"`
 }
 
-// verifyGroupOwnership checks that userID is the owner of groupID.
-func verifyGroupOwnership(userID, groupID string) error {
+// VerifyGroupOwnership checks that userID is the owner of groupID.
+func VerifyGroupOwnership(userID, groupID string) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -39,7 +39,7 @@ func verifyGroupOwnership(userID, groupID string) error {
 
 // CreateSubgroup creates a new subgroup in the given group.
 func CreateSubgroup(userID, groupID, name string) (string, error) {
-	if err := verifyGroupOwnership(userID, groupID); err != nil {
+	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return "", err
 	}
 
@@ -111,7 +111,7 @@ func ListSubgroups(userID, groupID string) ([]SubgroupItem, error) {
 
 // UpdateSubgroup updates the name of a subgroup.
 func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
-	if err := verifyGroupOwnership(userID, groupID); err != nil {
+	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
 
@@ -128,7 +128,7 @@ func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
 
 // DeleteSubgroup removes a subgroup and all its members.
 func DeleteSubgroup(userID, groupID, subgroupID string) error {
-	if err := verifyGroupOwnership(userID, groupID); err != nil {
+	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
 
@@ -186,7 +186,7 @@ func ListSubgroupMembers(userID, groupID, subgroupID string) ([]SubgroupMemberIt
 
 // AssignSubgroupMembers adds a list of group members to a subgroup.
 func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []string) error {
-	if err := verifyGroupOwnership(userID, groupID); err != nil {
+	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
 
@@ -232,7 +232,7 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 
 // RemoveSubgroupMember removes a single member from a subgroup.
 func RemoveSubgroupMember(userID, groupID, subgroupID, targetUserID string) error {
-	if err := verifyGroupOwnership(userID, groupID); err != nil {
+	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
 

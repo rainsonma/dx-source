@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import type { CursorPaginated } from "@/lib/api-client";
-import type { Group, GroupDetail, GroupApplication } from "../types/group";
+import type { Group, GroupDetail, GroupApplication, GroupGameSearchItem } from "../types/group";
 
 export const groupApi = {
   async list(params?: { tab?: string; cursor?: string; limit?: number }) {
@@ -37,5 +37,18 @@ export const groupApi = {
   },
   async handleApplication(groupId: string, appId: string, action: "accept" | "reject") {
     return apiClient.put<null>(`/api/groups/${groupId}/applications/${appId}`, { action });
+  },
+  async searchGamesForGroup(groupId: string, q?: string, limit?: number) {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (limit) params.set("limit", String(limit));
+    const qs = params.toString();
+    return apiClient.get<GroupGameSearchItem[]>(`/api/groups/${groupId}/games/search${qs ? `?${qs}` : ""}`);
+  },
+  async setGame(groupId: string, gameId: string, gameMode: string) {
+    return apiClient.put<null>(`/api/groups/${groupId}/game`, { game_id: gameId, game_mode: gameMode });
+  },
+  async clearGame(groupId: string) {
+    return apiClient.delete<null>(`/api/groups/${groupId}/game`);
   },
 };
