@@ -40,6 +40,8 @@ interface GameState {
   wrongCount: number;
   skipCount: number;
   playTime: number;
+  gameGroupId: string | null;
+  answerTimeLimit: number | null;
 }
 
 interface GameActions {
@@ -53,6 +55,8 @@ interface GameActions {
     levelId: string;
     contentItems: ContentItem[];
     startFromIndex: number;
+    gameGroupId?: string | null;
+    answerTimeLimit?: number | null;
     restored?: {
       score: number;
       maxCombo: number;
@@ -91,6 +95,8 @@ const initialGameState: GameState = {
   wrongCount: 0,
   skipCount: 0,
   playTime: 0,
+  gameGroupId: null,
+  answerTimeLimit: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()((set) => ({
@@ -122,6 +128,8 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
       wrongCount: data.restored?.wrongCount ?? 0,
       skipCount: data.restored?.skipCount ?? 0,
       playTime: data.restored?.playTime ?? 0,
+      gameGroupId: data.gameGroupId ?? null,
+      answerTimeLimit: data.answerTimeLimit ?? null,
     }),
 
   nextItem: () =>

@@ -4,7 +4,8 @@ export async function startSessionAction(
   gameId: string,
   degree?: string,
   levelId?: string,
-  pattern?: string
+  pattern?: string,
+  gameGroupId?: string
 ) {
   try {
     const res = await sessionApi.startSession({
@@ -12,6 +13,7 @@ export async function startSessionAction(
       degree,
       level_id: levelId,
       pattern,
+      ...(gameGroupId && { game_group_id: gameGroupId }),
     });
     if (res.code !== 0) return { data: null, error: res.message || "无法开始游戏" };
     return { data: res.data, error: null };

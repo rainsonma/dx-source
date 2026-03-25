@@ -82,6 +82,8 @@ interface GameLoadingScreenProps {
   pattern?: string;
   levelId?: string;
   levelName?: string;
+  groupId?: string;
+  answerTimeLimit?: number;
 }
 
 export function GameLoadingScreen({
@@ -92,6 +94,8 @@ export function GameLoadingScreen({
   pattern,
   levelId,
   levelName,
+  groupId,
+  answerTimeLimit,
 }: GameLoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +123,7 @@ export function GameLoadingScreen({
         setProgress(0);
 
         // Step 1: Start/resume session
-        const sessionResult = await startSessionAction(gameId, degree, levelId, pattern);
+        const sessionResult = await startSessionAction(gameId, degree, levelId, pattern, groupId);
         if (cancelled) return;
         if (sessionResult.error || !sessionResult.data) {
           setError(sessionResult.error ?? "无法开始游戏");
@@ -204,6 +208,8 @@ export function GameLoadingScreen({
           levelId: resolvedLevelId,
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
+          gameGroupId: groupId ?? null,
+          answerTimeLimit: answerTimeLimit ?? null,
           ...(restored && { restored }),
         });
       } catch {
@@ -214,7 +220,7 @@ export function GameLoadingScreen({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameMode, degree, pattern, levelId, initSession, retryCount]);
+  }, [gameId, gameMode, degree, pattern, levelId, groupId, answerTimeLimit, initSession, retryCount]);
 
   function handleRetry() {
     setError(null);
