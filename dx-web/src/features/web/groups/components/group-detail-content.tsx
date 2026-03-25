@@ -186,7 +186,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
 
   async function handleCopyInvite() {
     if (!group) return;
-    const link = `${window.location.origin}/hall/groups/join/${group.invite_code}`;
+    const link = `${window.location.origin}/g/${group.invite_code}`;
     await navigator.clipboard.writeText(link);
     toast.success("已复制邀请链接");
   }
@@ -336,8 +336,8 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
             <div className="flex items-center gap-2 rounded-lg border border-border bg-muted px-2.5 py-2">
               <span className="flex-1 truncate text-[11px] text-muted-foreground">
                 {typeof window !== "undefined"
-                  ? `${window.location.origin}/hall/groups/join/${group.invite_code}`
-                  : `/hall/groups/join/${group.invite_code}`}
+                  ? `${window.location.origin}/g/${group.invite_code}`
+                  : `/g/${group.invite_code}`}
               </span>
               <button type="button" onClick={handleCopyInvite}>
                 <Copy className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />

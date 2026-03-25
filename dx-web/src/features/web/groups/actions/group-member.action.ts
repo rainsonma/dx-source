@@ -18,4 +18,13 @@ export const groupMemberApi = {
   async joinByCode(code: string) {
     return apiClient.post<{ group_id: string }>(`/api/groups/join/${code}`);
   },
+  async getGroupByInviteCode(code: string) {
+    return apiClient.get<{
+      id: string;
+      name: string;
+      description: string | null;
+      member_count: number;
+      owner_name: string;
+    }>(`/api/groups/invite/${code}`);
+  },
 };
