@@ -21,7 +21,6 @@ func (r *M20260322000030CreateGameSubgroupsTable) Up() error {
 			table.Text("name").Default("")
 			table.Text("description").Nullable()
 			table.Double("order").Default(0)
-			table.TimestampTz("last_won_at").Nullable()
 			table.TimestampsTz()
 			table.Index("game_group_id")
 			table.Index("order")

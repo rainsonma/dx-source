@@ -27,8 +27,6 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.Boolean("is_active").Default(true)
 			table.Integer("member_count").Default(0)
 			table.Text("game_mode").Nullable()
-			table.Integer("answer_time_limit").Default(10)
-			table.Boolean("is_playing").Default(false)
 			table.TimestampsTz()
 			table.Unique("invite_code")
 			table.Index("owner_id")
