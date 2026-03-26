@@ -21,7 +21,7 @@ import {
 } from "@/features/web/play-core/actions/session.action";
 import { toast } from "sonner";
 
-export function LsrwGame() {
+export function GameLsrw() {
   const {
     inputValue,
     setInputValue,

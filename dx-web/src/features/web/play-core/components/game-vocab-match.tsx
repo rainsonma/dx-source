@@ -16,7 +16,7 @@ const matchDefs = [
   { def: "橘子", matched: false },
 ];
 
-export function VocabMatchGame() {
+export function GameVocabMatch() {
   return (
     <div className="flex w-full max-w-3xl flex-col gap-7 rounded-[20px] border border-border bg-card p-6 shadow-sm md:p-8">
       {/* Progress */}

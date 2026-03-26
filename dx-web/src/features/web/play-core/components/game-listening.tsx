@@ -9,7 +9,7 @@ const listeningOptions = [
 
 const waveformHeights = [14, 20, 10, 22, 12, 18, 24, 11, 16, 21, 13, 19, 15, 23, 10, 17, 22, 12, 20, 14, 18, 11, 16, 24];
 
-export function ListeningGame() {
+export function GameListening() {
   return (
     <div className="flex w-full max-w-[720px] flex-col gap-7 rounded-[20px] border border-border bg-card p-6 shadow-sm md:p-8">
       {/* Progress */}

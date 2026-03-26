@@ -226,7 +226,7 @@ export function GroupPlayLoadingScreen({
 
         // Init group store (shell state management)
         initGroupSession(sessionInit);
-        // Init game store (required by shared game components like LsrwGame)
+        // Init game store (required by shared game components like GameLsrw)
         initGameSession(sessionInit);
       } catch {
         if (!cancelled) setError("加载失败，请重试");

@@ -29,7 +29,7 @@ const elimGrid: { text: string; state: BlockState }[][] = [
   ],
 ];
 
-export function VocabEliminationGame() {
+export function GameVocabElimination() {
   return (
     <div className="flex w-full max-w-[700px] flex-col items-center gap-5">
       {/* Status row */}

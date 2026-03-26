@@ -18,7 +18,7 @@ const myLetters = [
 ];
 const keyboardLetters = ["H", "O", "L", "E", "L"];
 
-export function VocabBattleGame() {
+export function GameVocabBattle() {
   return (
     <div className="flex w-full max-w-[760px] flex-col rounded-[20px] border border-border bg-card shadow-sm">
       {/* Opponent zone */}

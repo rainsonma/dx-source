@@ -12,11 +12,11 @@ import { GameSettingsModal } from "@/features/web/play-core/components/game-sett
 import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
 import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
-import { LsrwGame } from "@/features/web/play-core/components/lsrw-game";
-import { VocabMatchGame } from "@/features/web/play-core/components/vocab-match-game";
-import { ListeningGame } from "@/features/web/play-core/components/listening-game";
-import { VocabEliminationGame } from "@/features/web/play-core/components/vocab-elimination-game";
-import { VocabBattleGame } from "@/features/web/play-core/components/vocab-battle-game";
+import { GameLsrw } from "@/features/web/play-core/components/game-lsrw";
+import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
+import { GameListening } from "@/features/web/play-core/components/game-listening";
+import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
+import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
 import { useGroupPlayEvents } from "../hooks/use-group-play-events";
 import { completeLevelAction } from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
@@ -24,11 +24,11 @@ import { getToken } from "@/lib/api-client";
 import type { ComponentType } from "react";
 
 const modeComponents: Record<string, ComponentType> = {
-  [GAME_MODES.LSRW]: LsrwGame,
-  [GAME_MODES.VOCAB_MATCH]: VocabMatchGame,
-  [GAME_MODES.LISTENING_CHALLENGE]: ListeningGame,
-  [GAME_MODES.VOCAB_ELIMINATION]: VocabEliminationGame,
-  [GAME_MODES.VOCAB_BATTLE]: VocabBattleGame,
+  [GAME_MODES.LSRW]: GameLsrw,
+  [GAME_MODES.VOCAB_MATCH]: GameVocabMatch,
+  [GAME_MODES.LISTENING_CHALLENGE]: GameListening,
+  [GAME_MODES.VOCAB_ELIMINATION]: GameVocabElimination,
+  [GAME_MODES.VOCAB_BATTLE]: GameVocabBattle,
 };
 
 interface GroupPlayShellProps {
