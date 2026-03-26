@@ -15,7 +15,7 @@ type GameGroup struct {
 	IsActive      bool    `gorm:"column:is_active" json:"is_active"`
 	MemberCount   int     `gorm:"column:member_count" json:"member_count"`
 	GameMode        *string `gorm:"column:game_mode" json:"game_mode"`
-	AnswerTimeLimit  int     `gorm:"column:answer_time_limit" json:"answer_time_limit"`
+	LevelTimeLimit  int     `gorm:"column:level_time_limit" json:"level_time_limit"`
 	IsPlaying        bool    `gorm:"column:is_playing" json:"is_playing"`
 }
 

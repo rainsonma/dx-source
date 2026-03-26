@@ -83,7 +83,7 @@ interface GameLoadingScreenProps {
   levelId?: string;
   levelName?: string;
   groupId?: string;
-  answerTimeLimit?: number;
+  levelTimeLimit?: number;
 }
 
 export function GameLoadingScreen({
@@ -95,7 +95,7 @@ export function GameLoadingScreen({
   levelId,
   levelName,
   groupId,
-  answerTimeLimit,
+  levelTimeLimit,
 }: GameLoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -209,7 +209,7 @@ export function GameLoadingScreen({
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
           gameGroupId: groupId ?? null,
-          answerTimeLimit: answerTimeLimit ?? null,
+          levelTimeLimit: levelTimeLimit ?? null,
           ...(restored && { restored }),
         });
       } catch {
@@ -220,7 +220,7 @@ export function GameLoadingScreen({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameMode, degree, pattern, levelId, groupId, answerTimeLimit, initSession, retryCount]);
+  }, [gameId, gameMode, degree, pattern, levelId, groupId, levelTimeLimit, initSession, retryCount]);
 
   function handleRetry() {
     setError(null);

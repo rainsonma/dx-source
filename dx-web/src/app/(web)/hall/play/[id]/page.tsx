@@ -18,8 +18,8 @@ export default function GamePlayPage({
   const level = searchParams.get("level") ?? undefined;
   const pattern = searchParams.get("pattern") ?? undefined;
   const groupId = searchParams.get("groupId") ?? undefined;
-  const answerTimeLimit = searchParams.get("answerTimeLimit")
-    ? Number(searchParams.get("answerTimeLimit"))
+  const levelTimeLimit = searchParams.get("levelTimeLimit")
+    ? Number(searchParams.get("levelTimeLimit"))
     : undefined;
 
   const [game, setGame] = useState<any>(null);
@@ -80,7 +80,7 @@ export default function GamePlayPage({
       pattern={pattern}
       levelId={level}
       groupId={groupId}
-      answerTimeLimit={answerTimeLimit}
+      levelTimeLimit={levelTimeLimit}
     />
   );
 }

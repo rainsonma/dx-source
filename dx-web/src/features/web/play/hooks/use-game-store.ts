@@ -42,7 +42,7 @@ interface GameState {
   skipCount: number;
   playTime: number;
   gameGroupId: string | null;
-  answerTimeLimit: number | null;
+  levelTimeLimit: number | null;
   groupPhase: "playing" | "waiting" | "result" | null;
   groupResult: GroupLevelCompleteEvent | null;
 }
@@ -59,7 +59,7 @@ interface GameActions {
     contentItems: ContentItem[];
     startFromIndex: number;
     gameGroupId?: string | null;
-    answerTimeLimit?: number | null;
+    levelTimeLimit?: number | null;
     restored?: {
       score: number;
       maxCombo: number;
@@ -102,7 +102,7 @@ const initialGameState: GameState = {
   skipCount: 0,
   playTime: 0,
   gameGroupId: null,
-  answerTimeLimit: null,
+  levelTimeLimit: null,
   groupPhase: null,
   groupResult: null,
 };
@@ -137,7 +137,7 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
       skipCount: data.restored?.skipCount ?? 0,
       playTime: data.restored?.playTime ?? 0,
       gameGroupId: data.gameGroupId ?? null,
-      answerTimeLimit: data.answerTimeLimit ?? null,
+      levelTimeLimit: data.levelTimeLimit ?? null,
       groupPhase: data.gameGroupId ? "playing" : null,
       groupResult: null,
     }),

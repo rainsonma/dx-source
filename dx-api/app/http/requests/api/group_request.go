@@ -38,7 +38,7 @@ func (r *CreateGroupRequest) Messages(ctx http.Context) map[string]string {
 type UpdateGroupRequest struct {
 	Name            string  `form:"name" json:"name"`
 	Description     *string `form:"description" json:"description"`
-	AnswerTimeLimit *int    `form:"answer_time_limit" json:"answer_time_limit"`
+	LevelTimeLimit *int    `form:"level_time_limit" json:"level_time_limit"`
 }
 
 func (r *UpdateGroupRequest) Authorize(ctx http.Context) error { return nil }
@@ -46,7 +46,7 @@ func (r *UpdateGroupRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
 		"name":              "required|min_len:2|max_len:50",
 		"description":       "max_len:200",
-		"answer_time_limit": "min:5|max:60",
+		"level_time_limit": "min:1|max:60",
 	}
 }
 func (r *UpdateGroupRequest) Filters(ctx http.Context) map[string]string {

@@ -41,10 +41,10 @@ interface GamePlayShellProps {
   pattern?: string;
   levelId?: string;
   groupId?: string;
-  answerTimeLimit?: number;
+  levelTimeLimit?: number;
 }
 
-export function GamePlayShell({ game, player, degree, pattern, levelId, groupId, answerTimeLimit }: GamePlayShellProps) {
+export function GamePlayShell({ game, player, degree, pattern, levelId, groupId, levelTimeLimit }: GamePlayShellProps) {
   const phase = useGameStore((s) => s.phase);
   const overlay = useGameStore((s) => s.overlay);
   const showOverlay = useGameStore((s) => s.showOverlay);
@@ -115,7 +115,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
         levelId={targetLevelId}
         levelName={targetLevel?.name}
         groupId={groupId}
-        answerTimeLimit={answerTimeLimit}
+        levelTimeLimit={levelTimeLimit}
       />
     );
   }

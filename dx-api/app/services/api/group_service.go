@@ -48,7 +48,7 @@ type GroupDetail struct {
 	GameMode        *string `json:"game_mode"`
 	CurrentGameName  string  `json:"current_game_name"`
 	InviteQrcodeURL  string  `json:"invite_qrcode_url"`
-	AnswerTimeLimit  int     `json:"answer_time_limit"`
+	LevelTimeLimit  int     `json:"level_time_limit"`
 	IsPlaying        bool    `json:"is_playing"`
 }
 
@@ -256,7 +256,7 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		GameMode:        group.GameMode,
 		CurrentGameName:  currentGameName,
 		InviteQrcodeURL:  inviteQrcodeURL,
-		AnswerTimeLimit:  group.AnswerTimeLimit,
+		LevelTimeLimit:  group.LevelTimeLimit,
 		IsPlaying:        group.IsPlaying,
 	}, nil
 }
@@ -292,7 +292,7 @@ func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 }
 
 // UpdateGroup updates the name, description, and optionally the answer time limit of a group.
-func UpdateGroup(userID, groupID, name string, description *string, answerTimeLimit *int) error {
+func UpdateGroup(userID, groupID, name string, description *string, levelTimeLimit *int) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -305,8 +305,8 @@ func UpdateGroup(userID, groupID, name string, description *string, answerTimeLi
 	if description != nil {
 		updates["description"] = *description
 	}
-	if answerTimeLimit != nil {
-		updates["answer_time_limit"] = *answerTimeLimit
+	if levelTimeLimit != nil {
+		updates["level_time_limit"] = *levelTimeLimit
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(updates); err != nil {

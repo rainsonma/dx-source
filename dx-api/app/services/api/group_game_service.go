@@ -135,7 +135,7 @@ type GroupGameStartEvent struct {
 	GameMode        string  `json:"game_mode"`
 	Degree          string  `json:"degree"`
 	Pattern         *string `json:"pattern"`
-	AnswerTimeLimit int     `json:"answer_time_limit"`
+	LevelTimeLimit int     `json:"level_time_limit"`
 }
 
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
@@ -204,7 +204,7 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		GameMode:        *group.GameMode,
 		Degree:          degree,
 		Pattern:         pattern,
-		AnswerTimeLimit: group.AnswerTimeLimit,
+		LevelTimeLimit: group.LevelTimeLimit,
 	})
 
 	return nil
