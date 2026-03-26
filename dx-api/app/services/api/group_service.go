@@ -58,13 +58,14 @@ func CreateGroup(userID, name string, description *string) (*CreateGroupResult, 
 	inviteCode := helpers.GenerateInviteCode(8)
 
 	group := models.GameGroup{
-		ID:          groupID,
-		Name:        name,
-		Description: description,
-		OwnerID:     userID,
-		InviteCode:  inviteCode,
-		IsActive:    true,
-		MemberCount: 1,
+		ID:             groupID,
+		Name:           name,
+		Description:    description,
+		OwnerID:        userID,
+		InviteCode:     inviteCode,
+		IsActive:       true,
+		MemberCount:    1,
+		LevelTimeLimit: 10,
 	}
 	member := models.GameGroupMember{
 		ID:          newID(),

@@ -183,6 +183,23 @@ export function SetGameDialog({
             )}
           </div>
 
+          {/* Level time limit */}
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="shrink-0 text-[13px] font-medium text-foreground">每关卡限时</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={levelTimeLimit}
+                onChange={(e) => setLevelTimeLimit(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+                className="h-9 w-16 rounded-lg border border-border bg-slate-50 px-2 text-center text-sm text-foreground outline-none focus:border-teal-500"
+              />
+              <span className="text-xs text-muted-foreground">分钟</span>
+            </div>
+          </div>
+
           {/* Mode selector */}
           <div className="flex gap-1 rounded-[10px] bg-slate-100 p-1">
             <button
@@ -209,23 +226,6 @@ export function SetGameDialog({
               <Users className="h-3.5 w-3.5" />
               小组
             </button>
-          </div>
-
-          {/* Level time limit */}
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="shrink-0 text-[13px] font-medium text-foreground">关卡限时</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={levelTimeLimit}
-                onChange={(e) => setLevelTimeLimit(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
-                className="h-9 w-16 rounded-lg border border-border bg-slate-50 px-2 text-center text-sm text-foreground outline-none focus:border-teal-500"
-              />
-              <span className="text-xs text-muted-foreground">分钟</span>
-            </div>
           </div>
 
           {/* Confirm button */}
