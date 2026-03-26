@@ -67,17 +67,14 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
 
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-6">
-      {/* Back link */}
-      <Link
-        href={`/hall/groups/${groupId}`}
-        className="flex items-center gap-1 self-start text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        返回群详情
-      </Link>
-
       {/* Group info card */}
-      <div className="flex w-full flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">
+      <div className="relative flex w-full flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">
+        <Link
+          href={`/hall/groups/${groupId}`}
+          className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-teal-100">
           <Gamepad2 className="h-7 w-7 text-teal-600" />
         </div>
