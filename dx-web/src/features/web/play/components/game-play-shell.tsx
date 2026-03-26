@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGameStore } from "@/features/web/play/hooks/use-game-store";
 import { GameLoadingScreen } from "@/features/web/play/components/game-loading-screen";
@@ -16,6 +16,10 @@ import { ListeningGame } from "@/features/web/play/components/listening-game";
 import { VocabEliminationGame } from "@/features/web/play/components/vocab-elimination-game";
 import { VocabBattleGame } from "@/features/web/play/components/vocab-battle-game";
 import { GameExitModal } from "@/features/web/play/components/game-exit-modal";
+import { GroupWaitingScreen } from "@/features/web/play/components/group-waiting-screen";
+import { GroupResultPanel } from "@/features/web/play/components/group-result-panel";
+import { useGroupEvents } from "@/features/web/groups/hooks/use-group-events";
+import { completeLevelAction } from "@/features/web/play/actions/session.action";
 import { useGameTimer, getElapsedSeconds } from "@/features/web/play/hooks/use-game-timer";
 import { useFullscreen } from "@/features/web/play/hooks/use-fullscreen";
 import { getToken } from "@/lib/api-client";
@@ -50,6 +54,17 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
   const showOverlay = useGameStore((s) => s.showOverlay);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
   const setPhase = useGameStore((s) => s.setPhase);
+  const groupPhase = useGameStore((s) => s.groupPhase);
+  const groupResult = useGameStore((s) => s.groupResult);
+  const setGroupWaiting = useGameStore((s) => s.setGroupWaiting);
+  const setGroupResult = useGameStore((s) => s.setGroupResult);
+  const sessionId = useGameStore((s) => s.sessionId);
+  const score = useGameStore((s) => s.score);
+  const combo = useGameStore((s) => s.combo);
+  const contentItems = useGameStore((s) => s.contentItems);
+
+  const isGroupGame = !!groupId;
+  const completedRef = useRef(false);
 
   const targetLevelId = levelId ?? game.levels[0]?.id;
   const targetLevel = game.levels.find((l) => l.id === targetLevelId);
@@ -61,6 +76,25 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
   const playTime = useGameStore((s) => s.playTime);
   const { formatted: elapsedTime } = useGameTimer(playTime);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  // Group game: complete level and show waiting screen
+  async function completeAndWait() {
+    if (completedRef.current || !sessionId || !targetLevelId) return;
+    completedRef.current = true;
+    setGroupWaiting();
+    await completeLevelAction(sessionId, targetLevelId, {
+      score,
+      maxCombo: combo.maxCombo,
+      totalItems: contentItems?.length ?? 0,
+    });
+  }
+
+  // SSE: listen for group level complete result
+  useGroupEvents(isGroupGame ? groupId : null, {
+    onLevelComplete: (event) => {
+      setGroupResult(event);
+    },
+  });
 
   useEffect(() => {
     const isDifferentGame = storeGameId !== null && storeGameId !== game.id;
@@ -122,6 +156,15 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
   }
 
   if (phase === "result") {
+    if (isGroupGame) {
+      // Group game: complete level and wait for SSE result
+      if (groupPhase !== "result") {
+        completeAndWait();
+        return <GroupWaitingScreen groupId={groupId!} />;
+      }
+      // SSE result received
+      return <GroupResultPanel result={groupResult!} groupId={groupId!} />;
+    }
     return <GameResultCard game={game} elapsedTime={elapsedTime} />;
   }
 
@@ -143,8 +186,12 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
         isFullscreen={isFullscreen}
         levelTimeLimit={levelTimeLimit}
         onLevelTimeUp={() => {
-          // Time's up — transition to result phase which triggers completeLevel
-          setPhase("result");
+          // Time's up — complete level and show waiting/result
+          if (isGroupGame) {
+            completeAndWait();
+          } else {
+            setPhase("result");
+          }
         }}
       />
       <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-10">

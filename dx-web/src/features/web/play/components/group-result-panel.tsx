@@ -2,22 +2,21 @@
 
 import { Trophy, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import type { GroupLevelCompleteEvent, SoloWinner, TeamWinner } from "@/features/web/groups/types/group";
 
 interface GroupResultPanelProps {
   result: GroupLevelCompleteEvent;
-  hasMoreLevels: boolean;
-  onNextLevel: () => void;
-  onFinish: () => void;
+  groupId: string;
 }
 
-export function GroupResultPanel({ result, hasMoreLevels, onNextLevel, onFinish }: GroupResultPanelProps) {
+export function GroupResultPanel({ result, groupId }: GroupResultPanelProps) {
   const isSolo = result.mode === "solo";
   const soloWinner = isSolo ? (result.winner as SoloWinner) : null;
   const teamWinner = !isSolo ? (result.winner as TeamWinner) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
+    <div className="flex h-full flex-col items-center justify-center gap-6 px-4">
       <div className="flex flex-col items-center gap-3">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
           <Trophy className="h-8 w-8 text-amber-500" />
@@ -55,13 +54,9 @@ export function GroupResultPanel({ result, hasMoreLevels, onNextLevel, onFinish 
         </div>
       )}
 
-      <div className="flex gap-3">
-        {hasMoreLevels ? (
-          <Button onClick={onNextLevel}>下一关</Button>
-        ) : (
-          <Button onClick={onFinish}>查看最终结果</Button>
-        )}
-      </div>
+      <Button asChild className="bg-teal-600 hover:bg-teal-700">
+        <Link href={`/hall/groups/${groupId}`}>返回群组</Link>
+      </Button>
     </div>
   );
 }
