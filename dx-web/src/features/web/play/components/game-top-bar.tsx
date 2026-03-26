@@ -83,7 +83,7 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          onLevelTimeUpRef.current?.();
+          setTimeout(() => onLevelTimeUpRef.current?.(), 0);
           return 0;
         }
         return prev - 1;
