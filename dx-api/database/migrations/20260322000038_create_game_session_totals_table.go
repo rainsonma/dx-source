@@ -46,23 +46,6 @@ func (r *M20260322000038CreateGameSessionTotalsTable) Up() error {
 			table.Index("started_at")
 		})
 	}
-
-	// Unique active session index (one active session per user per game+degree+pattern)
-	if _, err := facades.Orm().Query().Exec(
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_game_session_totals_unique_active
-		 ON game_session_totals (user_id, game_id, degree, COALESCE(pattern, ''))
-		 WHERE ended_at IS NULL`); err != nil {
-		return err
-	}
-
-	// Partial index for group queries
-	if _, err := facades.Orm().Query().Exec(
-		`CREATE INDEX IF NOT EXISTS idx_game_session_totals_group
-		 ON game_session_totals (game_group_id)
-		 WHERE game_group_id IS NOT NULL`); err != nil {
-		return err
-	}
-
 	return nil
 }
 

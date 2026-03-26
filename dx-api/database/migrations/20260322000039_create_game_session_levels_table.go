@@ -42,15 +42,6 @@ func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 			table.Index("current_content_item_id")
 		})
 	}
-
-	// Partial index for group winner determination queries
-	if _, err := facades.Orm().Query().Exec(
-		`CREATE INDEX IF NOT EXISTS idx_game_session_levels_group_level
-		 ON game_session_levels (game_group_id, game_level_id)
-		 WHERE game_group_id IS NOT NULL`); err != nil {
-		return err
-	}
-
 	return nil
 }
 
