@@ -49,6 +49,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
   const overlay = useGameStore((s) => s.overlay);
   const showOverlay = useGameStore((s) => s.showOverlay);
   const closeOverlay = useGameStore((s) => s.closeOverlay);
+  const setPhase = useGameStore((s) => s.setPhase);
 
   const targetLevelId = levelId ?? game.levels[0]?.id;
   const targetLevel = game.levels.find((l) => l.id === targetLevelId);
@@ -142,7 +143,8 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
         isFullscreen={isFullscreen}
         levelTimeLimit={levelTimeLimit}
         onLevelTimeUp={() => {
-          // TODO: auto-complete level when time is up
+          // Time's up — transition to result phase which triggers completeLevel
+          setPhase("result");
         }}
       />
       <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-10">
