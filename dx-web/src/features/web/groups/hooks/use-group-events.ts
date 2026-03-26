@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { getAccessToken } from "@/lib/token";
 import type {
   GroupGameStartEvent,
   GroupLevelCompleteEvent,
@@ -23,7 +24,7 @@ export function useGroupEvents(
   useEffect(() => {
     if (!groupId) return;
 
-    const token = localStorage.getItem("dx_token");
+    const token = getAccessToken();
     if (!token) return;
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
