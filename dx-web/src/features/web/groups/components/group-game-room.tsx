@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Gamepad2, Users, User, Loader2, ArrowLeft, Play, Square } from "lucide-react";
+import { Gamepad2, Users, User, Loader2, CircleArrowLeft, Play, Square } from "lucide-react";
 import Link from "next/link";
 import { swrMutate } from "@/lib/swr";
 import type { GroupDetail } from "../types/group";
@@ -73,7 +73,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
           href={`/hall/groups/${groupId}`}
           className="absolute left-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <CircleArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-teal-100">
           <Gamepad2 className="h-7 w-7 text-teal-600" />
