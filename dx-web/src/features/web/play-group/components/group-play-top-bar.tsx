@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
-import { StatRow } from "@/features/web/play/components/stat-row";
+import { StatRow } from "@/features/web/play-core/components/stat-row";
 
 const actionButtons = [
   { icon: Settings, label: "设置", action: "settings" },

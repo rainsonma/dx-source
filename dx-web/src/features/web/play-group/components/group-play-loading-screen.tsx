@@ -19,8 +19,8 @@ import {
   fetchLevelContentAction,
 } from "../actions/session.action";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
-import { useGameStore } from "@/features/web/play/hooks/use-game-store";
-import type { ContentItem } from "@/features/web/play/hooks/use-game-store";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
 
 const MINIMUM_DISPLAY_MS = 1200;
 

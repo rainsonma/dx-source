@@ -3,8 +3,8 @@ import {
   createComboState,
   processAnswer,
   type ComboState,
-} from "@/features/web/play/helpers/scoring";
-import type { ContentItem } from "@/features/web/play/hooks/use-game-store";
+} from "@/features/web/play-core/helpers/scoring";
+import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
 import type { GroupLevelCompleteEvent } from "../types/group-play";
 
 export type GamePhase = "loading" | "playing" | "result";
