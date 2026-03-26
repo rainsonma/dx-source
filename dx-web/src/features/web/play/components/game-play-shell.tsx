@@ -186,11 +186,9 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
         isFullscreen={isFullscreen}
         levelTimeLimit={levelTimeLimit}
         onLevelTimeUp={() => {
-          // Time's up — complete level and show waiting/result
+          setPhase("result");
           if (isGroupGame) {
             completeAndWait();
-          } else {
-            setPhase("result");
           }
         }}
       />
