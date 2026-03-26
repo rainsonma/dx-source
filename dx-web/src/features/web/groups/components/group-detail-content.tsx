@@ -97,7 +97,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [forceEnding, setForceEnding] = useState(false);
 
   // SSE: listen for group game events
-  useGroupEvents(group?.is_member ? id : null, {
+  useGroupEvents(group ? id : null, {
     onGameStart: (event) => {
       router.push(
         `/hall/play/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&answerTimeLimit=${event.answer_time_limit}`
