@@ -245,6 +245,19 @@ func Api() {
 				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
 			})
 
+			// Group game play routes
+			groupPlayController := apicontrollers.NewGamePlayGroupController()
+			protected.Prefix("/group-play/sessions").Group(func(gp route.Router) {
+				gp.Post("/start", groupPlayController.Start)
+				gp.Post("/{id}/levels/start", groupPlayController.StartLevel)
+				gp.Post("/{id}/levels/{levelId}/complete", groupPlayController.CompleteLevel)
+				gp.Post("/{id}/answers", groupPlayController.RecordAnswer)
+				gp.Post("/{id}/skips", groupPlayController.RecordSkip)
+				gp.Post("/{id}/sync-playtime", groupPlayController.SyncPlayTime)
+				gp.Get("/{id}/restore", groupPlayController.Restore)
+				gp.Put("/{id}/content-item", groupPlayController.UpdateContentItem)
+			})
+
 			// Group routes
 			groupController := apicontrollers.NewGroupController()
 			groupMemberController := apicontrollers.NewGroupMemberController()

@@ -11,21 +11,19 @@ import (
 // ---------- StartSessionRequest ----------
 
 type StartSessionRequest struct {
-	GameID      string  `form:"game_id" json:"game_id"`
-	Degree      string  `form:"degree" json:"degree"`
-	Pattern     *string `form:"pattern" json:"pattern"`
-	LevelID     *string `form:"level_id" json:"level_id"`
-	GameGroupID *string `form:"game_group_id" json:"game_group_id"`
+	GameID  string  `form:"game_id" json:"game_id"`
+	Degree  string  `form:"degree" json:"degree"`
+	Pattern *string `form:"pattern" json:"pattern"`
+	LevelID *string `form:"level_id" json:"level_id"`
 }
 
 func (r *StartSessionRequest) Authorize(ctx http.Context) error { return nil }
 func (r *StartSessionRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_id":      "required|uuid",
-		"degree":       helpers.InEnum("degree"),
-		"pattern":      helpers.InEnum("pattern"),
-		"level_id":     "uuid",
-		"game_group_id": "uuid",
+		"game_id":  "required|uuid",
+		"degree":   helpers.InEnum("degree"),
+		"pattern":  helpers.InEnum("pattern"),
+		"level_id": "uuid",
 	}
 }
 func (r *StartSessionRequest) Filters(ctx http.Context) map[string]string {

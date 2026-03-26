@@ -130,7 +130,7 @@ type EndSessionInput struct {
 // --- Session Lifecycle ---
 
 // StartSession starts or resumes a game session.
-func StartSession(userID, gameID, degree string, pattern *string, levelID *string, gameGroupID *string) (*StartSessionResult, error) {
+func StartSession(userID, gameID, degree string, pattern *string, levelID *string) (*StartSessionResult, error) {
 	query := facades.Orm().Query()
 
 	// Find the first active level
@@ -141,7 +141,7 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 	}
 
 	// Check for existing active session
-	existing, err := findActiveSession(query, userID, gameID, degree, pattern, gameGroupID)
+	existing, err := findActiveSession(query, userID, gameID, degree, pattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check active session: %w", err)
 	}
@@ -194,24 +194,6 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 		return nil, fmt.Errorf("failed to count levels: %w", err)
 	}
 
-	var gameSubgroupID *string
-	if gameGroupID != nil {
-		var group models.GameGroup
-		if err := query.Where("id", *gameGroupID).First(&group); err != nil || group.ID == "" {
-			return nil, ErrGroupNotFound
-		}
-		if group.GameMode != nil && *group.GameMode == consts.GameModeTeam {
-			var subMember models.GameSubgroupMember
-			if err := facades.Orm().Query().Raw(
-				"SELECT gsm.* FROM game_subgroup_members gsm JOIN game_subgroups gs ON gs.id = gsm.game_subgroup_id WHERE gs.game_group_id = ? AND gsm.user_id = ? LIMIT 1",
-				*gameGroupID, userID,
-			).Scan(&subMember); err != nil || subMember.ID == "" {
-				return nil, ErrNotInSubgroup
-			}
-			gameSubgroupID = &subMember.GameSubgroupID
-		}
-	}
-
 	now := time.Now()
 	session := models.GameSessionTotal{
 		ID:               newID(),
@@ -223,13 +205,11 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 		TotalLevelsCount: int(totalLevelsCount),
 		StartedAt:        now,
 		LastPlayedAt:     now,
-		GameGroupID:      gameGroupID,
-		GameSubgroupID:   gameSubgroupID,
 	}
 
 	if err := query.Create(&session); err != nil {
 		// Unique constraint violation: concurrent request already created the session.
-		existing, findErr := findActiveSession(query, userID, gameID, degree, pattern, gameGroupID)
+		existing, findErr := findActiveSession(query, userID, gameID, degree, pattern)
 		if findErr != nil || existing == nil {
 			return nil, fmt.Errorf("failed to create session: %w", err)
 		}
@@ -265,7 +245,7 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 
 // CheckActiveSession finds an active session for a specific degree+pattern combo.
 func CheckActiveSession(userID, gameID, degree string, pattern *string) (*ActiveSessionData, error) {
-	session, err := findActiveSession(facades.Orm().Query(), userID, gameID, degree, pattern, nil)
+	session, err := findActiveSession(facades.Orm().Query(), userID, gameID, degree, pattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check active session: %w", err)
 	}
@@ -299,7 +279,7 @@ func CheckAnyActiveSession(userID, gameID string) (*ActiveSessionData, error) {
 
 // CheckActiveLevelSession finds an active level session within an active game session.
 func CheckActiveLevelSession(userID, gameID, degree string, pattern *string, gameLevelID string) (*ActiveLevelSessionData, error) {
-	session, err := findActiveSession(facades.Orm().Query(), userID, gameID, degree, pattern, nil)
+	session, err := findActiveSession(facades.Orm().Query(), userID, gameID, degree, pattern)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check active session: %w", err)
 	}
@@ -622,13 +602,6 @@ func StartLevel(userID, sessionID, gameLevelID, degree string, pattern *string) 
 		LastPlayedAt:       now,
 	}
 
-	// Inherit group fields from parent session
-	var parentSession models.GameSessionTotal
-	if err := query.Where("id", sessionID).First(&parentSession); err == nil {
-		levelSession.GameGroupID = parentSession.GameGroupID
-		levelSession.GameSubgroupID = parentSession.GameSubgroupID
-	}
-
 	if err := query.Create(&levelSession); err != nil {
 		return nil, fmt.Errorf("failed to create session level: %w", err)
 	}
@@ -742,26 +715,6 @@ func CompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, total
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	// 6. Check for group winner determination
-	if session.GameGroupID != nil {
-		fmt.Printf("[GROUP] CompleteLevel: group=%s level=%s\n", *session.GameGroupID, gameLevelID)
-		result, err := CheckAndDetermineWinner(*session.GameGroupID, gameLevelID)
-		fmt.Printf("[GROUP] CheckAndDetermineWinner: result=%v err=%v\n", result, err)
-		if err == nil && result != nil {
-			fmt.Printf("[GROUP] Broadcasting group_level_complete\n")
-			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_level_complete", result)
-
-			// Check if this was the last level — if so, end the round
-			var totalLevels int64
-			totalLevels, _ = facades.Orm().Query().Model(&models.GameLevel{}).
-				Where("game_id", session.GameID).Where("is_active", true).Count()
-			if int64(session.PlayedLevelsCount+1) >= totalLevels {
-				facades.Orm().Query().Model(&models.GameGroup{}).
-					Where("id", *session.GameGroupID).Update("is_playing", false)
-			}
-		}
 	}
 
 	return &CompleteLevelResult{
@@ -919,7 +872,7 @@ func RestoreSessionData(userID, sessionID, gameLevelID string) (*SessionRestoreD
 // --- Helpers ---
 
 // findActiveSession queries for an active session with specific degree+pattern.
-func findActiveSession(query orm.Query, userID, gameID, degree string, pattern *string, gameGroupID *string) (*models.GameSessionTotal, error) {
+func findActiveSession(query orm.Query, userID, gameID, degree string, pattern *string) (*models.GameSessionTotal, error) {
 	var session models.GameSessionTotal
 	q := query.Where("user_id", userID).Where("game_id", gameID).
 		Where("degree", degree).Where("ended_at IS NULL").
@@ -929,12 +882,6 @@ func findActiveSession(query orm.Query, userID, gameID, degree string, pattern *
 		q = q.Where("pattern", *pattern)
 	} else {
 		q = q.Where("pattern IS NULL")
-	}
-
-	if gameGroupID != nil {
-		q = q.Where("game_group_id", *gameGroupID)
-	} else {
-		q = q.Where("game_group_id IS NULL")
 	}
 
 	if err := q.First(&session); err != nil || session.ID == "" {
