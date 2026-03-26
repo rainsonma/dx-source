@@ -18,6 +18,7 @@ import {
   Download,
   Play,
   Square,
+  DoorOpen,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
@@ -43,7 +44,6 @@ import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { SetGameDialog } from "./set-game-dialog";
 import { StartGameDialog } from "./start-game-dialog";
-import { useGroupEvents } from "../hooks/use-group-events";
 
 interface GroupDetailContentProps {
   id: string;
@@ -95,18 +95,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [clearingGame, setClearingGame] = useState(false);
   const [startGameOpen, setStartGameOpen] = useState(false);
   const [forceEnding, setForceEnding] = useState(false);
-
-  // SSE: listen for group game events
-  useGroupEvents(group ? id : null, {
-    onGameStart: (event) => {
-      router.push(
-        `/hall/play/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&answerTimeLimit=${event.answer_time_limit}`
-      );
-    },
-    onForceEnd: () => {
-      invalidateAll();
-    },
-  });
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");
@@ -363,6 +351,13 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                     </button>
                   )
                 )}
+                <Link
+                  href={`/hall/groups/${id}/room`}
+                  className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-teal-200 py-2 text-xs font-medium text-teal-600 hover:bg-teal-50"
+                >
+                  <DoorOpen className="h-3.5 w-3.5" />
+                  进入课程游戏
+                </Link>
               </>
             ) : isOwner ? (
               <button
