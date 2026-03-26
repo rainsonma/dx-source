@@ -113,7 +113,7 @@ func Api() {
 
 			// Game session routes (solo play)
 			sessionController := apicontrollers.NewGamePlaySingleController()
-			protected.Prefix("/play-single/sessions").Group(func(sessions route.Router) {
+			protected.Prefix("/play-single").Group(func(sessions route.Router) {
 				sessions.Post("/start", sessionController.Start)
 				sessions.Get("/active", sessionController.CheckActive)
 				sessions.Get("/active-level", sessionController.CheckActiveLevel)
@@ -247,7 +247,7 @@ func Api() {
 
 			// Group game play routes
 			groupPlayController := apicontrollers.NewGamePlayGroupController()
-			protected.Prefix("/group-play/sessions").Group(func(gp route.Router) {
+			protected.Prefix("/play-group").Group(func(gp route.Router) {
 				gp.Post("/start", groupPlayController.Start)
 				gp.Post("/{id}/levels/start", groupPlayController.StartLevel)
 				gp.Post("/{id}/levels/{levelId}/complete", groupPlayController.CompleteLevel)

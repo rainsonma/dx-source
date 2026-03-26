@@ -126,7 +126,7 @@ export function GroupPlayShell({
       };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      fetch(`${apiUrl}/api/group-play/sessions/${sid}/sync-playtime`, {
+      fetch(`${apiUrl}/api/play-group/${sid}/sync-playtime`, {
         method: "POST",
         headers,
         body: JSON.stringify({

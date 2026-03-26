@@ -87,7 +87,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      fetch(`${apiUrl}/api/play-single/sessions/${sid}/sync-playtime`, {
+      fetch(`${apiUrl}/api/play-single/${sid}/sync-playtime`, {
         method: "POST",
         headers,
         body: JSON.stringify({

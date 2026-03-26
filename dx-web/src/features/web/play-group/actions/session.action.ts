@@ -8,7 +8,7 @@ export async function startSessionAction(
   gameGroupId: string
 ) {
   try {
-    const res = await apiClient.post<any>("/api/group-play/sessions/start", {
+    const res = await apiClient.post<any>("/api/play-group/start", {
       game_id: gameId,
       degree,
       pattern,
@@ -30,7 +30,7 @@ export async function startLevelAction(
 ) {
   try {
     const res = await apiClient.post<any>(
-      `/api/group-play/sessions/${sessionId}/levels/start`,
+      `/api/play-group/${sessionId}/levels/start`,
       { game_level_id: gameLevelId, degree, pattern }
     );
     if (res.code !== 0) return { data: null, error: res.message || "开始关卡失败" };
@@ -47,7 +47,7 @@ export async function completeLevelAction(
 ) {
   try {
     const res = await apiClient.post<any>(
-      `/api/group-play/sessions/${sessionId}/levels/${gameLevelId}/complete`,
+      `/api/play-group/${sessionId}/levels/${gameLevelId}/complete`,
       { score: data.score, max_combo: data.maxCombo, total_items: data.totalItems }
     );
     if (res.code !== 0) return { data: null, error: res.message || "完成关卡失败" };
@@ -77,7 +77,7 @@ export async function recordAnswerAction(
 ) {
   try {
     const res = await apiClient.post<any>(
-      `/api/group-play/sessions/${sessionId}/answers`,
+      `/api/play-group/${sessionId}/answers`,
       {
         game_session_level_id: data.gameSessionLevelId,
         game_level_id: data.gameLevelId,
@@ -111,7 +111,7 @@ export async function recordSkipAction(
 ) {
   try {
     const res = await apiClient.post<any>(
-      `/api/group-play/sessions/${sessionId}/skips`,
+      `/api/play-group/${sessionId}/skips`,
       {
         game_level_id: data.gameLevelId,
         play_time: data.playTime,
@@ -131,7 +131,7 @@ export async function syncPlayTimeAction(
 ) {
   try {
     const res = await apiClient.post<any>(
-      `/api/group-play/sessions/${sessionId}/sync-playtime`,
+      `/api/play-group/${sessionId}/sync-playtime`,
       { play_time: playTime }
     );
     if (res.code !== 0) return { data: null, error: res.message || "同步时间失败" };
@@ -144,7 +144,7 @@ export async function syncPlayTimeAction(
 export async function restoreSessionDataAction(sessionId: string) {
   try {
     const res = await apiClient.get<any>(
-      `/api/group-play/sessions/${sessionId}/restore`
+      `/api/play-group/${sessionId}/restore`
     );
     if (res.code !== 0) return { data: null, error: res.message || "恢复会话数据失败" };
     return { data: res.data, error: null };
@@ -159,7 +159,7 @@ export async function updateContentItemAction(
 ) {
   try {
     const res = await apiClient.put<any>(
-      `/api/group-play/sessions/${sessionId}/content-item`,
+      `/api/play-group/${sessionId}/content-item`,
       { content_item_id: contentItemId }
     );
     if (res.code !== 0) return { data: null, error: res.message || "更新进度失败" };
