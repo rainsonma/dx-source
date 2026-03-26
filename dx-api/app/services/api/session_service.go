@@ -746,8 +746,11 @@ func CompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, total
 
 	// 6. Check for group winner determination
 	if session.GameGroupID != nil {
+		fmt.Printf("[GROUP] CompleteLevel: group=%s level=%s\n", *session.GameGroupID, gameLevelID)
 		result, err := CheckAndDetermineWinner(*session.GameGroupID, gameLevelID)
+		fmt.Printf("[GROUP] CheckAndDetermineWinner: result=%v err=%v\n", result, err)
 		if err == nil && result != nil {
+			fmt.Printf("[GROUP] Broadcasting group_level_complete\n")
 			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_level_complete", result)
 
 			// Check if this was the last level — if so, end the round

@@ -60,14 +60,18 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		}
 	}()
 
-	// Count participants with FOR UPDATE lock to prevent concurrent winner determination
-	var participantRow countRow
-	if err := tx.Raw(
-		"SELECT COUNT(*) AS count FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL FOR UPDATE",
-		gameGroupID).Scan(&participantRow); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to count participants: %w", err)
+	// Lock participant rows to prevent concurrent winner determination
+	type idRow struct {
+		ID string `gorm:"column:id"`
 	}
+	var lockedRows []idRow
+	if err := tx.Raw(
+		"SELECT id FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL FOR UPDATE",
+		gameGroupID).Scan(&lockedRows); err != nil {
+		_ = tx.Rollback()
+		return nil, fmt.Errorf("failed to lock participants: %w", err)
+	}
+	participantCount := int64(len(lockedRows))
 
 	// Count completed level sessions
 	var completedRow countRow
@@ -78,7 +82,8 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		return nil, fmt.Errorf("failed to count completed levels: %w", err)
 	}
 
-	if completedRow.Count < participantRow.Count {
+	fmt.Printf("[GROUP] Winner check: participants=%d completed=%d\n", participantCount, completedRow.Count)
+	if completedRow.Count < participantCount {
 		_ = tx.Rollback()
 		return nil, nil // Still waiting
 	}
