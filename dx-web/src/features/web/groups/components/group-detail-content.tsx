@@ -43,6 +43,7 @@ import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { SetGameDialog } from "./set-game-dialog";
 import { StartGameDialog } from "./start-game-dialog";
+import { useGroupEvents } from "../hooks/use-group-events";
 
 interface GroupDetailContentProps {
   id: string;
@@ -94,6 +95,18 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [clearingGame, setClearingGame] = useState(false);
   const [startGameOpen, setStartGameOpen] = useState(false);
   const [forceEnding, setForceEnding] = useState(false);
+
+  // SSE: listen for group game events
+  useGroupEvents(group?.is_member ? id : null, {
+    onGameStart: (event) => {
+      router.push(
+        `/hall/play/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&answerTimeLimit=${event.answer_time_limit}`
+      );
+    },
+    onForceEnd: () => {
+      invalidateAll();
+    },
+  });
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");

@@ -46,8 +46,10 @@ type GroupDetail struct {
 	CreatedAt       string  `json:"created_at"`
 	CurrentGameID   *string `json:"current_game_id"`
 	GameMode        *string `json:"game_mode"`
-	CurrentGameName string  `json:"current_game_name"`
-	InviteQrcodeURL string  `json:"invite_qrcode_url"`
+	CurrentGameName  string  `json:"current_game_name"`
+	InviteQrcodeURL  string  `json:"invite_qrcode_url"`
+	AnswerTimeLimit  int     `json:"answer_time_limit"`
+	IsPlaying        bool    `json:"is_playing"`
 }
 
 // CreateGroup creates a new group with the given user as owner and first member.
@@ -252,8 +254,10 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		CreatedAt:       group.CreatedAt.ToDateTimeString(),
 		CurrentGameID:   group.CurrentGameID,
 		GameMode:        group.GameMode,
-		CurrentGameName: currentGameName,
-		InviteQrcodeURL: inviteQrcodeURL,
+		CurrentGameName:  currentGameName,
+		InviteQrcodeURL:  inviteQrcodeURL,
+		AnswerTimeLimit:  group.AnswerTimeLimit,
+		IsPlaying:        group.IsPlaying,
 	}, nil
 }
 
