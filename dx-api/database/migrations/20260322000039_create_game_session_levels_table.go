@@ -34,12 +34,23 @@ func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 			table.Integer("play_time").Default(0)
 			table.Integer("total_items_count").Default(0)
 			table.Integer("played_items_count").Default(0)
+			table.Uuid("game_group_id").Nullable()
+			table.Uuid("game_subgroup_id").Nullable()
 			table.TimestampsTz()
 			table.Index("game_session_total_id")
 			table.Index("game_level_id")
 			table.Index("current_content_item_id")
 		})
 	}
+
+	// Partial index for group winner determination queries
+	if _, err := facades.Orm().Query().Exec(
+		`CREATE INDEX IF NOT EXISTS idx_game_session_levels_group_level
+		 ON game_session_levels (game_group_id, game_level_id)
+		 WHERE game_group_id IS NOT NULL`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
