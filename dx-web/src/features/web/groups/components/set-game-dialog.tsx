@@ -76,6 +76,10 @@ export function SetGameDialog({
       toast.error("请选择一个游戏");
       return;
     }
+    if (levelTimeLimit < 1) {
+      toast.error("每关卡限时必须大于0分钟");
+      return;
+    }
     setConfirming(true);
     const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, levelTimeLimit);
     setConfirming(false);
