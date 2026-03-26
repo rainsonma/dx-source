@@ -77,7 +77,7 @@ export function SetGameDialog({
       return;
     }
     if (levelTimeLimit < 1) {
-      toast.error("每关卡限时必须大于0分钟");
+      toast.error("每关卡限时必须大于 0");
       return;
     }
     setConfirming(true);
