@@ -39,10 +39,7 @@ func (h *SSEHub) Register(groupID, userID string, w http.ResponseWriter) *SSECon
 		close(old.done)
 	}
 	h.conns[groupID][userID] = conn
-	count := len(h.conns[groupID])
 	h.mu.Unlock()
-
-	fmt.Printf("[SSE] Register: group=%s user=%s (total connections: %d)\n", groupID, userID, count)
 
 	return conn
 }
@@ -65,8 +62,6 @@ func (h *SSEHub) Broadcast(groupID, event string, data any) {
 
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-
-	fmt.Printf("[SSE] Broadcast: group=%s event=%s connections=%d\n", groupID, event, len(h.conns[groupID]))
 
 	if group, ok := h.conns[groupID]; ok {
 		for _, conn := range group {
