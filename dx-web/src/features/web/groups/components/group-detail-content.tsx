@@ -16,8 +16,6 @@ import {
   Users,
   QrCode,
   Download,
-  Play,
-  Square,
   DoorOpen,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
@@ -43,7 +41,6 @@ import { ApplicationList } from "./application-list";
 import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { SetGameDialog } from "./set-game-dialog";
-import { StartGameDialog } from "./start-game-dialog";
 
 interface GroupDetailContentProps {
   id: string;
@@ -93,8 +90,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [setGameOpen, setSetGameOpen] = useState(false);
   const [clearGameOpen, setClearGameOpen] = useState(false);
   const [clearingGame, setClearingGame] = useState(false);
-  const [startGameOpen, setStartGameOpen] = useState(false);
-  const [forceEnding, setForceEnding] = useState(false);
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");
@@ -209,14 +204,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
     await swrMutate(`/api/groups/${id}`);
   }
 
-  async function handleForceEnd() {
-    setForceEnding(true);
-    const res = await groupApi.forceEnd(id);
-    setForceEnding(false);
-    if (res.code !== 0) { toast.error(res.message); return; }
-    toast.success("游戏已结束");
-    invalidateAll();
-  }
 
   if (isLoading && !group) {
     return (
@@ -329,31 +316,9 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                     </span>
                   )}
                 </div>
-                {isOwner && (
-                  group.is_playing ? (
-                    <button
-                      type="button"
-                      onClick={handleForceEnd}
-                      disabled={forceEnding}
-                      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-red-500 py-2 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
-                    >
-                      {forceEnding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Square className="h-3.5 w-3.5" />}
-                      游戏中，强制结束
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setStartGameOpen(true)}
-                      className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
-                    >
-                      <Play className="h-3.5 w-3.5" />
-                      开始游戏
-                    </button>
-                  )
-                )}
                 <Link
                   href={`/hall/groups/${id}/room`}
-                  className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] border border-teal-200 py-2 text-xs font-medium text-teal-600 hover:bg-teal-50"
+                  className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
                 >
                   <DoorOpen className="h-3.5 w-3.5" />
                   进入课程游戏
@@ -514,16 +479,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           groupId={id}
           currentGameId={group.current_game_id}
           currentGameMode={group.game_mode}
-        />
-      )}
-
-      {/* Start game dialog */}
-      {isOwner && group.current_game_id && (
-        <StartGameDialog
-          groupId={id}
-          open={startGameOpen}
-          onOpenChange={setStartGameOpen}
-          onStarted={invalidateAll}
         />
       )}
 

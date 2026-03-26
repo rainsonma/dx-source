@@ -1,11 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import { Gamepad2, Users, User, Loader2, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { Gamepad2, Users, User, Loader2, ArrowLeft, Play, Square } from "lucide-react";
 import Link from "next/link";
+import { swrMutate } from "@/lib/swr";
 import type { GroupDetail } from "../types/group";
+import { groupApi } from "../actions/group.action";
 import { useGroupEvents } from "../hooks/use-group-events";
+import { StartGameDialog } from "./start-game-dialog";
 
 interface GroupGameRoomProps {
   groupId: string;
@@ -15,6 +20,11 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
   const router = useRouter();
   const { data: group, isLoading } = useSWR<GroupDetail>(`/api/groups/${groupId}`);
 
+  const [startGameOpen, setStartGameOpen] = useState(false);
+  const [forceEnding, setForceEnding] = useState(false);
+
+  const isOwner = group?.is_owner ?? false;
+
   // SSE: when owner starts, navigate to game play
   useGroupEvents(group ? groupId : null, {
     onGameStart: (event) => {
@@ -23,6 +33,15 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
       );
     },
   });
+
+  async function handleForceEnd() {
+    setForceEnding(true);
+    const res = await groupApi.forceEnd(groupId);
+    setForceEnding(false);
+    if (res.code !== 0) { toast.error(res.message); return; }
+    toast.success("游戏已结束");
+    swrMutate(`/api/groups/${groupId}`);
+  }
 
   if (isLoading || !group) {
     return (
@@ -104,10 +123,44 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
             准备开始...
           </p>
           <p className="text-xs text-muted-foreground">
-            等待群主开始游戏
+            {isOwner ? "选择难度和模式后开始游戏" : "等待群主开始游戏"}
           </p>
         </div>
+
+        {/* Owner controls */}
+        {isOwner && (
+          group.is_playing ? (
+            <button
+              type="button"
+              onClick={handleForceEnd}
+              disabled={forceEnding}
+              className="flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-red-500 py-2.5 text-sm font-medium text-white hover:bg-red-600 disabled:opacity-50"
+            >
+              {forceEnding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+              游戏中，强制结束
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setStartGameOpen(true)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2.5 text-sm font-medium text-white hover:bg-teal-700"
+            >
+              <Play className="h-4 w-4" />
+              开始游戏
+            </button>
+          )
+        )}
       </div>
+
+      {/* Start game dialog */}
+      {isOwner && group.current_game_id && (
+        <StartGameDialog
+          groupId={groupId}
+          open={startGameOpen}
+          onOpenChange={setStartGameOpen}
+          onStarted={() => swrMutate(`/api/groups/${groupId}`)}
+        />
+      )}
     </div>
   );
 }
