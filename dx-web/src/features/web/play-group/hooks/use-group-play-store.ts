@@ -5,7 +5,7 @@ import {
   type ComboState,
 } from "@/features/web/play/helpers/scoring";
 import type { ContentItem } from "@/features/web/play/hooks/use-game-store";
-import type { GroupLevelCompleteEvent } from "@/features/web/groups/types/group";
+import type { GroupLevelCompleteEvent } from "../types/group-play";
 
 export type GamePhase = "loading" | "playing" | "result";
 export type GameOverlay = "paused" | "settings" | "reset" | "report" | "exit" | null;

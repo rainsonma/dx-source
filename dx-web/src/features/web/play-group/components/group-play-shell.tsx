@@ -17,7 +17,7 @@ import { VocabMatchGame } from "@/features/web/play/components/vocab-match-game"
 import { ListeningGame } from "@/features/web/play/components/listening-game";
 import { VocabEliminationGame } from "@/features/web/play/components/vocab-elimination-game";
 import { VocabBattleGame } from "@/features/web/play/components/vocab-battle-game";
-import { useGroupEvents } from "@/features/web/groups/hooks/use-group-events";
+import { useGroupPlayEvents } from "../hooks/use-group-play-events";
 import { completeLevelAction } from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play/hooks/use-fullscreen";
 import { getToken } from "@/lib/api-client";
@@ -95,7 +95,7 @@ export function GroupPlayShell({
   }
 
   // SSE: listen for group level complete result
-  useGroupEvents(groupId, {
+  useGroupPlayEvents(groupId, {
     onLevelComplete: (event) => {
       setGroupResult(event);
     },

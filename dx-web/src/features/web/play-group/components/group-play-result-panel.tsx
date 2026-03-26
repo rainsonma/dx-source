@@ -7,7 +7,7 @@ import type {
   GroupLevelCompleteEvent,
   SoloWinner,
   TeamWinner,
-} from "@/features/web/groups/types/group";
+} from "../types/group-play";
 
 interface GroupPlayResultPanelProps {
   result: GroupLevelCompleteEvent;
