@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Gamepad2, Search, User, Users, Check, X, Loader2 } from "lucide-react";
+import { Gamepad2, Search, User, Users, Check, X, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { swrMutate } from "@/lib/swr";
@@ -14,6 +14,7 @@ interface SetGameDialogProps {
   groupId: string;
   currentGameId?: string | null;
   currentGameMode?: string | null;
+  currentLevelTimeLimit?: number;
 }
 
 export function SetGameDialog({
@@ -22,9 +23,11 @@ export function SetGameDialog({
   groupId,
   currentGameId,
   currentGameMode,
+  currentLevelTimeLimit,
 }: SetGameDialogProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<"solo" | "team">("solo");
+  const [levelTimeLimit, setLevelTimeLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [games, setGames] = useState<GroupGameSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +49,7 @@ export function SetGameDialog({
     if (open) {
       setSelectedGameId(currentGameId ?? null);
       setSelectedMode(currentGameMode === "team" ? "team" : "solo");
+      setLevelTimeLimit(currentLevelTimeLimit ?? 10);
       setSearchQuery("");
       setIsSearching(false);
       fetchGames("", 3);
@@ -73,7 +77,7 @@ export function SetGameDialog({
       return;
     }
     setConfirming(true);
-    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode);
+    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, levelTimeLimit);
     setConfirming(false);
     if (res.code !== 0) {
       toast.error(res.message);
@@ -205,6 +209,23 @@ export function SetGameDialog({
               <Users className="h-3.5 w-3.5" />
               小组
             </button>
+          </div>
+
+          {/* Level time limit */}
+          <div className="flex items-center gap-3">
+            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="shrink-0 text-[13px] font-medium text-foreground">关卡限时</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={levelTimeLimit}
+                onChange={(e) => setLevelTimeLimit(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
+                className="h-9 w-16 rounded-lg border border-border bg-slate-50 px-2 text-center text-sm text-foreground outline-none focus:border-teal-500"
+              />
+              <span className="text-xs text-muted-foreground">分钟</span>
+            </div>
           </div>
 
           {/* Confirm button */}

@@ -64,7 +64,7 @@ func (c *GroupGameController) SetGame(ctx contractshttp.Context) contractshttp.R
 		return resp
 	}
 
-	if err := services.SetGroupGame(userID, id, req.GameID, req.GameMode); err != nil {
+	if err := services.SetGroupGame(userID, id, req.GameID, req.GameMode, req.LevelTimeLimit); err != nil {
 		return mapGroupGameError(ctx, err)
 	}
 

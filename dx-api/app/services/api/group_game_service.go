@@ -76,7 +76,7 @@ func SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error)
 }
 
 // SetGroupGame sets the current game and game mode for a group.
-func SetGroupGame(userID, groupID, gameID, gameMode string) error {
+func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -97,8 +97,9 @@ func SetGroupGame(userID, groupID, gameID, gameMode string) error {
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(map[string]any{
-		"current_game_id": gameID,
-		"game_mode":       gameMode,
+		"current_game_id":  gameID,
+		"game_mode":        gameMode,
+		"level_time_limit": levelTimeLimit,
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
 	}
