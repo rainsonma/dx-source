@@ -1,22 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Settings,
-  Pause,
   RotateCcw,
   Flag,
   Maximize,
   Minimize,
-  Timer,
+  Clock,
   ChevronsDown,
   ChevronsUp,
   Trophy,
   Flame,
   SkipForward,
-  SquareM,
-  Plus,
 } from "lucide-react";
 import {
   Collapsible,
@@ -24,48 +21,82 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useGameStore } from "@/features/web/play/hooks/use-game-store";
+import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { StatRow } from "@/features/web/play/components/stat-row";
-import { GAME_DEGREES } from "@/consts/game-degree";
 
 const actionButtons = [
   { icon: Settings, label: "设置", action: "settings" },
-  { icon: Pause, label: "暂停", action: "pause" },
   { icon: RotateCcw, label: "重置", action: "reset" },
   { icon: Flag, label: "反馈", action: "report" },
   { icon: Maximize, label: "全屏", action: "fullscreen" },
 ] as const;
 
-interface GameTopBarProps {
+interface GroupPlayTopBarProps {
   player: { nickname: string; avatarUrl: string | null };
   levelName: string;
-  elapsedTime: string;
+  levelTimeLimit: number;
   onExit: () => void;
   onReset: () => void;
   onSettings: () => void;
-  onPause: () => void;
   onReport: () => void;
   onFullscreen: () => void;
   isFullscreen: boolean;
+  onLevelTimeUp: () => void;
 }
 
-export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, onSettings, onPause, onReport, onFullscreen, isFullscreen }: GameTopBarProps) {
+export function GroupPlayTopBar({
+  player,
+  levelName,
+  levelTimeLimit,
+  onExit,
+  onReset,
+  onSettings,
+  onReport,
+  onFullscreen,
+  isFullscreen,
+  onLevelTimeUp,
+}: GroupPlayTopBarProps) {
   const [playersOpen, setPlayersOpen] = useState(false);
+
   const actionHandlers: Record<string, (() => void) | undefined> = {
     settings: onSettings,
-    pause: onPause,
     reset: onReset,
     report: onReport,
     fullscreen: onFullscreen,
   };
-  const score = useGameStore((s) => s.score);
-  const comboStreak = useGameStore((s) => s.combo.streak);
-  const skipCount = useGameStore((s) => s.skipCount);
-  const currentIndex = useGameStore((s) => s.currentIndex);
-  const totalItems = useGameStore((s) => s.contentItems?.length ?? 0);
-  const degree = useGameStore((s) => s.degree);
 
-  const progressPercent = totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
+  const score = useGroupPlayStore((s) => s.score);
+  const comboStreak = useGroupPlayStore((s) => s.combo.streak);
+  const skipCount = useGroupPlayStore((s) => s.skipCount);
+  const currentIndex = useGroupPlayStore((s) => s.currentIndex);
+  const totalItems = useGroupPlayStore((s) => s.contentItems?.length ?? 0);
+
+  const progressPercent =
+    totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
+
+  const [countdown, setCountdown] = useState(levelTimeLimit * 60);
+  const onLevelTimeUpRef = useRef(onLevelTimeUp);
+  onLevelTimeUpRef.current = onLevelTimeUp;
+
+  useEffect(() => {
+    setCountdown(levelTimeLimit * 60);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setTimeout(() => onLevelTimeUpRef.current(), 0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [levelTimeLimit]);
+
+  const countdownMins = Math.floor(countdown / 60);
+  const countdownSecs = countdown % 60;
+  const countdownStr = `${String(countdownMins).padStart(2, "0")}:${String(countdownSecs).padStart(2, "0")}`;
+  const countdownLow = countdown <= 60;
 
   return (
     <div className="relative flex w-full flex-col bg-card border-b border-border">
@@ -86,23 +117,37 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
           </span>
         </div>
 
-        {/* Center: timer */}
+        {/* Center: group countdown timer */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          <Timer className="h-4 w-4 text-teal-600" />
-          <span className="text-base font-extrabold tracking-tight text-foreground">
-            {elapsedTime}
+          <Clock
+            className={`h-4 w-4 ${countdownLow ? "text-red-500" : "text-teal-600"}`}
+          />
+          <span
+            className={`text-xs font-medium ${countdownLow ? "text-red-500" : "text-muted-foreground"}`}
+          >
+            Group:
+          </span>
+          <span
+            className={`text-base font-extrabold tracking-tight tabular-nums ${countdownLow ? "text-red-500" : "text-foreground"}`}
+          >
+            {countdownStr}
           </span>
         </div>
 
         {/* Right: action buttons */}
         <div className="flex items-center gap-1">
           {actionButtons.map((btn) => {
-            const Icon = btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
+            const Icon =
+              btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
             return (
               <button
                 key={btn.label}
                 type="button"
-                aria-label={btn.action === "fullscreen" && isFullscreen ? "退出全屏" : btn.label}
+                aria-label={
+                  btn.action === "fullscreen" && isFullscreen
+                    ? "退出全屏"
+                    : btn.label
+                }
                 onClick={actionHandlers[btn.action]}
                 className="flex h-8 w-8 items-center justify-center rounded-lg"
               >
@@ -119,7 +164,7 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
         onOpenChange={setPlayersOpen}
         className="absolute right-1 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-card shadow-sm md:right-1.5 md:w-64"
       >
-        {/* Top row: avatar + score + combo + degree badge */}
+        {/* Top row: avatar + score + combo */}
         <div className="flex items-center gap-2.5 px-3 pt-2">
           <Avatar size="sm" className="bg-teal-600">
             {player.avatarUrl && (
@@ -131,22 +176,13 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
           </Avatar>
           <span className="text-sm font-extrabold text-foreground">{score}</span>
           {comboStreak >= 3 && (
-            <span className="text-xs font-bold text-orange-500">连击 × {comboStreak}</span>
-          )}
-          {degree === GAME_DEGREES.PRACTICE ? (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700">
-              <SquareM className="h-3 w-3" />
-              练习
-            </span>
-          ) : (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
-              <Plus className="h-3 w-3" />
-              1v1
+            <span className="text-xs font-bold text-orange-500">
+              连击 × {comboStreak}
             </span>
           )}
         </div>
 
-        {/* Progress bar + centered toggle */}
+        {/* Progress bar + toggle */}
         <CollapsibleTrigger className="flex w-full flex-col items-center gap-1 px-3 pb-2 pt-1.5">
           <div className="h-1.5 w-full rounded-sm bg-border">
             <div
@@ -161,30 +197,11 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
           )}
         </CollapsibleTrigger>
 
-        {/* Expanded: player 2 */}
+        {/* Stats: always visible */}
         <CollapsibleContent>
           <div className="h-px w-full bg-border" />
-
-          {/* Player 2 (solo mode) */}
-          <div className="flex items-center gap-2.5 px-3 py-2.5">
-            <Avatar size="sm" className="border border-border bg-muted">
-              <AvatarFallback className="bg-muted text-muted-foreground text-xs font-bold">
-                ?
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-muted-foreground">单人模式</span>
-            <button
-              type="button"
-              className="ml-auto rounded-lg border border-border bg-card px-2.5 py-0.5"
-            >
-              <span className="text-[11px] font-medium text-muted-foreground">
-                邀请
-              </span>
-            </button>
-          </div>
         </CollapsibleContent>
 
-        {/* Stats: always visible below player panel */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">
           <StatRow
             icon={SkipForward}

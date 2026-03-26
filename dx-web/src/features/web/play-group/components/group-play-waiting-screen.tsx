@@ -4,11 +4,11 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-interface GroupWaitingScreenProps {
+interface GroupPlayWaitingScreenProps {
   groupId: string;
 }
 
-export function GroupWaitingScreen({ groupId }: GroupWaitingScreenProps) {
+export function GroupPlayWaitingScreen({ groupId }: GroupPlayWaitingScreenProps) {
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">

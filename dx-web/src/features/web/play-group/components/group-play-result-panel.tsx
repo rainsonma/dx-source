@@ -3,14 +3,18 @@
 import { Trophy, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import type { GroupLevelCompleteEvent, SoloWinner, TeamWinner } from "@/features/web/groups/types/group";
+import type {
+  GroupLevelCompleteEvent,
+  SoloWinner,
+  TeamWinner,
+} from "@/features/web/groups/types/group";
 
-interface GroupResultPanelProps {
+interface GroupPlayResultPanelProps {
   result: GroupLevelCompleteEvent;
   groupId: string;
 }
 
-export function GroupResultPanel({ result, groupId }: GroupResultPanelProps) {
+export function GroupPlayResultPanel({ result, groupId }: GroupPlayResultPanelProps) {
   const isSolo = result.mode === "solo";
   const soloWinner = isSolo ? (result.winner as SoloWinner) : null;
   const teamWinner = !isSolo ? (result.winner as TeamWinner) : null;
@@ -32,8 +36,12 @@ export function GroupResultPanel({ result, groupId }: GroupResultPanelProps) {
               <User className="h-4 w-4 text-amber-500" />
               <span className="text-sm font-medium text-muted-foreground">冠军</span>
             </div>
-            <span className="text-lg font-bold text-foreground">{soloWinner.user_name}</span>
-            <span className="text-2xl font-bold text-teal-600">{soloWinner.score} 分</span>
+            <span className="text-lg font-bold text-foreground">
+              {soloWinner.user_name}
+            </span>
+            <span className="text-2xl font-bold text-teal-600">
+              {soloWinner.score} 分
+            </span>
           </div>
         )}
 
@@ -43,12 +51,19 @@ export function GroupResultPanel({ result, groupId }: GroupResultPanelProps) {
               <Users className="h-4 w-4 text-amber-500" />
               <span className="text-sm font-medium text-muted-foreground">冠军小组</span>
             </div>
-            <span className="text-lg font-bold text-foreground">{teamWinner.subgroup_name}</span>
-            <span className="text-2xl font-bold text-teal-600">{teamWinner.total_score} 分</span>
+            <span className="text-lg font-bold text-foreground">
+              {teamWinner.subgroup_name}
+            </span>
+            <span className="text-2xl font-bold text-teal-600">
+              {teamWinner.total_score} 分
+            </span>
             <div className="h-px w-full bg-border" />
             <div className="w-full space-y-1">
               {teamWinner.members.map((m) => (
-                <div key={m.user_id} className="flex items-center justify-between text-sm">
+                <div
+                  key={m.user_id}
+                  className="flex items-center justify-between text-sm"
+                >
                   <span className="text-muted-foreground">{m.user_name}</span>
                   <span className="font-medium text-foreground">{m.score} 分</span>
                 </div>

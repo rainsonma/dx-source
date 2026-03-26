@@ -4,7 +4,6 @@ import {
   processAnswer,
   type ComboState,
 } from "@/features/web/play/helpers/scoring";
-import type { GroupLevelCompleteEvent } from "@/features/web/groups/types/group";
 
 export type GamePhase = "loading" | "playing" | "result";
 export type GameOverlay = "paused" | "settings" | "reset" | "report" | "exit" | null;
@@ -41,10 +40,6 @@ interface GameState {
   wrongCount: number;
   skipCount: number;
   playTime: number;
-  gameGroupId: string | null;
-  levelTimeLimit: number | null;
-  groupPhase: "playing" | "waiting" | "result" | null;
-  groupResult: GroupLevelCompleteEvent | null;
 }
 
 interface GameActions {
@@ -58,8 +53,6 @@ interface GameActions {
     levelId: string;
     contentItems: ContentItem[];
     startFromIndex: number;
-    gameGroupId?: string | null;
-    levelTimeLimit?: number | null;
     restored?: {
       score: number;
       maxCombo: number;
@@ -77,9 +70,6 @@ interface GameActions {
   closeOverlay: () => void;
   resetGame: () => void;
   exitGame: () => void;
-  setGroupWaiting: () => void;
-  setGroupResult: (result: GroupLevelCompleteEvent) => void;
-  clearGroupPhase: () => void;
 }
 
 const initialGameState: GameState = {
@@ -101,10 +91,6 @@ const initialGameState: GameState = {
   wrongCount: 0,
   skipCount: 0,
   playTime: 0,
-  gameGroupId: null,
-  levelTimeLimit: null,
-  groupPhase: null,
-  groupResult: null,
 };
 
 export const useGameStore = create<GameState & GameActions>()((set) => ({
@@ -136,10 +122,6 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
       wrongCount: data.restored?.wrongCount ?? 0,
       skipCount: data.restored?.skipCount ?? 0,
       playTime: data.restored?.playTime ?? 0,
-      gameGroupId: data.gameGroupId ?? null,
-      levelTimeLimit: data.levelTimeLimit ?? null,
-      groupPhase: data.gameGroupId ? "playing" : null,
-      groupResult: null,
     }),
 
   nextItem: () =>
@@ -183,8 +165,4 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
     }),
 
   exitGame: () => set({ ...initialGameState }),
-
-  setGroupWaiting: () => set({ groupPhase: "waiting" }),
-  setGroupResult: (result) => set({ groupPhase: "result", groupResult: result }),
-  clearGroupPhase: () => set({ groupPhase: null, groupResult: null }),
 }));

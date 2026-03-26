@@ -5,8 +5,8 @@ import {
   Keyboard,
   Swords,
   Headphones,
-  Crosshair,
   Lightbulb,
+  Crosshair,
   RotateCcw,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -14,11 +14,13 @@ import { GAME_MODES, type GameMode } from "@/consts/game-mode";
 import { GAME_DEGREE_LABELS, type GameDegree } from "@/consts/game-degree";
 import {
   startSessionAction,
-  startSessionLevelAction,
-  fetchSessionRestoreDataAction,
-} from "@/features/web/play/actions/session.action";
-import { fetchLevelContentAction } from "@/features/web/play/actions/content.action";
-import { useGameStore, type ContentItem } from "@/features/web/play/hooks/use-game-store";
+  startLevelAction,
+  restoreSessionDataAction,
+  fetchLevelContentAction,
+} from "../actions/session.action";
+import { useGroupPlayStore } from "../hooks/use-group-play-store";
+import { useGameStore } from "@/features/web/play/hooks/use-game-store";
+import type { ContentItem } from "@/features/web/play/hooks/use-game-store";
 
 const MINIMUM_DISPLAY_MS = 1200;
 
@@ -74,17 +76,19 @@ const loadingData: Record<GameMode, LoadingConfig> = {
   },
 };
 
-interface GameLoadingScreenProps {
+interface GroupPlayLoadingScreenProps {
   gameId: string;
   gameName: string;
   gameMode: string;
-  degree?: string;
-  pattern?: string;
-  levelId?: string;
+  degree: string;
+  pattern: string | null;
+  levelId: string;
   levelName?: string;
+  gameGroupId: string;
+  levelTimeLimit: number;
 }
 
-export function GameLoadingScreen({
+export function GroupPlayLoadingScreen({
   gameId,
   gameName,
   gameMode,
@@ -92,17 +96,18 @@ export function GameLoadingScreen({
   pattern,
   levelId,
   levelName,
-}: GameLoadingScreenProps) {
+  gameGroupId,
+  levelTimeLimit,
+}: GroupPlayLoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  const initSession = useGameStore((s) => s.initSession);
+  const initGroupSession = useGroupPlayStore((s) => s.initSession);
+  const initGameSession = useGameStore((s) => s.initSession);
 
   const config = loadingData[gameMode as GameMode];
-  const degreeLabel = degree
-    ? GAME_DEGREE_LABELS[degree as GameDegree] ?? degree
-    : "";
+  const degreeLabel = GAME_DEGREE_LABELS[degree as GameDegree] ?? degree;
   const subtitle = [gameName, degreeLabel, levelName].filter(Boolean).join(" · ");
 
   useEffect(() => {
@@ -118,8 +123,14 @@ export function GameLoadingScreen({
       try {
         setProgress(0);
 
-        // Step 1: Start/resume session
-        const sessionResult = await startSessionAction(gameId, degree, levelId, pattern);
+        // Step 1: Start group-play session
+        const sessionResult = await startSessionAction(
+          gameId,
+          degree,
+          pattern,
+          levelId,
+          gameGroupId
+        );
         if (cancelled) return;
         if (sessionResult.error || !sessionResult.data) {
           setError(sessionResult.error ?? "无法开始游戏");
@@ -127,13 +138,13 @@ export function GameLoadingScreen({
         }
         setProgress(25);
 
-        const resolvedLevelId = sessionResult.data.levelId;
+        const resolvedLevelId = sessionResult.data.levelId ?? levelId;
 
-        // Step 2: Create/resume GameSessionLevel
-        const levelResult = await startSessionLevelAction(
+        // Step 2: Start level session
+        const levelResult = await startLevelAction(
           sessionResult.data.id,
           resolvedLevelId,
-          degree ?? "intermediate",
+          degree,
           pattern
         );
         if (cancelled) return;
@@ -143,8 +154,9 @@ export function GameLoadingScreen({
         }
         setProgress(50);
 
-        // Step 3: Use LEVEL SESSION's resume point (not total session's)
-        const levelSessionResumeItemId = levelResult.data.currentContentItemId ?? null;
+        // Step 3: Restore data if resuming
+        const levelSessionResumeItemId =
+          levelResult.data.currentContentItemId ?? null;
 
         let restored: {
           score: number;
@@ -156,9 +168,8 @@ export function GameLoadingScreen({
         } | null = null;
 
         if (levelSessionResumeItemId) {
-          const restoreResult = await fetchSessionRestoreDataAction(
-            sessionResult.data.id,
-            resolvedLevelId
+          const restoreResult = await restoreSessionDataAction(
+            sessionResult.data.id
           );
           if (!cancelled && restoreResult.data?.sessionLevel) {
             const sl = restoreResult.data.sessionLevel;
@@ -174,8 +185,12 @@ export function GameLoadingScreen({
         }
         setProgress(75);
 
-        // Step 4: Fetch content for the resolved level
-        const contentResult = await fetchLevelContentAction(gameId, resolvedLevelId, degree);
+        // Step 4: Fetch content
+        const contentResult = await fetchLevelContentAction(
+          gameId,
+          resolvedLevelId,
+          degree
+        );
         if (cancelled) return;
         if (contentResult.error || !contentResult.data) {
           setError(contentResult.error ?? "加载内容失败");
@@ -186,7 +201,7 @@ export function GameLoadingScreen({
         let startFromIndex = 0;
         if (levelSessionResumeItemId) {
           const idx = contentResult.data.findIndex(
-            (item) => item.id === levelSessionResumeItemId
+            (item: any) => item.id === levelSessionResumeItemId
           );
           if (idx > 0) startFromIndex = idx;
         }
@@ -194,18 +209,25 @@ export function GameLoadingScreen({
         await timerPromise;
         if (cancelled) return;
 
-        initSession({
+        const sessionInit = {
           sessionId: sessionResult.data.id,
           levelSessionId: levelResult.data.id,
           gameId,
           gameMode,
-          degree: degree ?? "intermediate",
-          pattern: pattern ?? null,
+          degree,
+          pattern,
           levelId: resolvedLevelId,
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
+          gameGroupId,
+          levelTimeLimit,
           ...(restored && { restored }),
-        });
+        };
+
+        // Init group store (shell state management)
+        initGroupSession(sessionInit);
+        // Init game store (required by shared game components like LsrwGame)
+        initGameSession(sessionInit);
       } catch {
         if (!cancelled) setError("加载失败，请重试");
       }
@@ -214,7 +236,18 @@ export function GameLoadingScreen({
     return () => {
       cancelled = true;
     };
-  }, [gameId, gameMode, degree, pattern, levelId, initSession, retryCount]);
+  }, [
+    gameId,
+    gameMode,
+    degree,
+    pattern,
+    levelId,
+    gameGroupId,
+    levelTimeLimit,
+    initGroupSession,
+    initGameSession,
+    retryCount,
+  ]);
 
   function handleRetry() {
     setError(null);

@@ -5,24 +5,28 @@ import { use } from "react";
 import { notFound } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
-import { GamePlayShell } from "@/features/web/play/components/game-play-shell";
+import { GroupPlayShell } from "@/features/web/play-group/components/group-play-shell";
 
-export default function GamePlayPage({
+export default function GroupPlayPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
   const searchParams = useSearchParams();
-  const degree = searchParams.get("degree") ?? undefined;
-  const level = searchParams.get("level") ?? undefined;
-  const pattern = searchParams.get("pattern") ?? undefined;
+
+  const groupId = searchParams.get("groupId");
+  const degree = searchParams.get("degree");
+  const pattern = searchParams.get("pattern");
+  const level = searchParams.get("level");
+  const levelTimeLimitRaw = searchParams.get("levelTimeLimit");
+  const levelTimeLimit = levelTimeLimitRaw ? Number(levelTimeLimitRaw) : null;
 
   const [game, setGame] = useState<any>(null);
-  const [player, setPlayer] = useState<{ nickname: string; avatarUrl: string | null }>({
-    nickname: "我",
-    avatarUrl: null,
-  });
+  const [player, setPlayer] = useState<{
+    nickname: string;
+    avatarUrl: string | null;
+  }>({ nickname: "我", avatarUrl: null });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -51,7 +55,8 @@ export default function GamePlayPage({
 
       if (profileRes.code === 0 && profileRes.data) {
         setPlayer({
-          nickname: profileRes.data.nickname || profileRes.data.username || "我",
+          nickname:
+            profileRes.data.nickname || profileRes.data.username || "我",
           avatarUrl: profileRes.data.avatarUrl ?? null,
         });
       }
@@ -68,13 +73,23 @@ export default function GamePlayPage({
     return null;
   }
 
+  // groupId, degree, and levelTimeLimit are required for group play
+  if (!groupId || !degree || levelTimeLimit === null) {
+    notFound();
+    return null;
+  }
+
+  const targetLevelId = level ?? game.levels[0]?.id ?? "";
+
   return (
-    <GamePlayShell
+    <GroupPlayShell
       game={game}
       player={player}
       degree={degree}
       pattern={pattern}
-      levelId={level}
+      levelId={targetLevelId}
+      groupId={groupId}
+      levelTimeLimit={levelTimeLimit}
     />
   );
 }
