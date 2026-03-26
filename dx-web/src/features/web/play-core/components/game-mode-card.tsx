@@ -158,7 +158,7 @@ export function GameModeCard({
       const params = new URLSearchParams({ degree: selectedDegree });
       if (isLsrw) params.set("pattern", selectedPattern);
       if (levelId) params.set("level", levelId);
-      router.push(`/hall/play/${gameId}?${params}`);
+      router.push(`/hall/play-single/${gameId}?${params}`);
     });
   }
 
@@ -167,7 +167,7 @@ export function GameModeCard({
     const params = new URLSearchParams({ degree: activeSession.degree });
     if (activeSession.pattern) params.set("pattern", activeSession.pattern);
     params.set("level", levelId ?? activeSession.currentLevelId);
-    router.push(`/hall/play/${gameId}?${params}`);
+    router.push(`/hall/play-single/${gameId}?${params}`);
   }
 
   function handleRestart() {
@@ -179,7 +179,7 @@ export function GameModeCard({
       const params = new URLSearchParams({ degree: selectedDegree });
       if (isLsrw) params.set("pattern", selectedPattern);
       params.set("level", targetLevelId);
-      router.push(`/hall/play/${gameId}?${params}`);
+      router.push(`/hall/play-single/${gameId}?${params}`);
     });
   }
 

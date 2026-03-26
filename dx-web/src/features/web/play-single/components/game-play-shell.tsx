@@ -3,9 +3,9 @@
 import { useEffect } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
-import { GameLoadingScreen } from "@/features/web/play/components/game-loading-screen";
-import { GameTopBar } from "@/features/web/play/components/game-top-bar";
-import { GameResultCard } from "@/features/web/play/components/game-result-card";
+import { GameLoadingScreen } from "@/features/web/play-single/components/game-loading-screen";
+import { GameTopBar } from "@/features/web/play-single/components/game-top-bar";
+import { GameResultCard } from "@/features/web/play-single/components/game-result-card";
 import { GamePauseOverlay } from "@/features/web/play-core/components/game-pause-overlay";
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
@@ -87,7 +87,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      fetch(`${apiUrl}/api/sessions/${sid}/sync-playtime`, {
+      fetch(`${apiUrl}/api/play-single/sessions/${sid}/sync-playtime`, {
         method: "POST",
         headers,
         body: JSON.stringify({

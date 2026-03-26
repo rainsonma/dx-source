@@ -5,7 +5,7 @@ import { use } from "react";
 import { notFound } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api-client";
-import { GamePlayShell } from "@/features/web/play/components/game-play-shell";
+import { GamePlayShell } from "@/features/web/play-single/components/game-play-shell";
 
 export default function GamePlayPage({
   params,

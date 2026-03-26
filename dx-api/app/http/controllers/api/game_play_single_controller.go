@@ -14,14 +14,14 @@ import (
 	"github.com/goravel/framework/facades"
 )
 
-type GameSessionController struct{}
+type GamePlaySingleController struct{}
 
-func NewGameSessionController() *GameSessionController {
-	return &GameSessionController{}
+func NewGamePlaySingleController() *GamePlaySingleController {
+	return &GamePlaySingleController{}
 }
 
 // Start starts or resumes a game session.
-func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) Start(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -44,7 +44,7 @@ func (c *GameSessionController) Start(ctx contractshttp.Context) contractshttp.R
 }
 
 // End ends a game session and updates stats.
-func (c *GameSessionController) End(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) End(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -75,7 +75,7 @@ func (c *GameSessionController) End(ctx contractshttp.Context) contractshttp.Res
 }
 
 // ForceComplete force-completes a session.
-func (c *GameSessionController) ForceComplete(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) ForceComplete(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -91,7 +91,7 @@ func (c *GameSessionController) ForceComplete(ctx contractshttp.Context) contrac
 }
 
 // StartLevel starts a level within a session.
-func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -113,7 +113,7 @@ func (c *GameSessionController) StartLevel(ctx contractshttp.Context) contractsh
 }
 
 // CompleteLevel completes a level within a session.
-func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) CompleteLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -142,7 +142,7 @@ func (c *GameSessionController) CompleteLevel(ctx contractshttp.Context) contrac
 }
 
 // AdvanceLevel advances to the next level.
-func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) AdvanceLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -173,7 +173,7 @@ func (c *GameSessionController) AdvanceLevel(ctx contractshttp.Context) contract
 }
 
 // RestartLevel restarts a level within a session.
-func (c *GameSessionController) RestartLevel(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) RestartLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -190,7 +190,7 @@ func (c *GameSessionController) RestartLevel(ctx contractshttp.Context) contract
 }
 
 // RecordAnswer records a single answer.
-func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) RecordAnswer(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -233,7 +233,7 @@ func (c *GameSessionController) RecordAnswer(ctx contractshttp.Context) contract
 }
 
 // RecordSkip records a skip.
-func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) RecordSkip(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -266,7 +266,7 @@ func (c *GameSessionController) RecordSkip(ctx contractshttp.Context) contractsh
 }
 
 // SyncPlayTime syncs playtime for a session.
-func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) SyncPlayTime(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -290,7 +290,7 @@ func (c *GameSessionController) SyncPlayTime(ctx contractshttp.Context) contract
 }
 
 // CheckActive checks for an active session by degree+pattern.
-func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) CheckActive(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -310,7 +310,7 @@ func (c *GameSessionController) CheckActive(ctx contractshttp.Context) contracts
 }
 
 // CheckActiveLevel checks for an active level session.
-func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) CheckActiveLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -330,7 +330,7 @@ func (c *GameSessionController) CheckActiveLevel(ctx contractshttp.Context) cont
 }
 
 // CheckAnyActive checks for any active session for a game.
-func (c *GameSessionController) CheckAnyActive(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) CheckAnyActive(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -350,7 +350,7 @@ func (c *GameSessionController) CheckAnyActive(ctx contractshttp.Context) contra
 }
 
 // Restore returns accumulated stats for restoring client state.
-func (c *GameSessionController) Restore(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) Restore(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -372,7 +372,7 @@ func (c *GameSessionController) Restore(ctx contractshttp.Context) contractshttp
 }
 
 // UpdateContentItem updates the session's current content item.
-func (c *GameSessionController) UpdateContentItem(ctx contractshttp.Context) contractshttp.Response {
+func (c *GamePlaySingleController) UpdateContentItem(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")

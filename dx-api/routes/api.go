@@ -111,9 +111,9 @@ func Api() {
 			// Email verification code route (protected)
 			protected.Post("/email/send-change-code", emailController.SendChangeCode)
 
-			// Game session routes
-			sessionController := apicontrollers.NewGameSessionController()
-			protected.Prefix("/sessions").Group(func(sessions route.Router) {
+			// Game session routes (solo play)
+			sessionController := apicontrollers.NewGamePlaySingleController()
+			protected.Prefix("/play-single/sessions").Group(func(sessions route.Router) {
 				sessions.Post("/start", sessionController.Start)
 				sessions.Get("/active", sessionController.CheckActive)
 				sessions.Get("/active-level", sessionController.CheckActiveLevel)

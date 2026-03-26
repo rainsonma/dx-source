@@ -112,7 +112,7 @@ export function GameResultCard({ game, elapsedTime }: GameResultCardProps) {
     if (levelId) params.set("level", levelId);
     if (pattern) params.set("pattern", pattern);
     exitGame();
-    router.push(`/hall/play/${game.id}?${params.toString()}`);
+    router.push(`/hall/play-single/${game.id}?${params.toString()}`);
   }
 
   /** Advance to the next level via URL navigation (do NOT exitGame here — the store is reset by GamePlayShell's useEffect when new props arrive via soft navigation; calling exitGame before router.push would trigger a spurious loading screen with the OLD level ID) */
@@ -125,7 +125,7 @@ export function GameResultCard({ game, elapsedTime }: GameResultCardProps) {
     if (degree) params.set("degree", degree);
     params.set("level", nextLevel.id);
     if (pattern) params.set("pattern", pattern);
-    router.push(`/hall/play/${game.id}?${params.toString()}`);
+    router.push(`/hall/play-single/${game.id}?${params.toString()}`);
   }
 
   return (

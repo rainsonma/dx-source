@@ -305,17 +305,17 @@ export const sessionApi = {
     level_id?: string;
     pattern?: string;
   }) {
-    return apiClient.post<any>("/api/sessions/start", data);
+    return apiClient.post<any>("/api/play-single/sessions/start", data);
   },
   /** Check for an active session by degree+pattern */
   async checkActive(gameId: string, degree: string, pattern?: string | null) {
     const params = new URLSearchParams({ game_id: gameId, degree });
     if (pattern) params.set("pattern", pattern);
-    return apiClient.get<any>(`/api/sessions/active?${params}`);
+    return apiClient.get<any>(`/api/play-single/sessions/active?${params}`);
   },
   /** Check for any active session for a game */
   async checkAnyActive(gameId: string) {
-    return apiClient.get<any>(`/api/sessions/any-active?game_id=${gameId}`);
+    return apiClient.get<any>(`/api/play-single/sessions/any-active?game_id=${gameId}`);
   },
   /** Check for an active level session */
   async checkActiveLevel(
@@ -326,7 +326,7 @@ export const sessionApi = {
   ) {
     const params = new URLSearchParams({ game_id: gameId, degree, game_level_id: gameLevelId });
     if (pattern) params.set("pattern", pattern);
-    return apiClient.get<any>(`/api/sessions/active-level?${params}`);
+    return apiClient.get<any>(`/api/play-single/sessions/active-level?${params}`);
   },
   /** End a session */
   async endSession(
@@ -342,18 +342,18 @@ export const sessionApi = {
       all_levels_completed: boolean;
     }
   ) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/end`, data);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/end`, data);
   },
   /** Force-complete a session */
   async forceComplete(sessionId: string) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/force-complete`);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/force-complete`);
   },
   /** Start a level within a session */
   async startLevel(
     sessionId: string,
     data: { game_level_id: string; degree: string; pattern?: string }
   ) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/levels/start`, data);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/levels/start`, data);
   },
   /** Complete a level */
   async completeLevel(
@@ -362,21 +362,21 @@ export const sessionApi = {
     data: { score: number; max_combo: number; total_items: number }
   ) {
     return apiClient.post<any>(
-      `/api/sessions/${sessionId}/levels/${levelId}/complete`,
+      `/api/play-single/sessions/${sessionId}/levels/${levelId}/complete`,
       data
     );
   },
   /** Advance to next level */
   async advanceLevel(sessionId: string, levelId: string, nextLevelId: string) {
     return apiClient.post<any>(
-      `/api/sessions/${sessionId}/levels/${levelId}/advance`,
+      `/api/play-single/sessions/${sessionId}/levels/${levelId}/advance`,
       { next_level_id: nextLevelId }
     );
   },
   /** Restart a level */
   async restartLevel(sessionId: string, levelId: string) {
     return apiClient.post<any>(
-      `/api/sessions/${sessionId}/levels/${levelId}/restart`
+      `/api/play-single/sessions/${sessionId}/levels/${levelId}/restart`
     );
   },
   /** Record an answer */
@@ -398,7 +398,7 @@ export const sessionApi = {
       duration: number;
     }
   ) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/answers`, data);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/answers`, data);
   },
   /** Record a skip */
   async recordSkip(
@@ -409,24 +409,24 @@ export const sessionApi = {
       next_content_item_id: string | null;
     }
   ) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/skips`, data);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/skips`, data);
   },
   /** Sync playtime */
   async syncPlayTime(
     sessionId: string,
     data: { game_level_id: string; play_time: number }
   ) {
-    return apiClient.post<any>(`/api/sessions/${sessionId}/sync-playtime`, data);
+    return apiClient.post<any>(`/api/play-single/sessions/${sessionId}/sync-playtime`, data);
   },
   /** Restore session data */
   async restore(sessionId: string, gameLevelId: string) {
     return apiClient.get<any>(
-      `/api/sessions/${sessionId}/restore?game_level_id=${gameLevelId}`
+      `/api/play-single/sessions/${sessionId}/restore?game_level_id=${gameLevelId}`
     );
   },
   /** Update current content item */
   async updateContentItem(sessionId: string, contentItemId: string | null) {
-    return apiClient.put<any>(`/api/sessions/${sessionId}/content-item`, {
+    return apiClient.put<any>(`/api/play-single/sessions/${sessionId}/content-item`, {
       content_item_id: contentItemId,
     });
   },

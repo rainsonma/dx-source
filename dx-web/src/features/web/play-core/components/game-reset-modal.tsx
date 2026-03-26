@@ -27,7 +27,7 @@ export function GameResetModal() {
       if (degree) params.set("degree", degree);
       params.set("level", levelId);
       if (pattern) params.set("pattern", pattern);
-      router.push(`/hall/play/${gameId}?${params.toString()}`);
+      router.push(`/hall/play-single/${gameId}?${params.toString()}`);
     });
   }
 
