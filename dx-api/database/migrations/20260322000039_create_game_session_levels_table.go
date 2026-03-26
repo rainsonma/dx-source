@@ -34,6 +34,8 @@ func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 			table.Integer("play_time").Default(0)
 			table.Integer("total_items_count").Default(0)
 			table.Integer("played_items_count").Default(0)
+			table.Uuid("game_group_id").Nullable()
+			table.Uuid("game_subgroup_id").Nullable()
 			table.TimestampsTz()
 			table.Index("game_session_total_id")
 			table.Index("game_level_id")
