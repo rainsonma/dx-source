@@ -10,11 +10,11 @@ import {
   BookOpen,
   Loader2,
 } from "lucide-react";
-import { ProgressRing } from "@/features/web/play/components/progress-ring";
-import { useGameStore } from "@/features/web/play/hooks/use-game-store";
-import { useGameResult } from "@/features/web/play/hooks/use-game-result";
+import { ProgressRing } from "@/features/web/play-core/components/progress-ring";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import { useGameResult } from "@/features/web/play-core/hooks/use-game-result";
 import { getScoreRating } from "@/consts/score-rating";
-import { advanceSessionLevelAction } from "@/features/web/play/actions/session.action";
+import { advanceSessionLevelAction } from "@/features/web/play-core/actions/session.action";
 import { SCORING } from "@/consts/scoring";
 
 interface StatItem {

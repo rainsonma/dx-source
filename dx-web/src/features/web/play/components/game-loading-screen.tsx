@@ -16,9 +16,9 @@ import {
   startSessionAction,
   startSessionLevelAction,
   fetchSessionRestoreDataAction,
-} from "@/features/web/play/actions/session.action";
-import { fetchLevelContentAction } from "@/features/web/play/actions/content.action";
-import { useGameStore, type ContentItem } from "@/features/web/play/hooks/use-game-store";
+} from "@/features/web/play-core/actions/session.action";
+import { fetchLevelContentAction } from "@/features/web/play-core/actions/content.action";
+import { useGameStore, type ContentItem } from "@/features/web/play-core/hooks/use-game-store";
 
 const MINIMUM_DISPLAY_MS = 1200;
 

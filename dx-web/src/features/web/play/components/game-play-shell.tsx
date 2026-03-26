@@ -2,22 +2,22 @@
 
 import { useEffect } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
-import { useGameStore } from "@/features/web/play/hooks/use-game-store";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { GameLoadingScreen } from "@/features/web/play/components/game-loading-screen";
 import { GameTopBar } from "@/features/web/play/components/game-top-bar";
 import { GameResultCard } from "@/features/web/play/components/game-result-card";
-import { GamePauseOverlay } from "@/features/web/play/components/game-pause-overlay";
-import { GameSettingsModal } from "@/features/web/play/components/game-settings-modal";
-import { GameResetModal } from "@/features/web/play/components/game-reset-modal";
-import { GameReportModal } from "@/features/web/play/components/game-report-modal";
-import { LsrwGame } from "@/features/web/play/components/lsrw-game";
-import { VocabMatchGame } from "@/features/web/play/components/vocab-match-game";
-import { ListeningGame } from "@/features/web/play/components/listening-game";
-import { VocabEliminationGame } from "@/features/web/play/components/vocab-elimination-game";
-import { VocabBattleGame } from "@/features/web/play/components/vocab-battle-game";
-import { GameExitModal } from "@/features/web/play/components/game-exit-modal";
-import { useGameTimer, getElapsedSeconds } from "@/features/web/play/hooks/use-game-timer";
-import { useFullscreen } from "@/features/web/play/hooks/use-fullscreen";
+import { GamePauseOverlay } from "@/features/web/play-core/components/game-pause-overlay";
+import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
+import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
+import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
+import { LsrwGame } from "@/features/web/play-core/components/lsrw-game";
+import { VocabMatchGame } from "@/features/web/play-core/components/vocab-match-game";
+import { ListeningGame } from "@/features/web/play-core/components/listening-game";
+import { VocabEliminationGame } from "@/features/web/play-core/components/vocab-elimination-game";
+import { VocabBattleGame } from "@/features/web/play-core/components/vocab-battle-game";
+import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
+import { useGameTimer, getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
+import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
 import { getToken } from "@/lib/api-client";
 import type { ComponentType } from "react";
 

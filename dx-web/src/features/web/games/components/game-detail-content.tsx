@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { HeroCard } from "@/features/web/games/components/hero-card";
 import { LevelGrid } from "@/features/web/games/components/level-grid";
-import { GameModeCard } from "@/features/web/play/components/game-mode-card";
+import { GameModeCard } from "@/features/web/play-core/components/game-mode-card";
 import { useFavoriteToggle } from "@/features/web/games/hooks/use-favorite-toggle";
 
 type Level = { id: string; name: string; order: number };

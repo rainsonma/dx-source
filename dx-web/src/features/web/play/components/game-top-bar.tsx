@@ -24,8 +24,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useGameStore } from "@/features/web/play/hooks/use-game-store";
-import { StatRow } from "@/features/web/play/components/stat-row";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import { StatRow } from "@/features/web/play-core/components/stat-row";
 import { GAME_DEGREES } from "@/consts/game-degree";
 
 const actionButtons = [
