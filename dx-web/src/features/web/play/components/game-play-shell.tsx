@@ -140,6 +140,10 @@ export function GamePlayShell({ game, player, degree, pattern, levelId, groupId,
         onReport={() => showOverlay("report")}
         onFullscreen={toggleFullscreen}
         isFullscreen={isFullscreen}
+        levelTimeLimit={levelTimeLimit}
+        onLevelTimeUp={() => {
+          // TODO: auto-complete level when time is up
+        }}
       />
       <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-10">
         <GameComponent />

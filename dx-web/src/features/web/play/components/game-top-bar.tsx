@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Settings,
@@ -10,6 +10,7 @@ import {
   Maximize,
   Minimize,
   Timer,
+  Clock,
   ChevronsDown,
   ChevronsUp,
   Trophy,
@@ -47,9 +48,11 @@ interface GameTopBarProps {
   onReport: () => void;
   onFullscreen: () => void;
   isFullscreen: boolean;
+  levelTimeLimit?: number | null;
+  onLevelTimeUp?: () => void;
 }
 
-export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, onSettings, onPause, onReport, onFullscreen, isFullscreen }: GameTopBarProps) {
+export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, onSettings, onPause, onReport, onFullscreen, isFullscreen, levelTimeLimit, onLevelTimeUp }: GameTopBarProps) {
   const [playersOpen, setPlayersOpen] = useState(false);
   const actionHandlers: Record<string, (() => void) | undefined> = {
     settings: onSettings,
@@ -66,6 +69,33 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
   const degree = useGameStore((s) => s.degree);
 
   const progressPercent = totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
+
+  // Level countdown for group games
+  const isGroupGame = !!levelTimeLimit && levelTimeLimit > 0;
+  const [countdown, setCountdown] = useState(isGroupGame ? levelTimeLimit * 60 : 0);
+  const onLevelTimeUpRef = useRef(onLevelTimeUp);
+  onLevelTimeUpRef.current = onLevelTimeUp;
+
+  useEffect(() => {
+    if (!isGroupGame) return;
+    setCountdown(levelTimeLimit! * 60);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          onLevelTimeUpRef.current?.();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isGroupGame, levelTimeLimit]);
+
+  const countdownMins = Math.floor(countdown / 60);
+  const countdownSecs = countdown % 60;
+  const countdownStr = `${String(countdownMins).padStart(2, "0")}:${String(countdownSecs).padStart(2, "0")}`;
+  const countdownLow = countdown <= 60;
 
   return (
     <div className="relative flex w-full flex-col bg-card border-b border-border">
@@ -88,10 +118,22 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
 
         {/* Center: timer */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          <Timer className="h-4 w-4 text-teal-600" />
-          <span className="text-base font-extrabold tracking-tight text-foreground">
-            {elapsedTime}
-          </span>
+          {isGroupGame ? (
+            <>
+              <Clock className={`h-4 w-4 ${countdownLow ? "text-red-500" : "text-teal-600"}`} />
+              <span className={`text-xs font-medium ${countdownLow ? "text-red-500" : "text-muted-foreground"}`}>Group:</span>
+              <span className={`text-base font-extrabold tracking-tight tabular-nums ${countdownLow ? "text-red-500" : "text-foreground"}`}>
+                {countdownStr}
+              </span>
+            </>
+          ) : (
+            <>
+              <Timer className="h-4 w-4 text-teal-600" />
+              <span className="text-base font-extrabold tracking-tight text-foreground">
+                {elapsedTime}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Right: action buttons */}
