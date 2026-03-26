@@ -17,6 +17,10 @@ export default function GamePlayPage({
   const degree = searchParams.get("degree") ?? undefined;
   const level = searchParams.get("level") ?? undefined;
   const pattern = searchParams.get("pattern") ?? undefined;
+  const groupId = searchParams.get("groupId") ?? undefined;
+  const answerTimeLimit = searchParams.get("answerTimeLimit")
+    ? Number(searchParams.get("answerTimeLimit"))
+    : undefined;
 
   const [game, setGame] = useState<any>(null);
   const [player, setPlayer] = useState<{ nickname: string; avatarUrl: string | null }>({
@@ -75,6 +79,8 @@ export default function GamePlayPage({
       degree={degree}
       pattern={pattern}
       levelId={level}
+      groupId={groupId}
+      answerTimeLimit={answerTimeLimit}
     />
   );
 }
