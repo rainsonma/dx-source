@@ -49,7 +49,8 @@ export function GameLsrw() {
   if (!currentItem) return null;
 
   // Pre-compute sorted spelling items and whether any have phonetic
-  const sortedSpellingItems = ((currentItem.items as SpellingItem[]) ?? [])
+  const rawItems = Array.isArray(currentItem.items) ? currentItem.items : [];
+  const sortedSpellingItems = (rawItems as SpellingItem[])
     .filter((si) => si.position >= 1)
     .sort((a, b) => a.position - b.position);
   const hasAnyPhonetic = sortedSpellingItems.some((si) => si.phonetic?.uk);
