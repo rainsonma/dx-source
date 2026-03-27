@@ -93,7 +93,7 @@ export function SpellingInputRow({
   );
 
   // Count how many leading characters match the target word
-  const correctPrefixLen = currentWord
+  const correctPrefixLen = currentWord?.item
     ? (() => {
         const input = inputValue.toLowerCase();
         const target = currentWord.item.toLowerCase();
