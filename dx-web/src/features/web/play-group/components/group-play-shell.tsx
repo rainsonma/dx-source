@@ -159,6 +159,13 @@ export function GroupPlayShell({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
+  // Trigger completeAndWait when entering result phase
+  useEffect(() => {
+    if (phase === "result" && groupPhase !== "result") {
+      completeAndWait();
+    }
+  }, [phase, groupPhase]);
+
   if (phase === "loading") {
     return (
       <GamePlayProvider actions={playActions}>
@@ -176,13 +183,6 @@ export function GroupPlayShell({
       </GamePlayProvider>
     );
   }
-
-  // Trigger completeAndWait when entering result phase (via useEffect, not during render)
-  useEffect(() => {
-    if (phase === "result" && groupPhase !== "result") {
-      completeAndWait();
-    }
-  }, [phase, groupPhase]);
 
   if (phase === "result") {
     if (groupPhase !== "result") {
