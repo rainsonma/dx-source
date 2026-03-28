@@ -39,17 +39,14 @@ export function useLsrw() {
   const itemStartTimeRef = useRef<number>(Date.now());
 
   const currentItem = contentItems?.[currentIndex] ?? null;
-  const items: SpellingItem[] = Array.isArray(currentItem?.items) ? currentItem.items : [];
+  const rawItems = currentItem?.items;
+  const items: SpellingItem[] = Array.isArray(rawItems)
+    ? rawItems
+    : typeof rawItems === "string"
+      ? (() => { try { const parsed = JSON.parse(rawItems); return Array.isArray(parsed) ? parsed : []; } catch { return []; } })()
+      : [];
   const currentWord = items[wordIndex] ?? null;
   const totalItems = contentItems?.length ?? 0;
-
-  // DEBUG: remove after fixing
-  if (currentItem && !Array.isArray(currentItem.items)) {
-    console.error("[useLsrw] currentItem.items is NOT array:", typeof currentItem.items, currentItem.items);
-  }
-  if (items.length === 0 && currentItem) {
-    console.error("[useLsrw] items is empty. currentItem:", currentItem);
-  }
 
   const progress = {
     current: currentIndex + 1,
@@ -78,8 +75,12 @@ export function useLsrw() {
   // Initialize/reset when currentIndex changes
   useEffect(() => {
     const item = contentItems?.[currentIndex] ?? null;
-    const spellingItems: SpellingItem[] =
-      Array.isArray(item?.items) ? item.items : [];
+    const rawItems = item?.items;
+    const spellingItems: SpellingItem[] = Array.isArray(rawItems)
+      ? rawItems
+      : typeof rawItems === "string"
+        ? (() => { try { const parsed = JSON.parse(rawItems); return Array.isArray(parsed) ? parsed : []; } catch { return []; } })()
+        : [];
 
     if (revealTimerRef.current) {
       clearTimeout(revealTimerRef.current);

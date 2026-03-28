@@ -49,7 +49,12 @@ export function GameLsrw() {
   if (!currentItem) return null;
 
   // Pre-compute sorted spelling items and whether any have phonetic
-  const rawItems = Array.isArray(currentItem.items) ? currentItem.items : [];
+  const rawItemsData = currentItem.items;
+  const rawItems = Array.isArray(rawItemsData)
+    ? rawItemsData
+    : typeof rawItemsData === "string"
+      ? (() => { try { const p = JSON.parse(rawItemsData); return Array.isArray(p) ? p : []; } catch { return []; } })()
+      : [];
   const sortedSpellingItems = (rawItems as SpellingItem[])
     .filter((si) => si.position >= 1)
     .sort((a, b) => a.position - b.position);
