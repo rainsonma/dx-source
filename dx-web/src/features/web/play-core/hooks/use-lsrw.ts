@@ -41,7 +41,7 @@ export function useLsrw() {
   const itemStartTimeRef = useRef<number>(Date.now());
 
   const currentItem = contentItems?.[currentIndex] ?? null;
-  const items: SpellingItem[] = (currentItem?.items as SpellingItem[]) ?? [];
+  const items: SpellingItem[] = Array.isArray(currentItem?.items) ? currentItem.items : [];
   const currentWord = items[wordIndex] ?? null;
   const totalItems = contentItems?.length ?? 0;
 
@@ -73,7 +73,7 @@ export function useLsrw() {
   useEffect(() => {
     const item = contentItems?.[currentIndex] ?? null;
     const spellingItems: SpellingItem[] =
-      (item?.items as SpellingItem[]) ?? [];
+      Array.isArray(item?.items) ? item.items : [];
 
     if (revealTimerRef.current) {
       clearTimeout(revealTimerRef.current);
