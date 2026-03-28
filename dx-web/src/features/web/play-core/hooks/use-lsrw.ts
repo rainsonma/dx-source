@@ -43,6 +43,14 @@ export function useLsrw() {
   const currentWord = items[wordIndex] ?? null;
   const totalItems = contentItems?.length ?? 0;
 
+  // DEBUG: remove after fixing
+  if (currentItem && !Array.isArray(currentItem.items)) {
+    console.error("[useLsrw] currentItem.items is NOT array:", typeof currentItem.items, currentItem.items);
+  }
+  if (items.length === 0 && currentItem) {
+    console.error("[useLsrw] items is empty. currentItem:", currentItem);
+  }
+
   const progress = {
     current: currentIndex + 1,
     total: totalItems,
