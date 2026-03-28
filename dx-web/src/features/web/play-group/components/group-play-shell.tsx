@@ -177,9 +177,15 @@ export function GroupPlayShell({
     );
   }
 
+  // Trigger completeAndWait when entering result phase (via useEffect, not during render)
+  useEffect(() => {
+    if (phase === "result" && groupPhase !== "result") {
+      completeAndWait();
+    }
+  }, [phase, groupPhase]);
+
   if (phase === "result") {
     if (groupPhase !== "result") {
-      completeAndWait();
       return <GroupPlayWaitingScreen groupId={groupId} />;
     }
     return <GroupPlayResultPanel result={groupResult!} groupId={groupId} />;

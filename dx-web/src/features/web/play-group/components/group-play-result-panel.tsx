@@ -20,7 +20,7 @@ export function GroupPlayResultPanel({ result, groupId }: GroupPlayResultPanelPr
   const teamWinner = !isSolo ? (result.winner as TeamWinner) : null;
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center px-4 py-12">
+    <div className="flex h-screen flex-col items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-100">
           <Trophy className="h-7 w-7 text-amber-500" />
