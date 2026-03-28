@@ -29,7 +29,7 @@ import {
   checkActiveSessionAction,
   checkActiveLevelSessionAction,
   restartLevelSessionAction,
-} from "@/features/web/play-core/actions/session.action";
+} from "@/features/web/play-single/actions/session.action";
 
 interface ModeOption {
   value: GameDegree;

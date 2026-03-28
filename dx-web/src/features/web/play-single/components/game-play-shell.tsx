@@ -7,11 +7,11 @@ import { GamePlayProvider, type GamePlayActions } from "@/features/web/play-core
 import {
   recordAnswerAction,
   recordSkipAction,
-  markAsReviewAction,
   completeLevelAction,
   endSessionAction,
   restartLevelSessionAction,
-} from "@/features/web/play-core/actions/session.action";
+} from "@/features/web/play-single/actions/session.action";
+import { markAsReviewAction } from "@/features/web/play-core/actions/tracking.action";
 import { GameLoadingScreen } from "@/features/web/play-single/components/game-loading-screen";
 import { GameTopBar } from "@/features/web/play-single/components/game-top-bar";
 import { GameResultCard } from "@/features/web/play-single/components/game-result-card";

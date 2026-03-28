@@ -16,7 +16,7 @@ import {
   startSessionAction,
   startSessionLevelAction,
   fetchSessionRestoreDataAction,
-} from "@/features/web/play-core/actions/session.action";
+} from "@/features/web/play-single/actions/session.action";
 import { fetchLevelContentAction } from "@/features/web/play-core/actions/content.action";
 import { useGameStore, type ContentItem } from "@/features/web/play-core/hooks/use-game-store";
 

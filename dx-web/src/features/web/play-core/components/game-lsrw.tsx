@@ -18,7 +18,7 @@ import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import {
   markAsMasteredAction,
   markAsUnknownAction,
-} from "@/features/web/play-core/actions/session.action";
+} from "@/features/web/play-core/actions/tracking.action";
 import { toast } from "sonner";
 
 export function GameLsrw() {
