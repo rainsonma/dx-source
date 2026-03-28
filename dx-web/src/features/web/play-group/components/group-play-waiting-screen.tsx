@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -18,7 +18,7 @@ export function GroupPlayWaitingScreen({ groupId }: GroupPlayWaitingScreenProps)
         </div>
 
         <Button variant="outline" className="w-full" asChild>
-          <Link href={`/hall/groups/${groupId}`}>返回群组</Link>
+          <Link href={`/hall/groups/${groupId}`}><ArrowLeft className="mr-2 h-4 w-4" />返回群组</Link>
         </Button>
       </div>
     </div>

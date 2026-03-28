@@ -78,9 +78,11 @@ export function GroupPlayShell({
   const setGroupWaiting = useGroupPlayStore((s) => s.setGroupWaiting);
   const setGroupResult = useGroupPlayStore((s) => s.setGroupResult);
   const sessionId = useGroupPlayStore((s) => s.sessionId);
-  const score = useGroupPlayStore((s) => s.score);
-  const combo = useGroupPlayStore((s) => s.combo);
-  const contentItems = useGroupPlayStore((s) => s.contentItems);
+
+  // Score/combo are updated by shared game components via useGameStore
+  const score = useGameStore((s) => s.score);
+  const combo = useGameStore((s) => s.combo);
+  const contentItems = useGameStore((s) => s.contentItems);
 
   const completedRef = useRef(false);
 

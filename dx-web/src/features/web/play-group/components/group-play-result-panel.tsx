@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, Users, User } from "lucide-react";
+import { Trophy, Users, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type {
@@ -75,7 +75,7 @@ export function GroupPlayResultPanel({ result, groupId }: GroupPlayResultPanelPr
         <div className="h-px w-full bg-border" />
 
         <Button asChild className="w-full bg-teal-600 hover:bg-teal-700">
-          <Link href={`/hall/groups/${groupId}`}>返回群组</Link>
+          <Link href={`/hall/groups/${groupId}`}><ArrowLeft className="mr-2 h-4 w-4" />返回群组</Link>
         </Button>
       </div>
     </div>
