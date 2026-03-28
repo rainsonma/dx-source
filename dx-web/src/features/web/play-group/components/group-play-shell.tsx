@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import { GamePlayProvider, type GamePlayActions } from "@/features/web/play-core/context/game-play-context";
 import { GroupPlayLoadingScreen } from "./group-play-loading-screen";
 import { GroupPlayTopBar } from "./group-play-top-bar";
 import { GroupPlayWaitingScreen } from "./group-play-waiting-screen";
@@ -18,7 +19,14 @@ import { GameListening } from "@/features/web/play-core/components/game-listenin
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
 import { useGroupPlayEvents } from "../hooks/use-group-play-events";
-import { completeLevelAction } from "../actions/session.action";
+import {
+  completeLevelAction,
+  recordAnswerAction,
+  recordSkipAction,
+  markAsReviewAction,
+  endSessionAction,
+  restartLevelAction,
+} from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
 import { getToken } from "@/lib/api-client";
 import type { ComponentType } from "react";
@@ -75,6 +83,15 @@ export function GroupPlayShell({
   const contentItems = useGroupPlayStore((s) => s.contentItems);
 
   const completedRef = useRef(false);
+
+  const playActions = useMemo<GamePlayActions>(() => ({
+    recordAnswer: recordAnswerAction,
+    recordSkip: recordSkipAction,
+    markAsReview: markAsReviewAction,
+    completeLevel: completeLevelAction,
+    endSession: endSessionAction,
+    restartLevel: restartLevelAction,
+  }), []);
 
   const targetLevel =
     game.levels.find((l) => l.id === levelId) ?? game.levels[0];
@@ -142,6 +159,7 @@ export function GroupPlayShell({
 
   if (phase === "loading") {
     return (
+      <GamePlayProvider actions={playActions}>
       <GroupPlayLoadingScreen
         gameId={game.id}
         gameName={game.name}
@@ -153,6 +171,7 @@ export function GroupPlayShell({
         gameGroupId={groupId}
         levelTimeLimit={levelTimeLimit}
       />
+      </GamePlayProvider>
     );
   }
 
@@ -168,6 +187,7 @@ export function GroupPlayShell({
   if (!GameComponent) return null;
 
   return (
+    <GamePlayProvider actions={playActions}>
     <div className="flex h-screen w-full flex-col bg-muted">
       <GroupPlayTopBar
         player={player}
@@ -193,5 +213,6 @@ export function GroupPlayShell({
       {overlay === "report" && <GameReportModal />}
       {overlay === "exit" && <GameExitModal gameId={game.id} />}
     </div>
+    </GamePlayProvider>
   );
 }

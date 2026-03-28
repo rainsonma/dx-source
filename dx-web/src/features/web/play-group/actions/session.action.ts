@@ -57,27 +57,25 @@ export async function completeLevelAction(
   }
 }
 
-export async function recordAnswerAction(
-  sessionId: string,
-  data: {
-    gameSessionLevelId: string;
-    gameLevelId: string;
-    contentItemId: string;
-    isCorrect: boolean;
-    userAnswer: string;
-    sourceAnswer: string;
-    baseScore: number;
-    comboScore: number;
-    score: number;
-    maxCombo: number;
-    playTime: number;
-    nextContentItemId: string | null;
-    duration: number;
-  }
-) {
+export async function recordAnswerAction(data: {
+  gameSessionTotalId: string;
+  gameSessionLevelId: string;
+  gameLevelId: string;
+  contentItemId: string;
+  isCorrect: boolean;
+  userAnswer: string;
+  sourceAnswer: string;
+  baseScore: number;
+  comboScore: number;
+  score: number;
+  maxCombo: number;
+  playTime: number;
+  nextContentItemId: string | null;
+  duration: number;
+}) {
   try {
     const res = await apiClient.post<any>(
-      `/api/play-group/${sessionId}/answers`,
+      `/api/play-group/${data.gameSessionTotalId}/answers`,
       {
         game_session_level_id: data.gameSessionLevelId,
         game_level_id: data.gameLevelId,
@@ -101,17 +99,15 @@ export async function recordAnswerAction(
   }
 }
 
-export async function recordSkipAction(
-  sessionId: string,
-  data: {
-    gameLevelId: string;
-    playTime: number;
-    nextContentItemId: string | null;
-  }
-) {
+export async function recordSkipAction(data: {
+  gameSessionTotalId: string;
+  gameLevelId: string;
+  playTime: number;
+  nextContentItemId: string | null;
+}) {
   try {
     const res = await apiClient.post<any>(
-      `/api/play-group/${sessionId}/skips`,
+      `/api/play-group/${data.gameSessionTotalId}/skips`,
       {
         game_level_id: data.gameLevelId,
         play_time: data.playTime,
@@ -166,6 +162,69 @@ export async function updateContentItemAction(
     return { data: res.data, error: null };
   } catch {
     return { data: null, error: "更新进度失败" };
+  }
+}
+
+export async function endSessionAction(
+  sessionId: string,
+  data: {
+    gameId: string;
+    score: number;
+    exp: number;
+    maxCombo: number;
+    correctCount: number;
+    wrongCount: number;
+    skipCount: number;
+    allLevelsCompleted: boolean;
+  }
+) {
+  try {
+    const res = await apiClient.post<any>(
+      `/api/play-group/${sessionId}/end`,
+      {
+        game_id: data.gameId,
+        score: data.score,
+        exp: data.exp,
+        max_combo: data.maxCombo,
+        correct_count: data.correctCount,
+        wrong_count: data.wrongCount,
+        skip_count: data.skipCount,
+        all_levels_completed: data.allLevelsCompleted,
+      }
+    );
+    if (res.code !== 0) return { data: null, error: res.message || "结束会话失败" };
+    return { data: res.data, error: null };
+  } catch {
+    return { data: null, error: "结束会话失败" };
+  }
+}
+
+export async function restartLevelAction(sessionId: string, levelId: string) {
+  try {
+    const res = await apiClient.post<any>(
+      `/api/play-group/${sessionId}/levels/${levelId}/restart`
+    );
+    if (res.code !== 0) return { data: null, error: res.message || "重置关卡失败" };
+    return { data: res.data, error: null };
+  } catch {
+    return { data: null, error: "重置关卡失败" };
+  }
+}
+
+export async function markAsReviewAction(data: {
+  contentItemId: string;
+  gameId: string;
+  gameLevelId: string;
+}) {
+  // Uses shared tracking API — not play-group specific
+  try {
+    await apiClient.post<any>("/api/tracking/review", {
+      content_item_id: data.contentItemId,
+      game_id: data.gameId,
+      game_level_id: data.gameLevelId,
+    });
+  } catch {
+    // Fire-and-forget
   }
 }
 

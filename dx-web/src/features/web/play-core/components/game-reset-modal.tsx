@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RotateCcw, X, Loader2 } from "lucide-react";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
-import { restartLevelSessionAction } from "@/features/web/play-core/actions/session.action";
+import { useGamePlayActions } from "@/features/web/play-core/context/game-play-context";
 
 export function GameResetModal() {
   const router = useRouter();
@@ -15,12 +15,13 @@ export function GameResetModal() {
   const levelId = useGameStore((s) => s.levelId);
   const degree = useGameStore((s) => s.degree);
   const pattern = useGameStore((s) => s.pattern);
+  const { restartLevel } = useGamePlayActions();
   const [isPending, startTransition] = useTransition();
 
   function handleConfirm() {
     if (!sessionId || !levelId || !gameId) return;
     startTransition(async () => {
-      await restartLevelSessionAction(sessionId, levelId);
+      await restartLevel(sessionId, levelId);
       exitGame();
 
       const params = new URLSearchParams();

@@ -2,10 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
-import {
-  completeLevelAction,
-  endSessionAction,
-} from "@/features/web/play-core/actions/session.action";
+import { useGamePlayActions } from "@/features/web/play-core/context/game-play-context";
 
 interface UseGameResultParams {
   levels: { id: string; order: number }[];
@@ -25,6 +22,8 @@ export function useGameResult({ levels }: UseGameResultParams) {
   const wrongCount = useGameStore((s) => s.wrongCount);
   const skipCount = useGameStore((s) => s.skipCount);
   const contentItems = useGameStore((s) => s.contentItems);
+
+  const { completeLevel: completeLevelAction, endSession: endSessionAction } = useGamePlayActions();
 
   const totalItems = contentItems?.length ?? 0;
 

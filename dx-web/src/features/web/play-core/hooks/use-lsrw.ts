@@ -2,11 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
-import {
-  recordAnswerAction,
-  recordSkipAction,
-  markAsReviewAction,
-} from "@/features/web/play-core/actions/session.action";
+import { useGamePlayActions } from "@/features/web/play-core/context/game-play-context";
 import { getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import { SCORING } from "@/consts/scoring";
 import type { SpellingItem, TypedWord } from "@/features/web/play-core/types/spelling";
@@ -25,6 +21,8 @@ export function useLsrw() {
   const recordSkip = useGameStore((s) => s.recordSkip);
   const nextItem = useGameStore((s) => s.nextItem);
   const setPhase = useGameStore((s) => s.setPhase);
+
+  const { recordAnswer: recordAnswerAction, recordSkip: recordSkipAction, markAsReview: markAsReviewAction } = useGamePlayActions();
 
   const [wordIndex, setWordIndex] = useState(0);
   const [typedWords, setTypedWords] = useState<TypedWord[]>([]);

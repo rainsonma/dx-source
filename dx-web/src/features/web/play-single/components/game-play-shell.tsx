@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import { GamePlayProvider, type GamePlayActions } from "@/features/web/play-core/context/game-play-context";
+import {
+  recordAnswerAction,
+  recordSkipAction,
+  markAsReviewAction,
+  completeLevelAction,
+  endSessionAction,
+  restartLevelSessionAction,
+} from "@/features/web/play-core/actions/session.action";
 import { GameLoadingScreen } from "@/features/web/play-single/components/game-loading-screen";
 import { GameTopBar } from "@/features/web/play-single/components/game-top-bar";
 import { GameResultCard } from "@/features/web/play-single/components/game-result-card";
@@ -59,6 +68,15 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
   const { formatted: elapsedTime } = useGameTimer(playTime);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
+  const playActions = useMemo<GamePlayActions>(() => ({
+    recordAnswer: recordAnswerAction,
+    recordSkip: recordSkipAction,
+    markAsReview: markAsReviewAction,
+    completeLevel: completeLevelAction,
+    endSession: endSessionAction,
+    restartLevel: restartLevelSessionAction,
+  }), []);
+
   useEffect(() => {
     const isDifferentGame = storeGameId !== null && storeGameId !== game.id;
     const isDifferentLevel =
@@ -104,6 +122,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
 
   if (phase === "loading") {
     return (
+      <GamePlayProvider actions={playActions}>
       <GameLoadingScreen
         gameId={game.id}
         gameName={game.name}
@@ -113,17 +132,23 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
         levelId={targetLevelId}
         levelName={targetLevel?.name}
       />
+      </GamePlayProvider>
     );
   }
 
   if (phase === "result") {
-    return <GameResultCard game={game} elapsedTime={elapsedTime} />;
+    return (
+      <GamePlayProvider actions={playActions}>
+        <GameResultCard game={game} elapsedTime={elapsedTime} />
+      </GamePlayProvider>
+    );
   }
 
   const GameComponent = modeComponents[game.mode];
   if (!GameComponent) return null;
 
   return (
+    <GamePlayProvider actions={playActions}>
     <div className="flex h-screen w-full flex-col bg-muted">
       <GameTopBar
         player={player}
@@ -153,5 +178,6 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
       {overlay === "report" && <GameReportModal />}
       {overlay === "exit" && <GameExitModal gameId={game.id} />}
     </div>
+    </GamePlayProvider>
   );
 }
