@@ -173,78 +173,102 @@ type teamWinnerRow struct {
 	LastEndedAt time.Time `gorm:"column:last_ended_at"`
 }
 
-type teamMemberRow struct {
-	UserID string `gorm:"column:user_id"`
-	Score  int    `gorm:"column:score"`
-}
-
 func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
-	// Find winning subgroup by sum of scores
-	var winnerRows []teamWinnerRow
+	// Fetch ALL subgroups ranked by sum of scores
+	var teamRows []teamWinnerRow
 	if err := facades.Orm().Query().Raw(
 		`SELECT gsl.game_subgroup_id, SUM(gsl.score) AS total_score, MAX(gsl.ended_at) AS last_ended_at
 		 FROM game_session_levels gsl
 		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
 		   AND gsl.game_subgroup_id IS NOT NULL
 		 GROUP BY gsl.game_subgroup_id
-		 ORDER BY total_score DESC, last_ended_at ASC
-		 LIMIT 1`, gameGroupID, gameLevelID).Scan(&winnerRows); err != nil {
-		return nil, fmt.Errorf("failed to query team winner: %w", err)
+		 ORDER BY total_score DESC, last_ended_at ASC`, gameGroupID, gameLevelID).Scan(&teamRows); err != nil {
+		return nil, fmt.Errorf("failed to query team results: %w", err)
 	}
 
-	if len(winnerRows) == 0 {
+	if len(teamRows) == 0 {
 		return nil, nil
 	}
 
-	winnerSubgroupID := winnerRows[0].SubgroupID
-	totalScore := winnerRows[0].TotalScore
-
-	// Get subgroup name
-	var subgroup models.GameSubgroup
-	facades.Orm().Query().Where("id", winnerSubgroupID).First(&subgroup)
-
-	// Get individual member scores
-	var memberRows []teamMemberRow
+	// Fetch ALL member scores across all subgroups, JOIN users for nicknames
+	var memberRows []struct {
+		UserID     string  `gorm:"column:user_id"`
+		Nickname   *string `gorm:"column:nickname"`
+		Score      int     `gorm:"column:score"`
+		SubgroupID string  `gorm:"column:game_subgroup_id"`
+	}
 	if err := facades.Orm().Query().Raw(
-		`SELECT gst.user_id, gsl.score
+		`SELECT gst.user_id, u.nickname, gsl.score, gsl.game_subgroup_id
 		 FROM game_session_levels gsl
 		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+		 JOIN users u ON u.id = gst.user_id
 		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		   AND gsl.game_subgroup_id = ?
-		 ORDER BY gsl.score DESC`, gameGroupID, gameLevelID, winnerSubgroupID).Scan(&memberRows); err != nil {
+		   AND gsl.game_subgroup_id IS NOT NULL
+		 ORDER BY gsl.score DESC`, gameGroupID, gameLevelID).Scan(&memberRows); err != nil {
 		return nil, fmt.Errorf("failed to query team members: %w", err)
 	}
 
-	now := time.Now()
-	var members []TeamMember
-	var memberUserIDs []string
+	// Group members by subgroup
+	membersBySubgroup := make(map[string][]TeamMember)
+	var allParticipants []SoloWinner
 	for _, mr := range memberRows {
-		var user models.User
-		facades.Orm().Query().Where("id", mr.UserID).First(&user)
-		members = append(members, TeamMember{UserID: mr.UserID, UserName: derefNickname(user.Nickname), Score: mr.Score})
-		memberUserIDs = append(memberUserIDs, mr.UserID)
+		name := derefNickname(mr.Nickname)
+		membersBySubgroup[mr.SubgroupID] = append(membersBySubgroup[mr.SubgroupID], TeamMember{
+			UserID: mr.UserID, UserName: name, Score: mr.Score,
+		})
+		allParticipants = append(allParticipants, SoloWinner{
+			UserID: mr.UserID, UserName: name, Score: mr.Score,
+		})
 	}
 
-	// Update last_won_at on winning subgroup
+	// Fetch subgroup names
+	subgroupIDs := make([]string, len(teamRows))
+	for i, tr := range teamRows {
+		subgroupIDs[i] = tr.SubgroupID
+	}
+	var subgroups []models.GameSubgroup
+	facades.Orm().Query().Where("id IN ?", subgroupIDs).Find(&subgroups)
+	subgroupNames := make(map[string]string)
+	for _, sg := range subgroups {
+		subgroupNames[sg.ID] = sg.Name
+	}
+
+	// Build teams slice
+	teams := make([]TeamWinner, len(teamRows))
+	for i, tr := range teamRows {
+		teams[i] = TeamWinner{
+			SubgroupID:   tr.SubgroupID,
+			SubgroupName: subgroupNames[tr.SubgroupID],
+			TotalScore:   tr.TotalScore,
+			Members:      membersBySubgroup[tr.SubgroupID],
+		}
+	}
+
+	// Winner is first team
+	winnerTeam := teams[0]
+
+	// Update last_won_at on winning subgroup only
+	now := time.Now()
 	facades.Orm().Query().Exec(
 		"UPDATE game_subgroups SET last_won_at = ? WHERE id = ?",
-		now, winnerSubgroupID)
+		now, winnerTeam.SubgroupID)
 
-	// Update last_won_at on all participating members of winning subgroup
-	if len(memberUserIDs) > 0 {
+	// Update last_won_at on winning team's members only
+	winnerMemberIDs := make([]string, len(winnerTeam.Members))
+	for i, m := range winnerTeam.Members {
+		winnerMemberIDs[i] = m.UserID
+	}
+	if len(winnerMemberIDs) > 0 {
 		facades.Orm().Query().Exec(
 			"UPDATE game_group_members SET last_won_at = ? WHERE game_group_id = ? AND user_id IN ?",
-			now, gameGroupID, memberUserIDs)
+			now, gameGroupID, winnerMemberIDs)
 	}
 
 	return &LevelWinnerResult{
-		GameLevelID: gameLevelID,
-		Mode:        "team",
-		Winner: TeamWinner{
-			SubgroupID:   winnerSubgroupID,
-			SubgroupName: subgroup.Name,
-			TotalScore:   totalScore,
-			Members:      members,
-		},
+		GameLevelID:  gameLevelID,
+		Mode:         "team",
+		Winner:       winnerTeam,
+		Participants: allParticipants,
+		Teams:        teams,
 	}, nil
 }
