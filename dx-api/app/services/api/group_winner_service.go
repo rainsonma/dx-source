@@ -119,6 +119,7 @@ func DetermineWinnerForLevel(gameGroupID, gameLevelID string) (*LevelWinnerResul
 
 type soloWinnerRow struct {
 	UserID   string    `gorm:"column:user_id"`
+	Nickname *string   `gorm:"column:nickname"`
 	Score    int       `gorm:"column:score"`
 	EndedAt  time.Time `gorm:"column:ended_at"`
 }
@@ -126,39 +127,43 @@ type soloWinnerRow struct {
 func determineSoloWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
 	var rows []soloWinnerRow
 	if err := facades.Orm().Query().Raw(
-		`SELECT gst.user_id, gsl.score, gsl.ended_at
+		`SELECT gst.user_id, u.nickname, gsl.score, gsl.ended_at
 		 FROM game_session_levels gsl
 		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+		 JOIN users u ON u.id = gst.user_id
 		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		 ORDER BY gsl.score DESC, gsl.ended_at ASC
-		 LIMIT 1`, gameGroupID, gameLevelID).Scan(&rows); err != nil {
-		return nil, fmt.Errorf("failed to query solo winner: %w", err)
+		 ORDER BY gsl.score DESC, gsl.ended_at ASC`, gameGroupID, gameLevelID).Scan(&rows); err != nil {
+		return nil, fmt.Errorf("failed to query solo participants: %w", err)
 	}
 
 	if len(rows) == 0 {
 		return nil, nil
 	}
 
-	winner := rows[0]
+	// Build participants list
+	participants := make([]SoloWinner, len(rows))
+	for i, r := range rows {
+		participants[i] = SoloWinner{
+			UserID:   r.UserID,
+			UserName: derefNickname(r.Nickname),
+			Score:    r.Score,
+		}
+	}
 
-	// Get username
-	var user models.User
-	facades.Orm().Query().Where("id", winner.UserID).First(&user)
+	// Winner is first participant
+	winner := participants[0]
 
-	// Update last_won_at
+	// Update last_won_at for winner only
 	now := time.Now()
 	facades.Orm().Query().Exec(
 		"UPDATE game_group_members SET last_won_at = ? WHERE game_group_id = ? AND user_id = ?",
 		now, gameGroupID, winner.UserID)
 
 	return &LevelWinnerResult{
-		GameLevelID: gameLevelID,
-		Mode:        "solo",
-		Winner: SoloWinner{
-			UserID:   winner.UserID,
-			UserName: derefNickname(user.Nickname),
-			Score:    winner.Score,
-		},
+		GameLevelID:  gameLevelID,
+		Mode:         "solo",
+		Winner:       winner,
+		Participants: participants,
 	}, nil
 }
 
