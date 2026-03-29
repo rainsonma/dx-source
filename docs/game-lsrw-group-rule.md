@@ -85,7 +85,8 @@ Constraints:
 |-----------|------|-------|
 | No game set | 教室未开放 | Disabled, muted |
 | Game set, `is_playing = false` | 进入教室 | Active teal, navigates to `/hall/groups/{id}/room` |
-| Game set, `is_playing = true` | 游戏中... | Disabled, muted |
+| Game set, `is_playing = true`, owner | 进入教室（管理） | Active teal, navigates to room (owner needs force-end access) |
+| Game set, `is_playing = true`, non-owner | 游戏中... | Disabled, muted |
 
 ### Room Access During Gameplay
 

@@ -328,13 +328,13 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               <span className="text-xs text-muted-foreground">暂未设置课程游戏</span>
             )}
 
-            {group.current_game_id && !group.is_playing ? (
+            {group.current_game_id && (!group.is_playing || isOwner) ? (
               <Link
                 href={`/hall/groups/${id}/room`}
                 className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
               >
                 <DoorOpen className="h-3.5 w-3.5" />
-                进入教室
+                {group.is_playing ? "进入教室（管理）" : "进入教室"}
               </Link>
             ) : (
               <div
