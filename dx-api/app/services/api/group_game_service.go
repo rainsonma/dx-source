@@ -138,13 +138,15 @@ func ClearGroupGame(userID, groupID string) error {
 
 // GroupGameStartEvent is the SSE payload for group_game_start.
 type GroupGameStartEvent struct {
-	GameGroupID     string  `json:"game_group_id"`
-	GameID          string  `json:"game_id"`
-	GameName        string  `json:"game_name"`
-	GameMode        string  `json:"game_mode"`
-	Degree          string  `json:"degree"`
-	Pattern         *string `json:"pattern"`
+	GameGroupID    string  `json:"game_group_id"`
+	GameID         string  `json:"game_id"`
+	GameName       string  `json:"game_name"`
+	GameMode       string  `json:"game_mode"`
+	Degree         string  `json:"degree"`
+	Pattern        *string `json:"pattern"`
 	LevelTimeLimit int     `json:"level_time_limit"`
+	LevelID        *string `json:"level_id"`
+	LevelName      string  `json:"level_name"`
 }
 
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
@@ -199,6 +201,22 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		return ErrGameNotFound
 	}
 
+	// Resolve starting level
+	var startLevel models.GameLevel
+	if group.StartGameLevelID != nil && *group.StartGameLevelID != "" {
+		if err := facades.Orm().Query().Where("id", *group.StartGameLevelID).Where("game_id", *group.CurrentGameID).Where("is_active", true).First(&startLevel); err != nil || startLevel.ID == "" {
+			// Fallback to first level if configured level is invalid
+			facades.Orm().Query().Where("game_id", *group.CurrentGameID).Where("is_active", true).Order("\"order\" asc").First(&startLevel)
+		}
+	} else {
+		facades.Orm().Query().Where("game_id", *group.CurrentGameID).Where("is_active", true).Order("\"order\" asc").First(&startLevel)
+	}
+
+	var levelID *string
+	if startLevel.ID != "" {
+		levelID = &startLevel.ID
+	}
+
 	// Set is_playing = true
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).
 		Update("is_playing", true); err != nil {
@@ -207,13 +225,15 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 
 	// Broadcast SSE event
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_start", GroupGameStartEvent{
-		GameGroupID:     groupID,
-		GameID:          *group.CurrentGameID,
-		GameName:        game.Name,
-		GameMode:        *group.GameMode,
-		Degree:          degree,
-		Pattern:         pattern,
+		GameGroupID:    groupID,
+		GameID:         *group.CurrentGameID,
+		GameName:       game.Name,
+		GameMode:       *group.GameMode,
+		Degree:         degree,
+		Pattern:        pattern,
 		LevelTimeLimit: group.LevelTimeLimit,
+		LevelID:        levelID,
+		LevelName:      startLevel.Name,
 	})
 
 	return nil
@@ -276,4 +296,84 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 	})
 
 	return results, nil
+}
+
+// GroupNextLevelEvent is the SSE payload for group_next_level.
+type GroupNextLevelEvent struct {
+	GameGroupID    string  `json:"game_group_id"`
+	GameID         string  `json:"game_id"`
+	LevelID        string  `json:"level_id"`
+	LevelName      string  `json:"level_name"`
+	Degree         string  `json:"degree"`
+	Pattern        *string `json:"pattern"`
+	LevelTimeLimit int     `json:"level_time_limit"`
+}
+
+// NextGroupLevel finds the next level and broadcasts it to all group members.
+func NextGroupLevel(userID, groupID, currentLevelID string) error {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+		return ErrGroupNotFound
+	}
+	if !group.IsPlaying {
+		return ErrGroupNotPlaying
+	}
+
+	// Verify user is a group member
+	var memberCount int64
+	memberCount, _ = facades.Orm().Query().Model(&models.GameGroupMember{}).Where("game_group_id", groupID).Where("user_id", userID).Count()
+	if memberCount == 0 {
+		return ErrNotGroupMemberForAction
+	}
+
+	// Validate current level belongs to this game
+	if group.CurrentGameID == nil {
+		return ErrNoGameSet
+	}
+	var currentLevel models.GameLevel
+	if err := facades.Orm().Query().Where("id", currentLevelID).Where("game_id", *group.CurrentGameID).First(&currentLevel); err != nil || currentLevel.ID == "" {
+		return ErrLevelNotFound
+	}
+
+	// Find next active level by order
+	var nextLevel models.GameLevel
+	if err := facades.Orm().Query().
+		Where("game_id", *group.CurrentGameID).
+		Where("is_active", true).
+		Where("\"order\" > ?", currentLevel.Order).
+		Order("\"order\" asc").
+		First(&nextLevel); err != nil || nextLevel.ID == "" {
+		return ErrLastLevel
+	}
+
+	// Concurrency guard: prevent duplicate SSE broadcasts
+	cacheKey := fmt.Sprintf("group_next_level:%s:%s", groupID, currentLevelID)
+	if facades.Cache().Store("redis").Has(cacheKey) {
+		return nil // Already broadcast, return success silently
+	}
+	_ = facades.Cache().Store("redis").Put(cacheKey, "1", 30*time.Second)
+
+	// Get degree/pattern from caller's most recent session
+	type sessionInfo struct {
+		Degree  string  `gorm:"column:degree"`
+		Pattern *string `gorm:"column:pattern"`
+	}
+	var si sessionInfo
+	facades.Orm().Query().Raw(
+		`SELECT degree, pattern FROM game_session_totals
+		 WHERE game_group_id = ? AND user_id = ?
+		 ORDER BY last_played_at DESC LIMIT 1`,
+		groupID, userID).Scan(&si)
+
+	helpers.GroupSSEHub.Broadcast(groupID, "group_next_level", GroupNextLevelEvent{
+		GameGroupID:    groupID,
+		GameID:         *group.CurrentGameID,
+		LevelID:        nextLevel.ID,
+		LevelName:      nextLevel.Name,
+		Degree:         si.Degree,
+		Pattern:        si.Pattern,
+		LevelTimeLimit: group.LevelTimeLimit,
+	})
+
+	return nil
 }
