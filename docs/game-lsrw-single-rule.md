@@ -96,6 +96,12 @@ Total: 56 points
 - The degree determines which content types are included in the level
 - The degree + pattern combination determines which session to create or resume
 
+### Session Scope
+
+- All active session checks (`CheckAnyActiveSession`, `CheckActiveSession`, `CheckActiveLevelSession`) and `StartSession` exclude group sessions by filtering `game_group_id IS NULL`
+- Group game sessions are never resumable from the game detail page — they are managed exclusively through the group play flow
+- The hall session progress list also excludes group sessions
+
 ### Entry Point 1: Hero Section Button (no level specified)
 
 **Hero button label** (server-side, resolved at page load):

@@ -78,8 +78,20 @@ Constraints:
 
 ### Entering the Game Room
 
-- All members see "进入课程游戏" button (teal) on the group detail page below the current game card
-- Button navigates to `/hall/groups/{id}/room`
+- All members see a "进入教室" button on the group detail page — it is **always visible** regardless of game state
+- Button has 3 states:
+
+| Condition | Text | Style |
+|-----------|------|-------|
+| No game set | 教室未开放 | Disabled, muted |
+| Game set, `is_playing = false` | 进入教室 | Active teal, navigates to `/hall/groups/{id}/room` |
+| Game set, `is_playing = true` | 游戏中... | Disabled, muted |
+
+### Room Access During Gameplay
+
+- When `is_playing = true`, **non-owners are redirected** from the room page back to the group detail page
+- The **owner retains room access** during gameplay for the "游戏中，强制结束" (force-end) button
+- Non-owners cannot enter the room during gameplay from any path (button disabled + room page redirect)
 
 ### Game Room Page
 
@@ -112,8 +124,8 @@ Displays:
 
 ### Entry Point
 
-- Members enter the room via the "进入教室" button (teal) on the group detail page
-- The button is visible below the current game card when a game is set
+- Members enter the room via the "进入教室" button on the group detail page
+- The button is always visible but only active (teal, clickable) when a game is set and `is_playing = false`
 
 ## Starting the Game
 
