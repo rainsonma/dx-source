@@ -9,17 +9,10 @@ import {
   Maximize,
   Minimize,
   Clock,
-  ChevronsDown,
-  ChevronsUp,
   Trophy,
   Flame,
   SkipForward,
 } from "lucide-react";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { StatRow } from "@/features/web/play-core/components/stat-row";
@@ -56,8 +49,6 @@ export function GroupPlayTopBar({
   isFullscreen,
   onLevelTimeUp,
 }: GroupPlayTopBarProps) {
-  const [playersOpen, setPlayersOpen] = useState(false);
-
   const actionHandlers: Record<string, (() => void) | undefined> = {
     settings: onSettings,
     reset: onReset,
@@ -158,13 +149,9 @@ export function GroupPlayTopBar({
         </div>
       </div>
 
-      {/* Player panel — floating collapsible */}
-      <Collapsible
-        open={playersOpen}
-        onOpenChange={setPlayersOpen}
-        className="absolute right-1 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-card shadow-sm md:right-1.5 md:w-64"
-      >
-        {/* Top row: avatar + score + combo */}
+      {/* Player panel */}
+      <div className="absolute right-1 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-card shadow-sm md:right-1.5 md:w-64">
+        {/* Avatar row: avatar + score + combo */}
         <div className="flex items-center gap-2.5 px-3 pt-2">
           <Avatar size="sm" className="bg-teal-600">
             {player.avatarUrl && (
@@ -182,26 +169,17 @@ export function GroupPlayTopBar({
           )}
         </div>
 
-        {/* Progress bar + toggle */}
-        <CollapsibleTrigger className="flex w-full flex-col items-center gap-1 px-3 pb-2 pt-1.5">
+        {/* Progress bar */}
+        <div className="px-3 pb-2 pt-1.5">
           <div className="h-1.5 w-full rounded-sm bg-border">
             <div
               className="h-1.5 rounded-sm bg-teal-600 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          {playersOpen ? (
-            <ChevronsUp className="h-3.5 w-3.5 text-muted-foreground" />
-          ) : (
-            <ChevronsDown className="h-3.5 w-3.5 text-muted-foreground" />
-          )}
-        </CollapsibleTrigger>
+        </div>
 
-        {/* Stats: always visible */}
-        <CollapsibleContent>
-          <div className="h-px w-full bg-border" />
-        </CollapsibleContent>
-
+        {/* Stats */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">
           <StatRow
             icon={SkipForward}
@@ -228,7 +206,7 @@ export function GroupPlayTopBar({
             flashColorClass="bg-orange-400"
           />
         </div>
-      </Collapsible>
+      </div>
     </div>
   );
 }
