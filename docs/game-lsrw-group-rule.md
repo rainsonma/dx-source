@@ -276,7 +276,12 @@ When winner is determined, backend broadcasts `group_level_complete` to all grou
     "user_id": "uuid",
     "user_name": "张三",
     "score": 42
-  }
+  },
+  "participants": [
+    { "user_id": "uuid", "user_name": "张三", "score": 42 },
+    { "user_id": "uuid", "user_name": "李四", "score": 38 },
+    { "user_id": "uuid", "user_name": "王五", "score": 35 }
+  ]
 }
 ```
 
@@ -294,7 +299,17 @@ When winner is determined, backend broadcasts `group_level_complete` to all grou
       { "user_id": "uuid", "user_name": "李四", "score": 42 },
       { "user_id": "uuid", "user_name": "王五", "score": 41 }
     ]
-  }
+  },
+  "participants": [
+    { "user_id": "uuid", "user_name": "张三", "score": 45 },
+    { "user_id": "uuid", "user_name": "李四", "score": 42 },
+    { "user_id": "uuid", "user_name": "王五", "score": 41 },
+    { "user_id": "uuid", "user_name": "赵六", "score": 38 }
+  ],
+  "teams": [
+    { "subgroup_id": "uuid", "subgroup_name": "A组", "total_score": 128, "members": [...] },
+    { "subgroup_id": "uuid", "subgroup_name": "B组", "total_score": 112, "members": [...] }
+  ]
 }
 ```
 
@@ -310,8 +325,8 @@ After winner broadcast, if this was the last level in the game:
 |-------|-----|
 | Loading | Loading screen with progress bar |
 | Playing | Game component with countdown timer in top bar |
-| Result (waiting) | "正在计算结果..." spinner card (centered, h-screen) with "返回群组" button |
-| Result (received) | Winner result card (centered, h-screen) with trophy icon, winner info, "返回群组" button |
+| Result (waiting) | "正在计算结果..." spinner card (centered, h-screen) with "返回" button |
+| Result (received) | Podium result panel (centered, h-screen) — teal-themed stepped podium for top 3, ranked list for remaining, all participant avatars, "返回" button |
 
 ### State Transitions
 
@@ -320,7 +335,7 @@ Loading → Playing (initSession)
 Playing → Result (all items done OR timer expires)
 Result → Waiting Screen (completeAndWait called via useEffect)
 Waiting Screen → Result Panel (SSE group_level_complete received)
-Result Panel → Group Detail (user clicks "返回群组")
+Result Panel → Group Detail (user clicks "返回")
 ```
 
 ## Force End
@@ -339,7 +354,7 @@ Result Panel → Group Detail (user clicks "返回群组")
      ```json
      {
        "results": [
-         { "game_level_id": "uuid", "mode": "solo", "winner": { "user_id": "...", "user_name": "...", "score": 42 } }
+         { "game_level_id": "uuid", "mode": "solo", "winner": {...}, "participants": [...] }
        ]
      }
      ```
@@ -350,7 +365,7 @@ Result Panel → Group Detail (user clicks "返回群组")
      - Sets it as the group result via `setGroupResult()`
      - Transitions phase to "result" via `setPhase("result")`
    - The game stops immediately — regardless of whether the player was mid-answer, waiting, or idle
-   - The group result panel displays with the winner info and "返回群组" button
+   - The group result panel displays with the podium and "返回" button
    - Players who already finished and are on the waiting screen also transition to the result panel
 
 ### Group Deletion While Playing
