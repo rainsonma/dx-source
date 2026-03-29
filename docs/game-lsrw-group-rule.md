@@ -115,7 +115,8 @@ Displays:
 - JWT is passed as query parameter (browser EventSource cannot set Authorization headers)
 - Backend validates JWT via `ParseJWTUserID()`, verifies group membership
 - Connection stays open with 30-second heartbeat pings
-- On disconnect, connection is removed from the SSE hub
+- On disconnect, connection is removed from the SSE hub (only if it matches the current connection — prevents race conditions during EventSource reconnects)
+- **Disconnect during gameplay**: When a player disconnects while `is_playing = true`, the backend automatically ends their active session total and level sessions, then re-checks winner determination for affected levels. This unblocks remaining players stuck on the waiting screen. Skipped if the user reconnected (still in the hub).
 - **Room presence tracking**: The SSE hub's connection registry serves as the source of truth for who is in the room
   - When a member connects (enters the room): backend broadcasts `room_member_joined` SSE event to all connections
   - When a member disconnects (leaves the room): backend broadcasts `room_member_left` SSE event to remaining connections
@@ -126,7 +127,8 @@ Displays:
 ### Entry Point
 
 - Members enter the room via the "进入教室" button on the group detail page
-- The button is always visible but only active (teal, clickable) when a game is set and `is_playing = false`
+- The button is always visible but only active (teal, clickable) when a game is set and (`is_playing = false` OR user is the owner)
+- During gameplay, the owner sees "进入教室（管理）" to access the force-end button; non-owners see "游戏中..." (disabled)
 
 ## Starting the Game
 
