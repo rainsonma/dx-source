@@ -318,7 +318,23 @@ Result Panel → Group Detail (user clicks "返回群组")
    - Collects all distinct level IDs with completed sessions
    - Calls `DetermineWinnerForLevel()` for each (skips participant count check — sessions already ended)
    - Sets `is_playing = false`
-   - Broadcasts SSE event `group_game_force_end` with results array
+   - Broadcasts SSE event `group_game_force_end` with results array:
+     ```json
+     {
+       "results": [
+         { "game_level_id": "uuid", "mode": "solo", "winner": { "user_id": "...", "user_name": "...", "score": 42 } }
+       ]
+     }
+     ```
+3. **Player-side behavior** (all players currently on the play-group page):
+   - SSE hook (`useGroupPlayEvents`) receives `group_game_force_end` event
+   - `onForceEnd` handler fires:
+     - Takes the last level result from the results array
+     - Sets it as the group result via `setGroupResult()`
+     - Transitions phase to "result" via `setPhase("result")`
+   - The game stops immediately — regardless of whether the player was mid-answer, waiting, or idle
+   - The group result panel displays with the winner info and "返回群组" button
+   - Players who already finished and are on the waiting screen also transition to the result panel
 
 ### Group Deletion While Playing
 
