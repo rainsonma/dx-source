@@ -15,6 +15,8 @@ export type GroupLevelCompleteEvent = {
   game_level_id: string;
   mode: "solo" | "team";
   winner: SoloWinner | TeamWinner;
+  participants: SoloWinner[];
+  teams?: TeamWinner[];
 };
 
 export type GroupForceEndEvent = {
