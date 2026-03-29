@@ -148,12 +148,14 @@ type soloWinnerRow struct {
 func determineSoloWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
 	var rows []soloWinnerRow
 	if err := facades.Orm().Query().Raw(
-		`SELECT gst.user_id, u.nickname, gsl.score, gsl.ended_at
-		 FROM game_session_levels gsl
-		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-		 JOIN users u ON u.id = gst.user_id
-		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		 ORDER BY gsl.score DESC, gsl.ended_at ASC`, gameGroupID, gameLevelID).Scan(&rows); err != nil {
+		`SELECT user_id, nickname, score, ended_at FROM (
+			SELECT DISTINCT ON (gst.user_id) gst.user_id, u.nickname, gsl.score, gsl.ended_at
+			FROM game_session_levels gsl
+			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+			JOIN users u ON u.id = gst.user_id
+			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
+			ORDER BY gst.user_id, gsl.score DESC, gsl.ended_at ASC
+		 ) sub ORDER BY score DESC, ended_at ASC`, gameGroupID, gameLevelID).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query solo participants: %w", err)
 	}
 
@@ -195,14 +197,18 @@ type teamWinnerRow struct {
 }
 
 func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
-	// Fetch ALL subgroups ranked by sum of scores
+	// Fetch ALL subgroups ranked by sum of best scores (deduplicated per user)
 	var teamRows []teamWinnerRow
 	if err := facades.Orm().Query().Raw(
-		`SELECT gsl.game_subgroup_id, SUM(gsl.score) AS total_score, MAX(gsl.ended_at) AS last_ended_at
-		 FROM game_session_levels gsl
-		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		   AND gsl.game_subgroup_id IS NOT NULL
-		 GROUP BY gsl.game_subgroup_id
+		`SELECT game_subgroup_id, SUM(score) AS total_score, MAX(ended_at) AS last_ended_at FROM (
+			SELECT DISTINCT ON (gst.user_id) gsl.game_subgroup_id, gsl.score, gsl.ended_at
+			FROM game_session_levels gsl
+			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
+			  AND gsl.game_subgroup_id IS NOT NULL
+			ORDER BY gst.user_id, gsl.score DESC
+		 ) deduped
+		 GROUP BY game_subgroup_id
 		 ORDER BY total_score DESC, last_ended_at ASC`, gameGroupID, gameLevelID).Scan(&teamRows); err != nil {
 		return nil, fmt.Errorf("failed to query team results: %w", err)
 	}
@@ -219,13 +225,15 @@ func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 		SubgroupID string  `gorm:"column:game_subgroup_id"`
 	}
 	if err := facades.Orm().Query().Raw(
-		`SELECT gst.user_id, u.nickname, gsl.score, gsl.game_subgroup_id
-		 FROM game_session_levels gsl
-		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-		 JOIN users u ON u.id = gst.user_id
-		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		   AND gsl.game_subgroup_id IS NOT NULL
-		 ORDER BY gsl.score DESC`, gameGroupID, gameLevelID).Scan(&memberRows); err != nil {
+		`SELECT user_id, nickname, score, game_subgroup_id FROM (
+			SELECT DISTINCT ON (gst.user_id) gst.user_id, u.nickname, gsl.score, gsl.game_subgroup_id
+			FROM game_session_levels gsl
+			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+			JOIN users u ON u.id = gst.user_id
+			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
+			  AND gsl.game_subgroup_id IS NOT NULL
+			ORDER BY gst.user_id, gsl.score DESC
+		 ) sub ORDER BY score DESC`, gameGroupID, gameLevelID).Scan(&memberRows); err != nil {
 		return nil, fmt.Errorf("failed to query team members: %w", err)
 	}
 
