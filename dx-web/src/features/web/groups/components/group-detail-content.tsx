@@ -321,7 +321,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                   className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
                 >
                   <DoorOpen className="h-3.5 w-3.5" />
-                  进入课程游戏
+                  进入教室
                 </Link>
               </>
             ) : isOwner ? (

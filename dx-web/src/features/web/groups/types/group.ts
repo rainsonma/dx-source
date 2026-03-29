@@ -22,6 +22,15 @@ export type GroupDetail = Group & {
   is_playing: boolean;
 };
 
+export type RoomMemberEvent = {
+  user_id: string;
+};
+
+export type RoomMember = {
+  user_id: string;
+  user_name: string;
+};
+
 export type GroupGameStartEvent = {
   game_group_id: string;
   game_id: string;

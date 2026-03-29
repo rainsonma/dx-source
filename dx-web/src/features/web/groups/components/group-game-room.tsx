@@ -1,16 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Gamepad2, Users, User, Loader2, CircleArrowLeft, Play, Square } from "lucide-react";
 import Link from "next/link";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { swrMutate } from "@/lib/swr";
-import type { GroupDetail } from "../types/group";
+import type { GroupDetail, RoomMember } from "../types/group";
 import { groupApi } from "../actions/group.action";
 import { useGroupEvents } from "../hooks/use-group-events";
 import { StartGameDialog } from "./start-game-dialog";
+
+const avatarColors = [
+  { bg: "bg-teal-100", text: "text-teal-700" },
+  { bg: "bg-amber-100", text: "text-amber-700" },
+  { bg: "bg-indigo-100", text: "text-indigo-700" },
+  { bg: "bg-red-100", text: "text-red-700" },
+  { bg: "bg-fuchsia-100", text: "text-fuchsia-700" },
+  { bg: "bg-green-100", text: "text-green-700" },
+  { bg: "bg-purple-100", text: "text-purple-700" },
+];
+
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0;
+  }
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
 
 interface GroupGameRoomProps {
   groupId: string;
@@ -22,15 +41,37 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
 
   const [startGameOpen, setStartGameOpen] = useState(false);
   const [forceEnding, setForceEnding] = useState(false);
+  const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
 
   const isOwner = group?.is_owner ?? false;
+  const allMembersPresent = group ? roomMembers.length >= group.member_count : false;
 
-  // SSE: when owner starts, navigate to game play
+  // Fetch initial room members on mount
+  const fetchRoomMembers = useCallback(async () => {
+    const res = await groupApi.roomMembers(groupId);
+    if (res.code === 0 && res.data) {
+      setRoomMembers(res.data);
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!group) return;
+    fetchRoomMembers();
+  }, [group, fetchRoomMembers]);
+
+  // SSE: listen for game start, member join/leave
   useGroupEvents(group ? groupId : null, {
     onGameStart: (event) => {
       router.push(
         `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}`
       );
+    },
+    onRoomMemberJoined: () => {
+      // Re-fetch the full list to get user names
+      fetchRoomMembers();
+    },
+    onRoomMemberLeft: () => {
+      fetchRoomMembers();
     },
   });
 
@@ -111,16 +152,44 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
           )}
         </div>
 
+        {/* Room members */}
+        <div className="flex w-full flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              已进入教室（{roomMembers.length}/{group.member_count}）
+            </span>
+            {allMembersPresent && (
+              <span className="text-[11px] font-medium text-teal-600">全员到齐</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {roomMembers.map((m) => {
+              const color = getAvatarColor(m.user_name);
+              return (
+                <div key={m.user_id} className="flex flex-col items-center gap-1">
+                  <Avatar className={`h-9 w-9 ${color.bg}`}>
+                    <AvatarFallback className={`${color.bg} ${color.text} text-xs font-semibold`}>
+                      {m.user_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="max-w-[48px] truncate text-[10px] text-muted-foreground">
+                    {m.user_name}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         <div className="h-px w-full bg-border" />
 
         {/* Waiting state */}
-        <div className="flex flex-col items-center gap-3 py-4">
-          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
-          <p className="text-base font-medium text-muted-foreground">
-            准备开始...
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {isOwner ? "选择难度和模式后开始游戏" : "等待群主开始游戏"}
+        <div className="flex flex-col items-center gap-3 py-2">
+          <Loader2 className="h-6 w-6 animate-spin text-teal-500" />
+          <p className="text-sm font-medium text-muted-foreground">
+            {allMembersPresent
+              ? isOwner ? "全员到齐，可以开始" : "等待群主开始"
+              : "等待成员进入教室..."}
           </p>
         </div>
 
@@ -140,10 +209,11 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
             <button
               type="button"
               onClick={() => setStartGameOpen(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2.5 text-sm font-medium text-white hover:bg-teal-700"
+              disabled={!allMembersPresent}
+              className="flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="h-4 w-4" />
-              开始游戏
+              开始
             </button>
           )
         )}

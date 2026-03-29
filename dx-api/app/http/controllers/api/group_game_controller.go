@@ -187,6 +187,40 @@ func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Re
 	}
 }
 
+// RoomMembers returns the list of users currently connected to the group SSE (in the game room).
+func (c *GroupGameController) RoomMembers(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	groupID := ctx.Request().Route("id")
+	if groupID == "" {
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "group id is required")
+	}
+
+	connectedIDs := helpers.GroupSSEHub.ConnectedUserIDs(groupID)
+
+	type roomMember struct {
+		UserID   string `json:"user_id"`
+		UserName string `json:"user_name"`
+	}
+
+	members := make([]roomMember, 0, len(connectedIDs))
+	for _, uid := range connectedIDs {
+		var user models.User
+		if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", uid).First(&user); err == nil && user.ID != "" {
+			name := user.Username
+			if user.Nickname != nil && *user.Nickname != "" {
+				name = *user.Nickname
+			}
+			members = append(members, roomMember{UserID: uid, UserName: name})
+		}
+	}
+
+	return helpers.Success(ctx, members)
+}
+
 // mapGroupGameError maps service errors to HTTP responses.
 func mapGroupGameError(ctx contractshttp.Context, err error) contractshttp.Response {
 	switch {

@@ -6,12 +6,15 @@ import type {
   GroupGameStartEvent,
   GroupLevelCompleteEvent,
   GroupForceEndEvent,
+  RoomMemberEvent,
 } from "../types/group";
 
 type GroupEventHandlers = {
   onGameStart?: (event: GroupGameStartEvent) => void;
   onLevelComplete?: (event: GroupLevelCompleteEvent) => void;
   onForceEnd?: (event: GroupForceEndEvent) => void;
+  onRoomMemberJoined?: (event: RoomMemberEvent) => void;
+  onRoomMemberLeft?: (event: RoomMemberEvent) => void;
 };
 
 export function useGroupEvents(
@@ -45,6 +48,16 @@ export function useGroupEvents(
     eventSource.addEventListener("group_game_force_end", (e) => {
       const data: GroupForceEndEvent = JSON.parse(e.data);
       handlersRef.current.onForceEnd?.(data);
+    });
+
+    eventSource.addEventListener("room_member_joined", (e) => {
+      const data: RoomMemberEvent = JSON.parse(e.data);
+      handlersRef.current.onRoomMemberJoined?.(data);
+    });
+
+    eventSource.addEventListener("room_member_left", (e) => {
+      const data: RoomMemberEvent = JSON.parse(e.data);
+      handlersRef.current.onRoomMemberLeft?.(data);
     });
 
     return () => eventSource.close();

@@ -86,22 +86,39 @@ Displays:
 - Back button (CircleArrowLeft icon, top-left corner of card)
 - Group name and member count
 - Current game name with mode badge (单人/小组)
-- Spinner with "准备开始..." and "等待群主开始游戏" (non-owner) or "选择难度和模式后开始游戏" (owner)
-- **Owner controls**: "开始游戏" (teal) button or "游戏中，强制结束" (red) button
+- **Room member presence**: Avatars of all members currently in the room, showing "已进入教室（N/M）"
+  - When all members are present, shows "全员到齐" label
+- Waiting message:
+  - All members present + owner: "全员到齐，可以开始"
+  - All members present + non-owner: "等待群主开始"
+  - Members missing: "等待成员进入教室..."
+- **Owner controls**: "开始" (teal) button or "游戏中，强制结束" (red) button
+  - "开始" button is **disabled** until all members are present (全员到齐)
 
-### SSE Connection
+### SSE Connection & Room Presence
 
 - On mount, the game room establishes an `EventSource` connection to `GET /api/groups/{id}/events?token={JWT}`
 - JWT is passed as query parameter (browser EventSource cannot set Authorization headers)
 - Backend validates JWT via `ParseJWTUserID()`, verifies group membership
 - Connection stays open with 30-second heartbeat pings
 - On disconnect, connection is removed from the SSE hub
+- **Room presence tracking**: The SSE hub's connection registry serves as the source of truth for who is in the room
+  - When a member connects (enters the room): backend broadcasts `room_member_joined` SSE event to all connections
+  - When a member disconnects (leaves the room): backend broadcasts `room_member_left` SSE event to remaining connections
+  - Frontend fetches initial member list via `GET /api/groups/{id}/room-members` on mount
+  - On join/leave events, frontend re-fetches the member list to update avatars
+  - The `GET /api/groups/{id}/room-members` endpoint reads connected user IDs from the SSE hub and returns their names
+
+### Entry Point
+
+- Members enter the room via the "进入教室" button (teal) on the group detail page
+- The button is visible below the current game card when a game is set
 
 ## Starting the Game
 
 ### Owner Actions
 
-1. Owner clicks "开始游戏" in the game room
+1. Owner clicks "开始" in the game room (only enabled when all members are present)
 2. "开始游戏" dialog opens with:
    - **Degree selection**: 初级 (beginner), 中级 (intermediate), 高级 (advanced)
      - No 练习 (practice) mode for group games
@@ -350,6 +367,7 @@ Result Panel → Group Detail (user clicks "返回群组")
 | GET | `/api/groups/{id}/events?token=JWT` | SSE connection (query-param auth) |
 | POST | `/api/groups/{id}/start-game` | Owner starts game round |
 | POST | `/api/groups/{id}/force-end` | Owner force-ends game |
+| GET | `/api/groups/{id}/room-members` | List members currently in the game room |
 | PUT | `/api/groups/{id}/game` | Set current game + mode + time limit |
 | DELETE | `/api/groups/{id}/game` | Clear current game |
 
@@ -382,6 +400,8 @@ Result Panel → Group Detail (user clicks "返回群组")
 | `group_game_start` | Owner starts game | Game info, degree, pattern, time limit |
 | `group_level_complete` | All participants finish a level | Winner result (solo or team) |
 | `group_game_force_end` | Owner force-ends game | Array of level results |
+| `room_member_joined` | Member enters game room (SSE connects) | `{ user_id }` |
+| `room_member_left` | Member leaves game room (SSE disconnects) | `{ user_id }` |
 
 ## Database Schema (Group Play Fields)
 

@@ -25,7 +25,7 @@ var GroupSSEHub = &SSEHub{
 	conns: make(map[string]map[string]*SSEConnection),
 }
 
-// Register adds a connection for a user in a group.
+// Register adds a connection for a user in a group and broadcasts join event.
 func (h *SSEHub) Register(groupID, userID string, w http.ResponseWriter) *SSEConnection {
 	flusher, _ := w.(http.Flusher)
 	conn := &SSEConnection{w: w, flusher: flusher, done: make(chan struct{})}
@@ -41,19 +41,29 @@ func (h *SSEHub) Register(groupID, userID string, w http.ResponseWriter) *SSECon
 	h.conns[groupID][userID] = conn
 	h.mu.Unlock()
 
+	// Broadcast join event to all connections (including the new one)
+	h.Broadcast(groupID, "room_member_joined", map[string]string{
+		"user_id": userID,
+	})
+
 	return conn
 }
 
-// Unregister removes a connection.
+// Unregister removes a connection and broadcasts leave event.
 func (h *SSEHub) Unregister(groupID, userID string) {
 	h.mu.Lock()
-	defer h.mu.Unlock()
 	if group, ok := h.conns[groupID]; ok {
 		delete(group, userID)
 		if len(group) == 0 {
 			delete(h.conns, groupID)
 		}
 	}
+	h.mu.Unlock()
+
+	// Broadcast leave event to remaining connections
+	h.Broadcast(groupID, "room_member_left", map[string]string{
+		"user_id": userID,
+	})
 }
 
 // Broadcast sends an event to all connected members of a group.
@@ -71,6 +81,22 @@ func (h *SSEHub) Broadcast(groupID, event string, data any) {
 			}
 		}
 	}
+}
+
+// ConnectedUserIDs returns the list of user IDs currently connected to a group.
+func (h *SSEHub) ConnectedUserIDs(groupID string) []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	group, ok := h.conns[groupID]
+	if !ok {
+		return nil
+	}
+	ids := make([]string, 0, len(group))
+	for uid := range group {
+		ids = append(ids, uid)
+	}
+	return ids
 }
 
 // SendHeartbeat sends a comment line as keepalive.
