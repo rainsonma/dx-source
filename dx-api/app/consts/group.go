@@ -7,6 +7,6 @@ const (
 )
 
 const (
-	GameModeSolo = "solo"
-	GameModeTeam = "team"
+	GameModeSolo = "group_solo"
+	GameModeTeam = "group_team"
 )

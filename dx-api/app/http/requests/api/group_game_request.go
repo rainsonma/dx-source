@@ -16,7 +16,7 @@ func (r *SetGroupGameRequest) Authorize(ctx http.Context) error { return nil }
 func (r *SetGroupGameRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
 		"game_id":          "required",
-		"game_mode":        "required|in:solo,team",
+		"game_mode":        "required|in:group_solo,group_team",
 		"level_time_limit": "required|min:1|max:60",
 	}
 }
@@ -27,7 +27,7 @@ func (r *SetGroupGameRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
 		"game_id.required":   "请指定游戏",
 		"game_mode.required": "请指定游戏模式",
-		"game_mode.in":       "游戏模式只能为solo或team",
+		"game_mode.in":       "游戏模式只能为group_solo或group_team",
 	}
 }
 
