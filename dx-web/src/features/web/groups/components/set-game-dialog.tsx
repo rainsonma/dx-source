@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Gamepad2, Search, User, Users, Check, X, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiClient } from "@/lib/api-client";
 import { swrMutate } from "@/lib/swr";
 import { groupApi } from "../actions/group.action";
 import type { GroupGameSearchItem } from "../types/group";
@@ -15,6 +17,7 @@ interface SetGameDialogProps {
   currentGameId?: string | null;
   currentGameMode?: string | null;
   currentLevelTimeLimit?: number;
+  currentStartLevelId?: string | null;
 }
 
 export function SetGameDialog({
@@ -24,6 +27,7 @@ export function SetGameDialog({
   currentGameId,
   currentGameMode,
   currentLevelTimeLimit,
+  currentStartLevelId,
 }: SetGameDialogProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<"group_solo" | "group_team">("group_solo");
@@ -33,6 +37,8 @@ export function SetGameDialog({
   const [loading, setLoading] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [levels, setLevels] = useState<{ id: string; name: string; order: number }[]>([]);
+  const [selectedLevelId, setSelectedLevelId] = useState<string | null>(null);
 
   const fetchGames = useCallback(
     async (q: string, limit?: number) => {
@@ -71,6 +77,24 @@ export function SetGameDialog({
     return () => clearTimeout(timer);
   }, [searchQuery, open, fetchGames]);
 
+  // Fetch levels when a game is selected
+  useEffect(() => {
+    if (!selectedGameId) {
+      setLevels([]);
+      setSelectedLevelId(null);
+      return;
+    }
+    async function fetchLevels() {
+      const res = await apiClient.get<any>(`/api/games/${selectedGameId}`);
+      if (res.code === 0 && res.data?.levels) {
+        const lvls = (res.data.levels as any[]).map((l: any) => ({ id: l.id, name: l.name, order: l.order }));
+        setLevels(lvls);
+        setSelectedLevelId(currentStartLevelId ?? lvls[0]?.id ?? null);
+      }
+    }
+    fetchLevels();
+  }, [selectedGameId]);
+
   async function handleConfirm() {
     if (!selectedGameId) {
       toast.error("请选择一个游戏");
@@ -81,7 +105,7 @@ export function SetGameDialog({
       return;
     }
     setConfirming(true);
-    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, levelTimeLimit);
+    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, levelTimeLimit, selectedLevelId ?? undefined);
     setConfirming(false);
     if (res.code !== 0) {
       toast.error(res.message);
@@ -186,6 +210,26 @@ export function SetGameDialog({
               })
             )}
           </div>
+
+          {/* Level selector */}
+          {levels.length > 0 && (
+            <div className="flex items-center gap-3">
+              <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="shrink-0 text-[13px] font-medium text-foreground">起始关卡</span>
+              <Select value={selectedLevelId ?? ""} onValueChange={setSelectedLevelId}>
+                <SelectTrigger className="h-9 flex-1 text-sm">
+                  <SelectValue placeholder="选择关卡" />
+                </SelectTrigger>
+                <SelectContent>
+                  {levels.map((level) => (
+                    <SelectItem key={level.id} value={level.id}>
+                      {level.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Level time limit */}
           <div className="flex items-center gap-3">
