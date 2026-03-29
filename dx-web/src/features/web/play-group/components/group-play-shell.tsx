@@ -150,6 +150,7 @@ export function GroupPlayShell({
 
     if (isDifferentGame || isDifferentLevel || isStaleState) {
       exitGame();
+      completedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, targetLevelId]);
