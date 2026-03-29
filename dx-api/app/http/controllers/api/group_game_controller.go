@@ -190,7 +190,10 @@ func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Re
 	}
 
 	conn := helpers.GroupSSEHub.Register(groupID, userID, w)
-	defer helpers.GroupSSEHub.Unregister(groupID, userID)
+	defer func() {
+		helpers.GroupSSEHub.Unregister(groupID, userID)
+		services.HandleGroupPlayDisconnect(groupID, userID)
+	}()
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
