@@ -139,7 +139,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
               {group.current_game_name || "未知游戏"}
             </span>
           </div>
-          {group.game_mode === "team" ? (
+          {group.game_mode === "group_team" ? (
             <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
               <Users className="h-3 w-3" />
               小组

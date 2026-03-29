@@ -88,7 +88,7 @@ export function GroupPlayResultPanel({
   result,
   groupId,
 }: GroupPlayResultPanelProps) {
-  const isSolo = result.mode === "solo";
+  const isSolo = result.mode === "group_solo";
   const entries = isSolo
     ? buildSoloPodium(result.participants)
     : buildTeamPodium(result.teams ?? []);

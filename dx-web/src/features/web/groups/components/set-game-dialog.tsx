@@ -26,7 +26,7 @@ export function SetGameDialog({
   currentLevelTimeLimit,
 }: SetGameDialogProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [selectedMode, setSelectedMode] = useState<"solo" | "team">("solo");
+  const [selectedMode, setSelectedMode] = useState<"group_solo" | "group_team">("group_solo");
   const [levelTimeLimit, setLevelTimeLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [games, setGames] = useState<GroupGameSearchItem[]>([]);
@@ -48,7 +48,7 @@ export function SetGameDialog({
   useEffect(() => {
     if (open) {
       setSelectedGameId(currentGameId ?? null);
-      setSelectedMode(currentGameMode === "team" ? "team" : "solo");
+      setSelectedMode(currentGameMode === "group_team" ? "group_team" : "group_solo");
       setLevelTimeLimit(currentLevelTimeLimit ?? 10);
       setSearchQuery("");
       setIsSearching(false);
@@ -208,9 +208,9 @@ export function SetGameDialog({
           <div className="flex gap-1 rounded-[10px] bg-slate-100 p-1">
             <button
               type="button"
-              onClick={() => setSelectedMode("solo")}
+              onClick={() => setSelectedMode("group_solo")}
               className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-medium transition-colors ${
-                selectedMode === "solo"
+                selectedMode === "group_solo"
                   ? "bg-teal-600 text-white"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -220,9 +220,9 @@ export function SetGameDialog({
             </button>
             <button
               type="button"
-              onClick={() => setSelectedMode("team")}
+              onClick={() => setSelectedMode("group_team")}
               className={`flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg text-[13px] font-medium transition-colors ${
-                selectedMode === "team"
+                selectedMode === "group_team"
                   ? "bg-teal-600 text-white"
                   : "text-muted-foreground hover:text-foreground"
               }`}
