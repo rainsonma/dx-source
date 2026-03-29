@@ -116,7 +116,7 @@ Displays:
 - Backend validates JWT via `ParseJWTUserID()`, verifies group membership
 - Connection stays open with 30-second heartbeat pings
 - On disconnect, connection is removed from the SSE hub (only if it matches the current connection — prevents race conditions during EventSource reconnects)
-- **Disconnect during gameplay**: A disconnected player's session is **not** ended — they remain "in the game" as an inactive participant. Winner determination (`CheckAndDetermineWinner`) only counts **connected** players (via SSE hub) as participants, so disconnected players do not block remaining players from seeing results. The disconnected player gets no credit for the level.
+- **Disconnect during gameplay**: A disconnected player's session is **not** ended — they remain "in the game" as an inactive participant. Winner determination (`CheckAndDetermineWinner`) only counts **connected** players (via SSE hub) as participants, so disconnected players do not block remaining players from seeing results. The disconnected player gets no credit for the level. On disconnect, `RecheckGroupWinners` is called to re-run winner determination for all in-progress levels — this unblocks waiting players immediately when a leaver disconnects.
 - **Room presence tracking**: The SSE hub's connection registry serves as the source of truth for who is in the room
   - When a member connects (enters the room): backend broadcasts `room_member_joined` SSE event to all connections
   - When a member disconnects (leaves the room): backend broadcasts `room_member_left` SSE event to remaining connections
@@ -265,18 +265,22 @@ When all content items are answered/skipped, or when the timer expires:
 **Concurrency safety**: Uses `SELECT ... FOR UPDATE` to lock participant rows, preventing duplicate winner calculations.
 
 **Completion check**:
-1. Count active sessions for this group (participants)
-2. Count completed level sessions for this group + level
-3. If `completed < participants` → return nil (still waiting)
-4. If all done → determine winner
+1. Lock active sessions for this group
+2. Count only **connected** participants (cross-referenced with SSE hub) — disconnected players are ignored
+3. Count completed level sessions for this group + level
+4. If `completed < connected participants` → return nil (still waiting)
+5. If all connected players done → determine winner
+6. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels
+
+**Deduplication**: All winner queries use `DISTINCT ON (user_id)` to handle players with multiple completed level sessions (e.g., from restarts). Only the highest score per user is kept.
 
 **Solo mode winner**:
-- Query all completed level sessions for this group + level
+- Query all completed level sessions for this group + level (deduplicated per user, best score)
 - Rank by `score DESC`, tie-break by `ended_at ASC` (earlier finish wins)
 - Winner's `game_group_members.last_won_at` is updated
 
 **Team mode winner**:
-- Sum scores per subgroup
+- Sum best scores per user per subgroup (deduplicated)
 - Highest sum wins, tie-break by `MAX(ended_at) ASC` (team whose last member finished earliest wins)
 - Winning subgroup's `game_subgroups.last_won_at` is updated
 - All participating members of the winning subgroup get `game_group_members.last_won_at` updated
@@ -445,7 +449,7 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | Event | Trigger | Payload |
 |-------|---------|---------|
 | `group_game_start` | Owner starts game | Game info, degree, pattern, time limit, level_id, level_name |
-| `group_level_complete` | All participants finish a level | Winner result (solo or team) |
+| `group_level_complete` | All connected participants finish a level (or re-check after disconnect) | Winner result (solo or team) |
 | `group_next_level` | Any participant triggers next level | game_group_id, game_id, level_id, level_name, degree, pattern, level_time_limit |
 | `group_game_force_end` | Owner force-ends game | Array of level results |
 | `room_member_joined` | Member enters game room (SSE connects) | `{ user_id }` |
@@ -550,7 +554,7 @@ Injected actions:
 | API prefix | `/api/play-single/*` | `/api/play-group/*` |
 | Session creation | No group fields | Sets `game_group_id`, `game_subgroup_id` |
 | Timer | Elapsed time (count up) | Level countdown (count down from limit) |
-| Level completion | Shows result card | Waits for all participants, shows winner |
+| Level completion | Shows result card | Waits for all connected participants, shows winner |
 | Winner determination | N/A | Solo: highest score. Team: highest subgroup sum |
 | SSE | N/A | group_game_start, group_level_complete, group_next_level, group_game_force_end |
 | Entry point | Game detail page | Group game room (SSE-triggered) |
