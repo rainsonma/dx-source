@@ -85,27 +85,36 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 	for _, uid := range connectedIDs {
 		connectedSet[uid] = true
 	}
-	var participantCount int64
+	// Build the set of connected participant user IDs (connected AND have active session)
+	var connectedParticipantIDs []string
 	for _, row := range lockedRows {
 		if connectedSet[row.UserID] {
-			participantCount++
+			connectedParticipantIDs = append(connectedParticipantIDs, row.UserID)
 		}
 	}
+	participantCount := int64(len(connectedParticipantIDs))
 	if participantCount == 0 {
 		_ = tx.Rollback()
 		return nil, nil // No connected participants
 	}
 
-	// Count completed level sessions
+	// Count completed level sessions — only from connected players.
+	// Both counts must use the same population (connected players)
+	// to avoid premature winner determination when a player who
+	// already completed briefly disconnects (e.g., SSE reconnect).
 	var completedRow countRow
 	if err := tx.Raw(
-		"SELECT COUNT(*) AS count FROM game_session_levels WHERE game_group_id = ? AND game_level_id = ? AND ended_at IS NOT NULL",
-		gameGroupID, gameLevelID).Scan(&completedRow); err != nil {
+		`SELECT COUNT(DISTINCT gst.user_id) AS count
+		 FROM game_session_levels gsl
+		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
+		   AND gst.user_id IN ?`,
+		gameGroupID, gameLevelID, connectedParticipantIDs).Scan(&completedRow); err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("failed to count completed levels: %w", err)
 	}
 
-	fmt.Printf("[GROUP] Winner check: participants=%d (connected) completed=%d\n", participantCount, completedRow.Count)
+	fmt.Printf("[GROUP] Winner check: participants=%d (connected) completed=%d (connected)\n", participantCount, completedRow.Count)
 	if completedRow.Count < participantCount {
 		_ = tx.Rollback()
 		return nil, nil // Still waiting for connected players
