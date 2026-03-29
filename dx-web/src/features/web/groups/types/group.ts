@@ -35,7 +35,7 @@ export type GroupGameStartEvent = {
   game_group_id: string;
   game_id: string;
   game_name: string;
-  game_mode: "solo" | "team";
+  game_mode: "group_solo" | "group_team";
   degree: string;
   pattern: string | null;
   level_time_limit: number;
@@ -56,7 +56,7 @@ export type TeamWinner = {
 
 export type GroupLevelCompleteEvent = {
   game_level_id: string;
-  mode: "solo" | "team";
+  mode: "group_solo" | "group_team";
   winner: SoloWinner | TeamWinner;
 };
 

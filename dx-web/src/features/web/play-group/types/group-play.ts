@@ -13,7 +13,7 @@ export type TeamWinner = {
 
 export type GroupLevelCompleteEvent = {
   game_level_id: string;
-  mode: "solo" | "team";
+  mode: "group_solo" | "group_team";
   winner: SoloWinner | TeamWinner;
   participants: SoloWinner[];
   teams?: TeamWinner[];
