@@ -51,3 +51,24 @@ func (r *StartGroupGameRequest) Filters(ctx http.Context) map[string]string {
 func (r *StartGroupGameRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{}
 }
+
+// ---------- NextLevelRequest ----------
+
+type NextLevelRequest struct {
+	CurrentLevelID string `form:"current_level_id" json:"current_level_id"`
+}
+
+func (r *NextLevelRequest) Authorize(ctx http.Context) error { return nil }
+func (r *NextLevelRequest) Rules(ctx http.Context) map[string]string {
+	return map[string]string{
+		"current_level_id": "required",
+	}
+}
+func (r *NextLevelRequest) Filters(ctx http.Context) map[string]string {
+	return map[string]string{}
+}
+func (r *NextLevelRequest) Messages(ctx http.Context) map[string]string {
+	return map[string]string{
+		"current_level_id.required": "请指定当前关卡",
+	}
+}

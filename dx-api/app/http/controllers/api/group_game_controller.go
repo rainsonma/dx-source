@@ -136,6 +136,30 @@ func (c *GroupGameController) ForceEnd(ctx contractshttp.Context) contractshttp.
 	})
 }
 
+// NextLevel triggers the next level for all group members.
+func (c *GroupGameController) NextLevel(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	groupID := ctx.Request().Route("id")
+	if groupID == "" {
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "group id is required")
+	}
+
+	var req requests.NextLevelRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+
+	if err := services.NextGroupLevel(userID, groupID, req.CurrentLevelID); err != nil {
+		return mapGroupGameError(ctx, err)
+	}
+
+	return helpers.Success(ctx, nil)
+}
+
 // Events establishes a persistent SSE connection for group events.
 func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Response {
 	token := ctx.Request().Query("token", "")
@@ -246,6 +270,12 @@ func mapGroupGameError(ctx contractshttp.Context, err error) contractshttp.Respo
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
 	case errors.Is(err, services.ErrUnequalSubgroups):
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
+	case errors.Is(err, services.ErrLevelNotFound):
+		return helpers.Error(ctx, nethttp.StatusNotFound, consts.CodeNotFound, "关卡不存在")
+	case errors.Is(err, services.ErrLastLevel):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
+	case errors.Is(err, services.ErrNotGroupMemberForAction):
+		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeGroupForbidden, "非群组成员")
 	default:
 		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}
