@@ -699,13 +699,16 @@ func RecheckGroupWinners(groupID string) {
 		return
 	}
 
-	// Find levels that have at least one completed session (candidates for winner check)
+	// Find levels that have at least one completed session in the current round
 	type levelIDRow struct {
 		GameLevelID string `gorm:"column:game_level_id"`
 	}
 	var levels []levelIDRow
 	facades.Orm().Query().Raw(
-		"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL",
+		`SELECT DISTINCT gsl.game_level_id
+		 FROM game_session_levels gsl
+		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+		 WHERE gsl.game_group_id = ? AND gsl.ended_at IS NOT NULL AND gst.ended_at IS NULL`,
 		groupID).Scan(&levels)
 
 	for _, lid := range levels {

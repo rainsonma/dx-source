@@ -87,9 +87,11 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 	}
 	// Build the set of connected participant user IDs (connected AND have active session)
 	var connectedParticipantIDs []string
+	var connectedSessionIDs []string
 	for _, row := range lockedRows {
 		if connectedSet[row.UserID] {
 			connectedParticipantIDs = append(connectedParticipantIDs, row.UserID)
+			connectedSessionIDs = append(connectedSessionIDs, row.ID)
 		}
 	}
 	participantCount := int64(len(connectedParticipantIDs))
@@ -98,7 +100,13 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		return nil, nil // No connected participants
 	}
 
-	// Count completed level sessions — only from connected players.
+	// Collect all active session IDs (current round) for scoping winner queries
+	activeSessionIDs := make([]string, len(lockedRows))
+	for i, row := range lockedRows {
+		activeSessionIDs[i] = row.ID
+	}
+
+	// Count completed level sessions — only from connected players and current round.
 	// Both counts must use the same population (connected players)
 	// to avoid premature winner determination when a player who
 	// already completed briefly disconnects (e.g., SSE reconnect).
@@ -108,8 +116,8 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		 FROM game_session_levels gsl
 		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
 		 WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-		   AND gst.user_id IN ?`,
-		gameGroupID, gameLevelID, connectedParticipantIDs).Scan(&completedRow); err != nil {
+		   AND gst.user_id IN ? AND gsl.game_session_total_id IN ?`,
+		gameGroupID, gameLevelID, connectedParticipantIDs, connectedSessionIDs).Scan(&completedRow); err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("failed to count completed levels: %w", err)
 	}
@@ -122,29 +130,30 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 
 	_ = tx.Commit()
 
-	// All done — determine winner
+	// All done — determine winner (scoped to current round's sessions)
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", gameGroupID).First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
 	}
 
 	if group.GameMode != nil && *group.GameMode == consts.GameModeTeam {
-		return determineTeamWinner(gameGroupID, gameLevelID)
+		return determineTeamWinner(gameGroupID, gameLevelID, activeSessionIDs)
 	}
-	return determineSoloWinner(gameGroupID, gameLevelID)
+	return determineSoloWinner(gameGroupID, gameLevelID, activeSessionIDs)
 }
 
-// DetermineWinnerForLevel is used by force-end (sessions already ended, skip participant count check).
-func DetermineWinnerForLevel(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
+// DetermineWinnerForLevel is used by force-end. sessionIDs scopes queries
+// to the current round (sessions already ended, skip participant count check).
+func DetermineWinnerForLevel(gameGroupID, gameLevelID string, sessionIDs []string) (*LevelWinnerResult, error) {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", gameGroupID).First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
 	}
 
 	if group.GameMode != nil && *group.GameMode == consts.GameModeTeam {
-		return determineTeamWinner(gameGroupID, gameLevelID)
+		return determineTeamWinner(gameGroupID, gameLevelID, sessionIDs)
 	}
-	return determineSoloWinner(gameGroupID, gameLevelID)
+	return determineSoloWinner(gameGroupID, gameLevelID, sessionIDs)
 }
 
 type soloWinnerRow struct {
@@ -154,7 +163,7 @@ type soloWinnerRow struct {
 	EndedAt  time.Time `gorm:"column:ended_at"`
 }
 
-func determineSoloWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
+func determineSoloWinner(gameGroupID, gameLevelID string, sessionIDs []string) (*LevelWinnerResult, error) {
 	var rows []soloWinnerRow
 	if err := facades.Orm().Query().Raw(
 		`SELECT user_id, nickname, score, ended_at FROM (
@@ -163,8 +172,9 @@ func determineSoloWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
 			JOIN users u ON u.id = gst.user_id
 			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
+			  AND gsl.game_session_total_id IN ?
 			ORDER BY gst.user_id, gsl.score DESC, gsl.ended_at ASC
-		 ) sub ORDER BY score DESC, ended_at ASC`, gameGroupID, gameLevelID).Scan(&rows); err != nil {
+		 ) sub ORDER BY score DESC, ended_at ASC`, gameGroupID, gameLevelID, sessionIDs).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query solo participants: %w", err)
 	}
 
@@ -205,7 +215,7 @@ type teamWinnerRow struct {
 	LastEndedAt time.Time `gorm:"column:last_ended_at"`
 }
 
-func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, error) {
+func determineTeamWinner(gameGroupID, gameLevelID string, sessionIDs []string) (*LevelWinnerResult, error) {
 	// Fetch ALL subgroups ranked by sum of best scores (deduplicated per user)
 	var teamRows []teamWinnerRow
 	if err := facades.Orm().Query().Raw(
@@ -214,11 +224,11 @@ func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 			FROM game_session_levels gsl
 			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
 			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-			  AND gsl.game_subgroup_id IS NOT NULL
+			  AND gsl.game_subgroup_id IS NOT NULL AND gsl.game_session_total_id IN ?
 			ORDER BY gst.user_id, gsl.score DESC
 		 ) deduped
 		 GROUP BY game_subgroup_id
-		 ORDER BY total_score DESC, last_ended_at ASC`, gameGroupID, gameLevelID).Scan(&teamRows); err != nil {
+		 ORDER BY total_score DESC, last_ended_at ASC`, gameGroupID, gameLevelID, sessionIDs).Scan(&teamRows); err != nil {
 		return nil, fmt.Errorf("failed to query team results: %w", err)
 	}
 
@@ -240,9 +250,9 @@ func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 			JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
 			JOIN users u ON u.id = gst.user_id
 			WHERE gsl.game_group_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NOT NULL
-			  AND gsl.game_subgroup_id IS NOT NULL
+			  AND gsl.game_subgroup_id IS NOT NULL AND gsl.game_session_total_id IN ?
 			ORDER BY gst.user_id, gsl.score DESC
-		 ) sub ORDER BY score DESC`, gameGroupID, gameLevelID).Scan(&memberRows); err != nil {
+		 ) sub ORDER BY score DESC`, gameGroupID, gameLevelID, sessionIDs).Scan(&memberRows); err != nil {
 		return nil, fmt.Errorf("failed to query team members: %w", err)
 	}
 

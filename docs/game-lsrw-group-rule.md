@@ -155,8 +155,9 @@ Displays:
 
 ### On Success
 
-1. Backend sets `is_playing = true` on the group
-2. Backend broadcasts SSE event `group_game_start` to all group members:
+1. Backend ends any stale sessions from a previous round (active `game_session_levels` and `game_session_totals` for this group get `ended_at = NOW`) — this ensures each round starts with fresh sessions
+2. Backend sets `is_playing = true` on the group
+3. Backend broadcasts SSE event `group_game_start` to all group members:
    ```json
    {
      "game_group_id": "uuid",
@@ -265,22 +266,24 @@ When all content items are answered/skipped, or when the timer expires:
 **Concurrency safety**: Uses `SELECT ... FOR UPDATE` to lock participant rows, preventing duplicate winner calculations.
 
 **Completion check**:
-1. Lock active sessions for this group
+1. Lock active sessions for this group (`game_session_totals WHERE ended_at IS NULL`)
 2. Count only **connected** participants (cross-referenced with SSE hub) — disconnected players are ignored
-3. Count completed level sessions for this group + level
+3. Count completed level sessions **scoped to the current round's session IDs** — prevents stale completions from previous rounds being counted
 4. If `completed < connected participants` → return nil (still waiting)
-5. If all connected players done → determine winner
-6. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels
+5. If all connected players done → determine winner (also scoped to current round's sessions)
+6. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels (scoped to active sessions)
+
+**Session scoping**: All winner queries filter by `game_session_total_id IN (current round's session IDs)`. This prevents old completed sessions from previous rounds polluting the completion count or winner scores when replaying the same game. Force-end collects session IDs before ending them so the scope is preserved.
 
 **Deduplication**: All winner queries use `DISTINCT ON (user_id)` to handle players with multiple completed level sessions (e.g., from restarts). Only the highest score per user is kept.
 
 **Solo mode winner**:
-- Query all completed level sessions for this group + level (deduplicated per user, best score)
+- Query completed level sessions for this group + level, scoped to current round (deduplicated per user, best score)
 - Rank by `score DESC`, tie-break by `ended_at ASC` (earlier finish wins)
 - Winner's `game_group_members.last_won_at` is updated
 
 **Team mode winner**:
-- Sum best scores per user per subgroup (deduplicated)
+- Sum best scores per user per subgroup, scoped to current round (deduplicated)
 - Highest sum wins, tie-break by `MAX(ended_at) ASC` (team whose last member finished earliest wins)
 - Winning subgroup's `game_subgroups.last_won_at` is updated
 - All participating members of the winning subgroup get `game_group_members.last_won_at` updated
@@ -380,10 +383,11 @@ If no next level exists, the button shows "结束" instead (links back to group 
 1. Owner clicks "游戏中，强制结束" (red button) in the game room
 2. Backend `ForceEndGroupGame`:
    - Validates owner, validates `is_playing = true`
+   - Collects active session IDs before ending (scopes winner queries to current round)
    - Ends all active `game_session_levels` (sets `ended_at = NOW`)
    - Ends all active `game_session_totals` (sets `ended_at = NOW`)
-   - Collects all distinct level IDs with completed sessions
-   - Calls `DetermineWinnerForLevel()` for each (skips participant count check — sessions already ended)
+   - Collects distinct level IDs with completed sessions from the current round's sessions
+   - Calls `DetermineWinnerForLevel(sessionIDs)` for each (skips participant count check — sessions already ended)
    - Sets `is_playing = false`
    - Broadcasts SSE event `group_game_force_end` with results array:
      ```json

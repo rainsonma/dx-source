@@ -217,6 +217,15 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		levelID = &startLevel.ID
 	}
 
+	// End any stale sessions from a previous round (auto-end doesn't clean these up)
+	now := time.Now()
+	facades.Orm().Query().Exec(
+		"UPDATE game_session_levels SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		now, groupID)
+	facades.Orm().Query().Exec(
+		"UPDATE game_session_totals SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		now, groupID)
+
 	// Set is_playing = true
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).
 		Update("is_playing", true); err != nil {
@@ -252,6 +261,21 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 		return nil, ErrGroupNotPlaying
 	}
 
+	// Collect active session IDs before ending (these scope winner queries to current round)
+	type sessionIDRow struct {
+		ID string `gorm:"column:id"`
+	}
+	var activeRows []sessionIDRow
+	if err := facades.Orm().Query().Raw(
+		"SELECT id FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL",
+		groupID).Scan(&activeRows); err != nil {
+		return nil, fmt.Errorf("failed to collect session ids: %w", err)
+	}
+	sessionIDs := make([]string, len(activeRows))
+	for i, r := range activeRows {
+		sessionIDs[i] = r.ID
+	}
+
 	now := time.Now()
 
 	// End all active session levels
@@ -268,20 +292,22 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 		return nil, fmt.Errorf("failed to end session totals: %w", err)
 	}
 
-	// Collect completed level IDs for winner determination
+	// Collect completed level IDs for winner determination (current round only)
 	type levelIDRow struct {
 		GameLevelID string `gorm:"column:game_level_id"`
 	}
 	var levelIDs []levelIDRow
-	if err := facades.Orm().Query().Raw(
-		"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL",
-		groupID).Scan(&levelIDs); err != nil {
-		return nil, fmt.Errorf("failed to query levels: %w", err)
+	if len(sessionIDs) > 0 {
+		if err := facades.Orm().Query().Raw(
+			"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL AND game_session_total_id IN ?",
+			groupID, sessionIDs).Scan(&levelIDs); err != nil {
+			return nil, fmt.Errorf("failed to query levels: %w", err)
+		}
 	}
 
 	var results []LevelWinnerResult
 	for _, lid := range levelIDs {
-		result, err := DetermineWinnerForLevel(groupID, lid.GameLevelID)
+		result, err := DetermineWinnerForLevel(groupID, lid.GameLevelID, sessionIDs)
 		if err == nil && result != nil {
 			results = append(results, *result)
 		}
