@@ -11,9 +11,11 @@ import (
 
 // LevelWinnerResult holds winner data for SSE broadcast.
 type LevelWinnerResult struct {
-	GameLevelID string `json:"game_level_id"`
-	Mode        string `json:"mode"`
-	Winner      any    `json:"winner"`
+	GameLevelID  string       `json:"game_level_id"`
+	Mode         string       `json:"mode"`
+	Winner       any          `json:"winner"`
+	Participants []SoloWinner `json:"participants"`
+	Teams        []TeamWinner `json:"teams,omitempty"`
 }
 
 type SoloWinner struct {
