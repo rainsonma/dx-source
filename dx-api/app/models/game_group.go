@@ -17,6 +17,7 @@ type GameGroup struct {
 	GameMode        *string `gorm:"column:game_mode" json:"game_mode"`
 	LevelTimeLimit  int     `gorm:"column:level_time_limit" json:"level_time_limit"`
 	IsPlaying        bool    `gorm:"column:is_playing" json:"is_playing"`
+	StartGameLevelID *string `gorm:"column:start_game_level_id" json:"start_game_level_id"`
 }
 
 func (g *GameGroup) TableName() string {
