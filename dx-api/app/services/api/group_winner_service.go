@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"dx-api/app/consts"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -98,7 +99,7 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		return nil, ErrGroupNotFound
 	}
 
-	if group.GameMode != nil && *group.GameMode == "team" {
+	if group.GameMode != nil && *group.GameMode == consts.GameModeTeam {
 		return determineTeamWinner(gameGroupID, gameLevelID)
 	}
 	return determineSoloWinner(gameGroupID, gameLevelID)
@@ -111,7 +112,7 @@ func DetermineWinnerForLevel(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		return nil, ErrGroupNotFound
 	}
 
-	if group.GameMode != nil && *group.GameMode == "team" {
+	if group.GameMode != nil && *group.GameMode == consts.GameModeTeam {
 		return determineTeamWinner(gameGroupID, gameLevelID)
 	}
 	return determineSoloWinner(gameGroupID, gameLevelID)
@@ -161,7 +162,7 @@ func determineSoloWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 
 	return &LevelWinnerResult{
 		GameLevelID:  gameLevelID,
-		Mode:         "solo",
+		Mode:         consts.GameModeSolo,
 		Winner:       winner,
 		Participants: participants,
 	}, nil
@@ -266,7 +267,7 @@ func determineTeamWinner(gameGroupID, gameLevelID string) (*LevelWinnerResult, e
 
 	return &LevelWinnerResult{
 		GameLevelID:  gameLevelID,
-		Mode:         "team",
+		Mode:         consts.GameModeTeam,
 		Winner:       winnerTeam,
 		Participants: allParticipants,
 		Teams:        teams,
