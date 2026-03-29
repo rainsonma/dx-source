@@ -18,7 +18,7 @@ export function GroupPlayWaitingScreen({ groupId }: GroupPlayWaitingScreenProps)
         </div>
 
         <Button variant="outline" className="w-full" asChild>
-          <Link href={`/hall/groups/${groupId}`}><ArrowLeft className="mr-2 h-4 w-4" />返回群组</Link>
+          <Link href={`/hall/groups/${groupId}`}><ArrowLeft className="mr-2 h-4 w-4" />返回</Link>
         </Button>
       </div>
     </div>
