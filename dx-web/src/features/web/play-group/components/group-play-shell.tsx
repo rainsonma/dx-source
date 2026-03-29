@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
@@ -65,6 +66,8 @@ export function GroupPlayShell({
   levelTimeLimit,
   gameMode,
 }: GroupPlayShellProps) {
+  const router = useRouter();
+
   // Phase and overlay managed via useGameStore so shared modals work
   const phase = useGameStore((s) => s.phase);
   const overlay = useGameStore((s) => s.overlay);
@@ -102,6 +105,10 @@ export function GroupPlayShell({
   const targetLevelId = targetLevel?.id ?? levelId;
   const levelName = targetLevel?.name ?? game.name;
 
+  const currentLevelIndex = game.levels.findIndex((l) => l.id === targetLevelId);
+  const nextLevel = currentLevelIndex >= 0 ? game.levels[currentLevelIndex + 1] : undefined;
+  const nextLevelId = nextLevel?.id ?? null;
+
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   async function completeAndWait() {
@@ -115,7 +122,7 @@ export function GroupPlayShell({
     });
   }
 
-  // SSE: listen for group level complete and force-end
+  // SSE: listen for group level complete, force-end, and next-level
   useGroupPlayEvents(groupId, {
     onLevelComplete: (event) => {
       setGroupResult(event);
@@ -127,6 +134,11 @@ export function GroupPlayShell({
         setGroupResult(lastResult);
       }
       setPhase("result");
+    },
+    onNextLevel: (event) => {
+      router.push(
+        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${gameMode}${event.level_id ? `&level=${event.level_id}` : ""}`
+      );
     },
   });
 
@@ -202,10 +214,19 @@ export function GroupPlayShell({
           player={player}
           gameName={game.name}
           gameMode={gameMode}
+          levelName={levelName}
         />
       );
     }
-    return <GroupPlayResultPanel result={groupResult!} groupId={groupId} />;
+    return (
+      <GroupPlayResultPanel
+        result={groupResult!}
+        groupId={groupId}
+        levelName={levelName}
+        nextLevelId={nextLevelId}
+        currentLevelId={targetLevelId}
+      />
+    );
   }
 
   const GameComponent = modeComponents[game.mode];
