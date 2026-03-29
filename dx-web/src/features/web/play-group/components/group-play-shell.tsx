@@ -113,10 +113,18 @@ export function GroupPlayShell({
     });
   }
 
-  // SSE: listen for group level complete result
+  // SSE: listen for group level complete and force-end
   useGroupPlayEvents(groupId, {
     onLevelComplete: (event) => {
       setGroupResult(event);
+    },
+    onForceEnd: (event) => {
+      // Force-end: show the last level result (or first if available)
+      const lastResult = event.results[event.results.length - 1];
+      if (lastResult) {
+        setGroupResult(lastResult);
+      }
+      setPhase("result");
     },
   });
 

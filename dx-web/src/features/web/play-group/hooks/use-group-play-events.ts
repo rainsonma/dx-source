@@ -2,10 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import { getAccessToken } from "@/lib/token";
-import type { GroupLevelCompleteEvent } from "../types/group-play";
+import type { GroupLevelCompleteEvent, GroupForceEndEvent } from "../types/group-play";
 
 type GroupPlayEventHandlers = {
   onLevelComplete?: (event: GroupLevelCompleteEvent) => void;
+  onForceEnd?: (event: GroupForceEndEvent) => void;
 };
 
 export function useGroupPlayEvents(
@@ -29,6 +30,11 @@ export function useGroupPlayEvents(
     eventSource.addEventListener("group_level_complete", (e) => {
       const data: GroupLevelCompleteEvent = JSON.parse(e.data);
       handlersRef.current.onLevelComplete?.(data);
+    });
+
+    eventSource.addEventListener("group_game_force_end", (e) => {
+      const data: GroupForceEndEvent = JSON.parse(e.data);
+      handlersRef.current.onForceEnd?.(data);
     });
 
     return () => eventSource.close();
