@@ -687,6 +687,35 @@ func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string)
 	return err
 }
 
+// RecheckGroupWinners re-checks winner determination for all in-progress levels
+// of a group. Called on SSE disconnect so that waiting players aren't stuck when
+// another player leaves. Non-destructive — no sessions are ended.
+func RecheckGroupWinners(groupID string) {
+	var group models.GameGroup
+	if err := facades.Orm().Query().Where("id", groupID).First(&group); err != nil || group.ID == "" {
+		return
+	}
+	if !group.IsPlaying {
+		return
+	}
+
+	// Find levels that have at least one completed session (candidates for winner check)
+	type levelIDRow struct {
+		GameLevelID string `gorm:"column:game_level_id"`
+	}
+	var levels []levelIDRow
+	facades.Orm().Query().Raw(
+		"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL",
+		groupID).Scan(&levels)
+
+	for _, lid := range levels {
+		result, err := CheckAndDetermineWinner(groupID, lid.GameLevelID)
+		if err == nil && result != nil {
+			helpers.GroupSSEHub.Broadcast(groupID, "group_level_complete", result)
+		}
+	}
+}
+
 // --- Helper ---
 
 // findGroupPlayActiveSession queries for an active session that always filters by game_group_id.

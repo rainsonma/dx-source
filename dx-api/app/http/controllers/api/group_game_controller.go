@@ -190,7 +190,14 @@ func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Re
 	}
 
 	conn := helpers.GroupSSEHub.Register(groupID, userID, w)
-	defer helpers.GroupSSEHub.Unregister(groupID, userID, conn)
+	defer func() {
+		helpers.GroupSSEHub.Unregister(groupID, userID, conn)
+		// Re-check winner for in-progress levels after disconnect.
+		// Safe and non-destructive — no sessions are ended. Since
+		// CheckAndDetermineWinner only counts connected players, a
+		// disconnect may unblock waiting players.
+		services.RecheckGroupWinners(groupID)
+	}()
 
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
