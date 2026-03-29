@@ -49,21 +49,26 @@ func (h *SSEHub) Register(groupID, userID string, w http.ResponseWriter) *SSECon
 	return conn
 }
 
-// Unregister removes a connection and broadcasts leave event.
-func (h *SSEHub) Unregister(groupID, userID string) {
+// Unregister removes a connection only if it matches the given pointer.
+// This prevents a replaced connection (via Register) from being deleted
+// by the old connection's deferred cleanup.
+func (h *SSEHub) Unregister(groupID, userID string, conn *SSEConnection) {
 	h.mu.Lock()
-	if group, ok := h.conns[groupID]; ok {
-		delete(group, userID)
-		if len(group) == 0 {
+	current, exists := h.conns[groupID][userID]
+	if exists && current == conn {
+		delete(h.conns[groupID], userID)
+		if len(h.conns[groupID]) == 0 {
 			delete(h.conns, groupID)
 		}
 	}
 	h.mu.Unlock()
 
-	// Broadcast leave event to remaining connections
-	h.Broadcast(groupID, "room_member_left", map[string]string{
-		"user_id": userID,
-	})
+	// Only broadcast leave if we actually removed the connection
+	if exists && current == conn {
+		h.Broadcast(groupID, "room_member_left", map[string]string{
+			"user_id": userID,
+		})
+	}
 }
 
 // Broadcast sends an event to all connected members of a group.

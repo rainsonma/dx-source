@@ -690,7 +690,15 @@ func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string)
 // HandleGroupPlayDisconnect cleans up a player's active sessions when they
 // disconnect (SSE drops) during group gameplay. Ends their session total and
 // level sessions, then re-checks winner determination for affected levels.
+// Skips cleanup if the user still has an active SSE connection (reconnected).
 func HandleGroupPlayDisconnect(groupID, userID string) {
+	// Skip if user reconnected (still in the hub)
+	for _, uid := range helpers.GroupSSEHub.ConnectedUserIDs(groupID) {
+		if uid == userID {
+			return
+		}
+	}
+
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).First(&group); err != nil || group.ID == "" {
 		return

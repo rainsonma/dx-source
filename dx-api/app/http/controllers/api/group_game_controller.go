@@ -191,7 +191,7 @@ func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Re
 
 	conn := helpers.GroupSSEHub.Register(groupID, userID, w)
 	defer func() {
-		helpers.GroupSSEHub.Unregister(groupID, userID)
+		helpers.GroupSSEHub.Unregister(groupID, userID, conn)
 		services.HandleGroupPlayDisconnect(groupID, userID)
 	}()
 
