@@ -52,9 +52,10 @@ Owner opens "设置群课程游戏" dialog from the group detail page:
 
 1. **Search**: Find published games by name (debounced search, shows latest 3 by default)
 2. **Select game**: Radio-button selection from search results
-3. **Set level time limit**: 1-60 minutes per level (default 10, shown as "每关卡限时")
-4. **Set game mode**: Solo/单人 (`group_solo`) or Team/小组 (`group_team`) toggle
-5. **Confirm**: `PUT /api/groups/{id}/game` with `game_id`, `game_mode`, `level_time_limit`
+3. **Select starting level**: Dropdown of game levels (defaults to first level, shown as "起始关卡")
+4. **Set level time limit**: 1-60 minutes per level (default 10, shown as "每关卡限时")
+5. **Set game mode**: Solo/单人 (`group_solo`) or Team/小组 (`group_team`) toggle
+6. **Confirm**: `PUT /api/groups/{id}/game` with `game_id`, `game_mode`, `level_time_limit`, `start_game_level_id`
 
 Constraints:
 - Owner only
@@ -149,11 +150,13 @@ Displays:
      "game_mode": "group_solo",
      "degree": "intermediate",
      "pattern": "write",
-     "level_time_limit": 10
+     "level_time_limit": 10,
+     "level_id": "uuid",
+     "level_name": "Level 1"
    }
    ```
 3. All members' clients (on the game room page) receive the event
-4. Clients auto-navigate to `/hall/play-group/{gameId}?groupId={groupId}&degree={degree}&pattern={pattern}&levelTimeLimit={minutes}&gameMode={gameMode}`
+4. Clients auto-navigate to `/hall/play-group/{gameId}?groupId={groupId}&degree={degree}&pattern={pattern}&levelTimeLimit={minutes}&gameMode={gameMode}&level={levelId}`
 
 ### Members Not in the Game Room
 
@@ -326,7 +329,7 @@ After winner broadcast, if this was the last level in the game:
 | Loading | Loading screen with progress bar |
 | Playing | Game component with countdown timer in top bar |
 | Result (waiting) | Player avatar + game info card with mode badge, spinner with "好厉害！请耐心等待其他选手完成...", teal "返回" button |
-| Result (received) | Podium result panel (centered, h-screen) — teal-themed stepped podium for top 3, ranked list for remaining, all participant avatars, "返回" button |
+| Result (received) | Podium result panel with level name subtitle — teal-themed stepped podium for top 3, ranked list for remaining, all participant avatars. Buttons: "下一关" (solid) + "返回" (outline) if more levels remain, or single "结束" button on last level |
 
 ### State Transitions
 
@@ -335,8 +338,21 @@ Loading → Playing (initSession)
 Playing → Result (all items done OR timer expires)
 Result → Waiting Screen (completeAndWait called via useEffect)
 Waiting Screen → Result Panel (SSE group_level_complete received)
-Result Panel → Group Detail (user clicks "返回")
+Result Panel → Group Detail (user clicks "返回" or "结束")
+Result Panel → Next Level Loading (any participant clicks "下一关" → SSE group_next_level → all navigate)
 ```
+
+### Next Level
+
+When the result panel shows and there are more levels:
+1. Any participant can click "下一关" button
+2. Frontend calls `POST /api/groups/{id}/next-level` with `current_level_id`
+3. Backend finds the next active level by `order`, uses Redis cache guard for idempotency
+4. Backend broadcasts `group_next_level` SSE event with next level info
+5. All participants' clients receive the event and navigate to the play-group page with the new level
+6. This triggers a fresh loading screen → session start → play cycle
+
+If no next level exists, the button shows "结束" instead (links back to group page).
 
 ## Force End
 
@@ -383,8 +399,9 @@ Result Panel → Group Detail (user clicks "返回")
 | POST | `/api/groups/{id}/start-game` | Owner starts game round |
 | POST | `/api/groups/{id}/force-end` | Owner force-ends game |
 | GET | `/api/groups/{id}/room-members` | List members currently in the game room |
-| PUT | `/api/groups/{id}/game` | Set current game + mode + time limit |
+| PUT | `/api/groups/{id}/game` | Set current game + mode + time limit + start level |
 | DELETE | `/api/groups/{id}/game` | Clear current game |
+| POST | `/api/groups/{id}/next-level` | Any member triggers next level (SSE broadcast) |
 
 ### Group Play Session
 
@@ -412,8 +429,9 @@ Result Panel → Group Detail (user clicks "返回")
 
 | Event | Trigger | Payload |
 |-------|---------|---------|
-| `group_game_start` | Owner starts game | Game info, degree, pattern, time limit |
+| `group_game_start` | Owner starts game | Game info, degree, pattern, time limit, level_id, level_name |
 | `group_level_complete` | All participants finish a level | Winner result (solo or team) |
+| `group_next_level` | Any participant triggers next level | game_group_id, game_id, level_id, level_name, degree, pattern, level_time_limit |
 | `group_game_force_end` | Owner force-ends game | Array of level results |
 | `room_member_joined` | Member enters game room (SSE connects) | `{ user_id }` |
 | `room_member_left` | Member leaves game room (SSE disconnects) | `{ user_id }` |
@@ -426,6 +444,7 @@ Result Panel → Group Detail (user clicks "返回")
 |--------|------|---------|-------------|
 | `level_time_limit` | INTEGER | 10 | Minutes per level (1-60) |
 | `is_playing` | BOOLEAN | false | Whether a game round is in progress |
+| `start_game_level_id` | VARCHAR | NULL | Starting level ID (set via 设置群课程游戏) |
 
 ### game_group_members
 
