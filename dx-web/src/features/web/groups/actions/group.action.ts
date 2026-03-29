@@ -45,8 +45,8 @@ export const groupApi = {
     const qs = params.toString();
     return apiClient.get<GroupGameSearchItem[]>(`/api/groups/${groupId}/games/search${qs ? `?${qs}` : ""}`);
   },
-  async setGame(groupId: string, gameId: string, gameMode: string, levelTimeLimit: number) {
-    return apiClient.put<null>(`/api/groups/${groupId}/game`, { game_id: gameId, game_mode: gameMode, level_time_limit: levelTimeLimit });
+  async setGame(groupId: string, gameId: string, gameMode: string, levelTimeLimit: number, startGameLevelId?: string) {
+    return apiClient.put<null>(`/api/groups/${groupId}/game`, { game_id: gameId, game_mode: gameMode, level_time_limit: levelTimeLimit, start_game_level_id: startGameLevelId });
   },
   async clearGame(groupId: string) {
     return apiClient.delete<null>(`/api/groups/${groupId}/game`);
@@ -56,6 +56,9 @@ export const groupApi = {
   },
   async forceEnd(groupId: string) {
     return apiClient.post<{ results: GroupLevelCompleteEvent[] }>(`/api/groups/${groupId}/force-end`);
+  },
+  async nextLevel(groupId: string, currentLevelId: string) {
+    return apiClient.post<null>(`/api/groups/${groupId}/next-level`, { current_level_id: currentLevelId });
   },
   async roomMembers(groupId: string) {
     return apiClient.get<RoomMember[]>(`/api/groups/${groupId}/room-members`);

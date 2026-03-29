@@ -22,3 +22,13 @@ export type GroupLevelCompleteEvent = {
 export type GroupForceEndEvent = {
   results: GroupLevelCompleteEvent[];
 };
+
+export type GroupNextLevelEvent = {
+  game_group_id: string;
+  game_id: string;
+  level_id: string;
+  level_name: string;
+  degree: string;
+  pattern: string | null;
+  level_time_limit: number;
+};
