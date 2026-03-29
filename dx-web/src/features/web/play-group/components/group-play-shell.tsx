@@ -46,12 +46,13 @@ interface GroupPlayShellProps {
     mode: string;
     levels: { id: string; name: string; order: number }[];
   };
-  player: { nickname: string; avatarUrl: string | null };
+  player: { id: string; nickname: string; avatarUrl: string | null };
   degree: string;
   pattern: string | null;
   levelId: string;
   groupId: string;
   levelTimeLimit: number;
+  gameMode: string | null;
 }
 
 export function GroupPlayShell({
@@ -62,6 +63,7 @@ export function GroupPlayShell({
   levelId,
   groupId,
   levelTimeLimit,
+  gameMode,
 }: GroupPlayShellProps) {
   // Phase and overlay managed via useGameStore so shared modals work
   const phase = useGameStore((s) => s.phase);
@@ -194,7 +196,14 @@ export function GroupPlayShell({
 
   if (phase === "result") {
     if (groupPhase !== "result") {
-      return <GroupPlayWaitingScreen groupId={groupId} />;
+      return (
+        <GroupPlayWaitingScreen
+          groupId={groupId}
+          player={player}
+          gameName={game.name}
+          gameMode={gameMode}
+        />
+      );
     }
     return <GroupPlayResultPanel result={groupResult!} groupId={groupId} />;
   }

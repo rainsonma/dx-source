@@ -21,12 +21,14 @@ export default function GroupPlayPage({
   const level = searchParams.get("level");
   const levelTimeLimitRaw = searchParams.get("levelTimeLimit");
   const levelTimeLimit = levelTimeLimitRaw ? Number(levelTimeLimitRaw) : null;
+  const gameMode = searchParams.get("gameMode");
 
   const [game, setGame] = useState<any>(null);
   const [player, setPlayer] = useState<{
+    id: string;
     nickname: string;
     avatarUrl: string | null;
-  }>({ nickname: "我", avatarUrl: null });
+  }>({ id: "", nickname: "我", avatarUrl: null });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -55,6 +57,7 @@ export default function GroupPlayPage({
 
       if (profileRes.code === 0 && profileRes.data) {
         setPlayer({
+          id: profileRes.data.id ?? "",
           nickname:
             profileRes.data.nickname || profileRes.data.username || "我",
           avatarUrl: profileRes.data.avatarUrl ?? null,
@@ -90,6 +93,7 @@ export default function GroupPlayPage({
       levelId={targetLevelId}
       groupId={groupId}
       levelTimeLimit={levelTimeLimit}
+      gameMode={gameMode}
     />
   );
 }
