@@ -53,7 +53,7 @@ Owner opens "设置群课程游戏" dialog from the group detail page:
 1. **Search**: Find published games by name (debounced search, shows latest 3 by default)
 2. **Select game**: Radio-button selection from search results
 3. **Set level time limit**: 1-60 minutes per level (default 10, shown as "每关卡限时")
-4. **Set game mode**: Solo (单人) or Team (小组) toggle
+4. **Set game mode**: Solo/单人 (`group_solo`) or Team/小组 (`group_team`) toggle
 5. **Confirm**: `PUT /api/groups/{id}/game` with `game_id`, `game_mode`, `level_time_limit`
 
 Constraints:
@@ -146,14 +146,14 @@ Displays:
      "game_group_id": "uuid",
      "game_id": "uuid",
      "game_name": "游戏名称",
-     "game_mode": "solo",
+     "game_mode": "group_solo",
      "degree": "intermediate",
      "pattern": "write",
      "level_time_limit": 10
    }
    ```
 3. All members' clients (on the game room page) receive the event
-4. Clients auto-navigate to `/hall/play-group/{gameId}?groupId={groupId}&degree={degree}&pattern={pattern}&levelTimeLimit={minutes}`
+4. Clients auto-navigate to `/hall/play-group/{gameId}?groupId={groupId}&degree={degree}&pattern={pattern}&levelTimeLimit={minutes}&gameMode={gameMode}`
 
 ### Members Not in the Game Room
 
@@ -271,7 +271,7 @@ When winner is determined, backend broadcasts `group_level_complete` to all grou
 ```json
 {
   "game_level_id": "uuid",
-  "mode": "solo",
+  "mode": "group_solo",
   "winner": {
     "user_id": "uuid",
     "user_name": "张三",
@@ -289,7 +289,7 @@ When winner is determined, backend broadcasts `group_level_complete` to all grou
 ```json
 {
   "game_level_id": "uuid",
-  "mode": "team",
+  "mode": "group_team",
   "winner": {
     "subgroup_id": "uuid",
     "subgroup_name": "A组",
@@ -325,7 +325,7 @@ After winner broadcast, if this was the last level in the game:
 |-------|-----|
 | Loading | Loading screen with progress bar |
 | Playing | Game component with countdown timer in top bar |
-| Result (waiting) | "正在计算结果..." spinner card (centered, h-screen) with "返回" button |
+| Result (waiting) | Player avatar + game info card with mode badge, spinner with "好厉害！请耐心等待其他选手完成...", teal "返回" button |
 | Result (received) | Podium result panel (centered, h-screen) — teal-themed stepped podium for top 3, ranked list for remaining, all participant avatars, "返回" button |
 
 ### State Transitions
@@ -354,7 +354,7 @@ Result Panel → Group Detail (user clicks "返回")
      ```json
      {
        "results": [
-         { "game_level_id": "uuid", "mode": "solo", "winner": {...}, "participants": [...] }
+         { "game_level_id": "uuid", "mode": "group_solo", "winner": {...}, "participants": [...] }
        ]
      }
      ```
