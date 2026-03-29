@@ -230,6 +230,7 @@ func getSessionProgress(userID string) ([]SessionProgress, error) {
 		FROM game_session_totals s
 		INNER JOIN games g ON g.id = s.game_id
 		WHERE s.user_id = ?
+			AND s.game_group_id IS NULL
 		ORDER BY s.last_played_at DESC
 		LIMIT 20
 	`, userID).Scan(&rows); err != nil {
