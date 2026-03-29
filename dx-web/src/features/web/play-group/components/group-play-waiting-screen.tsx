@@ -11,6 +11,7 @@ interface GroupPlayWaitingScreenProps {
   player: { id: string; nickname: string; avatarUrl: string | null };
   gameName: string;
   gameMode: string | null;
+  levelName: string;
 }
 
 export function GroupPlayWaitingScreen({
@@ -18,6 +19,7 @@ export function GroupPlayWaitingScreen({
   player,
   gameName,
   gameMode,
+  levelName,
 }: GroupPlayWaitingScreenProps) {
   const avatarBg = getAvatarColor(player.id);
 
@@ -47,6 +49,9 @@ export function GroupPlayWaitingScreen({
           <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
             <span className="truncate text-sm font-semibold text-foreground">
               {gameName}
+            </span>
+            <span className="truncate text-[11px] text-muted-foreground">
+              {levelName}
             </span>
           </div>
           {gameMode === "group_team" ? (
