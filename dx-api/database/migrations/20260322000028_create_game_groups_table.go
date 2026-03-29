@@ -22,6 +22,7 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.Uuid("owner_id")
 			table.Uuid("cover_id").Nullable()
 			table.Uuid("current_game_id").Nullable()
+			table.Uuid("start_game_level_id").Nullable()
 			table.Text("invite_code").Default("")
 			table.Uuid("invite_qrcode_id").Nullable()
 			table.Boolean("is_active").Default(true)
