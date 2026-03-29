@@ -294,36 +294,27 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
             </div>
 
             {group.current_game_id ? (
-              <>
-                <div className="flex items-center gap-3 rounded-[10px] border border-border bg-muted px-3 py-2.5">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100">
-                    <Gamepad2 className="h-4 w-4 text-teal-600" />
-                  </div>
-                  <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-                    <span className="truncate text-[13px] font-semibold text-foreground">
-                      {group.current_game_name || "未知游戏"}
-                    </span>
-                  </div>
-                  {group.game_mode === "group_team" ? (
-                    <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
-                      <Users className="h-3 w-3" />
-                      小组
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
-                      <User className="h-3 w-3" />
-                      单人
-                    </span>
-                  )}
+              <div className="flex items-center gap-3 rounded-[10px] border border-border bg-muted px-3 py-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-100">
+                  <Gamepad2 className="h-4 w-4 text-teal-600" />
                 </div>
-                <Link
-                  href={`/hall/groups/${id}/room`}
-                  className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
-                >
-                  <DoorOpen className="h-3.5 w-3.5" />
-                  进入教室
-                </Link>
-              </>
+                <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
+                  <span className="truncate text-[13px] font-semibold text-foreground">
+                    {group.current_game_name || "未知游戏"}
+                  </span>
+                </div>
+                {group.game_mode === "group_team" ? (
+                  <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
+                    <Users className="h-3 w-3" />
+                    小组
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+                    <User className="h-3 w-3" />
+                    单人
+                  </span>
+                )}
+              </div>
             ) : isOwner ? (
               <button
                 type="button"
@@ -335,6 +326,25 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               </button>
             ) : (
               <span className="text-xs text-muted-foreground">暂未设置课程游戏</span>
+            )}
+
+            {group.current_game_id && !group.is_playing ? (
+              <Link
+                href={`/hall/groups/${id}/room`}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[10px] bg-teal-600 py-2 text-xs font-medium text-white hover:bg-teal-700"
+              >
+                <DoorOpen className="h-3.5 w-3.5" />
+                进入教室
+              </Link>
+            ) : (
+              <div
+                role="button"
+                aria-disabled="true"
+                className="mt-1 flex w-full cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-muted py-2 text-xs font-medium text-muted-foreground"
+              >
+                <DoorOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                {group.current_game_id ? "游戏中..." : "教室未开放"}
+              </div>
             )}
           </div>
 
