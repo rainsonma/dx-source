@@ -48,8 +48,10 @@ type GroupDetail struct {
 	GameMode        *string `json:"game_mode"`
 	CurrentGameName  string  `json:"current_game_name"`
 	InviteQrcodeURL  string  `json:"invite_qrcode_url"`
-	LevelTimeLimit  int     `json:"level_time_limit"`
-	IsPlaying        bool    `json:"is_playing"`
+	LevelTimeLimit     int     `json:"level_time_limit"`
+	IsPlaying          bool    `json:"is_playing"`
+	StartGameLevelID   *string `json:"start_game_level_id"`
+	StartGameLevelName *string `json:"start_game_level_name"`
 }
 
 // CreateGroup creates a new group with the given user as owner and first member.
@@ -237,6 +239,14 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		}
 	}
 
+	var startGameLevelName *string
+	if group.StartGameLevelID != nil && *group.StartGameLevelID != "" {
+		var level models.GameLevel
+		if err := facades.Orm().Query().Select("id", "name").Where("id", *group.StartGameLevelID).First(&level); err == nil && level.ID != "" {
+			startGameLevelName = &level.Name
+		}
+	}
+
 	var inviteQrcodeURL string
 	if group.InviteQrcodeID != nil && *group.InviteQrcodeID != "" {
 		inviteQrcodeURL = helpers.ImageServeURL(*group.InviteQrcodeID)
@@ -257,8 +267,10 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		GameMode:        group.GameMode,
 		CurrentGameName:  currentGameName,
 		InviteQrcodeURL:  inviteQrcodeURL,
-		LevelTimeLimit:  group.LevelTimeLimit,
-		IsPlaying:        group.IsPlaying,
+		LevelTimeLimit:     group.LevelTimeLimit,
+		IsPlaying:          group.IsPlaying,
+		StartGameLevelID:   group.StartGameLevelID,
+		StartGameLevelName: startGameLevelName,
 	}, nil
 }
 

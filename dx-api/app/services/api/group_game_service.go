@@ -76,7 +76,7 @@ func SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error)
 }
 
 // SetGroupGame sets the current game and game mode for a group.
-func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int) error {
+func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, startGameLevelID *string) error {
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -96,10 +96,18 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int) 
 		return ErrGameNotPublished
 	}
 
+	if startGameLevelID != nil && *startGameLevelID != "" {
+		var level models.GameLevel
+		if err := facades.Orm().Query().Where("id", *startGameLevelID).Where("game_id", gameID).Where("is_active", true).First(&level); err != nil || level.ID == "" {
+			return ErrLevelNotFound
+		}
+	}
+
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(map[string]any{
-		"current_game_id":  gameID,
-		"game_mode":        gameMode,
-		"level_time_limit": levelTimeLimit,
+		"current_game_id":    gameID,
+		"game_mode":          gameMode,
+		"level_time_limit":   levelTimeLimit,
+		"start_game_level_id": startGameLevelID,
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
 	}
@@ -120,7 +128,7 @@ func ClearGroupGame(userID, groupID string) error {
 	}
 
 	if _, err := facades.Orm().Query().Exec(
-		"UPDATE game_groups SET current_game_id = NULL, game_mode = NULL WHERE id = ?",
+		"UPDATE game_groups SET current_game_id = NULL, game_mode = NULL, start_game_level_id = NULL WHERE id = ?",
 		groupID,
 	); err != nil {
 		return fmt.Errorf("failed to clear group game: %w", err)

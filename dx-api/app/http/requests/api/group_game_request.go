@@ -7,9 +7,10 @@ import (
 // ---------- SetGroupGameRequest ----------
 
 type SetGroupGameRequest struct {
-	GameID         string `form:"game_id" json:"game_id"`
-	GameMode       string `form:"game_mode" json:"game_mode"`
-	LevelTimeLimit int    `form:"level_time_limit" json:"level_time_limit"`
+	GameID           string  `form:"game_id" json:"game_id"`
+	GameMode         string  `form:"game_mode" json:"game_mode"`
+	LevelTimeLimit   int     `form:"level_time_limit" json:"level_time_limit"`
+	StartGameLevelID *string `form:"start_game_level_id" json:"start_game_level_id"`
 }
 
 func (r *SetGroupGameRequest) Authorize(ctx http.Context) error { return nil }
