@@ -116,7 +116,7 @@ Displays:
 - Backend validates JWT via `ParseJWTUserID()`, verifies group membership
 - Connection stays open with 30-second heartbeat pings
 - On disconnect, connection is removed from the SSE hub (only if it matches the current connection — prevents race conditions during EventSource reconnects)
-- **Disconnect during gameplay**: When a player disconnects while `is_playing = true`, the backend automatically ends their active session total and level sessions, then re-checks winner determination for affected levels. This unblocks remaining players stuck on the waiting screen. Skipped if the user reconnected (still in the hub).
+- **Disconnect during gameplay**: A disconnected player's session is **not** ended — they remain "in the game" as an inactive participant. Winner determination (`CheckAndDetermineWinner`) only counts **connected** players (via SSE hub) as participants, so disconnected players do not block remaining players from seeing results. The disconnected player gets no credit for the level.
 - **Room presence tracking**: The SSE hub's connection registry serves as the source of truth for who is in the room
   - When a member connects (enters the room): backend broadcasts `room_member_joined` SSE event to all connections
   - When a member disconnects (leaves the room): backend broadcasts `room_member_left` SSE event to remaining connections
