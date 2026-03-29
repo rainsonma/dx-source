@@ -92,6 +92,16 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
     );
   }
 
+  // Redirect non-owners away from room during gameplay
+  if (group.is_playing && !isOwner) {
+    router.replace(`/hall/groups/${groupId}`);
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+      </div>
+    );
+  }
+
   if (!group.current_game_id) {
     return (
       <div className="flex flex-col items-center gap-4">
