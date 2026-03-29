@@ -1,10 +1,13 @@
 "use client";
 
-import { Crown, ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { Crown, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
 import Link from "next/link";
+import { toast } from "sonner";
+import { groupApi } from "@/features/web/groups/actions/group.action";
 import type {
   GroupLevelCompleteEvent,
   SoloWinner,
@@ -14,6 +17,9 @@ import type {
 interface GroupPlayResultPanelProps {
   result: GroupLevelCompleteEvent;
   groupId: string;
+  levelName: string;
+  nextLevelId: string | null;
+  currentLevelId: string;
 }
 
 /** Teal palette for podium columns */
@@ -87,7 +93,22 @@ function buildTeamPodium(teams: TeamWinner[]): PodiumEntry[] {
 export function GroupPlayResultPanel({
   result,
   groupId,
+  levelName,
+  nextLevelId,
+  currentLevelId,
 }: GroupPlayResultPanelProps) {
+  const [loadingNext, setLoadingNext] = useState(false);
+
+  async function handleNextLevel() {
+    setLoadingNext(true);
+    const res = await groupApi.nextLevel(groupId, currentLevelId);
+    if (res.code !== 0) {
+      toast.error(res.message);
+      setLoadingNext(false);
+    }
+    // Don't reset loading — SSE will navigate everyone away
+  }
+
   const isSolo = result.mode === "group_solo";
   const entries = isSolo
     ? buildSoloPodium(result.participants)
@@ -100,6 +121,7 @@ export function GroupPlayResultPanel({
     <div className="flex h-screen flex-col items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-lg font-bold text-foreground">关卡结果</h2>
+        <p className="text-sm text-muted-foreground">{levelName}</p>
 
         {/* Podium */}
         <div className="flex items-end justify-center gap-1">
@@ -222,14 +244,32 @@ export function GroupPlayResultPanel({
           </div>
         </div>
 
-        {/* Return button */}
+        {/* Return / next-level button */}
         <div className="h-px w-full bg-border" />
-        <Button asChild className="w-full bg-teal-600 hover:bg-teal-700">
-          <Link href={`/hall/groups/${groupId}`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            返回
-          </Link>
-        </Button>
+        {nextLevelId ? (
+          <div className="flex w-full gap-2">
+            <Button variant="outline" asChild className="flex-1">
+              <Link href={`/hall/groups/${groupId}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                返回
+              </Link>
+            </Button>
+            <Button
+              className="flex-1 bg-teal-600 hover:bg-teal-700"
+              onClick={handleNextLevel}
+              disabled={loadingNext}
+            >
+              {loadingNext ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              下一关
+            </Button>
+          </div>
+        ) : (
+          <Button asChild className="w-full bg-teal-600 hover:bg-teal-700">
+            <Link href={`/hall/groups/${groupId}`}>
+              结束
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
