@@ -63,7 +63,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
   useGroupEvents(group ? groupId : null, {
     onGameStart: (event) => {
       router.push(
-        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${event.game_mode}`
+        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${event.game_mode}${event.level_id ? `&level=${event.level_id}` : ""}`
       );
     },
     onRoomMemberJoined: () => {
@@ -138,6 +138,11 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
             <span className="truncate text-sm font-semibold text-foreground">
               {group.current_game_name || "未知游戏"}
             </span>
+            {group.start_game_level_name && (
+              <span className="truncate text-[11px] text-muted-foreground">
+                {group.start_game_level_name}
+              </span>
+            )}
           </div>
           {group.game_mode === "group_team" ? (
             <span className="flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-600">
