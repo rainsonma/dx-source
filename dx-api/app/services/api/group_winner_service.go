@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -65,16 +66,35 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 
 	// Lock participant rows to prevent concurrent winner determination
 	type idRow struct {
-		ID string `gorm:"column:id"`
+		ID     string `gorm:"column:id"`
+		UserID string `gorm:"column:user_id"`
 	}
 	var lockedRows []idRow
 	if err := tx.Raw(
-		"SELECT id FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL FOR UPDATE",
+		"SELECT id, user_id FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL FOR UPDATE",
 		gameGroupID).Scan(&lockedRows); err != nil {
 		_ = tx.Rollback()
 		return nil, fmt.Errorf("failed to lock participants: %w", err)
 	}
-	participantCount := int64(len(lockedRows))
+
+	// Only count players who are still connected (via SSE).
+	// Disconnected players are ignored — their sessions stay active
+	// but they don't block winner determination for remaining players.
+	connectedIDs := helpers.GroupSSEHub.ConnectedUserIDs(gameGroupID)
+	connectedSet := make(map[string]bool, len(connectedIDs))
+	for _, uid := range connectedIDs {
+		connectedSet[uid] = true
+	}
+	var participantCount int64
+	for _, row := range lockedRows {
+		if connectedSet[row.UserID] {
+			participantCount++
+		}
+	}
+	if participantCount == 0 {
+		_ = tx.Rollback()
+		return nil, nil // No connected participants
+	}
 
 	// Count completed level sessions
 	var completedRow countRow
@@ -85,10 +105,10 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 		return nil, fmt.Errorf("failed to count completed levels: %w", err)
 	}
 
-	fmt.Printf("[GROUP] Winner check: participants=%d completed=%d\n", participantCount, completedRow.Count)
+	fmt.Printf("[GROUP] Winner check: participants=%d (connected) completed=%d\n", participantCount, completedRow.Count)
 	if completedRow.Count < participantCount {
 		_ = tx.Rollback()
-		return nil, nil // Still waiting
+		return nil, nil // Still waiting for connected players
 	}
 
 	_ = tx.Commit()

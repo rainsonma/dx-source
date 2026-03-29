@@ -687,63 +687,6 @@ func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string)
 	return err
 }
 
-// HandleGroupPlayDisconnect cleans up a player's active sessions when they
-// disconnect (SSE drops) during group gameplay. Ends their session total and
-// level sessions, then re-checks winner determination for affected levels.
-// Skips cleanup if the user still has an active SSE connection (reconnected).
-func HandleGroupPlayDisconnect(groupID, userID string) {
-	// Skip if user reconnected (still in the hub)
-	for _, uid := range helpers.GroupSSEHub.ConnectedUserIDs(groupID) {
-		if uid == userID {
-			return
-		}
-	}
-
-	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).First(&group); err != nil || group.ID == "" {
-		return
-	}
-	if !group.IsPlaying {
-		return
-	}
-
-	now := time.Now()
-
-	// Find active level sessions for this group + user (to re-check winners)
-	type levelIDRow struct {
-		GameLevelID string `gorm:"column:game_level_id"`
-	}
-	var affectedLevels []levelIDRow
-	facades.Orm().Query().Raw(`
-		SELECT DISTINCT gsl.game_level_id
-		FROM game_session_levels gsl
-		JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-		WHERE gst.game_group_id = ? AND gst.user_id = ? AND gsl.ended_at IS NULL
-	`, groupID, userID).Scan(&affectedLevels)
-
-	// End active level sessions
-	facades.Orm().Query().Exec(`
-		UPDATE game_session_levels SET ended_at = ?
-		WHERE ended_at IS NULL AND game_session_total_id IN (
-			SELECT id FROM game_session_totals
-			WHERE game_group_id = ? AND user_id = ? AND ended_at IS NULL
-		)
-	`, now, groupID, userID)
-
-	// End active session totals
-	facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET ended_at = ? WHERE game_group_id = ? AND user_id = ? AND ended_at IS NULL",
-		now, groupID, userID)
-
-	// Re-check winner for each affected level
-	for _, lid := range affectedLevels {
-		result, err := CheckAndDetermineWinner(groupID, lid.GameLevelID)
-		if err == nil && result != nil {
-			helpers.GroupSSEHub.Broadcast(groupID, "group_level_complete", result)
-		}
-	}
-}
-
 // --- Helper ---
 
 // findGroupPlayActiveSession queries for an active session that always filters by game_group_id.
