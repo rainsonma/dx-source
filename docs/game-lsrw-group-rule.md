@@ -65,7 +65,7 @@ Constraints:
 ### Clearing the Current Game
 
 - Owner clicks "清除" button → confirms → `DELETE /api/groups/{id}/game`
-- Clears `current_game_id` and `game_mode` (sets to NULL)
+- Clears `current_game_id`, `game_mode`, and `start_game_level_id` (sets to NULL)
 - Cannot clear while `is_playing = true`
 
 ### Updating Level Time Limit
@@ -86,7 +86,7 @@ Constraints:
 Displays:
 - Back button (CircleArrowLeft icon, top-left corner of card)
 - Group name and member count
-- Current game name with mode badge (单人/小组)
+- Current game name with mode badge (单人/小组) and starting level name (if set)
 - **Room member presence**: Avatars of all members currently in the room, showing "已进入教室（N/M）"
   - When all members are present, shows "全员到齐" label
 - Waiting message:
@@ -328,7 +328,7 @@ After winner broadcast, if this was the last level in the game:
 |-------|-----|
 | Loading | Loading screen with progress bar |
 | Playing | Game component with countdown timer in top bar |
-| Result (waiting) | Player avatar + game info card with mode badge, spinner with "好厉害！请耐心等待其他选手完成...", teal "返回" button |
+| Result (waiting) | Player avatar + game info card with mode badge and level name, spinner with "好厉害！请耐心等待其他选手完成...", teal "返回" button |
 | Result (received) | Podium result panel with level name subtitle — teal-themed stepped podium for top 3, ranked list for remaining, all participant avatars. Buttons: "下一关" (solid) + "返回" (outline) if more levels remain, or single "结束" button on last level |
 
 ### State Transitions
@@ -537,7 +537,7 @@ Injected actions:
 | Timer | Elapsed time (count up) | Level countdown (count down from limit) |
 | Level completion | Shows result card | Waits for all participants, shows winner |
 | Winner determination | N/A | Solo: highest score. Team: highest subgroup sum |
-| SSE | N/A | group_game_start, group_level_complete, group_game_force_end |
+| SSE | N/A | group_game_start, group_level_complete, group_next_level, group_game_force_end |
 | Entry point | Game detail page | Group game room (SSE-triggered) |
 | Degree options | practice, beginner, intermediate, advanced | beginner, intermediate, advanced (no practice) |
 | Pattern | Optional | Required (default: write) |
