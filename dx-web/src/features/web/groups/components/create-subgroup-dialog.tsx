@@ -54,7 +54,7 @@ export function CreateSubgroupDialog({ open, onOpenChange, onCreated }: CreateSu
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>创建小组</DialogTitle>
         </DialogHeader>

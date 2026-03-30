@@ -69,7 +69,7 @@ export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroup
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>创建学习群</DialogTitle>
         </DialogHeader>

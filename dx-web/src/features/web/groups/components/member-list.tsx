@@ -78,7 +78,7 @@ export function MemberList({
         <span className="text-sm font-semibold text-foreground">群成员（{members.length}）</span>
         <div className="flex items-center gap-2">
           {isOwner && (
-            <DropdownMenu modal={false} open={hasSelection ? undefined : false}>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"

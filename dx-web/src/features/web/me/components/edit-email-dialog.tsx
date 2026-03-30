@@ -66,7 +66,7 @@ export function EditEmailDialog({ open, onOpenChange, currentEmail, onProfileCha
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
         <DialogHeader>
           <DialogTitle>修改邮箱</DialogTitle>
         </DialogHeader>
