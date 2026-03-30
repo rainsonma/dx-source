@@ -636,7 +636,14 @@ func GroupPlayRecordSkip(userID string, input RecordSkipInput) error {
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit skip transaction: %w", err)
+	}
+
+	// Broadcast player skip to group (fire-and-forget)
+	go broadcastPlayerAction(userID, input.GameSessionTotalID, "skip", 0)
+
+	return nil
 }
 
 // broadcastPlayerAction broadcasts a group_player_action SSE event.
