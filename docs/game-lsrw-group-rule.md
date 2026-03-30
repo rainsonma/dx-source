@@ -271,6 +271,18 @@ Combo cycle resets after 10 consecutive correct answers.
 - **Live updates**: `group_player_complete` SSE event triggers badge appearance in real-time
 - **Reset**: Completion indicators reset on level transition (`group_next_level`)
 
+### Live Stats Feed (During Play)
+
+- The stats section (跳过, 得分, 连击) displays a **real-time activity feed** of all group members' actions
+- Each row shows the last player who performed that action type, with a whoosh animation bar
+- **跳过**: Whooshes when any player skips, showing the player's name
+- **得分**: Whooshes when any player answers correctly, showing the player's name
+- **连击**: Whooshes when any player hits a combo bonus (3, 5, or 10 streak), showing "player ×N"
+- Actions are broadcast via `group_player_action` SSE event from the backend after each answer/skip
+- Wrong answers do not trigger any broadcast
+- Latest action wins — rapid successive actions replace the previous display immediately
+- Self-events (current player's own actions) are NOT filtered — all members see a consistent feed
+
 ### Play Time Tracking
 
 - Active play time accumulates only during `phase=playing` with no overlay
@@ -489,6 +501,7 @@ If no next level exists, the button shows "结束" instead (links back to group 
 |-------|---------|---------|
 | `group_game_start` | Owner starts game | Game info, degree, pattern, time limit, level_id, level_name, participants roster |
 | `group_player_complete` | Individual player completes a level | `{ user_id, user_name, game_level_id }` |
+| `group_player_action` | Player records correct answer, skip, or combo bonus | `{ user_id, user_name, action, combo_streak? }` |
 | `group_level_complete` | All connected participants finish a level (or re-check after disconnect) | Winner result (solo or team) |
 | `group_next_level` | Any participant triggers next level | game_group_id, game_id, level_id, level_name, degree, pattern, level_time_limit |
 | `group_game_force_end` | Owner force-ends game | Array of level results |
