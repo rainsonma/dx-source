@@ -85,10 +85,14 @@ func CheckAndDetermineWinner(gameGroupID, gameLevelID string) (*LevelWinnerResul
 	for _, uid := range connectedIDs {
 		connectedSet[uid] = true
 	}
-	// Build the set of connected participant user IDs (connected AND have active session)
+	// Build the set of connected participant user IDs (connected AND have active session).
+	// Use a seen-set to deduplicate — a user with multiple active sessions must only
+	// be counted once so that participantCount matches COUNT(DISTINCT user_id).
+	seen := make(map[string]bool)
 	var connectedParticipantIDs []string
 	for _, row := range lockedRows {
-		if connectedSet[row.UserID] {
+		if connectedSet[row.UserID] && !seen[row.UserID] {
+			seen[row.UserID] = true
 			connectedParticipantIDs = append(connectedParticipantIDs, row.UserID)
 		}
 	}

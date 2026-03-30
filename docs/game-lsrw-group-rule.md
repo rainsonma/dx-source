@@ -283,7 +283,7 @@ Combo cycle resets after 10 consecutive correct answers.
 
 When all content items are answered/skipped, or when the timer expires:
 
-1. Client calls `completeLevelAction(sessionId, levelId, { score, maxCombo, totalItems })`
+1. Client calls `completeLevelAction(sessionId, levelId, { score, maxCombo, totalItems })` — retries once on failure to prevent the player from being stuck on the waiting screen
 2. Backend `GroupPlayCompleteLevel`:
    - Marks `GameSessionLevel.ended_at = NOW`
    - Calculates accuracy (`correct_count / total_items`)
@@ -298,14 +298,17 @@ When all content items are answered/skipped, or when the timer expires:
 **Completion check**:
 1. Lock active sessions for this group (`game_session_totals WHERE ended_at IS NULL`)
 2. Count only **connected** participants (cross-referenced with SSE hub) — disconnected players are ignored
-3. Count completed level sessions from connected players, scoped to active sessions (`gst.ended_at IS NULL`) — prevents stale completions from previous rounds being counted
-4. If `completed < connected participants` → return nil (still waiting)
-5. If all connected players done → determine winner (scoped to current round's active session IDs)
-6. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels (scoped to active sessions)
+3. **Deduplicate** connected participant IDs: a user with multiple active session totals is counted once so that `participantCount` matches the `COUNT(DISTINCT user_id)` used for completion counting
+4. Count completed level sessions from connected players, scoped to active sessions (`gst.ended_at IS NULL`) — prevents stale completions from previous rounds being counted
+5. If `completed < connected participants` → return nil (still waiting)
+6. If all connected players done → determine winner (scoped to current round's active session IDs)
+7. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels (scoped to active sessions)
 
 **Session scoping**: The completion count uses `gst.ended_at IS NULL` (via JOIN) to scope to the current round's active sessions. Winner determination queries filter by `game_session_total_id IN (active session IDs)`. This prevents old completed sessions from previous rounds polluting the completion count or winner scores when replaying the same game. Force-end collects session IDs before ending them so the scope is preserved.
 
-**Deduplication**: All winner queries use `DISTINCT ON (user_id)` to handle players with multiple completed level sessions (e.g., from restarts). Only the highest score per user is kept.
+**Participant deduplication**: Connected participant IDs are deduplicated with a seen-set before counting. This ensures `participantCount` matches the `COUNT(DISTINCT gst.user_id)` used in the completion query. Without this, a user with stale duplicate sessions would inflate the participant count, causing the winner check to never succeed.
+
+**Winner query deduplication**: All winner queries use `DISTINCT ON (user_id)` to handle players with multiple completed level sessions (e.g., from restarts). Only the highest score per user is kept.
 
 **Solo mode winner**:
 - Query completed level sessions for this group + level, scoped to current round (deduplicated per user, best score)

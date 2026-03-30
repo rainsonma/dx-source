@@ -114,13 +114,28 @@ export function GroupPlayShell({
 
   async function completeAndWait() {
     if (completedRef.current || !sessionId || !targetLevelId) return;
+    // Guard against stale store state: on remount after navigation, the
+    // completeAndWait effect can fire before exitGame() resets the stores.
+    // Verify the group store's levelId matches the current target to avoid
+    // sending a completeLevelAction with a stale sessionId (→ 404).
+    if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
     setGroupWaiting();
-    await completeLevelAction(sessionId, targetLevelId, {
+    const result = await completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
     });
+    // Retry once on failure — the backend must know we completed so the
+    // winner check can proceed. Without this, a transient error leaves the
+    // player stuck on the waiting screen indefinitely.
+    if (result.error) {
+      await completeLevelAction(sessionId, targetLevelId, {
+        score,
+        maxCombo: combo.maxCombo,
+        totalItems: contentItems?.length ?? 0,
+      });
+    }
   }
 
   // SSE: listen for group level complete, force-end, and next-level
