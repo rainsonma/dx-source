@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { getAccessToken } from "@/lib/token";
-import type { GroupLevelCompleteEvent, GroupForceEndEvent, GroupNextLevelEvent, GroupPlayerCompleteEvent } from "../types/group-play";
+import { useRef, useMemo } from "react";
+import { useGroupSSE } from "@/hooks/use-group-sse";
+import type {
+  GroupLevelCompleteEvent,
+  GroupForceEndEvent,
+  GroupNextLevelEvent,
+  GroupPlayerCompleteEvent,
+} from "../types/group-play";
 
 type GroupPlayEventHandlers = {
   onLevelComplete?: (event: GroupLevelCompleteEvent) => void;
@@ -18,37 +23,16 @@ export function useGroupPlayEvents(
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
-  useEffect(() => {
-    if (!groupId) return;
+  const listeners = useMemo(() => ({
+    group_level_complete: (data: unknown) =>
+      handlersRef.current.onLevelComplete?.(data as GroupLevelCompleteEvent),
+    group_game_force_end: (data: unknown) =>
+      handlersRef.current.onForceEnd?.(data as GroupForceEndEvent),
+    group_next_level: (data: unknown) =>
+      handlersRef.current.onNextLevel?.(data as GroupNextLevelEvent),
+    group_player_complete: (data: unknown) =>
+      handlersRef.current.onPlayerComplete?.(data as GroupPlayerCompleteEvent),
+  }), []);
 
-    const token = getAccessToken();
-    if (!token) return;
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${apiUrl}/api/groups/${groupId}/events?token=${encodeURIComponent(token)}`;
-
-    const eventSource = new EventSource(url);
-
-    eventSource.addEventListener("group_level_complete", (e) => {
-      const data: GroupLevelCompleteEvent = JSON.parse(e.data);
-      handlersRef.current.onLevelComplete?.(data);
-    });
-
-    eventSource.addEventListener("group_game_force_end", (e) => {
-      const data: GroupForceEndEvent = JSON.parse(e.data);
-      handlersRef.current.onForceEnd?.(data);
-    });
-
-    eventSource.addEventListener("group_next_level", (e) => {
-      const data: GroupNextLevelEvent = JSON.parse(e.data);
-      handlersRef.current.onNextLevel?.(data);
-    });
-
-    eventSource.addEventListener("group_player_complete", (e) => {
-      const data: GroupPlayerCompleteEvent = JSON.parse(e.data);
-      handlersRef.current.onPlayerComplete?.(data);
-    });
-
-    return () => eventSource.close();
-  }, [groupId]);
+  useGroupSSE(groupId, listeners);
 }
