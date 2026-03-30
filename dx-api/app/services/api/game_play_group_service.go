@@ -51,6 +51,14 @@ type GroupPlayerCompleteEvent struct {
 	GameLevelID string `json:"game_level_id"`
 }
 
+// GroupPlayerActionEvent is the SSE payload for group_player_action.
+type GroupPlayerActionEvent struct {
+	UserID      string `json:"user_id"`
+	UserName    string `json:"user_name"`
+	Action      string `json:"action"`
+	ComboStreak int    `json:"combo_streak,omitempty"`
+}
+
 // GroupPlayRestoreSessionResult holds accumulated stats for restoring client state in a group game.
 type GroupPlayRestoreSessionResult struct {
 	Session      *SessionStats `json:"session"`
@@ -540,7 +548,19 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 		return fmt.Errorf("failed to touch user last_played_at: %w", err)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit answer transaction: %w", err)
+	}
+
+	// Broadcast player action to group (fire-and-forget)
+	if input.IsCorrect {
+		go broadcastPlayerAction(userID, input.GameSessionTotalID, "score", 0)
+		if input.ComboScore > 0 {
+			go broadcastPlayerAction(userID, input.GameSessionTotalID, "combo", input.ComboScore)
+		}
+	}
+
+	return nil
 }
 
 // GroupPlayRecordSkip records a skip and increments skip counts atomically.
@@ -617,6 +637,34 @@ func GroupPlayRecordSkip(userID string, input RecordSkipInput) error {
 	}
 
 	return tx.Commit()
+}
+
+// broadcastPlayerAction broadcasts a group_player_action SSE event.
+// Runs as fire-and-forget — errors are silently ignored.
+func broadcastPlayerAction(userID, sessionTotalID, action string, comboStreak int) {
+	var session models.GameSessionTotal
+	if err := facades.Orm().Query().Select("id", "game_group_id").
+		Where("id", sessionTotalID).First(&session); err != nil || session.GameGroupID == nil {
+		return
+	}
+
+	var user models.User
+	if err := facades.Orm().Query().Select("id", "username", "nickname").
+		Where("id", userID).First(&user); err != nil || user.ID == "" {
+		return
+	}
+
+	userName := user.Username
+	if user.Nickname != nil && *user.Nickname != "" {
+		userName = *user.Nickname
+	}
+
+	helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_action", GroupPlayerActionEvent{
+		UserID:      userID,
+		UserName:    userName,
+		Action:      action,
+		ComboStreak: comboStreak,
+	})
 }
 
 // GroupPlaySyncPlayTime syncs playtime to both session and active level.
