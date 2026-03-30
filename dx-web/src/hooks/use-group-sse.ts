@@ -78,7 +78,10 @@ export function useGroupSSE(
           if (!disposed) connect(token);
         })
         .catch(() => {
-          // refreshAccessToken handles redirect to /auth/signin on failure
+          // On auth failure, refreshAccessToken redirects to /auth/signin
+          // (which triggers cleanup via disposed flag).
+          // On transient network failure, schedule another retry.
+          scheduleReconnect();
         });
     }
 
