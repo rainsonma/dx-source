@@ -168,7 +168,14 @@ Displays:
      "pattern": "write",
      "level_time_limit": 10,
      "level_id": "uuid",
-     "level_name": "Level 1"
+     "level_name": "Level 1",
+     "participants": {
+       "mode": "group_solo",
+       "members": [
+         { "user_id": "uuid", "user_name": "张三" },
+         { "user_id": "uuid", "user_name": "李四" }
+       ]
+     }
    }
    ```
 3. All members' clients (on the game room page) receive the event
@@ -239,7 +246,18 @@ Combo cycle resets after 10 consecutive correct answers.
 | Level name | Current level display |
 | Center timer | "Group: MM:SS" countdown (teal, red at ≤60s) |
 | Action buttons | Settings, Reset, Report, Fullscreen |
-| Player panel | Expandable: avatar, score, combo, progress bar, stats |
+| Player panel | Expandable: avatar, score, combo, progress bar, **member roster with completion indicators**, stats |
+
+### Member Roster (During Play)
+
+- Displayed below the progress bar in the player panel
+- **Solo mode**: Flat row of member avatars (ShadCN `Avatar size="sm"` with deterministic color from user ID)
+- **Team mode**: Subgroup name labels with member avatars grouped underneath
+- **Completion indicator**: Green checkmark badge (`AvatarBadge`) appears on a player's avatar when they complete the level
+- **Current player highlight**: Ring-2 teal border on the current user's avatar
+- **Data source**: Participant roster embedded in `group_game_start` SSE event, stored via sessionStorage across navigation
+- **Live updates**: `group_player_complete` SSE event triggers badge appearance in real-time
+- **Reset**: Completion indicators reset on level transition (`group_next_level`)
 
 ### Play Time Tracking
 
@@ -454,7 +472,8 @@ If no next level exists, the button shows "结束" instead (links back to group 
 
 | Event | Trigger | Payload |
 |-------|---------|---------|
-| `group_game_start` | Owner starts game | Game info, degree, pattern, time limit, level_id, level_name |
+| `group_game_start` | Owner starts game | Game info, degree, pattern, time limit, level_id, level_name, participants roster |
+| `group_player_complete` | Individual player completes a level | `{ user_id, user_name, game_level_id }` |
 | `group_level_complete` | All connected participants finish a level (or re-check after disconnect) | Winner result (solo or team) |
 | `group_next_level` | Any participant triggers next level | game_group_id, game_id, level_id, level_name, degree, pattern, level_time_limit |
 | `group_game_force_end` | Owner force-ends game | Array of level results |

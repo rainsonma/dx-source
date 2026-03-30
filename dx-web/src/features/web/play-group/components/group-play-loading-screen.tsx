@@ -21,6 +21,7 @@ import {
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
+import type { Participants } from "../types/group-play";
 
 const MINIMUM_DISPLAY_MS = 1200;
 
@@ -123,6 +124,19 @@ export function GroupPlayLoadingScreen({
       try {
         setProgress(0);
 
+        // Read participants roster from sessionStorage (stored by game room on game start)
+        let participants: Participants | null = null;
+        try {
+          const key = `group-participants:${gameGroupId}`;
+          const raw = sessionStorage.getItem(key);
+          if (raw) {
+            participants = JSON.parse(raw) as Participants;
+            sessionStorage.removeItem(key);
+          }
+        } catch {
+          // Proceed without participants if sessionStorage read fails
+        }
+
         // Step 1: Start group-play session
         const sessionResult = await startSessionAction(
           gameId,
@@ -222,6 +236,7 @@ export function GroupPlayLoadingScreen({
           gameGroupId,
           levelTimeLimit,
           ...(restored && { restored }),
+          ...(participants && { participants }),
         };
 
         // Init group store (shell state management)

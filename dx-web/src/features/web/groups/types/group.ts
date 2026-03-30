@@ -33,6 +33,27 @@ export type RoomMember = {
   user_name: string;
 };
 
+export type ParticipantMember = {
+  user_id: string;
+  user_name: string;
+};
+
+export type SoloParticipants = {
+  mode: "group_solo";
+  members: ParticipantMember[];
+};
+
+export type TeamParticipants = {
+  mode: "group_team";
+  teams: {
+    subgroup_id: string;
+    subgroup_name: string;
+    members: ParticipantMember[];
+  }[];
+};
+
+export type Participants = SoloParticipants | TeamParticipants;
+
 export type GroupGameStartEvent = {
   game_group_id: string;
   game_id: string;
@@ -43,6 +64,7 @@ export type GroupGameStartEvent = {
   level_time_limit: number;
   level_id: string | null;
   level_name: string;
+  participants: Participants;
 };
 
 export type SoloWinner = {

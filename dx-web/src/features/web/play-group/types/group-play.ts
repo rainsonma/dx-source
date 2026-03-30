@@ -32,3 +32,30 @@ export type GroupNextLevelEvent = {
   pattern: string | null;
   level_time_limit: number;
 };
+
+export type ParticipantMember = {
+  user_id: string;
+  user_name: string;
+};
+
+export type SoloParticipants = {
+  mode: "group_solo";
+  members: ParticipantMember[];
+};
+
+export type TeamParticipants = {
+  mode: "group_team";
+  teams: {
+    subgroup_id: string;
+    subgroup_name: string;
+    members: ParticipantMember[];
+  }[];
+};
+
+export type Participants = SoloParticipants | TeamParticipants;
+
+export type GroupPlayerCompleteEvent = {
+  user_id: string;
+  user_name: string;
+  game_level_id: string;
+};

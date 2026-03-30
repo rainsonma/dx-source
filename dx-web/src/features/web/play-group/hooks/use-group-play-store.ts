@@ -5,7 +5,7 @@ import {
   type ComboState,
 } from "@/features/web/play-core/helpers/scoring";
 import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
-import type { GroupLevelCompleteEvent } from "../types/group-play";
+import type { GroupLevelCompleteEvent, Participants } from "../types/group-play";
 
 export type GamePhase = "loading" | "playing" | "result";
 export type GameOverlay = "paused" | "settings" | "reset" | "report" | "exit" | null;
@@ -35,6 +35,8 @@ interface GroupPlayState {
   levelTimeLimit: number | null;
   groupPhase: "playing" | "waiting" | "result" | null;
   groupResult: GroupLevelCompleteEvent | null;
+  participants: Participants | null;
+  completedPlayerIds: string[];
 }
 
 interface GroupPlayActions {
@@ -50,6 +52,7 @@ interface GroupPlayActions {
     startFromIndex: number;
     gameGroupId: string;
     levelTimeLimit: number;
+    participants?: Participants | null;
     restored?: {
       score: number;
       maxCombo: number;
@@ -70,6 +73,8 @@ interface GroupPlayActions {
   setGroupWaiting: () => void;
   setGroupResult: (result: GroupLevelCompleteEvent) => void;
   clearGroupPhase: () => void;
+  setParticipants: (data: Participants) => void;
+  addCompletedPlayer: (userId: string) => void;
 }
 
 const initialState: GroupPlayState = {
@@ -95,6 +100,8 @@ const initialState: GroupPlayState = {
   levelTimeLimit: null,
   groupPhase: null,
   groupResult: null,
+  participants: null,
+  completedPlayerIds: [],
 };
 
 export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
@@ -131,6 +138,8 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
         levelTimeLimit: data.levelTimeLimit,
         groupPhase: "playing",
         groupResult: null,
+        participants: data.participants ?? null,
+        completedPlayerIds: [],
       }),
 
     nextItem: () => set((s) => ({ currentIndex: s.currentIndex + 1 })),
@@ -175,7 +184,14 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
     exitGame: () => set({ ...initialState }),
 
     setGroupWaiting: () => set({ groupPhase: "waiting" }),
-    setGroupResult: (result) => set({ groupPhase: "result", groupResult: result }),
-    clearGroupPhase: () => set({ groupPhase: null, groupResult: null }),
+    setGroupResult: (result) => set({ groupPhase: "result", groupResult: result, completedPlayerIds: [] }),
+    clearGroupPhase: () => set({ groupPhase: null, groupResult: null, completedPlayerIds: [] }),
+    setParticipants: (data) => set({ participants: data }),
+    addCompletedPlayer: (userId) =>
+      set((s) => ({
+        completedPlayerIds: s.completedPlayerIds.includes(userId)
+          ? s.completedPlayerIds
+          : [...s.completedPlayerIds, userId],
+      })),
   })
 );

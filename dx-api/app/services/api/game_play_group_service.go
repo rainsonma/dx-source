@@ -44,6 +44,13 @@ type GroupPlayCompleteLevelResult struct {
 	MeetsThreshold bool    `json:"meetsThreshold"`
 }
 
+// GroupPlayerCompleteEvent is the SSE payload for group_player_complete.
+type GroupPlayerCompleteEvent struct {
+	UserID      string `json:"user_id"`
+	UserName    string `json:"user_name"`
+	GameLevelID string `json:"game_level_id"`
+}
+
 // GroupPlayRestoreSessionResult holds accumulated stats for restoring client state in a group game.
 type GroupPlayRestoreSessionResult struct {
 	Session      *SessionStats `json:"session"`
@@ -360,6 +367,22 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// Broadcast individual player completion to group
+	if session.GameGroupID != nil {
+		var user models.User
+		if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user); err == nil && user.ID != "" {
+			userName := user.Username
+			if user.Nickname != nil && *user.Nickname != "" {
+				userName = *user.Nickname
+			}
+			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_complete", GroupPlayerCompleteEvent{
+				UserID:      userID,
+				UserName:    userName,
+				GameLevelID: gameLevelID,
+			})
+		}
 	}
 
 	// 6. Check for group winner determination and broadcast SSE

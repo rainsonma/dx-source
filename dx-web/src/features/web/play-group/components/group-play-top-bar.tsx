@@ -12,8 +12,10 @@ import {
   Trophy,
   Flame,
   SkipForward,
+  Check,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
+import { getAvatarColor } from "@/lib/avatar";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { StatRow } from "@/features/web/play-core/components/stat-row";
 
@@ -26,6 +28,7 @@ const actionButtons = [
 
 interface GroupPlayTopBarProps {
   player: { nickname: string; avatarUrl: string | null };
+  playerId: string;
   levelName: string;
   levelTimeLimit: number;
   onExit: () => void;
@@ -39,6 +42,7 @@ interface GroupPlayTopBarProps {
 
 export function GroupPlayTopBar({
   player,
+  playerId,
   levelName,
   levelTimeLimit,
   onExit,
@@ -61,6 +65,8 @@ export function GroupPlayTopBar({
   const skipCount = useGroupPlayStore((s) => s.skipCount);
   const currentIndex = useGroupPlayStore((s) => s.currentIndex);
   const totalItems = useGroupPlayStore((s) => s.contentItems?.length ?? 0);
+  const participants = useGroupPlayStore((s) => s.participants);
+  const completedPlayerIds = useGroupPlayStore((s) => s.completedPlayerIds);
 
   const progressPercent =
     totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
@@ -178,6 +184,78 @@ export function GroupPlayTopBar({
             />
           </div>
         </div>
+
+        {/* Member roster */}
+        {participants && (
+          <div className="border-t border-border px-3 py-2 max-h-24 overflow-y-auto">
+            {participants.mode === "group_solo" ? (
+              <div className="flex flex-wrap gap-1.5">
+                {participants.members.map((m) => {
+                  const isCompleted = completedPlayerIds.includes(m.user_id);
+                  const isMe = m.user_id === playerId;
+                  const color = getAvatarColor(m.user_id);
+                  return (
+                    <Avatar
+                      key={m.user_id}
+                      size="sm"
+                      className={isMe ? "ring-2 ring-teal-500" : ""}
+                      style={{ backgroundColor: color }}
+                    >
+                      <AvatarFallback
+                        className="text-white text-[10px] font-bold"
+                        style={{ backgroundColor: color }}
+                      >
+                        {m.user_name[0]?.toUpperCase()}
+                      </AvatarFallback>
+                      {isCompleted && (
+                        <AvatarBadge className="bg-green-500">
+                          <Check className="h-2 w-2 text-white" />
+                        </AvatarBadge>
+                      )}
+                    </Avatar>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {participants.teams.map((team) => (
+                  <div key={team.subgroup_id}>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1">
+                      {team.subgroup_name}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {team.members.map((m) => {
+                        const isCompleted = completedPlayerIds.includes(m.user_id);
+                        const isMe = m.user_id === playerId;
+                        const color = getAvatarColor(m.user_id);
+                        return (
+                          <Avatar
+                            key={m.user_id}
+                            size="sm"
+                            className={isMe ? "ring-2 ring-teal-500" : ""}
+                            style={{ backgroundColor: color }}
+                          >
+                            <AvatarFallback
+                              className="text-white text-[10px] font-bold"
+                              style={{ backgroundColor: color }}
+                            >
+                              {m.user_name[0]?.toUpperCase()}
+                            </AvatarFallback>
+                            {isCompleted && (
+                              <AvatarBadge className="bg-green-500">
+                                <Check className="h-2 w-2 text-white" />
+                              </AvatarBadge>
+                            )}
+                          </Avatar>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">

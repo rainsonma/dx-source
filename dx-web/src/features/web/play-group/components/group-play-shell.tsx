@@ -83,6 +83,7 @@ export function GroupPlayShell({
   const setGroupWaiting = useGroupPlayStore((s) => s.setGroupWaiting);
   const setGroupResult = useGroupPlayStore((s) => s.setGroupResult);
   const sessionId = useGroupPlayStore((s) => s.sessionId);
+  const addCompletedPlayer = useGroupPlayStore((s) => s.addCompletedPlayer);
 
   // Score/combo are updated by shared game components via useGameStore
   const score = useGameStore((s) => s.score);
@@ -139,6 +140,12 @@ export function GroupPlayShell({
       router.push(
         `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${gameMode}${event.level_id ? `&level=${event.level_id}` : ""}`
       );
+    },
+    onPlayerComplete: (event) => {
+      const currentLevelId = useGroupPlayStore.getState().levelId;
+      if (event.game_level_id === currentLevelId) {
+        addCompletedPlayer(event.user_id);
+      }
     },
   });
 
@@ -238,6 +245,7 @@ export function GroupPlayShell({
     <div className="flex h-screen w-full flex-col bg-muted">
       <GroupPlayTopBar
         player={player}
+        playerId={player.id}
         levelName={levelName}
         levelTimeLimit={levelTimeLimit}
         onExit={() => showOverlay("exit")}

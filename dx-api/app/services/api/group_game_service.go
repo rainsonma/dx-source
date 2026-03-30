@@ -136,6 +136,31 @@ func ClearGroupGame(userID, groupID string) error {
 	return nil
 }
 
+// ParticipantMember represents a connected member in the game.
+type ParticipantMember struct {
+	UserID   string `json:"user_id"`
+	UserName string `json:"user_name"`
+}
+
+// SoloParticipants is the participants payload for group_solo mode.
+type SoloParticipants struct {
+	Mode    string              `json:"mode"`
+	Members []ParticipantMember `json:"members"`
+}
+
+// TeamParticipantGroup is one team in the participants payload for group_team mode.
+type TeamParticipantGroup struct {
+	SubgroupID   string              `json:"subgroup_id"`
+	SubgroupName string              `json:"subgroup_name"`
+	Members      []ParticipantMember `json:"members"`
+}
+
+// TeamParticipants is the participants payload for group_team mode.
+type TeamParticipants struct {
+	Mode  string                 `json:"mode"`
+	Teams []TeamParticipantGroup `json:"teams"`
+}
+
 // GroupGameStartEvent is the SSE payload for group_game_start.
 type GroupGameStartEvent struct {
 	GameGroupID    string  `json:"game_group_id"`
@@ -147,6 +172,7 @@ type GroupGameStartEvent struct {
 	LevelTimeLimit int     `json:"level_time_limit"`
 	LevelID        *string `json:"level_id"`
 	LevelName      string  `json:"level_name"`
+	Participants   any     `json:"participants"`
 }
 
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
@@ -232,6 +258,77 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		return fmt.Errorf("failed to set is_playing: %w", err)
 	}
 
+	// Build participants roster from connected users
+	connectedIDs := helpers.GroupSSEHub.ConnectedUserIDs(groupID)
+
+	userMap := make(map[string]string, len(connectedIDs))
+	if len(connectedIDs) > 0 {
+		var users []models.User
+		facades.Orm().Query().Where("id IN ?", connectedIDs).Get(&users)
+		for _, u := range users {
+			name := u.Username
+			if u.Nickname != nil && *u.Nickname != "" {
+				name = *u.Nickname
+			}
+			userMap[u.ID] = name
+		}
+	}
+
+	var participants any
+	if *group.GameMode == consts.GameModeTeam {
+		var subgroups []models.GameSubgroup
+		facades.Orm().Query().Where("game_group_id", groupID).Order("\"order\" ASC").Get(&subgroups)
+
+		type sgMemberRow struct {
+			GameSubgroupID string `gorm:"column:game_subgroup_id"`
+			UserID         string `gorm:"column:user_id"`
+		}
+		sgIDs := make([]string, len(subgroups))
+		for i, sg := range subgroups {
+			sgIDs[i] = sg.ID
+		}
+
+		var sgMembers []sgMemberRow
+		if len(sgIDs) > 0 {
+			facades.Orm().Query().Raw(
+				"SELECT game_subgroup_id, user_id FROM game_subgroup_members WHERE game_subgroup_id IN ? ORDER BY game_subgroup_id",
+				sgIDs).Scan(&sgMembers)
+		}
+
+		// Group members by subgroup, only include connected users
+		sgMemberMap := make(map[string][]ParticipantMember)
+		for _, m := range sgMembers {
+			if name, ok := userMap[m.UserID]; ok {
+				sgMemberMap[m.GameSubgroupID] = append(sgMemberMap[m.GameSubgroupID], ParticipantMember{
+					UserID:   m.UserID,
+					UserName: name,
+				})
+			}
+		}
+
+		teams := make([]TeamParticipantGroup, 0, len(subgroups))
+		for _, sg := range subgroups {
+			members := sgMemberMap[sg.ID]
+			if members == nil {
+				members = []ParticipantMember{}
+			}
+			teams = append(teams, TeamParticipantGroup{
+				SubgroupID:   sg.ID,
+				SubgroupName: sg.Name,
+				Members:      members,
+			})
+		}
+		participants = TeamParticipants{Mode: consts.GameModeTeam, Teams: teams}
+	} else {
+		members := make([]ParticipantMember, 0, len(connectedIDs))
+		for _, uid := range connectedIDs {
+			if name, ok := userMap[uid]; ok {
+				members = append(members, ParticipantMember{UserID: uid, UserName: name})
+			}
+		}
+		participants = SoloParticipants{Mode: consts.GameModeSolo, Members: members}
+	}
+
 	// Broadcast SSE event
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_start", GroupGameStartEvent{
 		GameGroupID:    groupID,
@@ -243,6 +340,7 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		LevelTimeLimit: group.LevelTimeLimit,
 		LevelID:        levelID,
 		LevelName:      startLevel.Name,
+		Participants:   participants,
 	})
 
 	return nil
