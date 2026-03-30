@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { getAccessToken } from "@/lib/token";
+import { useRef, useMemo } from "react";
+import { useGroupSSE } from "@/hooks/use-group-sse";
 import type {
   GroupGameStartEvent,
   GroupLevelCompleteEvent,
@@ -24,42 +24,18 @@ export function useGroupEvents(
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
-  useEffect(() => {
-    if (!groupId) return;
+  const listeners = useMemo(() => ({
+    group_game_start: (data: unknown) =>
+      handlersRef.current.onGameStart?.(data as GroupGameStartEvent),
+    group_level_complete: (data: unknown) =>
+      handlersRef.current.onLevelComplete?.(data as GroupLevelCompleteEvent),
+    group_game_force_end: (data: unknown) =>
+      handlersRef.current.onForceEnd?.(data as GroupForceEndEvent),
+    room_member_joined: (data: unknown) =>
+      handlersRef.current.onRoomMemberJoined?.(data as RoomMemberEvent),
+    room_member_left: (data: unknown) =>
+      handlersRef.current.onRoomMemberLeft?.(data as RoomMemberEvent),
+  }), []);
 
-    const token = getAccessToken();
-    if (!token) return;
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${apiUrl}/api/groups/${groupId}/events?token=${encodeURIComponent(token)}`;
-
-    const eventSource = new EventSource(url);
-
-    eventSource.addEventListener("group_game_start", (e) => {
-      const data: GroupGameStartEvent = JSON.parse(e.data);
-      handlersRef.current.onGameStart?.(data);
-    });
-
-    eventSource.addEventListener("group_level_complete", (e) => {
-      const data: GroupLevelCompleteEvent = JSON.parse(e.data);
-      handlersRef.current.onLevelComplete?.(data);
-    });
-
-    eventSource.addEventListener("group_game_force_end", (e) => {
-      const data: GroupForceEndEvent = JSON.parse(e.data);
-      handlersRef.current.onForceEnd?.(data);
-    });
-
-    eventSource.addEventListener("room_member_joined", (e) => {
-      const data: RoomMemberEvent = JSON.parse(e.data);
-      handlersRef.current.onRoomMemberJoined?.(data);
-    });
-
-    eventSource.addEventListener("room_member_left", (e) => {
-      const data: RoomMemberEvent = JSON.parse(e.data);
-      handlersRef.current.onRoomMemberLeft?.(data);
-    });
-
-    return () => eventSource.close();
-  }, [groupId]);
+  useGroupSSE(groupId, listeners);
 }
