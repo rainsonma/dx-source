@@ -17,7 +17,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
-import { StatRow } from "@/features/web/play-core/components/stat-row";
+import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
 
 const actionButtons = [
   { icon: Settings, label: "设置", action: "settings" },
@@ -62,11 +62,35 @@ export function GroupPlayTopBar({
 
   const score = useGroupPlayStore((s) => s.score);
   const comboStreak = useGroupPlayStore((s) => s.combo.streak);
-  const skipCount = useGroupPlayStore((s) => s.skipCount);
   const currentIndex = useGroupPlayStore((s) => s.currentIndex);
   const totalItems = useGroupPlayStore((s) => s.contentItems?.length ?? 0);
   const participants = useGroupPlayStore((s) => s.participants);
   const completedPlayerIds = useGroupPlayStore((s) => s.completedPlayerIds);
+
+  const lastPlayerAction = useGroupPlayStore((s) => s.lastPlayerAction);
+
+  const [skipFlash, setSkipFlash] = useState({ key: 0, name: null as string | null });
+  const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
+  const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
+
+  useEffect(() => {
+    if (!lastPlayerAction) return;
+    switch (lastPlayerAction.action) {
+      case "skip":
+        setSkipFlash((prev) => ({ key: prev.key + 1, name: lastPlayerAction.user_name }));
+        break;
+      case "score":
+        setScoreFlash((prev) => ({ key: prev.key + 1, name: lastPlayerAction.user_name }));
+        break;
+      case "combo":
+        setComboFlash((prev) => ({
+          key: prev.key + 1,
+          name: lastPlayerAction.user_name,
+          text: `${lastPlayerAction.user_name} ×${lastPlayerAction.combo_streak}`,
+        }));
+        break;
+    }
+  }, [lastPlayerAction]);
 
   const progressPercent =
     totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
@@ -259,28 +283,28 @@ export function GroupPlayTopBar({
 
         {/* Stats */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">
-          <StatRow
+          <GroupStatRow
             icon={SkipForward}
             iconClass="text-muted-foreground"
             label="跳过"
-            value={skipCount}
-            valueClass="text-foreground"
+            displayText={skipFlash.name}
+            flashKey={skipFlash.key}
             flashColorClass="bg-pink-400"
           />
-          <StatRow
+          <GroupStatRow
             icon={Trophy}
             iconClass="text-teal-600"
             label="得分"
-            value={score}
-            valueClass="text-foreground"
+            displayText={scoreFlash.name}
+            flashKey={scoreFlash.key}
             flashColorClass="bg-teal-400"
           />
-          <StatRow
+          <GroupStatRow
             icon={Flame}
             iconClass="text-orange-500"
             label="连击"
-            value={comboStreak >= 3 ? comboStreak : 0}
-            valueClass="text-orange-500"
+            displayText={comboFlash.text}
+            flashKey={comboFlash.key}
             flashColorClass="bg-orange-400"
           />
         </div>
