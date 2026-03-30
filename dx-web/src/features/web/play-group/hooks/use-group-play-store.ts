@@ -183,6 +183,7 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
         wrongCount: 0,
         skipCount: 0,
         playTime: 0,
+        lastPlayerAction: null,
       }),
 
     exitGame: () => set({ ...initialState }),

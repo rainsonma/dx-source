@@ -552,7 +552,8 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 		return fmt.Errorf("failed to commit answer transaction: %w", err)
 	}
 
-	// Broadcast player action to group (fire-and-forget)
+	// Broadcast player action to group (fire-and-forget).
+	// ComboScore doubles as combo_streak: bonus values (3,5,10) equal streak thresholds.
 	if input.IsCorrect {
 		go broadcastPlayerAction(userID, input.GameSessionTotalID, "score", 0)
 		if input.ComboScore > 0 {
