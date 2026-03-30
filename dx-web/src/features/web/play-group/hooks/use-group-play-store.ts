@@ -5,7 +5,7 @@ import {
   type ComboState,
 } from "@/features/web/play-core/helpers/scoring";
 import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
-import type { GroupLevelCompleteEvent, Participants } from "../types/group-play";
+import type { GroupLevelCompleteEvent, Participants, GroupPlayerActionEvent } from "../types/group-play";
 
 export type GamePhase = "loading" | "playing" | "result";
 export type GameOverlay = "paused" | "settings" | "reset" | "report" | "exit" | null;
@@ -37,6 +37,7 @@ interface GroupPlayState {
   groupResult: GroupLevelCompleteEvent | null;
   participants: Participants | null;
   completedPlayerIds: string[];
+  lastPlayerAction: GroupPlayerActionEvent | null;
 }
 
 interface GroupPlayActions {
@@ -75,6 +76,7 @@ interface GroupPlayActions {
   clearGroupPhase: () => void;
   setParticipants: (data: Participants) => void;
   addCompletedPlayer: (userId: string) => void;
+  setLastPlayerAction: (action: GroupPlayerActionEvent) => void;
 }
 
 const initialState: GroupPlayState = {
@@ -102,6 +104,7 @@ const initialState: GroupPlayState = {
   groupResult: null,
   participants: null,
   completedPlayerIds: [],
+  lastPlayerAction: null,
 };
 
 export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
@@ -140,6 +143,7 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
         groupResult: null,
         participants: data.participants ?? null,
         completedPlayerIds: [],
+        lastPlayerAction: null,
       }),
 
     nextItem: () => set((s) => ({ currentIndex: s.currentIndex + 1 })),
@@ -193,5 +197,7 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
           ? s.completedPlayerIds
           : [...s.completedPlayerIds, userId],
       })),
+
+    setLastPlayerAction: (action) => set({ lastPlayerAction: action }),
   })
 );

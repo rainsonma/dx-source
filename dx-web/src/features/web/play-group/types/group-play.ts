@@ -59,3 +59,10 @@ export type GroupPlayerCompleteEvent = {
   user_name: string;
   game_level_id: string;
 };
+
+export type GroupPlayerActionEvent = {
+  user_id: string;
+  user_name: string;
+  action: "score" | "skip" | "combo";
+  combo_streak?: number;
+};
