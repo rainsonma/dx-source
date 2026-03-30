@@ -124,6 +124,17 @@ Displays:
   - On join/leave events, frontend re-fetches the member list to update avatars
   - The `GET /api/groups/{id}/room-members` endpoint reads connected user IDs from the SSE hub and returns their names
 
+### SSE Auth Resilience
+
+Both SSE hooks (`useGroupEvents` for the game room, `useGroupPlayEvents` for gameplay) use a shared `useGroupSSE` hook that handles token expiration and reconnection:
+
+- **Token refresh on auth failure**: When EventSource gets a 401 (expired JWT), the hook closes the connection, calls `refreshAccessToken()` to obtain a fresh access token via the `dx_refresh` cookie, then creates a new EventSource with the fresh token
+- **Missing token on page refresh**: The access token is in-memory only. On page refresh, the hook detects a null token, calls `refreshAccessToken()` first, then connects
+- **Exponential backoff**: Reconnection delays follow `min(1000 * 2^(n-1), 30000)` ms — 1s, 2s, 4s, 8s, 16s, 30s — to avoid hammering the server
+- **Max retries**: After 10 consecutive failures, the hook stops retrying
+- **Backoff reset**: On successful connection (`onopen`), the retry counter resets to 0
+- **Backend safety**: `SSEHub.Register()` replaces existing connections for the same user (closes old, registers new), so reconnection never creates duplicate connections
+
 ### Entry Point
 
 - Members enter the room via the "进入教室" button on the group detail page
