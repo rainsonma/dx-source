@@ -7,6 +7,7 @@ import type {
   GroupForceEndEvent,
   GroupNextLevelEvent,
   GroupPlayerCompleteEvent,
+  GroupPlayerActionEvent,
 } from "../types/group-play";
 
 type GroupPlayEventHandlers = {
@@ -14,6 +15,7 @@ type GroupPlayEventHandlers = {
   onForceEnd?: (event: GroupForceEndEvent) => void;
   onNextLevel?: (event: GroupNextLevelEvent) => void;
   onPlayerComplete?: (event: GroupPlayerCompleteEvent) => void;
+  onPlayerAction?: (event: GroupPlayerActionEvent) => void;
 };
 
 export function useGroupPlayEvents(
@@ -32,6 +34,8 @@ export function useGroupPlayEvents(
       handlersRef.current.onNextLevel?.(data as GroupNextLevelEvent),
     group_player_complete: (data: unknown) =>
       handlersRef.current.onPlayerComplete?.(data as GroupPlayerCompleteEvent),
+    group_player_action: (data: unknown) =>
+      handlersRef.current.onPlayerAction?.(data as GroupPlayerActionEvent),
   }), []);
 
   useGroupSSE(groupId, listeners);

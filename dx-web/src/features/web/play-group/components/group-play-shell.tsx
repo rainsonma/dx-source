@@ -84,6 +84,7 @@ export function GroupPlayShell({
   const setGroupResult = useGroupPlayStore((s) => s.setGroupResult);
   const sessionId = useGroupPlayStore((s) => s.sessionId);
   const addCompletedPlayer = useGroupPlayStore((s) => s.addCompletedPlayer);
+  const setLastPlayerAction = useGroupPlayStore((s) => s.setLastPlayerAction);
 
   // Score/combo are updated by shared game components via useGameStore
   const score = useGameStore((s) => s.score);
@@ -161,6 +162,9 @@ export function GroupPlayShell({
       if (event.game_level_id === currentLevelId) {
         addCompletedPlayer(event.user_id);
       }
+    },
+    onPlayerAction: (event) => {
+      setLastPlayerAction(event);
     },
   });
 
