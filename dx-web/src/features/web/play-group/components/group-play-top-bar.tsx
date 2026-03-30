@@ -198,7 +198,7 @@ export function GroupPlayTopBar({
                     <Avatar
                       key={m.user_id}
                       size="sm"
-                      className={isMe ? "ring-2 ring-teal-500" : ""}
+                      className="overflow-visible"
                       style={{ backgroundColor: color }}
                     >
                       <AvatarFallback
@@ -208,7 +208,7 @@ export function GroupPlayTopBar({
                         {m.user_name[0]?.toUpperCase()}
                       </AvatarFallback>
                       {isCompleted && (
-                        <AvatarBadge className="bg-green-500">
+                        <AvatarBadge className="bg-green-500 ring-0">
                           <Check className="h-2 w-2 text-white" />
                         </AvatarBadge>
                       )}

@@ -127,11 +127,9 @@ export function GroupPlayLoadingScreen({
         // Read participants roster from sessionStorage (stored by game room on game start)
         let participants: Participants | null = null;
         try {
-          const key = `group-participants:${gameGroupId}`;
-          const raw = sessionStorage.getItem(key);
+          const raw = sessionStorage.getItem(`group-participants:${gameGroupId}`);
           if (raw) {
             participants = JSON.parse(raw) as Participants;
-            sessionStorage.removeItem(key);
           }
         } catch {
           // Proceed without participants if sessionStorage read fails

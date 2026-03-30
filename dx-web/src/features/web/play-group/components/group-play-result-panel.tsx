@@ -28,7 +28,7 @@ const PODIUM_STYLES = [
     // 1st place (center)
     colWidth: "w-[84px]",
     avatarSize: "h-[42px] w-[42px]",
-    avatarBorder: "border-2 border-[#2dd4bf]",
+    avatarBorder: "",
     nameColor: "text-[#2dd4bf]",
     nameSize: "text-xs",
     barHeight: "h-[90px]",
@@ -40,7 +40,7 @@ const PODIUM_STYLES = [
     // 2nd place (left)
     colWidth: "w-[76px]",
     avatarSize: "h-[34px] w-[34px]",
-    avatarBorder: "border-2 border-[#14b8a6]",
+    avatarBorder: "",
     nameColor: "text-[#5eead4]",
     nameSize: "text-[10px]",
     barHeight: "h-[64px]",
@@ -52,7 +52,7 @@ const PODIUM_STYLES = [
     // 3rd place (right)
     colWidth: "w-[76px]",
     avatarSize: "h-[34px] w-[34px]",
-    avatarBorder: "border-2 border-[#0f766e]",
+    avatarBorder: "",
     nameColor: "text-[#99f6e4]",
     nameSize: "text-[10px]",
     barHeight: "h-[44px]",
