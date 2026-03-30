@@ -101,12 +101,17 @@ export function GroupPlayResultPanel({
 
   async function handleNextLevel() {
     setLoadingNext(true);
-    const res = await groupApi.nextLevel(groupId, currentLevelId);
-    if (res.code !== 0) {
-      toast.error(res.message);
+    try {
+      const res = await groupApi.nextLevel(groupId, currentLevelId);
+      if (res.code !== 0) {
+        toast.error(res.message || "进入下一关失败");
+        setLoadingNext(false);
+      }
+      // Don't reset loading — SSE will navigate everyone away
+    } catch {
+      toast.error("进入下一关失败");
       setLoadingNext(false);
     }
-    // Don't reset loading — SSE will navigate everyone away
   }
 
   const isSolo = result.mode === "group_solo";

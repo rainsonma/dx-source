@@ -259,7 +259,7 @@ When all content items are answered/skipped, or when the timer expires:
    - Calculates accuracy (`correct_count / total_items`)
    - Awards EXP if accuracy ≥ 60% threshold (+10 EXP)
    - Updates session totals, level stats, game stats, user EXP
-3. Backend calls `CheckAndDetermineWinner(groupID, levelID)`
+3. Backend calls `CheckAndDetermineWinner(groupID, levelID)` — errors are logged but do not fail the completion response
 
 ### Winner Determination
 
@@ -268,12 +268,12 @@ When all content items are answered/skipped, or when the timer expires:
 **Completion check**:
 1. Lock active sessions for this group (`game_session_totals WHERE ended_at IS NULL`)
 2. Count only **connected** participants (cross-referenced with SSE hub) — disconnected players are ignored
-3. Count completed level sessions **scoped to the current round's session IDs** — prevents stale completions from previous rounds being counted
+3. Count completed level sessions from connected players, scoped to active sessions (`gst.ended_at IS NULL`) — prevents stale completions from previous rounds being counted
 4. If `completed < connected participants` → return nil (still waiting)
-5. If all connected players done → determine winner (also scoped to current round's sessions)
+5. If all connected players done → determine winner (scoped to current round's active session IDs)
 6. On SSE disconnect, `RecheckGroupWinners` re-runs this check for all in-progress levels (scoped to active sessions)
 
-**Session scoping**: All winner queries filter by `game_session_total_id IN (current round's session IDs)`. This prevents old completed sessions from previous rounds polluting the completion count or winner scores when replaying the same game. Force-end collects session IDs before ending them so the scope is preserved.
+**Session scoping**: The completion count uses `gst.ended_at IS NULL` (via JOIN) to scope to the current round's active sessions. Winner determination queries filter by `game_session_total_id IN (active session IDs)`. This prevents old completed sessions from previous rounds polluting the completion count or winner scores when replaying the same game. Force-end collects session IDs before ending them so the scope is preserved.
 
 **Deduplication**: All winner queries use `DISTINCT ON (user_id)` to handle players with multiple completed level sessions (e.g., from restarts). Only the highest score per user is kept.
 
@@ -341,8 +341,10 @@ When winner is determined, backend broadcasts `group_level_complete` to all grou
 ### Auto-End Round
 
 After winner broadcast, if this was the last level in the game:
-- Backend checks `played_levels_count >= total_levels`
+- Backend counts active levels for the game; only proceeds if the count query succeeds and returns > 0
+- Checks `played_levels_count + 1 >= total_levels` (uses pre-increment value + 1)
 - If yes: sets `game_group.is_playing = false`
+- If the count query fails, `is_playing` is left unchanged to avoid prematurely ending the round
 
 ## Client State During Game
 

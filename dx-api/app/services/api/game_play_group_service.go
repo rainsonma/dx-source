@@ -365,14 +365,17 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 	// 6. Check for group winner determination and broadcast SSE
 	if session.GameGroupID != nil {
 		result, winErr := CheckAndDetermineWinner(*session.GameGroupID, gameLevelID)
+		if winErr != nil {
+			fmt.Printf("[GROUP] Winner check error for group=%s level=%s: %v\n", *session.GameGroupID, gameLevelID, winErr)
+		}
 		if winErr == nil && result != nil {
 			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_level_complete", result)
 
-			// If this was the last level, set is_playing = false on the group
-			var totalLevels int64
-			totalLevels, _ = facades.Orm().Query().Model(&models.GameLevel{}).
+			// If this was the last level, set is_playing = false on the group.
+			// Only auto-end if count query succeeds — avoid false positive on error.
+			totalLevels, countErr := facades.Orm().Query().Model(&models.GameLevel{}).
 				Where("game_id", session.GameID).Where("is_active", true).Count()
-			if int64(session.PlayedLevelsCount+1) >= totalLevels {
+			if countErr == nil && totalLevels > 0 && int64(session.PlayedLevelsCount+1) >= totalLevels {
 				facades.Orm().Query().Model(&models.GameGroup{}).
 					Where("id", *session.GameGroupID).Update("is_playing", false)
 			}
