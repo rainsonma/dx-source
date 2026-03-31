@@ -21,10 +21,12 @@ func (r *M20260322000033CreatePostCommentsTable) Up() error {
 			table.Uuid("user_id")
 			table.Text("content").Default("")
 			table.Integer("like_count").Default(0)
+			table.Uuid("parent_id").Nullable()
 			table.TimestampsTz()
 			table.Index("post_id")
 			table.Index("user_id")
 			table.Index("created_at")
+			table.Index("parent_id")
 		})
 	}
 	return nil

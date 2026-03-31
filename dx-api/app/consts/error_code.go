@@ -41,6 +41,8 @@ const (
 	CodeImageNotFound       = 40406
 	CodeGroupNotFound       = 40407
 	CodeApplicationNotFound = 40408
+	CodePostNotFound        = 40409
+	CodeCommentNotFound     = 40410
 
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900
