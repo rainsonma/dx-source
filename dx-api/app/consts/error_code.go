@@ -6,17 +6,17 @@ const (
 	CodeSuccess = 0
 
 	// 400xx: Validation
-	CodeValidationError   = 40000
-	CodeInvalidEmail      = 40001
-	CodeInvalidPassword   = 40002
-	CodeDuplicateEmail    = 40003
-	CodeDuplicateUsername = 40004
-	CodeInvalidCode       = 40005
-	CodeCodeExpired       = 40006
-	CodeInsufficientBeans = 40007
-	CodeNicknameTaken     = 40008
-	CodeAlreadyMember     = 40009
-	CodeAlreadyApplied    = 40010
+	CodeValidationError    = 40000
+	CodeInvalidEmail       = 40001
+	CodeInvalidPassword    = 40002
+	CodeDuplicateEmail     = 40003
+	CodeDuplicateUsername  = 40004
+	CodeInvalidCode        = 40005
+	CodeCodeExpired        = 40006
+	CodeInsufficientBeans  = 40007
+	CodeNicknameTaken      = 40008
+	CodeAlreadyMember      = 40009
+	CodeAlreadyApplied     = 40010
 	CodeGroupMembersFull   = 40011
 	CodeGroupSubgroupsFull = 40012
 
@@ -32,12 +32,12 @@ const (
 	CodeGroupForbidden = 40301
 
 	// 404xx: Not Found
-	CodeNotFound        = 40400
-	CodeUserNotFound    = 40401
-	CodeGameNotFound    = 40402
-	CodeSessionNotFound = 40403
-	CodeLevelNotFound   = 40404
-	CodeContentNotFound = 40405
+	CodeNotFound            = 40400
+	CodeUserNotFound        = 40401
+	CodeGameNotFound        = 40402
+	CodeSessionNotFound     = 40403
+	CodeLevelNotFound       = 40404
+	CodeContentNotFound     = 40405
 	CodeImageNotFound       = 40406
 	CodeGroupNotFound       = 40407
 	CodeApplicationNotFound = 40408
