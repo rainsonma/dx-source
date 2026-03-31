@@ -262,6 +262,28 @@ func Api() {
 				gp.Put("/{id}/content-item", playGroupController.UpdateContentItem)
 			})
 
+			// Community
+			postController := apicontrollers.NewPostController()
+			postCommentController := apicontrollers.NewPostCommentController()
+			postInteractController := apicontrollers.NewPostInteractController()
+			followController := apicontrollers.NewFollowController()
+
+			protected.Post("/posts", postController.Create)
+			protected.Get("/posts", postController.List)
+			protected.Get("/posts/{id}", postController.Show)
+			protected.Put("/posts/{id}", postController.Update)
+			protected.Delete("/posts/{id}", postController.Delete)
+
+			protected.Post("/posts/{id}/comments", postCommentController.Create)
+			protected.Get("/posts/{id}/comments", postCommentController.List)
+			protected.Put("/posts/{id}/comments/{commentId}", postCommentController.Update)
+			protected.Delete("/posts/{id}/comments/{commentId}", postCommentController.Delete)
+
+			protected.Post("/posts/{id}/like", postInteractController.ToggleLike)
+			protected.Post("/posts/{id}/bookmark", postInteractController.ToggleBookmark)
+
+			protected.Post("/users/{id}/follow", followController.ToggleFollow)
+
 			// Group routes
 			groupController := apicontrollers.NewGroupController()
 			groupMemberController := apicontrollers.NewGroupMemberController()
