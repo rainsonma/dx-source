@@ -269,7 +269,7 @@ func Api() {
 				groups.Post("/", groupController.Create)
 				groups.Get("/{id}", groupController.Detail)
 				groups.Put("/{id}", groupController.Update)
-				groups.Delete("/{id}", groupController.Delete)
+				groups.Post("/{id}/dismiss", groupController.Dismiss)
 
 				// Applications
 				groups.Post("/{id}/apply", groupController.Apply)

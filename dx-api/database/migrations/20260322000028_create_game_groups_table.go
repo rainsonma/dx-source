@@ -25,7 +25,7 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.Uuid("start_game_level_id").Nullable()
 			table.Text("invite_code").Default("")
 			table.Uuid("invite_qrcode_id").Nullable()
-			table.Boolean("is_active").Default(true)
+			table.TimestampTz("dismissed_at").Nullable()
 			table.Integer("member_count").Default(0)
 			table.Text("game_mode").Nullable()
 			table.Integer("level_time_limit").Default(10)
@@ -35,7 +35,7 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.Index("owner_id")
 			table.Index("cover_id")
 			table.Index("current_game_id")
-			table.Index("is_active")
+			table.Index("dismissed_at")
 			table.Index("created_at")
 		})
 	}

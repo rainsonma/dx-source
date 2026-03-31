@@ -61,7 +61,7 @@ func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, 
 	}
 
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, "", false, ErrGroupNotFound
 	}
 
@@ -115,7 +115,7 @@ func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, 
 // KickMember removes a member from the group (owner only).
 func KickMember(userID, groupID, targetUserID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -127,7 +127,7 @@ func KickMember(userID, groupID, targetUserID string) error {
 // LeaveGroup removes the current user from the group.
 func LeaveGroup(userID, groupID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	return removeMemberFromGroup(groupID, userID)
@@ -136,7 +136,7 @@ func LeaveGroup(userID, groupID string) error {
 // JoinByCode submits a join application for a group via invite code, returning the group ID.
 func JoinByCode(userID, code string) (string, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("invite_code", code).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("invite_code", code).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return "", ErrGroupNotFound
 	}
 

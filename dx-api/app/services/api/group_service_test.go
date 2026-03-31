@@ -22,6 +22,6 @@ func TestUpdateGroupFunctionExists(t *testing.T) {
 	assert.NotNil(t, UpdateGroup)
 }
 
-func TestDeleteGroupFunctionExists(t *testing.T) {
-	assert.NotNil(t, DeleteGroup)
+func TestDismissGroupFunctionExists(t *testing.T) {
+	assert.NotNil(t, DismissGroup)
 }

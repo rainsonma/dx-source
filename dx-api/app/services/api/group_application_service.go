@@ -22,7 +22,7 @@ type ApplicationItem struct {
 // ApplyToGroup creates a pending application for a user to join a group.
 func ApplyToGroup(userID, groupID string) (string, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return "", ErrGroupNotFound
 	}
 
@@ -83,7 +83,7 @@ type applicationRow struct {
 // ListApplications returns a paginated list of pending applications for a group.
 func ListApplications(userID, groupID, cursor string, limit int) ([]ApplicationItem, string, bool, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, "", false, ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -141,7 +141,7 @@ func ListApplications(userID, groupID, cursor string, limit int) ([]ApplicationI
 // HandleApplication accepts or rejects a pending application.
 func HandleApplication(userID, groupID, appID, action string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {

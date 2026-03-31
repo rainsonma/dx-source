@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"dx-api/app/helpers"
 	"dx-api/app/models"
@@ -41,7 +42,6 @@ type GroupDetail struct {
 	OwnerName       string  `json:"owner_name"`
 	MemberCount     int     `json:"member_count"`
 	InviteCode      string  `json:"invite_code"`
-	IsActive        bool    `json:"is_active"`
 	IsOwner         bool    `json:"is_owner"`
 	CreatedAt       string  `json:"created_at"`
 	CurrentGameID   *string `json:"current_game_id"`
@@ -65,7 +65,6 @@ func CreateGroup(userID, name string, description *string) (*CreateGroupResult, 
 		Description:    description,
 		OwnerID:        userID,
 		InviteCode:     inviteCode,
-		IsActive:       true,
 		MemberCount:    1,
 		LevelTimeLimit: 10,
 	}
@@ -134,7 +133,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			       TO_CHAR(g.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
 			FROM game_groups g
 			JOIN users u ON u.id = g.owner_id
-			WHERE g.owner_id = ? AND g.is_active = true`
+			WHERE g.owner_id = ? AND g.dismissed_at IS NULL`
 		args = []any{userID}
 	case "joined":
 		// Groups user is a member of but did not create
@@ -147,7 +146,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			FROM game_groups g
 			JOIN game_group_members m ON m.game_group_id = g.id
 			JOIN users u ON u.id = g.owner_id
-			WHERE m.user_id = ? AND g.owner_id != ? AND g.is_active = true`
+			WHERE m.user_id = ? AND g.owner_id != ? AND g.dismissed_at IS NULL`
 		args = []any{userID, userID}
 	default:
 		// All active groups — LEFT JOIN members + pending applications
@@ -162,7 +161,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 			JOIN users u ON u.id = g.owner_id
 			LEFT JOIN game_group_members m ON m.game_group_id = g.id AND m.user_id = ?
 			LEFT JOIN game_group_applications a ON a.game_group_id = g.id AND a.user_id = ? AND a.status = 'pending'
-			WHERE g.is_active = true`
+			WHERE g.dismissed_at IS NULL`
 		args = []any{userID, userID}
 	}
 
@@ -212,7 +211,7 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 // GetGroupDetail returns the full detail of a group for a member.
 func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
 	}
 
@@ -260,7 +259,6 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		OwnerName:   ownerName,
 		MemberCount: group.MemberCount,
 		InviteCode:  group.InviteCode,
-		IsActive:        group.IsActive,
 		IsOwner:         group.OwnerID == userID,
 		CreatedAt:       group.CreatedAt.ToDateTimeString(),
 		CurrentGameID:   group.CurrentGameID,
@@ -286,7 +284,7 @@ type GroupInviteInfo struct {
 // GetGroupByInviteCode returns public group info for a given invite code (no auth required).
 func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("invite_code", code).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("invite_code", code).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
 	}
 	var owner models.User
@@ -307,7 +305,7 @@ func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 // UpdateGroup updates the name, description, and optionally the answer time limit of a group.
 func UpdateGroup(userID, groupID, name string, description *string, levelTimeLimit *int) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -328,43 +326,34 @@ func UpdateGroup(userID, groupID, name string, description *string, levelTimeLim
 	return nil
 }
 
-// DeleteGroup soft-deletes a group by removing all related records and the group itself.
-func DeleteGroup(userID, groupID string) error {
+// DismissGroup soft-dismisses a group by setting dismissed_at.
+// If a game is in progress, it is force-ended first.
+func DismissGroup(userID, groupID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
 	}
+
+	// Force-end any active game before dismissing
 	if group.IsPlaying {
-		return ErrGroupIsPlaying
+		if _, err := ForceEndGroupGame(userID, groupID); err != nil {
+			return fmt.Errorf("failed to force-end game: %w", err)
+		}
 	}
 
-	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Delete subgroup members for all subgroups in this group
-		if _, err := tx.Exec(
-			"DELETE FROM game_subgroup_members WHERE game_subgroup_id IN (SELECT id FROM game_subgroups WHERE game_group_id = ?)",
-			groupID,
-		); err != nil {
-			return fmt.Errorf("failed to delete subgroup members: %w", err)
-		}
-		// Delete subgroups
-		if _, err := tx.Exec("DELETE FROM game_subgroups WHERE game_group_id = ?", groupID); err != nil {
-			return fmt.Errorf("failed to delete subgroups: %w", err)
-		}
-		// Delete group members
-		if _, err := tx.Where("game_group_id", groupID).Delete(&models.GameGroupMember{}); err != nil {
-			return fmt.Errorf("failed to delete group members: %w", err)
-		}
-		// Delete applications
-		if _, err := tx.Where("game_group_id", groupID).Delete(&models.GameGroupApplication{}); err != nil {
-			return fmt.Errorf("failed to delete group applications: %w", err)
-		}
-		// Delete the group itself
-		if _, err := tx.Where("id", groupID).Delete(&models.GameGroup{}); err != nil {
-			return fmt.Errorf("failed to delete group: %w", err)
-		}
-		return nil
+	// Set dismissed_at
+	now := time.Now()
+	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("dismissed_at", now); err != nil {
+		return fmt.Errorf("failed to dismiss group: %w", err)
+	}
+
+	// Broadcast dismiss event to all connected members
+	helpers.GroupSSEHub.Broadcast(groupID, "group_dismissed", map[string]string{
+		"group_id": groupID,
 	})
+
+	return nil
 }

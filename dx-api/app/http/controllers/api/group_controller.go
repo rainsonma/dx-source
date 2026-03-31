@@ -102,8 +102,8 @@ func (c *GroupController) Update(ctx contractshttp.Context) contractshttp.Respon
 	return helpers.Success(ctx, nil)
 }
 
-// Delete deletes a group.
-func (c *GroupController) Delete(ctx contractshttp.Context) contractshttp.Response {
+// Dismiss soft-dismisses a group by setting dismissed_at.
+func (c *GroupController) Dismiss(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
@@ -114,7 +114,7 @@ func (c *GroupController) Delete(ctx contractshttp.Context) contractshttp.Respon
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "group id is required")
 	}
 
-	if err := services.DeleteGroup(userID, id); err != nil {
+	if err := services.DismissGroup(userID, id); err != nil {
 		return mapGroupError(ctx, err)
 	}
 

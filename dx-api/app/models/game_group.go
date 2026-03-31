@@ -1,6 +1,10 @@
 package models
 
-import "github.com/goravel/framework/database/orm"
+import (
+	"time"
+
+	"github.com/goravel/framework/database/orm"
+)
 
 type GameGroup struct {
 	orm.Timestamps
@@ -13,7 +17,7 @@ type GameGroup struct {
 	StartGameLevelID *string `gorm:"column:start_game_level_id" json:"start_game_level_id"`
 	InviteCode       string  `gorm:"column:invite_code" json:"invite_code"`
 	InviteQrcodeID   *string `gorm:"column:invite_qrcode_id" json:"invite_qrcode_id"`
-	IsActive      bool    `gorm:"column:is_active" json:"is_active"`
+	DismissedAt   *time.Time `gorm:"column:dismissed_at" json:"dismissed_at"`
 	MemberCount   int     `gorm:"column:member_count" json:"member_count"`
 	GameMode        *string `gorm:"column:game_mode" json:"game_mode"`
 	LevelTimeLimit  int     `gorm:"column:level_time_limit" json:"level_time_limit"`

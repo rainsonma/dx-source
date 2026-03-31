@@ -28,7 +28,7 @@ type SubgroupMemberItem struct {
 // VerifyGroupOwnership checks that userID is the owner of groupID.
 func VerifyGroupOwnership(userID, groupID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {

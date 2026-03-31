@@ -78,7 +78,7 @@ func SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error)
 // SetGroupGame sets the current game and game mode for a group.
 func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, startGameLevelID *string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -117,7 +117,7 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, 
 // ClearGroupGame clears the current game and game mode for a group.
 func ClearGroupGame(userID, groupID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -178,7 +178,7 @@ type GroupGameStartEvent struct {
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
 func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -349,7 +349,7 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 // ForceEndGroupGame ends all active sessions and determines winners.
 func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
 	}
 	if group.OwnerID != userID {
@@ -436,7 +436,7 @@ type GroupNextLevelEvent struct {
 // NextGroupLevel finds the next level and broadcasts it to all group members.
 func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).Where("is_active", true).First(&group); err != nil || group.ID == "" {
+	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
 	if !group.IsPlaying {
