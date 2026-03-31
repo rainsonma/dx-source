@@ -101,6 +101,7 @@ export type GroupMember = {
   user_id: string;
   user_name: string;
   is_owner: boolean;
+  is_last_winner: boolean;
   created_at: string;
 };
 
@@ -110,6 +111,7 @@ export type Subgroup = {
   description: string | null;
   member_count: number;
   order: number;
+  is_last_winner: boolean;
 };
 
 export type SubgroupMember = {
