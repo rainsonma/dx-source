@@ -20,8 +20,8 @@ export const groupApi = {
   async update(id: string, data: { name: string; description?: string }) {
     return apiClient.put<null>(`/api/groups/${id}`, data);
   },
-  async delete(id: string) {
-    return apiClient.delete<null>(`/api/groups/${id}`);
+  async dismiss(id: string) {
+    return apiClient.post<null>(`/api/groups/${id}/dismiss`);
   },
   async apply(id: string) {
     return apiClient.post<{ id: string }>(`/api/groups/${id}/apply`);

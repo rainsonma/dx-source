@@ -10,7 +10,7 @@ import {
   Copy,
   Loader2,
   Pencil,
-  Trash2,
+  Ban,
   Gamepad2,
   User,
   Users,
@@ -85,8 +85,8 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [createSubgroupOpen, setCreateSubgroupOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [dismissOpen, setDismissOpen] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
   const [setGameOpen, setSetGameOpen] = useState(false);
   const [clearGameOpen, setClearGameOpen] = useState(false);
   const [clearingGame, setClearingGame] = useState(false);
@@ -134,13 +134,13 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
     router.push("/hall/groups");
   }
 
-  async function handleDelete() {
-    setDeleting(true);
-    const res = await groupApi.delete(id);
-    setDeleting(false);
+  async function handleDismiss() {
+    setDismissing(true);
+    const res = await groupApi.dismiss(id);
+    setDismissing(false);
     if (res.code !== 0) { toast.error(res.message); return; }
-    toast.success("群组已删除");
-    setDeleteOpen(false);
+    toast.success("群组已解散");
+    setDismissOpen(false);
     await swrMutate("/api/groups");
     router.push("/hall/groups");
   }
@@ -216,7 +216,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   if (!group) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 py-20 text-muted-foreground">
-        <p className="text-sm">群组不存在或已被删除</p>
+        <p className="text-sm">群组不存在或已解散</p>
         <Link href="/hall/groups" className="text-sm text-teal-600 hover:underline">返回群组列表</Link>
       </div>
     );
@@ -410,11 +410,11 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDeleteOpen(true)}
+                  onClick={() => setDismissOpen(true)}
                   className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 text-xs font-medium text-red-500 hover:bg-red-50"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  删除群组
+                  <Ban className="h-3.5 w-3.5" />
+                  解散群组
                 </button>
               </div>
             </>
@@ -513,20 +513,20 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      {/* Dismiss confirmation */}
+      <AlertDialog open={dismissOpen} onOpenChange={setDismissOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>确认删除群组</AlertDialogTitle>
+            <AlertDialogTitle>确认解散群组</AlertDialogTitle>
             <AlertDialogDescription>
-              删除后所有成员和小组数据将被清除，此操作不可撤销。
+              解散后群组将不再可用，此操作不可撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={handleDelete} disabled={deleting}>
-              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              确认删除
+            <AlertDialogAction variant="destructive" onClick={handleDismiss} disabled={dismissing}>
+              {dismissing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              确认解散
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

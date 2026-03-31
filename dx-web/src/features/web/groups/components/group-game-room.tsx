@@ -81,6 +81,10 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
     onRoomMemberLeft: () => {
       fetchRoomMembers();
     },
+    onDismissed: () => {
+      toast.error("群组已被解散");
+      router.push("/hall/groups");
+    },
   });
 
   async function handleForceEnd() {

@@ -15,6 +15,7 @@ type GroupEventHandlers = {
   onForceEnd?: (event: GroupForceEndEvent) => void;
   onRoomMemberJoined?: (event: RoomMemberEvent) => void;
   onRoomMemberLeft?: (event: RoomMemberEvent) => void;
+  onDismissed?: () => void;
 };
 
 export function useGroupEvents(
@@ -35,6 +36,7 @@ export function useGroupEvents(
       handlersRef.current.onRoomMemberJoined?.(data as RoomMemberEvent),
     room_member_left: (data: unknown) =>
       handlersRef.current.onRoomMemberLeft?.(data as RoomMemberEvent),
+    group_dismissed: () => handlersRef.current.onDismissed?.(),
   }), []);
 
   useGroupSSE(groupId, listeners);

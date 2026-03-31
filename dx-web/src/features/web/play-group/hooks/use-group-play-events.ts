@@ -16,6 +16,7 @@ type GroupPlayEventHandlers = {
   onNextLevel?: (event: GroupNextLevelEvent) => void;
   onPlayerComplete?: (event: GroupPlayerCompleteEvent) => void;
   onPlayerAction?: (event: GroupPlayerActionEvent) => void;
+  onDismissed?: () => void;
 };
 
 export function useGroupPlayEvents(
@@ -36,6 +37,7 @@ export function useGroupPlayEvents(
       handlersRef.current.onPlayerComplete?.(data as GroupPlayerCompleteEvent),
     group_player_action: (data: unknown) =>
       handlersRef.current.onPlayerAction?.(data as GroupPlayerActionEvent),
+    group_dismissed: () => handlersRef.current.onDismissed?.(),
   }), []);
 
   useGroupSSE(groupId, listeners);

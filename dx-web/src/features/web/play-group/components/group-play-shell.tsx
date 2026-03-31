@@ -19,6 +19,7 @@ import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-m
 import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
+import { toast } from "sonner";
 import { useGroupPlayEvents } from "../hooks/use-group-play-events";
 import {
   completeLevelAction,
@@ -165,6 +166,10 @@ export function GroupPlayShell({
     },
     onPlayerAction: (event) => {
       setLastPlayerAction(event);
+    },
+    onDismissed: () => {
+      toast.error("群组已被解散");
+      router.push("/hall/groups");
     },
   });
 

@@ -13,7 +13,6 @@ export type Group = {
 };
 
 export type GroupDetail = Group & {
-  is_active: boolean;
   current_game_id: string | null;
   game_mode: string | null;
   current_game_name: string | null;
