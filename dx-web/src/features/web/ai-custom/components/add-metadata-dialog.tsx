@@ -12,7 +12,7 @@ import {
   Loader2,
   Wand2,
   Play,
-  ArrowRight, ArrowLeft,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Dialog,

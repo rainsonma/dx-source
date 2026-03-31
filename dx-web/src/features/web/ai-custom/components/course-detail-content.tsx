@@ -10,38 +10,66 @@ import { GameLevelsCard } from "@/features/web/ai-custom/components/game-levels-
 import { GameInfoCard } from "@/features/web/ai-custom/components/game-info-card"
 import { PageSpinner } from "@/components/in/page-spinner"
 
-function mapGameDetail(raw: any, categories: any[], presses: any[]) {
-  const mapped = {
-    ...raw,
+type RawGameDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  gameCategoryId: string | null;
+  gamePressId: string | null;
+  coverId: string | null;
+  coverUrl?: string;
+  levels?: { id: string; name: string; description: string | null; isActive: boolean; order: number }[];
+  user?: { id: string; username: string } | null;
+  [key: string]: unknown;
+};
+
+type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean };
+type SelectOption = { id: string; name: string };
+
+function mapGameDetail(raw: RawGameDetail, categories: CategoryOption[], presses: SelectOption[]) {
+  let category: { name: string } | null = null;
+  let press: { name: string } | null = null;
+
+  if (raw.gameCategoryId) {
+    const cat = categories.find((c) => c.id === raw.gameCategoryId);
+    if (cat) category = { name: cat.name };
+  }
+  if (raw.gamePressId) {
+    const p = presses.find((p) => p.id === raw.gamePressId);
+    if (p) press = { name: p.name };
+  }
+
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    mode: raw.mode,
+    status: raw.status,
+    createdAt: new Date(raw.createdAt),
+    updatedAt: new Date(raw.updatedAt),
     gameCategoryId: raw.gameCategoryId ?? null,
     gamePressId: raw.gamePressId ?? null,
     coverId: raw.coverId ?? null,
     cover: raw.coverUrl ? { url: raw.coverUrl } : null,
-    category: null as { name: string } | null,
-    press: null as { name: string } | null,
-    levels: (raw.levels ?? []).map((l: any) => ({
+    category,
+    press,
+    user: raw.user ?? null,
+    levels: (raw.levels ?? []).map((l) => ({
       ...l,
       _count: { items: 0 },
     })),
     _count: { levels: raw.levels?.length ?? 0, stats: 0 },
-  }
-
-  if (raw.gameCategoryId) {
-    const cat = categories.find((c: any) => c.id === raw.gameCategoryId)
-    if (cat) mapped.category = { name: cat.name }
-  }
-  if (raw.gamePressId) {
-    const press = presses.find((p: any) => p.id === raw.gamePressId)
-    if (press) mapped.press = { name: press.name }
-  }
-
-  return mapped
+  };
 }
 
 export function CourseDetailContent({ id }: { id: string }) {
-  const { data: raw, error, isLoading: gameLoading } = useSWR(`/api/course-games/${id}`)
-  const { data: categories } = useSWR<any[]>("/api/game-categories")
-  const { data: presses } = useSWR<any[]>("/api/game-presses")
+  const { data: raw, error, isLoading: gameLoading } = useSWR<RawGameDetail>(`/api/course-games/${id}`)
+  const { data: categories } = useSWR<CategoryOption[]>("/api/game-categories")
+  const { data: presses } = useSWR<SelectOption[]>("/api/game-presses")
 
   if (gameLoading) return <PageSpinner size="lg" />
 

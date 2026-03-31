@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useGroupSSE } from "@/hooks/use-group-sse";
 import type {
   GroupLevelCompleteEvent,
@@ -24,7 +24,7 @@ export function useGroupPlayEvents(
   handlers: GroupPlayEventHandlers
 ) {
   const handlersRef = useRef(handlers);
-  handlersRef.current = handlers;
+  useEffect(() => { handlersRef.current = handlers; });
 
   const listeners = useMemo(() => ({
     group_level_complete: (data: unknown) =>

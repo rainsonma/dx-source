@@ -13,7 +13,7 @@ function parseJsonField(value: unknown): unknown {
 }
 
 /** Map Go API flat ContentItemData to the nested shape expected by the game store */
-function toContentItem(item: any) {
+function toContentItem(item: Record<string, unknown>) {
   return {
     id: item.id,
     content: item.content,
@@ -36,7 +36,7 @@ export async function fetchLevelContentAction(
 ) {
   try {
     const params = degree ? `?degree=${degree}` : "";
-    const res = await apiClient.get<any[]>(
+    const res = await apiClient.get<Record<string, unknown>[]>(
       `/api/games/${gameId}/levels/${gameLevelId}/content${params}`
     );
 

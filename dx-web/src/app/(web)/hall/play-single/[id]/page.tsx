@@ -18,7 +18,28 @@ export default function GamePlayPage({
   const level = searchParams.get("level") ?? undefined;
   const pattern = searchParams.get("pattern") ?? undefined;
 
-  const [game, setGame] = useState<any>(null);
+  type GameData = {
+    id: string;
+    name: string;
+    mode: string;
+    levels: { id: string; name: string; order: number }[];
+  };
+
+  type ApiGameData = {
+    id: string;
+    name: string;
+    mode: string;
+    levels?: { id: string; name: string; order: number }[];
+  };
+
+  type ApiProfileData = {
+    id?: string;
+    nickname?: string | null;
+    username?: string;
+    avatarUrl?: string | null;
+  };
+
+  const [game, setGame] = useState<GameData | null>(null);
   const [player, setPlayer] = useState<{ nickname: string; avatarUrl: string | null }>({
     nickname: "我",
     avatarUrl: null,
@@ -28,8 +49,8 @@ export default function GamePlayPage({
   useEffect(() => {
     async function load() {
       const [gameRes, profileRes] = await Promise.all([
-        apiClient.get<any>(`/api/games/${id}`),
-        apiClient.get<any>("/api/user/profile"),
+        apiClient.get<ApiGameData>(`/api/games/${id}`),
+        apiClient.get<ApiProfileData>("/api/user/profile"),
       ]);
 
       if (gameRes.code !== 0 || !gameRes.data) {
@@ -42,7 +63,7 @@ export default function GamePlayPage({
         id: g.id,
         name: g.name,
         mode: g.mode,
-        levels: ((g.levels as any[]) ?? []).map((l: any) => ({
+        levels: (g.levels ?? []).map((l) => ({
           id: l.id,
           name: l.name,
           order: l.order,

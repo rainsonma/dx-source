@@ -6,15 +6,39 @@ import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { PlayedGameCard } from "@/features/web/hall/components/played-game-card";
 
+type PlayedGame = {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: string;
+  cover: { url: string } | null;
+  category: { name: string } | null;
+  user: { username: string } | null;
+  highestScore: number;
+  totalPlayTime: number;
+};
+
+type ApiPlayedItem = {
+  id: string;
+  name: string;
+  description?: string | null;
+  mode: string;
+  coverUrl?: string | null;
+  categoryName?: string | null;
+  author?: string | null;
+  highestScore?: number;
+  totalPlayTime?: number;
+};
+
 export default function MyGamesPage() {
-  const [games, setGames] = useState<any[]>([]);
+  const [games, setGames] = useState<PlayedGame[]>([]);
 
   useEffect(() => {
     async function load() {
-      const res = await apiClient.get<any[]>("/api/games/played");
+      const res = await apiClient.get<ApiPlayedItem[]>("/api/games/played");
       const rawGames = res.code === 0 ? res.data ?? [] : [];
       setGames(
-        rawGames.map((g: any) => ({
+        rawGames.map((g) => ({
           id: g.id,
           name: g.name,
           description: g.description ?? null,

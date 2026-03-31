@@ -9,6 +9,7 @@ export function ThemeToggleButton() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- standard mounted pattern for SSR hydration
   useEffect(() => setMounted(true), []);
 
   return (

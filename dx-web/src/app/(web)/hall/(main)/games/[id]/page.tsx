@@ -55,25 +55,60 @@ const DEFAULT_RULES = [
   "完成所有题目后结算得分",
 ];
 
+type GameLevel = { id: string; name: string; order: number };
+
+type GameDetail = {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: string;
+  coverUrl: string | null;
+  levelCount: number;
+  levels: GameLevel[];
+};
+
+type ApiGameData = {
+  id: string;
+  name: string;
+  description?: string | null;
+  mode: string;
+  coverUrl?: string | null;
+  levelCount?: number;
+  levels?: { id: string; name: string; order: number }[];
+};
+
+type GameStats = {
+  highestScore: number;
+  totalSessions: number;
+  totalScores: number;
+  totalExp: number;
+};
+
+type ActiveSession = {
+  currentLevelId: string;
+  degree: string;
+  pattern: string | null;
+};
+
 export default function GameDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [game, setGame] = useState<any>(null);
+  const [game, setGame] = useState<GameDetail | null>(null);
   const [heroSession, setHeroSession] = useState<{
     degree: string;
     pattern: string | null;
     levelName: string;
   } | null>(null);
-  const [myStats, setMyStats] = useState<any>(null);
+  const [myStats, setMyStats] = useState<GameStats | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const res = await apiClient.get<any>(`/api/games/${id}`);
+      const res = await apiClient.get<ApiGameData>(`/api/games/${id}`);
 
       if (res.code !== 0 || !res.data) {
         setLoaded(true);
@@ -81,32 +116,34 @@ export default function GameDetailPage({
       }
 
       const g = res.data;
-      const mapped = {
-        id: g.id as string,
-        name: g.name as string,
-        description: (g.description as string | null) ?? null,
-        mode: g.mode as string,
-        coverUrl: (g.coverUrl as string | null) ?? null,
-        levelCount: (g.levelCount as number) ?? 0,
-        levels: ((g.levels as any[]) ?? []).map((l: any) => ({
-          id: l.id as string,
-          name: l.name as string,
-          order: l.order as number,
+      const mapped: GameDetail = {
+        id: g.id,
+        name: g.name,
+        description: g.description ?? null,
+        mode: g.mode,
+        coverUrl: g.coverUrl ?? null,
+        levelCount: g.levelCount ?? 0,
+        levels: (g.levels ?? []).map((l) => ({
+          id: l.id,
+          name: l.name,
+          order: l.order,
         })),
       };
 
       const [activeSessionRes, statsRes, favoritedRes] = await Promise.all([
         sessionApi.checkAnyActive(mapped.id),
-        apiClient.get<any>(`/api/games/${mapped.id}/stats`),
+        apiClient.get<GameStats>(`/api/games/${mapped.id}/stats`),
         apiClient.get<{ favorited: boolean }>(`/api/games/${mapped.id}/favorited`),
       ]);
 
-      const activeSession = activeSessionRes.code === 0 ? activeSessionRes.data : null;
+      const activeSession = activeSessionRes.code === 0
+        ? (activeSessionRes.data as ActiveSession | null)
+        : null;
       const stats = statsRes.code === 0 ? statsRes.data : null;
       const favorited = favoritedRes.code === 0 ? favoritedRes.data.favorited : false;
 
       if (activeSession) {
-        const level = mapped.levels.find((l: any) => l.id === activeSession.currentLevelId);
+        const level = mapped.levels.find((l) => l.id === activeSession.currentLevelId);
         if (level) {
           setHeroSession({
             degree: activeSession.degree,

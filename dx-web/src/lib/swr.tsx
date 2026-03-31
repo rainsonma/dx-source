@@ -1,6 +1,8 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { useEffect } from "react"
+import type { Cache } from "swr"
 import { SWRConfig, useSWRConfig } from "swr"
 import { mutate } from "swr"
 import { apiClient } from "@/lib/api-client"
@@ -14,11 +16,13 @@ export const swrFetcher = (url: string) =>
 // Module-level reference to SWR cache, captured when SWRProvider mounts.
 // Allows swrMutate to iterate cache keys including $inf$ keys that
 // global mutate(filterFn) intentionally skips.
-let _cache: Map<string, any> | null = null
+let _cache: Cache | null = null
 
 function CacheCapture() {
   const { cache } = useSWRConfig()
-  _cache = cache as Map<string, any>
+  useEffect(() => {
+    _cache = cache
+  }, [cache])
   return null
 }
 

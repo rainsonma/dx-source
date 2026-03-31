@@ -213,7 +213,7 @@ export function GroupPlayLoadingScreen({
         let startFromIndex = 0;
         if (levelSessionResumeItemId) {
           const idx = contentResult.data.findIndex(
-            (item: any) => item.id === levelSessionResumeItemId
+            (item) => item.id === levelSessionResumeItemId
           );
           if (idx > 0) startFromIndex = idx;
         }

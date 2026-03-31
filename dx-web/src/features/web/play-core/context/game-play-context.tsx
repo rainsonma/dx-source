@@ -18,26 +18,26 @@ export type RecordAnswerFn = (data: {
   playTime: number;
   nextContentItemId: string | null;
   duration: number;
-}) => Promise<{ data: any; error: string | null }>;
+}) => Promise<{ data: unknown; error: string | null }>;
 
 export type RecordSkipFn = (data: {
   gameSessionTotalId: string;
   gameLevelId: string;
   playTime: number;
   nextContentItemId: string | null;
-}) => Promise<{ data: any; error: string | null }>;
+}) => Promise<{ data: unknown; error: string | null }>;
 
 export type MarkAsReviewFn = (data: {
   contentItemId: string;
   gameId: string;
   gameLevelId: string;
-}) => Promise<any>;
+}) => Promise<unknown>;
 
 export type CompleteLevelFn = (
   sessionId: string,
   gameLevelId: string,
   data: { score: number; maxCombo: number; totalItems: number }
-) => Promise<{ data: any; error: string | null }>;
+) => Promise<{ data: unknown; error: string | null }>;
 
 export type EndSessionFn = (
   sessionId: string,
@@ -51,12 +51,12 @@ export type EndSessionFn = (
     skipCount: number;
     allLevelsCompleted: boolean;
   }
-) => Promise<{ data: any; error: string | null }>;
+) => Promise<{ data: unknown; error: string | null }>;
 
 export type RestartLevelFn = (
   sessionId: string,
   levelId: string
-) => Promise<{ data: any; error: string | null }>;
+) => Promise<{ data: unknown; error: string | null }>;
 
 export interface GamePlayActions {
   recordAnswer: RecordAnswerFn;

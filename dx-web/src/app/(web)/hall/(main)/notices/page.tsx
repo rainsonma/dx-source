@@ -6,16 +6,24 @@ import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { NoticesContent } from "@/features/web/notice/components/notices-content";
 import { MarkNoticesRead } from "@/features/web/notice/components/mark-notices-read";
 
+type NoticeItem = {
+  id: string;
+  title: string;
+  content: string | null;
+  icon: string | null;
+  createdAt: string;
+};
+
 export default function NoticesPage() {
   const [username, setUsername] = useState<string | null>(null);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<NoticeItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
       const [profileRes, noticesRes] = await Promise.all([
         apiClient.get<{ username: string }>("/api/user/profile"),
-        apiClient.get<{ items: any[]; nextCursor: string; hasMore: boolean }>("/api/notices"),
+        apiClient.get<{ items: NoticeItem[]; nextCursor: string; hasMore: boolean }>("/api/notices"),
       ]);
 
       if (profileRes.code === 0) setUsername(profileRes.data.username);

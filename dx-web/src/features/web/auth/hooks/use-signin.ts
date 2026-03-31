@@ -57,13 +57,13 @@ export function useSignIn() {
     if (emailState.success) {
       router.push(redirectTo);
     }
-  }, [emailState, router]);
+  }, [emailState, router, redirectTo]);
 
   useEffect(() => {
     if (accountState.success) {
       router.push(redirectTo);
     }
-  }, [accountState, router]);
+  }, [accountState, router, redirectTo]);
 
   /** Send verification code via Go API */
   const handleSendCode = useCallback(

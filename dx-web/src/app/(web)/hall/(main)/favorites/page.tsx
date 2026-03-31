@@ -6,15 +6,35 @@ import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { FavoriteCard } from "@/features/web/hall/components/favorite-card";
 
+type FavoriteGame = {
+  id: string;
+  name: string;
+  description: string | null;
+  mode: string;
+  cover: { url: string } | null;
+  category: { name: string } | null;
+  user: { username: string } | null;
+};
+
+type ApiFavoriteItem = {
+  id: string;
+  name: string;
+  description?: string | null;
+  mode: string;
+  coverUrl?: string | null;
+  categoryName?: string | null;
+  author?: string | null;
+};
+
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteGame[]>([]);
 
   useEffect(() => {
     async function load() {
-      const res = await apiClient.get<any[]>("/api/favorites");
+      const res = await apiClient.get<ApiFavoriteItem[]>("/api/favorites");
       const rawFavorites = res.code === 0 ? res.data ?? [] : [];
       setFavorites(
-        rawFavorites.map((g: any) => ({
+        rawFavorites.map((g) => ({
           id: g.id,
           name: g.name,
           description: g.description ?? null,

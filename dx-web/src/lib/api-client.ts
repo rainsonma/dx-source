@@ -219,15 +219,15 @@ export const authApi = {
 export const userApi = {
   /** Fetch the authenticated user's full profile */
   async getProfile() {
-    return apiClient.get<any>("/api/user/profile");
+    return apiClient.get<unknown>("/api/user/profile");
   },
   /** Update profile fields (nickname, city, introduction) */
   async updateProfile(data: { nickname?: string; city?: string; introduction?: string }) {
-    return apiClient.put<any>("/api/user/profile", data);
+    return apiClient.put<unknown>("/api/user/profile", data);
   },
   /** Set avatar from an uploaded image ID */
   async updateAvatar(imageId: string) {
-    return apiClient.put<any>("/api/user/avatar", { image_id: imageId });
+    return apiClient.put<unknown>("/api/user/avatar", { image_id: imageId });
   },
   /** Send verification code for email change */
   async sendEmailCode(email: string) {
@@ -235,11 +235,11 @@ export const userApi = {
   },
   /** Verify code and change email */
   async changeEmail(email: string, code: string) {
-    return apiClient.put<any>("/api/user/email", { email, code });
+    return apiClient.put<unknown>("/api/user/email", { email, code });
   },
   /** Change password (current + new) */
   async changePassword(currentPassword: string, newPassword: string) {
-    return apiClient.put<any>("/api/user/password", {
+    return apiClient.put<unknown>("/api/user/password", {
       current_password: currentPassword,
       new_password: newPassword,
     });
@@ -265,36 +265,65 @@ export const gameApi = {
       query.set("categoryIds", params.categoryIds.join(","));
     }
     const qs = query.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/games${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/games${qs ? `?${qs}` : ""}`);
   },
   /** Search published games by name */
   async searchGames(q: string, limit?: number) {
     const params = new URLSearchParams({ q });
     if (limit) params.set("limit", String(limit));
-    return apiClient.get<any[]>(`/api/games/search?${params}`);
+    return apiClient.get<unknown[]>(`/api/games/search?${params}`);
   },
   /** Get current user's recently played games */
   async getRecentGames() {
-    return apiClient.get<any[]>("/api/games/recent");
+    return apiClient.get<unknown[]>("/api/games/recent");
   },
   /** Get full game detail with levels */
   async getGameDetail(id: string) {
-    return apiClient.get<any>(`/api/games/${id}`);
+    return apiClient.get<unknown>(`/api/games/${id}`);
   },
   /** Get content items for a game level, filtered by degree */
   async getLevelContent(gameId: string, levelId: string, degree?: string) {
     const params = degree ? `?degree=${degree}` : "";
-    return apiClient.get<any[]>(`/api/games/${gameId}/levels/${levelId}/content${params}`);
+    return apiClient.get<unknown[]>(`/api/games/${gameId}/levels/${levelId}/content${params}`);
   },
   /** Get hierarchical game categories */
   async getCategories() {
-    return apiClient.get<any[]>("/api/game-categories");
+    return apiClient.get<unknown[]>("/api/game-categories");
   },
   /** Get game publishers */
   async getPresses() {
-    return apiClient.get<any[]>("/api/game-presses");
+    return apiClient.get<unknown[]>("/api/game-presses");
   },
 };
+
+// Session response types
+interface SessionStartResponse {
+  id: string;
+  levelId: string;
+}
+
+interface ActiveSessionResponse {
+  id: string;
+  degree: string;
+  pattern: string | null;
+  currentLevelId: string;
+}
+
+interface SessionLevelResponse {
+  id: string;
+  currentContentItemId: string | null;
+}
+
+interface SessionRestoreResponse {
+  sessionLevel: {
+    score: number;
+    maxCombo: number;
+    correctCount: number;
+    wrongCount: number;
+    skipCount: number;
+    playTime: number;
+  };
+}
 
 // Session/gameplay API functions targeting the Go API
 export const sessionApi = {
@@ -305,17 +334,17 @@ export const sessionApi = {
     level_id?: string;
     pattern?: string;
   }) {
-    return apiClient.post<any>("/api/play-single/start", data);
+    return apiClient.post<SessionStartResponse>("/api/play-single/start", data);
   },
   /** Check for an active session by degree+pattern */
   async checkActive(gameId: string, degree: string, pattern?: string | null) {
     const params = new URLSearchParams({ game_id: gameId, degree });
     if (pattern) params.set("pattern", pattern);
-    return apiClient.get<any>(`/api/play-single/active?${params}`);
+    return apiClient.get<ActiveSessionResponse | null>(`/api/play-single/active?${params}`);
   },
   /** Check for any active session for a game */
   async checkAnyActive(gameId: string) {
-    return apiClient.get<any>(`/api/play-single/any-active?game_id=${gameId}`);
+    return apiClient.get<ActiveSessionResponse | null>(`/api/play-single/any-active?game_id=${gameId}`);
   },
   /** Check for an active level session */
   async checkActiveLevel(
@@ -326,7 +355,7 @@ export const sessionApi = {
   ) {
     const params = new URLSearchParams({ game_id: gameId, degree, game_level_id: gameLevelId });
     if (pattern) params.set("pattern", pattern);
-    return apiClient.get<any>(`/api/play-single/active-level?${params}`);
+    return apiClient.get<unknown>(`/api/play-single/active-level?${params}`);
   },
   /** End a session */
   async endSession(
@@ -342,18 +371,18 @@ export const sessionApi = {
       all_levels_completed: boolean;
     }
   ) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/end`, data);
+    return apiClient.post<unknown>(`/api/play-single/${sessionId}/end`, data);
   },
   /** Force-complete a session */
   async forceComplete(sessionId: string) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/force-complete`);
+    return apiClient.post<unknown>(`/api/play-single/${sessionId}/force-complete`);
   },
   /** Start a level within a session */
   async startLevel(
     sessionId: string,
     data: { game_level_id: string; degree: string; pattern?: string }
   ) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/levels/start`, data);
+    return apiClient.post<SessionLevelResponse>(`/api/play-single/${sessionId}/levels/start`, data);
   },
   /** Complete a level */
   async completeLevel(
@@ -361,21 +390,21 @@ export const sessionApi = {
     levelId: string,
     data: { score: number; max_combo: number; total_items: number }
   ) {
-    return apiClient.post<any>(
+    return apiClient.post<unknown>(
       `/api/play-single/${sessionId}/levels/${levelId}/complete`,
       data
     );
   },
   /** Advance to next level */
   async advanceLevel(sessionId: string, levelId: string, nextLevelId: string) {
-    return apiClient.post<any>(
+    return apiClient.post<unknown>(
       `/api/play-single/${sessionId}/levels/${levelId}/advance`,
       { next_level_id: nextLevelId }
     );
   },
   /** Restart a level */
   async restartLevel(sessionId: string, levelId: string) {
-    return apiClient.post<any>(
+    return apiClient.post<unknown>(
       `/api/play-single/${sessionId}/levels/${levelId}/restart`
     );
   },
@@ -398,7 +427,7 @@ export const sessionApi = {
       duration: number;
     }
   ) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/answers`, data);
+    return apiClient.post<unknown>(`/api/play-single/${sessionId}/answers`, data);
   },
   /** Record a skip */
   async recordSkip(
@@ -409,24 +438,24 @@ export const sessionApi = {
       next_content_item_id: string | null;
     }
   ) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/skips`, data);
+    return apiClient.post<unknown>(`/api/play-single/${sessionId}/skips`, data);
   },
   /** Sync playtime */
   async syncPlayTime(
     sessionId: string,
     data: { game_level_id: string; play_time: number }
   ) {
-    return apiClient.post<any>(`/api/play-single/${sessionId}/sync-playtime`, data);
+    return apiClient.post<unknown>(`/api/play-single/${sessionId}/sync-playtime`, data);
   },
   /** Restore session data */
   async restore(sessionId: string, gameLevelId: string) {
-    return apiClient.get<any>(
+    return apiClient.get<SessionRestoreResponse>(
       `/api/play-single/${sessionId}/restore?game_level_id=${gameLevelId}`
     );
   },
   /** Update current content item */
   async updateContentItem(sessionId: string, contentItemId: string | null) {
-    return apiClient.put<any>(`/api/play-single/${sessionId}/content-item`, {
+    return apiClient.put<unknown>(`/api/play-single/${sessionId}/content-item`, {
       content_item_id: contentItemId,
     });
   },
@@ -436,65 +465,65 @@ export const sessionApi = {
 export const trackingApi = {
   // Mastered
   async markMastered(data: { content_item_id: string; game_id: string; game_level_id: string }) {
-    return apiClient.post<any>("/api/tracking/master", data);
+    return apiClient.post<unknown>("/api/tracking/master", data);
   },
   async listMastered(cursor?: string, limit?: number) {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
     const qs = params.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/tracking/master${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/tracking/master${qs ? `?${qs}` : ""}`);
   },
   async masterStats() {
-    return apiClient.get<any>("/api/tracking/master/stats");
+    return apiClient.get<unknown>("/api/tracking/master/stats");
   },
   async deleteMastered(id: string) {
-    return apiClient.delete<any>(`/api/tracking/master/${id}`);
+    return apiClient.delete<unknown>(`/api/tracking/master/${id}`);
   },
   async bulkDeleteMastered(ids: string[]) {
-    return apiClient.delete<any>("/api/tracking/master", { ids });
+    return apiClient.delete<unknown>("/api/tracking/master", { ids });
   },
 
   // Unknown
   async markUnknown(data: { content_item_id: string; game_id: string; game_level_id: string }) {
-    return apiClient.post<any>("/api/tracking/unknown", data);
+    return apiClient.post<unknown>("/api/tracking/unknown", data);
   },
   async listUnknown(cursor?: string, limit?: number) {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
     const qs = params.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/tracking/unknown${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/tracking/unknown${qs ? `?${qs}` : ""}`);
   },
   async unknownStats() {
-    return apiClient.get<any>("/api/tracking/unknown/stats");
+    return apiClient.get<unknown>("/api/tracking/unknown/stats");
   },
   async deleteUnknown(id: string) {
-    return apiClient.delete<any>(`/api/tracking/unknown/${id}`);
+    return apiClient.delete<unknown>(`/api/tracking/unknown/${id}`);
   },
   async bulkDeleteUnknown(ids: string[]) {
-    return apiClient.delete<any>("/api/tracking/unknown", { ids });
+    return apiClient.delete<unknown>("/api/tracking/unknown", { ids });
   },
 
   // Review
   async markReview(data: { content_item_id: string; game_id: string; game_level_id: string }) {
-    return apiClient.post<any>("/api/tracking/review", data);
+    return apiClient.post<unknown>("/api/tracking/review", data);
   },
   async listReviews(cursor?: string, limit?: number) {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (limit) params.set("limit", String(limit));
     const qs = params.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/tracking/review${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/tracking/review${qs ? `?${qs}` : ""}`);
   },
   async reviewStats() {
-    return apiClient.get<any>("/api/tracking/review/stats");
+    return apiClient.get<unknown>("/api/tracking/review/stats");
   },
   async deleteReview(id: string) {
-    return apiClient.delete<any>(`/api/tracking/review/${id}`);
+    return apiClient.delete<unknown>(`/api/tracking/review/${id}`);
   },
   async bulkDeleteReviews(ids: string[]) {
-    return apiClient.delete<any>("/api/tracking/review", { ids });
+    return apiClient.delete<unknown>("/api/tracking/review", { ids });
   },
 };
 
@@ -504,7 +533,7 @@ export const favoriteApi = {
     return apiClient.post<{ favorited: boolean }>("/api/favorites/toggle", { game_id: gameId });
   },
   async list() {
-    return apiClient.get<any[]>("/api/favorites");
+    return apiClient.get<unknown[]>("/api/favorites");
   },
 };
 
@@ -512,7 +541,7 @@ export const favoriteApi = {
 export const leaderboardApi = {
   /** Get leaderboard by type (exp|playtime) and period (all|day|week|month) */
   async getLeaderboard(type: string, period: string) {
-    return apiClient.get<any>(`/api/leaderboard?type=${type}&period=${period}`);
+    return apiClient.get<unknown>(`/api/leaderboard?type=${type}&period=${period}`);
   },
 };
 
@@ -520,11 +549,11 @@ export const leaderboardApi = {
 export const hallApi = {
   /** Get aggregated dashboard data */
   async getDashboard() {
-    return apiClient.get<any>("/api/hall/dashboard");
+    return apiClient.get<unknown>("/api/hall/dashboard");
   },
   /** Get heatmap data for a given year */
   async getHeatmap(year: number) {
-    return apiClient.get<any>(`/api/hall/heatmap?year=${year}`);
+    return apiClient.get<unknown>(`/api/hall/heatmap?year=${year}`);
   },
 };
 
@@ -532,7 +561,7 @@ export const hallApi = {
 export const inviteApi = {
   /** Get invite code, stats, and first page of referrals */
   async getInviteData() {
-    return apiClient.get<any>("/api/invite");
+    return apiClient.get<unknown>("/api/invite");
   },
   /** Get paginated referral records */
   async getReferrals(page?: number, pageSize?: number) {
@@ -540,7 +569,7 @@ export const inviteApi = {
     if (page) params.set("page", String(page));
     if (pageSize) params.set("pageSize", String(pageSize));
     const qs = params.toString();
-    return apiClient.get<OffsetPaginated<any>>(`/api/referrals${qs ? `?${qs}` : ""}`);
+    return apiClient.get<OffsetPaginated<unknown>>(`/api/referrals${qs ? `?${qs}` : ""}`);
   },
 };
 
@@ -551,7 +580,7 @@ export const noticeApi = {
     const params = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     const qs = params.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/notices${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/notices${qs ? `?${qs}` : ""}`);
   },
   /** Mark all notices as read */
   async markRead() {
@@ -563,7 +592,7 @@ export const noticeApi = {
 export const feedbackApi = {
   /** Submit feedback */
   async submit(data: { type: string; description: string }) {
-    return apiClient.post<any>("/api/feedback", data);
+    return apiClient.post<unknown>("/api/feedback", data);
   },
 };
 
@@ -577,7 +606,7 @@ export const reportApi = {
     reason: string;
     note?: string;
   }) {
-    return apiClient.post<any>("/api/reports", data);
+    return apiClient.post<unknown>("/api/reports", data);
   },
 };
 
@@ -588,11 +617,11 @@ export const redeemApi = {
     const params = new URLSearchParams();
     if (page) params.set("page", String(page));
     const qs = params.toString();
-    return apiClient.get<OffsetPaginated<any>>(`/api/redeems${qs ? `?${qs}` : ""}`);
+    return apiClient.get<OffsetPaginated<unknown>>(`/api/redeems${qs ? `?${qs}` : ""}`);
   },
   /** Redeem a code */
   async redeemCode(code: string) {
-    return apiClient.post<any>("/api/redeems", { code });
+    return apiClient.post<unknown>("/api/redeems", { code });
   },
 };
 
@@ -600,11 +629,11 @@ export const redeemApi = {
 export const contentSeekApi = {
   /** Get user's content seek records */
   async getSeeks() {
-    return apiClient.get<any[]>("/api/content-seek");
+    return apiClient.get<unknown[]>("/api/content-seek");
   },
   /** Submit a content seek request */
   async submit(data: { course_name: string; description: string; disk_url: string }) {
-    return apiClient.post<any>("/api/content-seek", data);
+    return apiClient.post<unknown>("/api/content-seek", data);
   },
 };
 
@@ -672,11 +701,11 @@ export const courseGameApi = {
     if (params?.cursor) query.set("cursor", params.cursor);
     if (params?.limit) query.set("limit", String(params.limit));
     const qs = query.toString();
-    return apiClient.get<CursorPaginated<any>>(`/api/course-games${qs ? `?${qs}` : ""}`);
+    return apiClient.get<CursorPaginated<unknown>>(`/api/course-games${qs ? `?${qs}` : ""}`);
   },
   /** Get course game detail with levels */
   async getDetail(id: string) {
-    return apiClient.get<any>(`/api/course-games/${id}`);
+    return apiClient.get<unknown>(`/api/course-games/${id}`);
   },
   /** Create a new course game */
   async create(data: {
@@ -733,7 +762,7 @@ export const courseGameApi = {
   },
   /** Get content items grouped by metadata for a level */
   async getContentItems(gameId: string, levelId: string) {
-    return apiClient.get<any[]>(`/api/course-games/${gameId}/levels/${levelId}/content-items`);
+    return apiClient.get<unknown[]>(`/api/course-games/${gameId}/levels/${levelId}/content-items`);
   },
   /** Insert a content item at a position */
   async insertContentItem(gameId: string, levelId: string, data: {
@@ -744,7 +773,7 @@ export const courseGameApi = {
     referenceItemId: string;
     direction: string;
   }) {
-    return apiClient.post<any>(`/api/course-games/${gameId}/levels/${levelId}/content-items`, data);
+    return apiClient.post<unknown>(`/api/course-games/${gameId}/levels/${levelId}/content-items`, data);
   },
   /** Update content item text and translation */
   async updateContentItemText(gameId: string, itemId: string, data: {

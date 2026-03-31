@@ -58,6 +58,7 @@ export function useGameResult({ levels }: UseGameResultParams) {
     }
 
     complete();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- action functions are stable, fire-once via firedRef guard
   }, [
     sessionId,
     levelId,

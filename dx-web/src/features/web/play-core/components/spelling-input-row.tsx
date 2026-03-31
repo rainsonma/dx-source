@@ -8,6 +8,15 @@ import type {
 import { useKeySound } from "@/features/web/play-core/hooks/use-key-sound";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 
+/** Keys that should not trigger the typewriter sound */
+const SILENT_KEYS = new Set([
+  "Escape",
+  "Meta",
+  "Control",
+  "Alt",
+  "Shift",
+]);
+
 interface SpellingInputRowProps {
   typedWords: TypedWord[];
   inputValue: string;
@@ -114,15 +123,6 @@ export function SpellingInputRow({
     inputValue.length > 0
       ? (correctPrefixLen / inputValue.length) * 100
       : 0;
-
-  /** Keys that should not trigger the typewriter sound */
-  const SILENT_KEYS = new Set([
-    "Escape",
-    "Meta",
-    "Control",
-    "Alt",
-    "Shift",
-  ]);
 
   /** Play key sound on printable keystrokes, then delegate to parent handler */
   const handleKeyDownWithSound = useCallback(

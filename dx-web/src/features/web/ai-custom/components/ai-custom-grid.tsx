@@ -24,8 +24,8 @@ export function AiCustomGrid() {
   const [open, setOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all")
 
-  const { data: categories } = useSWR<any[]>("/api/game-categories")
-  const { data: presses } = useSWR<any[]>("/api/game-presses")
+  const { data: categories } = useSWR<{ id: string; name: string; depth: number; isLeaf: boolean }[]>("/api/game-categories")
+  const { data: presses } = useSWR<{ id: string; name: string }[]>("/api/game-presses")
   const { data: counts } = useSWR<GameCounts>("/api/course-games/counts")
   const { games, isLoading, isValidating, hasMore, sentinelRef } =
     useInfiniteGames(activeFilter)

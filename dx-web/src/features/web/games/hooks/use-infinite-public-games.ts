@@ -14,7 +14,7 @@ type Filters = {
 export function useInfinitePublicGames(filters: Filters = {}) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  const getKey = (pageIndex: number, previousPageData: any) => {
+  const getKey = (pageIndex: number, previousPageData: { hasMore: boolean; nextCursor?: string; items?: unknown[] } | null) => {
     if (previousPageData && !previousPageData.hasMore) return null
     const cursor = previousPageData?.nextCursor
     const params = new URLSearchParams()

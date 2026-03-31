@@ -1,12 +1,27 @@
 import { apiClient } from "@/lib/api-client";
 
+export type ReferralItem = {
+  id: string;
+  status: string;
+  rewardAmount: number;
+  rewardedAt: string | null;
+  createdAt: string;
+  invitee: {
+    id: string;
+    username: string;
+    nickname: string | null;
+    email: string | null;
+    grade: string;
+  } | null;
+};
+
 /** Fetch a specific page of referral records for the current user */
 export async function fetchReferralPage(page: number) {
   try {
     const safePage = Math.max(1, Math.floor(page));
 
     const res = await apiClient.get<{
-      items: any[];
+      items: ReferralItem[];
       total: number;
       page: number;
       pageSize: number;

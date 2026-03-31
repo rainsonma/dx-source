@@ -147,6 +147,7 @@ export function GameModeCard({
       setHasActiveLevelSession(result.data !== null);
     });
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSession.id is sufficient, full object would cause infinite loop
   }, [open, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isLsrw]);
 
   if (!open) return null;

@@ -378,6 +378,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
                 <span className="text-[11px] font-semibold text-muted-foreground">群邀请二维码</span>
               </div>
               <div className="flex flex-col items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={group.invite_qrcode_url}
                   alt="群组邀请二维码"

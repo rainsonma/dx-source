@@ -17,6 +17,8 @@ export function useGameSearch() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recentLoadedRef = useRef(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect -- search dialog patterns require setState in effects */
+
   /** Load recent games once when dialog opens */
   useEffect(() => {
     if (!isOpen) return;
@@ -62,6 +64,8 @@ export function useGameSearch() {
       stale = true;
     };
   }, [query]);
+
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   /** Register Cmd+K / Ctrl+K keyboard shortcut */
   useEffect(() => {

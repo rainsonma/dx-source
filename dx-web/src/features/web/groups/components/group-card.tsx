@@ -37,64 +37,62 @@ export function GroupCard({ group, isMember = true, highlighted = false, onJoin 
   const v = variantClasses[variant];
   const letter = group.name[0];
 
-  const Wrapper = isMember ? Link : "div";
-  const wrapperProps = isMember
-    ? { href: `/hall/groups/${group.id}`, className: "block" }
-    : { className: "block" };
-
-  return (
-    <Wrapper {...(wrapperProps as any)}>
-      <div
-        className={`flex flex-col gap-3.5 rounded-[14px] p-5 transition-colors hover:shadow-sm ${
-          highlighted
-            ? "border-2 border-teal-600 bg-teal-50/50"
-            : "border border-border bg-card"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${v.avatarBg}`}
-          >
-            <span className={`text-lg font-bold ${v.avatarColor}`}>{letter}</span>
-          </div>
-          <div className="flex flex-1 flex-col gap-0.5">
-            <span className="text-[15px] font-semibold text-foreground">{group.name}</span>
-            <div className="flex items-center gap-1.5">
-              <div className={`flex h-[18px] w-[18px] items-center justify-center rounded-full ${v.avatarBg}`}>
-                <span className={`text-[8px] font-semibold ${v.avatarColor}`}>{group.owner_name[0]}</span>
-              </div>
-              <span className="text-xs font-medium text-muted-foreground">{group.owner_name}</span>
-              <span className="text-xs text-muted-foreground">·</span>
-              <span className="text-xs text-muted-foreground">{group.member_count} 人</span>
-            </div>
-          </div>
-          {isMember ? (
-            <span className="rounded-md bg-teal-600/10 px-2.5 py-1 text-[11px] font-medium text-teal-600">已加入</span>
-          ) : group.has_applied ? (
-            <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600">申请审核中...</span>
-          ) : (
-            <button
-              type="button"
-              onClick={(e) => { e.preventDefault(); onJoin?.(); }}
-              className="flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-            >
-              <Plus className="h-[11px] w-[11px]" />
-              加入
-            </button>
-          )}
+  const cardContent = (
+    <div
+      className={`flex flex-col gap-3.5 rounded-[14px] p-5 transition-colors hover:shadow-sm ${
+        highlighted
+          ? "border-2 border-teal-600 bg-teal-50/50"
+          : "border border-border bg-card"
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${v.avatarBg}`}
+        >
+          <span className={`text-lg font-bold ${v.avatarColor}`}>{letter}</span>
         </div>
-
-        {group.description && (
-          <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{group.description}</p>
-        )}
-
-        <div className="flex items-center justify-end">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-400/10">
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-1 flex-col gap-0.5">
+          <span className="text-[15px] font-semibold text-foreground">{group.name}</span>
+          <div className="flex items-center gap-1.5">
+            <div className={`flex h-[18px] w-[18px] items-center justify-center rounded-full ${v.avatarBg}`}>
+              <span className={`text-[8px] font-semibold ${v.avatarColor}`}>{group.owner_name[0]}</span>
+            </div>
+            <span className="text-xs font-medium text-muted-foreground">{group.owner_name}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">{group.member_count} 人</span>
           </div>
+        </div>
+        {isMember ? (
+          <span className="rounded-md bg-teal-600/10 px-2.5 py-1 text-[11px] font-medium text-teal-600">已加入</span>
+        ) : group.has_applied ? (
+          <span className="rounded-md bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-600">申请审核中...</span>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); onJoin?.(); }}
+            className="flex items-center gap-1 rounded-md bg-muted px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+          >
+            <Plus className="h-[11px] w-[11px]" />
+            加入
+          </button>
+        )}
+      </div>
+
+      {group.description && (
+        <p className="line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{group.description}</p>
+      )}
+
+      <div className="flex items-center justify-end">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-400/10">
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
-    </Wrapper>
+    </div>
   );
+
+  if (isMember) {
+    return <Link href={`/hall/groups/${group.id}`} className="block">{cardContent}</Link>;
+  }
+  return <div className="block">{cardContent}</div>;
 }

@@ -63,6 +63,11 @@ import {
   generateContentItems,
 } from "@/features/web/ai-custom/helpers/generate-items-api";
 import type { LevelMeta, LevelContentItem } from "@/features/web/ai-custom/actions/course-game.action";
+
+type ContentGroup = {
+  meta: { id: string } | null;
+  items: LevelContentItem[];
+};
 import { MAX_SENTENCES, MAX_VOCAB } from "@/features/web/ai-custom/helpers/format-metadata";
 import { SOURCE_TYPES } from "@/consts/source-type";
 import { ProcessingOverlay } from "@/features/web/ai-custom/components/processing-overlay";
@@ -137,8 +142,8 @@ export function LevelUnitsPanel({
     if (selectedId) {
       fetchContentItemsAction(gameId, levelId).then((result) => {
         // Filter items by the selected meta from the grouped response
-        const group = (result.items as any[]).find(
-          (g: any) => g.meta?.id === selectedId
+        const group = (result.items as unknown as ContentGroup[]).find(
+          (g) => g.meta?.id === selectedId
         );
         setContentItems(group?.items ?? []);
       });
@@ -199,8 +204,8 @@ export function LevelUnitsPanel({
     setIsLoadingItems(true);
     const result = await fetchContentItemsAction(gameId, levelId);
     // Filter items by the selected meta from the grouped response
-    const group = (result.items as any[]).find(
-      (g: any) => g.meta?.id === metaId
+    const group = (result.items as unknown as ContentGroup[]).find(
+      (g) => g.meta?.id === metaId
     );
     setContentItems(group?.items ?? []);
     setIsLoadingItems(false);

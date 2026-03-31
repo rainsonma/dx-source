@@ -10,6 +10,7 @@ export function useValueFlash(value: number) {
   useEffect(() => {
     if (value !== prevRef.current) {
       prevRef.current = value;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- trigger animation on value change
       setFlashKey((k) => k + 1);
     }
   }, [value]);

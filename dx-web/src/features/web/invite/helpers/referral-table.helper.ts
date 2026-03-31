@@ -27,7 +27,7 @@ export function maskEmail(email: string | null): string {
 }
 
 /** Format a date to YYYY-MM-DD string */
-export function formatDate(date: Date): string {
+export function formatDate(date: Date | string): string {
   return new Date(date).toLocaleDateString("zh-CN", {
     year: "numeric",
     month: "2-digit",

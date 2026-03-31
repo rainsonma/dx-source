@@ -218,6 +218,7 @@ export function GroupPlayShell({
     if (phase === "result" && groupPhase !== "result") {
       completeAndWait();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- completeAndWait uses refs and store state, not a stable dep
   }, [phase, groupPhase]);
 
   if (phase === "loading") {

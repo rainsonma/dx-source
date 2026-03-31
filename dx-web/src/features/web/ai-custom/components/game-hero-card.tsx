@@ -116,6 +116,7 @@ export function GameHeroCard({
         <div className="flex w-full flex-col gap-5 p-4 lg:flex-row lg:gap-7 lg:p-6">
           {/* Cover */}
           {game.cover ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={game.cover.url}
               alt={game.name}

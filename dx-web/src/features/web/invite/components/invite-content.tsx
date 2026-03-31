@@ -16,21 +16,7 @@ import { InviteQrCard } from "@/features/web/invite/components/invite-qr-card";
 import { InviteReferralTable } from "@/features/web/invite/components/invite-referral-table";
 import { ShareSnippetsModal } from "@/features/web/invite/components/share-snippets-modal";
 import type { InviteStats } from "@/features/web/invite/helpers/invite-stats.helper";
-
-type ReferralItem = {
-  id: string;
-  status: string;
-  rewardAmount: number;
-  rewardedAt: Date | null;
-  createdAt: Date;
-  invitee: {
-    id: string;
-    username: string;
-    nickname: string | null;
-    email: string | null;
-    grade: string;
-  } | null;
-};
+import type { ReferralItem } from "@/features/web/invite/actions/invite.action";
 
 type InviteContentProps = {
   inviteUrl: string;

@@ -56,6 +56,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
 
   useEffect(() => {
     if (!group) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetches initial data on mount, setState is inside async callback
     fetchRoomMembers();
   }, [group, fetchRoomMembers]);
 

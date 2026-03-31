@@ -6,8 +6,11 @@ import { GamesPageContent } from "@/features/web/games/components/games-page-con
 import { PageSpinner } from "@/components/in/page-spinner"
 
 export default function HallGamesPage() {
-  const { data: categories, isLoading: catLoading } = useSWR<any[]>("/api/game-categories")
-  const { data: presses, isLoading: pressLoading } = useSWR<any[]>("/api/game-presses")
+  type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean }
+  type PressOption = { id: string; name: string }
+
+  const { data: categories, isLoading: catLoading } = useSWR<CategoryOption[]>("/api/game-categories")
+  const { data: presses, isLoading: pressLoading } = useSWR<PressOption[]>("/api/game-presses")
 
   const isLoading = catLoading || pressLoading
 

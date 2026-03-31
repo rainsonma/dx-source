@@ -9,9 +9,8 @@ import { MobileNav } from "@/components/in/mobile-nav";
 export function LandingHeader() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    setIsLoggedIn(!!getAccessToken());
-  }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only token check, cannot derive during SSR
+  useEffect(() => { setIsLoggedIn(!!getAccessToken()); }, []);
 
   return (
     <header className="flex h-20 w-full items-center justify-between px-5 lg:px-20">

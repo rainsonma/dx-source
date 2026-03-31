@@ -15,13 +15,27 @@ export default function CourseGameLevelPage({
   const { id, levelId } = use(params)
 
   const { data: game, isLoading: gameLoading } = useSWR(`/api/course-games/${id}`)
-  const { data: contentGroups, isLoading: contentLoading } = useSWR<any[]>(
+  type ContentGroupItem = { items: unknown[] | null };
+  type ContentGroup = {
+    meta: {
+      id: string;
+      sourceData: string;
+      translation: string | null;
+      sourceFrom: string;
+      sourceType: string;
+      isBreakDone: boolean;
+      order: number;
+    };
+    items?: ContentGroupItem[];
+  };
+
+  const { data: contentGroups, isLoading: contentLoading } = useSWR<ContentGroup[]>(
     `/api/course-games/${id}/levels/${levelId}/content-items`
   )
 
   if (gameLoading || contentLoading) return <PageSpinner size="lg" />
 
-  const metas = (contentGroups ?? []).map((group: any) => ({
+  const metas = (contentGroups ?? []).map((group) => ({
     id: group.meta.id,
     sourceData: group.meta.sourceData,
     translation: group.meta.translation ?? null,
@@ -29,12 +43,12 @@ export default function CourseGameLevelPage({
     sourceType: group.meta.sourceType,
     isBreakDone: group.meta.isBreakDone,
     isItemDone: group.meta.isBreakDone && (group.items?.length ?? 0) > 0
-      && group.items.every((item: any) => item.items !== null),
+      && group.items!.every((item) => item.items !== null),
     order: group.meta.order,
     itemCount: group.items?.length ?? 0,
   }))
 
-  const level = game?.levels?.find((l: any) => l.id === levelId)
+  const level = game?.levels?.find((l: { id: string }) => l.id === levelId)
   const isPublished = game?.status === GAME_STATUSES.PUBLISHED
 
   return (

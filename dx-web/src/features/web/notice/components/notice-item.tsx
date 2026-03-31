@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import type { NoticeItem as NoticeItemType } from "@/features/web/notice/actions/notice.action";
 import { resolveNoticeIcon } from "@/features/web/notice/helpers/notice-icon";
@@ -12,12 +13,12 @@ interface NoticeItemProps {
 
 /** Renders a single notice row with dynamic icon */
 export function NoticeItem({ notice, isAdmin, onEdit, onDelete }: NoticeItemProps) {
-  const Icon = resolveNoticeIcon(notice.icon);
+  const icon = resolveNoticeIcon(notice.icon);
 
   return (
     <div className="flex gap-3.5 border-b border-slate-200 px-4 py-4 last:border-b-0 lg:px-5">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-teal-50">
-        <Icon className="h-[18px] w-[18px] text-teal-600" />
+        {createElement(icon, { className: "h-[18px] w-[18px] text-teal-600" })}
       </div>
       <div className="flex flex-1 flex-col gap-1.5">
         <span className="text-sm font-semibold text-slate-900">

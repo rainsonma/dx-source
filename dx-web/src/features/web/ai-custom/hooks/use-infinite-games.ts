@@ -8,7 +8,7 @@ type StatusFilter = "all" | "published" | "withdraw" | "draft"
 export function useInfiniteGames(status: StatusFilter = "all") {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
-  const getKey = (pageIndex: number, previousPageData: any) => {
+  const getKey = (pageIndex: number, previousPageData: { hasMore: boolean; nextCursor?: string } | null) => {
     if (previousPageData && !previousPageData.hasMore) return null
     const cursor = previousPageData?.nextCursor
     const params = new URLSearchParams()

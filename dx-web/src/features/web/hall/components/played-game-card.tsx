@@ -39,6 +39,7 @@ export function PlayedGameCard({ game }: { game: PlayedGameCardType }) {
       className="flex w-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
     >
       {game.cover ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={game.cover.url}
           alt={game.name}

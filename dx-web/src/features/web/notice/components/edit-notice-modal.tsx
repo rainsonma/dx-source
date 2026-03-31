@@ -37,6 +37,7 @@ export function EditNoticeModal({
   /** Sync form fields when notice changes */
   useEffect(() => {
     if (notice) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initialize form from prop when notice changes
       setTitle(notice.title);
       setContent(notice.content ?? "");
       setIcon(notice.icon ?? "");

@@ -60,7 +60,7 @@ export function SetGameDialog({
       setIsSearching(false);
       fetchGames("", 3);
     }
-  }, [open, currentGameId, currentGameMode, fetchGames]);
+  }, [open, currentGameId, currentGameMode, currentLevelTimeLimit, fetchGames]);
 
   // Debounced search
   useEffect(() => {
@@ -85,14 +85,15 @@ export function SetGameDialog({
       return;
     }
     async function fetchLevels() {
-      const res = await apiClient.get<any>(`/api/games/${selectedGameId}`);
+      const res = await apiClient.get<{ levels?: { id: string; name: string; order: number }[] }>(`/api/games/${selectedGameId}`);
       if (res.code === 0 && res.data?.levels) {
-        const lvls = (res.data.levels as any[]).map((l: any) => ({ id: l.id, name: l.name, order: l.order }));
+        const lvls = res.data.levels.map((l) => ({ id: l.id, name: l.name, order: l.order }));
         setLevels(lvls);
         setSelectedLevelId(currentStartLevelId ?? lvls[0]?.id ?? null);
       }
     }
     fetchLevels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-fetch when selected game changes
   }, [selectedGameId]);
 
   async function handleConfirm() {

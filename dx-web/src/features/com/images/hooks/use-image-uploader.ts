@@ -33,7 +33,7 @@ export function useImageUploader({
   const uppyRef = useRef<Uppy<{ role: string }, UploadedImage> | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const onUploadCompleteRef = useRef(onUploadComplete);
-  onUploadCompleteRef.current = onUploadComplete;
+  useEffect(() => { onUploadCompleteRef.current = onUploadComplete; });
 
   useEffect(() => {
     const uppy = new Uppy<{ role: string }, UploadedImage>({

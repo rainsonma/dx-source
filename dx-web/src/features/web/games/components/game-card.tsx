@@ -52,6 +52,7 @@ export function GameCard({ game }: { game: PublicGameCard }) {
       {/* Cover */}
       {game.cover?.url ? (
         <div className="h-[180px] w-full bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={game.cover.url}
             alt={game.name}

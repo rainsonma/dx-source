@@ -43,6 +43,7 @@ export function ImageUploader({
       {image ? (
         /* Preview after upload */
         <div className="relative flex items-center gap-3 rounded-[10px] border border-border bg-muted p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.url}
             alt={image.name}

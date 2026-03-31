@@ -61,6 +61,7 @@ export function GameCardItem({ game }: { game: GameCard }) {
       {/* Cover */}
       <div className={`relative flex h-[120px] items-center justify-center ${(game.coverUrl || game.cover?.url) ? "bg-border" : pickCoverColor(game.id)}`}>
         {(game.coverUrl || game.cover?.url) ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={game.coverUrl ?? game.cover?.url ?? ""}
             alt={game.name}

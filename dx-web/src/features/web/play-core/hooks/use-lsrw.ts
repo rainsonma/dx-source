@@ -7,9 +7,6 @@ import { getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer
 import { SCORING } from "@/consts/scoring";
 import type { SpellingItem, TypedWord } from "@/features/web/play-core/types/spelling";
 
-const REVEAL_DELAY_MS = 1200;
-const ERROR_ANIMATION_MS = 400;
-
 export function useLsrw() {
   const currentIndex = useGameStore((s) => s.currentIndex);
   const contentItems = useGameStore((s) => s.contentItems);
@@ -28,7 +25,7 @@ export function useLsrw() {
   const [typedWords, setTypedWords] = useState<TypedWord[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [hasError, setHasError] = useState(false);
-  const [hadWrongAttempt, setHadWrongAttempt] = useState(false);
+  const [, setHadWrongAttempt] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
@@ -36,7 +33,7 @@ export function useLsrw() {
   const revealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hadWrongAttemptRef = useRef(false);
   const isProcessingRef = useRef(false);
-  const itemStartTimeRef = useRef<number>(Date.now());
+  const itemStartTimeRef = useRef<number>(0);
 
   const currentItem = contentItems?.[currentIndex] ?? null;
   const rawItems = currentItem?.items;
@@ -204,6 +201,7 @@ export function useLsrw() {
         // Wait for user to press Enter/Space to advance (handled in handleKeyDown)
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recordAnswerAction/markAsReviewAction are stable context values
     [
       currentWord,
       isRevealed,
@@ -267,6 +265,7 @@ export function useLsrw() {
     // Show reveal — user must press again to advance
     setIsRevealed(true);
     isProcessingRef.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recordSkipAction is a stable context value
   }, [
     currentItem,
     isRevealed,

@@ -233,7 +233,7 @@ export async function fetchContentItemsAction(
   levelId: string
 ): Promise<FetchContentItemsResult> {
   try {
-    const res = await apiClient.get<any[]>(
+    const res = await apiClient.get<LevelContentItem[]>(
       `/api/course-games/${gameId}/levels/${levelId}/content-items`
     );
 
@@ -300,7 +300,7 @@ export async function insertContentItemAction(
   }
 ): Promise<InsertContentItemResult> {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<LevelContentItem>(
       `/api/course-games/${gameId}/levels/${data.gameLevelId}/content-items`,
       data
     );

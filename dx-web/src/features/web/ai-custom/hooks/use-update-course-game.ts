@@ -13,10 +13,10 @@ const initialState: UpdateGameResult = {}
 export function useUpdateCourseGame(gameId: string, onSuccess?: () => void) {
   const [coverId, setCoverId] = useState<string | null>(null)
   const onSuccessRef = useRef(onSuccess)
-  onSuccessRef.current = onSuccess
+  useEffect(() => { onSuccessRef.current = onSuccess })
 
   const boundAction = useCallback(
-    updateCourseGameAction.bind(null, gameId),
+    (prev: UpdateGameResult, formData: FormData) => updateCourseGameAction(gameId, prev, formData),
     [gameId]
   )
 

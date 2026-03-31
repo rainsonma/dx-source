@@ -12,10 +12,10 @@ const initialState: GameLevelActionResult = {}
 
 export function useCreateGameLevel(gameId: string, onSuccess?: () => void) {
   const onSuccessRef = useRef(onSuccess)
-  onSuccessRef.current = onSuccess
+  useEffect(() => { onSuccessRef.current = onSuccess })
 
   const boundAction = useCallback(
-    createGameLevelAction.bind(null, gameId),
+    (prev: GameLevelActionResult, formData: FormData) => createGameLevelAction(gameId, prev, formData),
     [gameId]
   )
 

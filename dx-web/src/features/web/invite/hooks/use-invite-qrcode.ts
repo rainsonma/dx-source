@@ -32,10 +32,11 @@ export function useInviteQrcode(url: string) {
 
     renderQrcode();
 
+    const el = containerRef.current;
     return () => {
       cancelled = true;
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+      if (el) {
+        el.innerHTML = "";
       }
     };
   }, [url]);

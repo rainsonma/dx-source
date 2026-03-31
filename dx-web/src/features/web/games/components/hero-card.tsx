@@ -50,6 +50,7 @@ export function HeroCard({
       <div className="flex w-full flex-col gap-5 p-4 lg:flex-row lg:gap-7 lg:p-6">
         {/* Cover image / fallback */}
         {coverUrl ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={coverUrl}
             alt={title}

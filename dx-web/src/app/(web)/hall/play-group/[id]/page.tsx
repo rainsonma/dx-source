@@ -23,7 +23,28 @@ export default function GroupPlayPage({
   const levelTimeLimit = levelTimeLimitRaw ? Number(levelTimeLimitRaw) : null;
   const gameMode = searchParams.get("gameMode");
 
-  const [game, setGame] = useState<any>(null);
+  type GameData = {
+    id: string;
+    name: string;
+    mode: string;
+    levels: { id: string; name: string; order: number }[];
+  };
+
+  type ApiGameData = {
+    id: string;
+    name: string;
+    mode: string;
+    levels?: { id: string; name: string; order: number }[];
+  };
+
+  type ApiProfileData = {
+    id?: string;
+    nickname?: string | null;
+    username?: string;
+    avatarUrl?: string | null;
+  };
+
+  const [game, setGame] = useState<GameData | null>(null);
   const [player, setPlayer] = useState<{
     id: string;
     nickname: string;
@@ -34,8 +55,8 @@ export default function GroupPlayPage({
   useEffect(() => {
     async function load() {
       const [gameRes, profileRes] = await Promise.all([
-        apiClient.get<any>(`/api/games/${id}`),
-        apiClient.get<any>("/api/user/profile"),
+        apiClient.get<ApiGameData>(`/api/games/${id}`),
+        apiClient.get<ApiProfileData>("/api/user/profile"),
       ]);
 
       if (gameRes.code !== 0 || !gameRes.data) {
@@ -48,7 +69,7 @@ export default function GroupPlayPage({
         id: g.id,
         name: g.name,
         mode: g.mode,
-        levels: ((g.levels as any[]) ?? []).map((l: any) => ({
+        levels: (g.levels ?? []).map((l) => ({
           id: l.id,
           name: l.name,
           order: l.order,

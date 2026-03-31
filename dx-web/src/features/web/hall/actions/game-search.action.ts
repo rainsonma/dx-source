@@ -13,12 +13,12 @@ export type GameSearchActionResult = {
 };
 
 /** Map Go API flat search/recent result to the nested GameSearchResult shape */
-function toGameSearchResult(item: any): GameSearchResult {
+function toGameSearchResult(item: Record<string, unknown>): GameSearchResult {
   return {
-    id: item.id,
-    name: item.name,
-    mode: item.mode,
-    category: item.categoryName ? { name: item.categoryName } : null,
+    id: item.id as string,
+    name: item.name as string,
+    mode: item.mode as string,
+    category: item.categoryName ? { name: item.categoryName as string } : null,
   };
 }
 
@@ -34,7 +34,7 @@ export async function searchGamesAction(
       q: trimmed,
       limit: "8",
     });
-    const res = await apiClient.get<any[]>(`/api/games/search?${params}`);
+    const res = await apiClient.get<Record<string, unknown>[]>(`/api/games/search?${params}`);
 
     if (res.code !== 0) {
       return { games: [], error: res.message };
@@ -49,7 +49,7 @@ export async function searchGamesAction(
 /** Get current user's recently played games */
 export async function getRecentGamesAction(): Promise<GameSearchActionResult> {
   try {
-    const res = await apiClient.get<any[]>("/api/games/recent");
+    const res = await apiClient.get<Record<string, unknown>[]>("/api/games/recent");
 
     if (res.code !== 0) {
       return { games: [], error: res.message };

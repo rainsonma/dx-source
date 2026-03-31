@@ -14,7 +14,7 @@ import {
 } from "@/consts/referral-status";
 import type { ReferralStatus } from "@/consts/referral-status";
 import { DataTablePagination } from "@/components/in/data-table-pagination";
-import { fetchReferralPage } from "@/features/web/invite/actions/invite.action";
+import { fetchReferralPage, type ReferralItem } from "@/features/web/invite/actions/invite.action";
 import {
   AVATAR_COLORS,
   getDisplayName,
@@ -24,20 +24,7 @@ import {
   getStatusClasses,
 } from "@/features/web/invite/helpers/referral-table.helper";
 
-type Referral = {
-  id: string;
-  status: string;
-  rewardAmount: number;
-  rewardedAt: Date | null;
-  createdAt: Date;
-  invitee: {
-    id: string;
-    username: string;
-    nickname: string | null;
-    email: string | null;
-    grade: string;
-  } | null;
-};
+type Referral = ReferralItem;
 
 type InviteReferralTableProps = {
   initialReferrals: Referral[];

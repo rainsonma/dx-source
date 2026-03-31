@@ -5,11 +5,12 @@ import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { InviteContent } from "@/features/web/invite/components/invite-content";
 import type { InviteStats } from "@/features/web/invite/helpers/invite-stats.helper";
+import type { ReferralItem } from "@/features/web/invite/actions/invite.action";
 
 type ApiInviteData = {
   inviteCode: string;
   stats: { total: number; pending: number; paid: number; rewarded: number };
-  referrals: any[];
+  referrals: ReferralItem[];
   totalReferrals: number;
 };
 
@@ -23,7 +24,7 @@ const emptyStats: InviteStats = {
 
 export default function InvitePage() {
   const [inviteUrl, setInviteUrl] = useState("");
-  const [referrals, setReferrals] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<ReferralItem[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [stats, setStats] = useState<InviteStats>(emptyStats);
 

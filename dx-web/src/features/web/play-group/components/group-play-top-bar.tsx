@@ -73,6 +73,8 @@ export function GroupPlayTopBar({
   const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
   const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
 
+  /* eslint-disable react-hooks/set-state-in-effect -- SSE event handlers and countdown timer require setState in effects */
+
   useEffect(() => {
     if (!lastPlayerAction) return;
     switch (lastPlayerAction.action) {
@@ -97,7 +99,7 @@ export function GroupPlayTopBar({
 
   const [countdown, setCountdown] = useState(levelTimeLimit * 60);
   const onLevelTimeUpRef = useRef(onLevelTimeUp);
-  onLevelTimeUpRef.current = onLevelTimeUp;
+  useEffect(() => { onLevelTimeUpRef.current = onLevelTimeUp; });
 
   useEffect(() => {
     setCountdown(levelTimeLimit * 60);
@@ -113,6 +115,8 @@ export function GroupPlayTopBar({
     }, 1000);
     return () => clearInterval(interval);
   }, [levelTimeLimit]);
+
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const countdownMins = Math.floor(countdown / 60);
   const countdownSecs = countdown % 60;
@@ -216,7 +220,6 @@ export function GroupPlayTopBar({
               <div className="flex flex-wrap gap-1.5">
                 {participants.members.map((m) => {
                   const isCompleted = completedPlayerIds.includes(m.user_id);
-                  const isMe = m.user_id === playerId;
                   const color = getAvatarColor(m.user_id);
                   return (
                     <Avatar

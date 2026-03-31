@@ -8,7 +8,7 @@ export async function startSessionAction(
   gameGroupId: string
 ) {
   try {
-    const res = await apiClient.post<any>("/api/play-group/start", {
+    const res = await apiClient.post<{ id: string; levelId?: string }>("/api/play-group/start", {
       game_id: gameId,
       degree,
       pattern,
@@ -29,7 +29,7 @@ export async function startLevelAction(
   pattern: string | null
 ) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>(
       `/api/play-group/${sessionId}/levels/start`,
       { game_level_id: gameLevelId, degree, pattern }
     );
@@ -46,7 +46,7 @@ export async function completeLevelAction(
   data: { score: number; maxCombo: number; totalItems: number }
 ) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${sessionId}/levels/${gameLevelId}/complete`,
       { score: data.score, max_combo: data.maxCombo, total_items: data.totalItems }
     );
@@ -74,7 +74,7 @@ export async function recordAnswerAction(data: {
   duration: number;
 }) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${data.gameSessionTotalId}/answers`,
       {
         game_session_level_id: data.gameSessionLevelId,
@@ -106,7 +106,7 @@ export async function recordSkipAction(data: {
   nextContentItemId: string | null;
 }) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${data.gameSessionTotalId}/skips`,
       {
         game_level_id: data.gameLevelId,
@@ -126,7 +126,7 @@ export async function syncPlayTimeAction(
   playTime: number
 ) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${sessionId}/sync-playtime`,
       { play_time: playTime }
     );
@@ -137,9 +137,20 @@ export async function syncPlayTimeAction(
   }
 }
 
+type RestoreData = {
+  sessionLevel?: {
+    score: number;
+    maxCombo: number;
+    correctCount: number;
+    wrongCount: number;
+    skipCount: number;
+    playTime: number;
+  };
+};
+
 export async function restoreSessionDataAction(sessionId: string) {
   try {
-    const res = await apiClient.get<any>(
+    const res = await apiClient.get<RestoreData>(
       `/api/play-group/${sessionId}/restore`
     );
     if (res.code !== 0) return { data: null, error: res.message || "恢复会话数据失败" };
@@ -154,7 +165,7 @@ export async function updateContentItemAction(
   contentItemId: string | null
 ) {
   try {
-    const res = await apiClient.put<any>(
+    const res = await apiClient.put<unknown>(
       `/api/play-group/${sessionId}/content-item`,
       { content_item_id: contentItemId }
     );
@@ -179,7 +190,7 @@ export async function endSessionAction(
   }
 ) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${sessionId}/end`,
       {
         game_id: data.gameId,
@@ -201,7 +212,7 @@ export async function endSessionAction(
 
 export async function restartLevelAction(sessionId: string, levelId: string) {
   try {
-    const res = await apiClient.post<any>(
+    const res = await apiClient.post<unknown>(
       `/api/play-group/${sessionId}/levels/${levelId}/restart`
     );
     if (res.code !== 0) return { data: null, error: res.message || "重置关卡失败" };
@@ -218,7 +229,7 @@ export async function markAsReviewAction(data: {
 }) {
   // Uses shared tracking API — not play-group specific
   try {
-    await apiClient.post<any>("/api/tracking/review", {
+    await apiClient.post<unknown>("/api/tracking/review", {
       content_item_id: data.contentItemId,
       game_id: data.gameId,
       game_level_id: data.gameLevelId,
@@ -235,7 +246,7 @@ export async function fetchLevelContentAction(
 ) {
   try {
     const params = degree ? `?degree=${degree}` : "";
-    const res = await apiClient.get<any[]>(
+    const res = await apiClient.get<Record<string, unknown>[]>(
       `/api/games/${gameId}/levels/${levelId}/content${params}`
     );
     if (res.code !== 0) return { data: null, error: res.message || "加载内容失败" };

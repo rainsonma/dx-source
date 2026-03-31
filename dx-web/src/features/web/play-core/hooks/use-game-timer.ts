@@ -36,6 +36,7 @@ export function useGameTimer(initialSeconds: number = 0) {
       setElapsed(initialSeconds);
       currentElapsed = initialSeconds;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- elapsed is intentionally excluded to avoid loop
   }, [phase, initialSeconds]);
 
   // Start/stop interval based on running state
