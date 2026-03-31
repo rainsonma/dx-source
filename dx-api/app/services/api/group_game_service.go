@@ -111,6 +111,7 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, 
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	return nil
 }
 
@@ -133,6 +134,7 @@ func ClearGroupGame(userID, groupID string) error {
 	); err != nil {
 		return fmt.Errorf("failed to clear group game: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	return nil
 }
 
@@ -342,6 +344,7 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		LevelName:      startLevel.Name,
 		Participants:   participants,
 	})
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
 
 	return nil
 }
@@ -418,6 +421,7 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_force_end", map[string]any{
 		"results": results,
 	})
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
 
 	return results, nil
 }

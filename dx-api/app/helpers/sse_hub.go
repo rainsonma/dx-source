@@ -27,8 +27,7 @@ var GroupSSEHub = &SSEHub{
 
 // Register adds a connection for a user in a group and broadcasts join event.
 func (h *SSEHub) Register(groupID, userID string, w http.ResponseWriter) *SSEConnection {
-	flusher, _ := w.(http.Flusher)
-	conn := &SSEConnection{w: w, flusher: flusher, done: make(chan struct{})}
+	conn := NewSSEConnection(w)
 
 	h.mu.Lock()
 	if h.conns[groupID] == nil {
@@ -119,4 +118,10 @@ func (conn *SSEConnection) SendHeartbeat() error {
 // Done returns a channel that closes when the connection should end.
 func (conn *SSEConnection) Done() <-chan struct{} {
 	return conn.done
+}
+
+// NewSSEConnection creates an SSEConnection from an http.ResponseWriter.
+func NewSSEConnection(w http.ResponseWriter) *SSEConnection {
+	flusher, _ := w.(http.Flusher)
+	return &SSEConnection{w: w, flusher: flusher, done: make(chan struct{})}
 }

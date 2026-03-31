@@ -479,7 +479,8 @@ If no next level exists, the button shows "结束" instead (links back to group 
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/groups/{id}/events?token=JWT` | SSE connection (query-param auth) |
+| GET | `/api/groups/{id}/events?token=JWT` | SSE connection for game room (query-param auth) |
+| GET | `/api/groups/{id}/notify?token=JWT` | SSE connection for group detail notifications (query-param auth) |
 | POST | `/api/groups/{id}/start-game` | Owner starts game round |
 | POST | `/api/groups/{id}/force-end` | Owner force-ends game |
 | GET | `/api/groups/{id}/room-members` | List members currently in the game room |
@@ -522,6 +523,41 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | `group_dismissed` | Owner dismisses the group | `{ group_id }` |
 | `room_member_joined` | Member enters game room (SSE connects) | `{ user_id }` |
 | `room_member_left` | Member leaves game room (SSE disconnects) | `{ user_id }` |
+| `group_updated` | Any group state mutation (see Notification Scopes below) | `{ scope }` — triggers SWR revalidation on group detail page |
+
+## Group Detail Notifications
+
+### Notification SSE Endpoint
+
+A separate, lightweight SSE endpoint for pushing real-time updates to the group detail page. Unlike the game room SSE (`/api/groups/{id}/events`), this endpoint has **no presence tracking** — connecting and disconnecting does not broadcast any events and does not affect game mechanics.
+
+**Endpoint:** `GET /api/groups/{id}/notify?token=JWT`
+
+- Query-param JWT auth (same as game room SSE)
+- Members only — non-members receive 403
+- 30-second heartbeat keepalive
+- Exponential backoff reconnection (1s → 30s, max 10 retries)
+
+### Event Format
+
+A single event type `group_updated` with a scope field:
+
+```json
+{ "scope": "applications" }
+```
+
+### Notification Scopes
+
+| Scope | Trigger | What updates on group detail page |
+|-------|---------|----------------------------------|
+| `applications` | Member applies, cancels, or owner accepts/rejects | 待审批 badge count + modal list |
+| `members` | Member accepted, kicked, or leaves | 群成员 list |
+| `subgroups` | Subgroup created, updated, deleted, or members assigned/removed | 群小组 list |
+| `detail` | Game set/cleared/started/ended, member count changed, subgroup deleted | Group info card, 当前课程游戏 section, 进入教室 button |
+
+### Frontend Behavior
+
+The group detail page connects to the notification SSE on mount. When a `group_updated` event arrives, the frontend invalidates the corresponding SWR cache key, triggering a refetch from the API. No payload is pushed — the SSE event is a lightweight "poke" to revalidate.
 
 ## Database Schema (Group Play Fields)
 

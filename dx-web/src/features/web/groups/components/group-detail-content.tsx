@@ -42,6 +42,7 @@ import { ApplicationListDialog } from "./application-list";
 import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { SetGameDialog } from "./set-game-dialog";
+import { useGroupNotify } from "@/hooks/use-group-notify";
 
 interface GroupDetailContentProps {
   id: string;
@@ -75,6 +76,13 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const { data: appsData } = useSWR<ApplicationsResponse>(
     group?.is_owner ? `/api/groups/${id}/applications` : null
   );
+
+  useGroupNotify(id, (scope) => {
+    if (scope === "applications") swrMutate(`/api/groups/${id}/applications`);
+    if (scope === "members") swrMutate(`/api/groups/${id}/members`);
+    if (scope === "subgroups") swrMutate(`/api/groups/${id}/subgroups`);
+    if (scope === "detail") swrMutate(`/api/groups/${id}`);
+  });
 
   const members = membersData?.items ?? [];
   const subgroupList = subgroups ?? [];

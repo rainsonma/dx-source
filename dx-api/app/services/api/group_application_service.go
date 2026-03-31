@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/contracts/database/orm"
@@ -55,6 +56,7 @@ func ApplyToGroup(userID, groupID string) (string, error) {
 	if err := facades.Orm().Query().Create(&app); err != nil {
 		return "", fmt.Errorf("failed to create application: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	return app.ID, nil
 }
 
@@ -72,6 +74,7 @@ func CancelApplication(userID, groupID string) error {
 	if _, err := facades.Orm().Query().Where("id", app.ID).Delete(&models.GameGroupApplication{}); err != nil {
 		return fmt.Errorf("failed to cancel application: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	return nil
 }
 
@@ -164,7 +167,7 @@ func HandleApplication(userID, groupID, appID, action string) error {
 		if group.MemberCount >= consts.MaxGroupMembers {
 			return ErrGroupMembersFull
 		}
-		return facades.Orm().Transaction(func(tx orm.Query) error {
+		if err := facades.Orm().Transaction(func(tx orm.Query) error {
 			if _, err := tx.Model(&models.GameGroupApplication{}).Where("id", appID).Update("status", consts.ApplicationStatusAccepted); err != nil {
 				return fmt.Errorf("failed to update application status: %w", err)
 			}
@@ -180,12 +183,19 @@ func HandleApplication(userID, groupID, appID, action string) error {
 				return fmt.Errorf("failed to increment member_count: %w", err)
 			}
 			return nil
-		})
+		}); err != nil {
+			return err
+		}
+		helpers.GroupNotifyHub.Notify(groupID, "applications")
+		helpers.GroupNotifyHub.Notify(groupID, "members")
+		helpers.GroupNotifyHub.Notify(groupID, "detail")
+		return nil
 	}
 
 	// reject
 	if _, err := facades.Orm().Query().Model(&models.GameGroupApplication{}).Where("id", appID).Update("status", consts.ApplicationStatusRejected); err != nil {
 		return fmt.Errorf("failed to reject application: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	return nil
 }

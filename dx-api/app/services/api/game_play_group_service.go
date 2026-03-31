@@ -409,6 +409,7 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 			if countErr == nil && totalLevels > 0 && int64(session.PlayedLevelsCount+1) >= totalLevels {
 				facades.Orm().Query().Model(&models.GameGroup{}).
 					Where("id", *session.GameGroupID).Update("is_playing", false)
+				helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
 			}
 		}
 	}

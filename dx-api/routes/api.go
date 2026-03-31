@@ -79,6 +79,10 @@ func Api() {
 		groupGameController := apicontrollers.NewGroupGameController()
 		router.Get("/groups/{id}/events", groupGameController.Events)
 
+		// Group detail notification SSE (query-param auth, not JWT middleware)
+		groupNotifyController := apicontrollers.NewGroupNotifyController()
+		router.Get("/groups/{id}/notify", groupNotifyController.Notify)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)

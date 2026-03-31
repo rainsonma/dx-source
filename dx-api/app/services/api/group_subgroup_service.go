@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/contracts/database/orm"
@@ -75,6 +76,7 @@ func CreateSubgroup(userID, groupID, name string) (string, error) {
 	if err := facades.Orm().Query().Create(&sub); err != nil {
 		return "", fmt.Errorf("failed to create subgroup: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	return sub.ID, nil
 }
 
@@ -140,6 +142,7 @@ func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
 	if _, err := facades.Orm().Query().Model(&models.GameSubgroup{}).Where("id", subgroupID).Update("name", name); err != nil {
 		return fmt.Errorf("failed to update subgroup: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	return nil
 }
 
@@ -154,7 +157,7 @@ func DeleteSubgroup(userID, groupID, subgroupID string) error {
 		return ErrSubgroupNotFound
 	}
 
-	return facades.Orm().Transaction(func(tx orm.Query) error {
+	if err := facades.Orm().Transaction(func(tx orm.Query) error {
 		if _, err := tx.Where("game_subgroup_id", subgroupID).Delete(&models.GameSubgroupMember{}); err != nil {
 			return fmt.Errorf("failed to delete subgroup members: %w", err)
 		}
@@ -162,7 +165,12 @@ func DeleteSubgroup(userID, groupID, subgroupID string) error {
 			return fmt.Errorf("failed to delete subgroup: %w", err)
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	return nil
 }
 
 // subgroupMemberRow is used to scan raw SQL results for subgroup member list queries.
@@ -212,7 +220,7 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 		return ErrSubgroupNotFound
 	}
 
-	return facades.Orm().Transaction(func(tx orm.Query) error {
+	if err := facades.Orm().Transaction(func(tx orm.Query) error {
 		for _, targetID := range targetUserIDs {
 			// Verify target is a group member
 			var gm models.GameGroupMember
@@ -244,7 +252,11 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	return nil
 }
 
 // RemoveSubgroupMember removes a single member from a subgroup.
@@ -261,5 +273,6 @@ func RemoveSubgroupMember(userID, groupID, subgroupID, targetUserID string) erro
 	if _, err := facades.Orm().Query().Where("game_subgroup_id", subgroupID).Where("user_id", targetUserID).Delete(&models.GameSubgroupMember{}); err != nil {
 		return fmt.Errorf("failed to remove subgroup member: %w", err)
 	}
+	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	return nil
 }

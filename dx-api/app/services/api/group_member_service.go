@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/contracts/database/orm"
@@ -127,7 +128,12 @@ func KickMember(userID, groupID, targetUserID string) error {
 	if group.OwnerID != userID {
 		return ErrNotGroupOwner
 	}
-	return removeMemberFromGroup(groupID, targetUserID)
+	if err := removeMemberFromGroup(groupID, targetUserID); err != nil {
+		return err
+	}
+	helpers.GroupNotifyHub.Notify(groupID, "members")
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	return nil
 }
 
 // LeaveGroup removes the current user from the group.
@@ -136,7 +142,12 @@ func LeaveGroup(userID, groupID string) error {
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
-	return removeMemberFromGroup(groupID, userID)
+	if err := removeMemberFromGroup(groupID, userID); err != nil {
+		return err
+	}
+	helpers.GroupNotifyHub.Notify(groupID, "members")
+	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	return nil
 }
 
 // JoinByCode submits a join application for a group via invite code, returning the group ID.
