@@ -24,7 +24,7 @@ Members can join a group through:
 | Method | Flow |
 |--------|------|
 | Invite link (`/g/{code}`) | User visits link → clicks "Join" → `POST /api/groups/join/{code}` → auto-accepted |
-| Application | User applies → `POST /api/groups/{id}/apply` → owner accepts/rejects in 待审批 panel |
+| Application | User applies → `POST /api/groups/{id}/apply` → owner clicks "加入待审批（N）" button (top-right of group info card) → accepts/rejects in modal dialog |
 
 - When accepted: `GameGroupMember` created, `member_count` incremented
 - A user cannot be a member twice (unique constraint on `game_group_id + user_id`)

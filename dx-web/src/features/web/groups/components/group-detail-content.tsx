@@ -17,6 +17,7 @@ import {
   QrCode,
   Download,
   DoorOpen,
+  UserPlus,
 } from "lucide-react";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import {
@@ -37,7 +38,7 @@ import type { GroupDetail, GroupMember, Subgroup, SubgroupMember, GroupApplicati
 import { MemberList } from "./member-list";
 import { SubgroupList } from "./subgroup-list";
 import { SubgroupMemberList } from "./subgroup-member-list";
-import { ApplicationList } from "./application-list";
+import { ApplicationListDialog } from "./application-list";
 import { CreateSubgroupDialog } from "./create-subgroup-dialog";
 import { EditGroupDialog } from "./edit-group-dialog";
 import { SetGameDialog } from "./set-game-dialog";
@@ -90,6 +91,7 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
   const [setGameOpen, setSetGameOpen] = useState(false);
   const [clearGameOpen, setClearGameOpen] = useState(false);
   const [clearingGame, setClearingGame] = useState(false);
+  const [applicationsOpen, setApplicationsOpen] = useState(false);
 
   function invalidateAll() {
     swrMutate(`/api/groups/${id}`, "/api/groups");
@@ -248,10 +250,23 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
             <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] bg-teal-100">
               <span className="text-[22px] font-bold text-teal-600">{group.name[0]}</span>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-lg font-bold text-foreground">{group.name}</span>
               <span className="text-xs text-muted-foreground">由 {group.owner_name} 创建</span>
             </div>
+            {isOwner && (
+              <button
+                type="button"
+                onClick={() => setApplicationsOpen(true)}
+                className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-amber-600"
+              >
+                <UserPlus className="h-3 w-3" />
+                待审批
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/25 px-0.5 text-[10px] font-bold">
+                  {applications.length}
+                </span>
+              </button>
+            )}
           </div>
 
           {group.description && (
@@ -454,15 +469,18 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           emptyText={selectedSubgroup ? "暂无组成员" : "请选择一个小组查看成员"}
         />
 
-        {/* Applications (owner only) */}
-        {isOwner && applications.length > 0 && (
-          <ApplicationList
-            applications={applications}
-            onAccept={(appId) => handleApplication(appId, "accept")}
-            onReject={(appId) => handleApplication(appId, "reject")}
-          />
-        )}
       </div>
+
+      {/* Applications dialog */}
+      {isOwner && (
+        <ApplicationListDialog
+          open={applicationsOpen}
+          onOpenChange={setApplicationsOpen}
+          applications={applications}
+          onAccept={(appId) => handleApplication(appId, "accept")}
+          onReject={(appId) => handleApplication(appId, "reject")}
+        />
+      )}
 
       {/* Create subgroup dialog */}
       <CreateSubgroupDialog
