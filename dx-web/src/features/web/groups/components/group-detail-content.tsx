@@ -263,17 +263,35 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
               <span className="text-xs text-muted-foreground">由 {group.owner_name} 创建</span>
             </div>
             {isOwner && (
-              <button
-                type="button"
-                onClick={() => setApplicationsOpen(true)}
-                className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-amber-600"
-              >
-                <UserPlus className="h-3 w-3" />
-                待审批
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/25 px-0.5 text-[10px] font-bold">
-                  {applications.length}
-                </span>
-              </button>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className="flex items-center gap-1 rounded-full bg-teal-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-teal-600"
+                >
+                  <Pencil className="h-3 w-3" />
+                  编辑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setApplicationsOpen(true)}
+                  className="flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-amber-600"
+                >
+                  <UserPlus className="h-3 w-3" />
+                  待审批
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/25 px-0.5 text-[10px] font-bold">
+                    {applications.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDismissOpen(true)}
+                  className="flex items-center gap-1 rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-red-600"
+                >
+                  <Ban className="h-3 w-3" />
+                  解散群组
+                </button>
+              </div>
             )}
           </div>
 
@@ -419,30 +437,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
             </div>
           )}
 
-          {/* Owner actions */}
-          {isOwner && (
-            <>
-              <div className="h-px bg-border" />
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditOpen(true)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-border py-2 text-xs font-medium text-muted-foreground hover:bg-muted"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDismissOpen(true)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 py-2 text-xs font-medium text-red-500 hover:bg-red-50"
-                >
-                  <Ban className="h-3.5 w-3.5" />
-                  解散群组
-                </button>
-              </div>
-            </>
-          )}
         </div>
 
         {/* Members list */}
