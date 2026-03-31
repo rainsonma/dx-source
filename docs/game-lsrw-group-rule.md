@@ -454,10 +454,13 @@ If no next level exists, the button shows "结束" instead (links back to group 
    - The group result panel displays with the podium and "返回" button
    - Players who already finished and are on the waiting screen also transition to the result panel
 
-### Group Deletion While Playing
+### Group Dismissal
 
-- Cannot delete a group while `is_playing = true`
-- Error: "game is in progress"
+- Owner dismisses the group via "解散群组" button on the group detail page → `POST /api/groups/{id}/dismiss`
+- If `is_playing = true`, the backend automatically force-ends the game first (broadcasts `group_game_force_end`), then sets `dismissed_at = NOW()` and broadcasts `group_dismissed`
+- Dismissed groups return 404 on all endpoints — they no longer appear in the groups list
+- Members in the game room or mid-gameplay receive the `group_dismissed` SSE event and are redirected to the groups list page
+- This action is irreversible
 
 ## API Endpoints
 
@@ -505,6 +508,7 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | `group_level_complete` | All connected participants finish a level (or re-check after disconnect) | Winner result (solo or team) |
 | `group_next_level` | Any participant triggers next level | game_group_id, game_id, level_id, level_name, degree, pattern, level_time_limit |
 | `group_game_force_end` | Owner force-ends game | Array of level results |
+| `group_dismissed` | Owner dismisses the group | `{ group_id }` |
 | `room_member_joined` | Member enters game room (SSE connects) | `{ user_id }` |
 | `room_member_left` | Member leaves game room (SSE disconnects) | `{ user_id }` |
 
@@ -517,6 +521,7 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | `level_time_limit` | INTEGER | 10 | Minutes per level (1-60) |
 | `is_playing` | BOOLEAN | false | Whether a game round is in progress |
 | `start_game_level_id` | VARCHAR | NULL | Starting level ID (set via 设置群课程游戏) |
+| `dismissed_at` | TIMESTAMP | NULL | When the group was dismissed (NULL = active) |
 
 ### game_group_members
 
