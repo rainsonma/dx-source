@@ -17,6 +17,17 @@ Group game play is a competitive feature where multiple members of a game group 
    - `is_playing` defaults to false
 3. The owner can leave/be removed from their own group (ownership persists, but they won't participate as a player)
 
+### Group Limits
+
+| Resource | Maximum | Error Message |
+|----------|---------|---------------|
+| Members per group | 50 | 当前群组已满员 |
+| Subgroups per group | 10 | 每群最多 10 个小组 |
+
+- **Member limit** is enforced when applying to join (direct apply or invite code) and when the owner accepts an application
+- **Subgroup limit** is enforced when the owner creates a new subgroup
+- When the limit is reached, the API returns the error message above, which is displayed as a toast notification
+
 ### Adding Members
 
 Members can join a group through:
