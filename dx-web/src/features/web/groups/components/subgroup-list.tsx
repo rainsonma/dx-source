@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Crown, Plus, Trash2 } from "lucide-react";
 import type { Subgroup } from "../types/group";
 
 const subgroupColors = [
@@ -59,7 +59,10 @@ export function SubgroupList({ subgroups, isOwner, selectedId, onSelect, onCreat
                 <span className="text-sm font-semibold text-foreground">{sg.name[0]}</span>
               </div>
               <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-[13px] font-semibold text-foreground">{sg.name}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[13px] font-semibold text-foreground">{sg.name}</span>
+                  {sg.is_last_winner && <Crown className="h-3.5 w-3.5 text-amber-400" />}
+                </div>
                 <span className="text-[11px] text-muted-foreground">{sg.member_count} 名成员</span>
               </div>
               {isOwner && (
