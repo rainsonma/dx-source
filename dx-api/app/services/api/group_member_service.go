@@ -11,19 +11,21 @@ import (
 
 // MemberItem represents a group member in a list response.
 type MemberItem struct {
-	ID        string `json:"id"`
-	UserID    string `json:"user_id"`
-	UserName  string `json:"user_name"`
-	IsOwner   bool   `json:"is_owner"`
-	CreatedAt string `json:"created_at"`
+	ID           string `json:"id"`
+	UserID       string `json:"user_id"`
+	UserName     string `json:"user_name"`
+	IsOwner      bool   `json:"is_owner"`
+	IsLastWinner bool   `json:"is_last_winner"`
+	CreatedAt    string `json:"created_at"`
 }
 
 // memberRow is used to scan raw SQL results for member list queries.
 type memberRow struct {
-	ID        string `gorm:"column:id"`
-	UserID    string `gorm:"column:user_id"`
-	UserName  string `gorm:"column:user_name"`
-	CreatedAt string `gorm:"column:created_at"`
+	ID           string `gorm:"column:id"`
+	UserID       string `gorm:"column:user_id"`
+	UserName     string `gorm:"column:user_name"`
+	IsLastWinner bool   `gorm:"column:is_last_winner"`
+	CreatedAt    string `gorm:"column:created_at"`
 }
 
 // verifyMembership checks that userID is a member of groupID.
@@ -68,6 +70,9 @@ func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, 
 	query := `
 		SELECT m.id, m.user_id,
 		       COALESCE(u.nickname, u.username) AS user_name,
+		       CASE WHEN m.last_won_at IS NOT NULL
+		            AND m.last_won_at = (SELECT MAX(m2.last_won_at) FROM game_group_members m2 WHERE m2.game_group_id = m.game_group_id)
+		       THEN true ELSE false END AS is_last_winner,
 		       TO_CHAR(m.created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS created_at
 		FROM game_group_members m
 		JOIN users u ON u.id = m.user_id
@@ -96,11 +101,12 @@ func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, 
 	items := make([]MemberItem, 0, len(rows))
 	for _, r := range rows {
 		items = append(items, MemberItem{
-			ID:        r.ID,
-			UserID:    r.UserID,
-			UserName:  r.UserName,
-			IsOwner:   r.UserID == group.OwnerID,
-			CreatedAt: r.CreatedAt,
+			ID:           r.ID,
+			UserID:       r.UserID,
+			UserName:     r.UserName,
+			IsOwner:      r.UserID == group.OwnerID,
+			IsLastWinner: r.IsLastWinner,
+			CreatedAt:    r.CreatedAt,
 		})
 	}
 
