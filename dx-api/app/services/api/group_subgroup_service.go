@@ -11,11 +11,12 @@ import (
 
 // SubgroupItem represents a subgroup in a list response.
 type SubgroupItem struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description"`
-	MemberCount int64   `json:"member_count"`
-	Order       float64 `json:"order"`
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description"`
+	MemberCount  int64   `json:"member_count"`
+	Order        float64 `json:"order"`
+	IsLastWinner bool    `json:"is_last_winner"`
 }
 
 // SubgroupMemberItem represents a subgroup member in a list response.
@@ -68,11 +69,12 @@ func CreateSubgroup(userID, groupID, name string) (string, error) {
 
 // subgroupRow is used to scan raw SQL results for subgroup list queries.
 type subgroupRow struct {
-	ID          string  `gorm:"column:id"`
-	Name        string  `gorm:"column:name"`
-	Description *string `gorm:"column:description"`
-	MemberCount int64   `gorm:"column:member_count"`
-	Order       float64 `gorm:"column:order"`
+	ID           string  `gorm:"column:id"`
+	Name         string  `gorm:"column:name"`
+	Description  *string `gorm:"column:description"`
+	MemberCount  int64   `gorm:"column:member_count"`
+	Order        float64 `gorm:"column:order"`
+	IsLastWinner bool    `gorm:"column:is_last_winner"`
 }
 
 // ListSubgroups returns all subgroups for a group, with member counts.
@@ -84,11 +86,14 @@ func ListSubgroups(userID, groupID string) ([]SubgroupItem, error) {
 	query := `
 		SELECT s.id, s.name, s.description,
 		       COUNT(sm.id) AS member_count,
-		       s."order"
+		       s."order",
+		       CASE WHEN s.last_won_at IS NOT NULL
+		            AND s.last_won_at = (SELECT MAX(s2.last_won_at) FROM game_subgroups s2 WHERE s2.game_group_id = s.game_group_id)
+		       THEN true ELSE false END AS is_last_winner
 		FROM game_subgroups s
 		LEFT JOIN game_subgroup_members sm ON sm.game_subgroup_id = s.id
 		WHERE s.game_group_id = ?
-		GROUP BY s.id, s.name, s.description, s."order"
+		GROUP BY s.id, s.name, s.description, s."order", s.last_won_at
 		ORDER BY s."order" ASC`
 
 	var rows []subgroupRow
@@ -99,11 +104,12 @@ func ListSubgroups(userID, groupID string) ([]SubgroupItem, error) {
 	items := make([]SubgroupItem, 0, len(rows))
 	for _, r := range rows {
 		items = append(items, SubgroupItem{
-			ID:          r.ID,
-			Name:        r.Name,
-			Description: r.Description,
-			MemberCount: r.MemberCount,
-			Order:       r.Order,
+			ID:           r.ID,
+			Name:         r.Name,
+			Description:  r.Description,
+			MemberCount:  r.MemberCount,
+			Order:        r.Order,
+			IsLastWinner: r.IsLastWinner,
 		})
 	}
 	return items, nil
