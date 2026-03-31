@@ -528,12 +528,14 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | Column | Type | Default | Description |
 |--------|------|---------|-------------|
 | `last_won_at` | TIMESTAMP | NULL | Last time this member won (solo or team) |
+| `is_last_winner` | BOOLEAN | computed | Whether this member won the most recent group game (not stored, computed in query) |
 
 ### game_subgroups
 
 | Column | Type | Default | Description |
 |--------|------|---------|-------------|
 | `last_won_at` | TIMESTAMP | NULL | Last time this subgroup won (team mode) |
+| `is_last_winner` | BOOLEAN | computed | Whether this subgroup won the most recent group game (not stored, computed in query) |
 
 ### game_session_totals (additional columns)
 
@@ -557,6 +559,23 @@ If no next level exists, the button shows "结束" instead (links back to group 
 | `idx_game_session_totals_unique_active_group` | game_session_totals | user_id, game_id, degree, COALESCE(pattern, ''), game_group_id | ended_at IS NULL AND game_group_id IS NOT NULL |
 | `idx_game_session_totals_group` | game_session_totals | game_group_id | game_group_id IS NOT NULL |
 | `idx_game_session_levels_group_level` | game_session_levels | game_group_id, game_level_id | game_group_id IS NOT NULL |
+
+## Winner Crown Badge
+
+On the group detail page, a small amber crown icon (Lucide `Crown`, `h-3.5 w-3.5 text-amber-400`) is displayed next to the name of the latest winner:
+
+- **群成员 list (Solo or Team mode)**: Members whose `last_won_at` equals the maximum `last_won_at` across all members in the group show a crown. In solo mode this is one member; in team mode this is all members of the winning subgroup (they share the same timestamp).
+- **群小组 list (Team mode)**: The subgroup whose `last_won_at` equals the maximum `last_won_at` across all subgroups in the group shows a crown.
+
+The `is_last_winner` boolean is computed server-side in the list API queries using:
+
+```sql
+CASE WHEN last_won_at IS NOT NULL
+     AND last_won_at = (SELECT MAX(last_won_at) FROM <table> WHERE game_group_id = ?)
+THEN true ELSE false END
+```
+
+If no member or subgroup has ever won (`last_won_at` is NULL for all), no crowns are displayed.
 
 ## Frontend Architecture
 
