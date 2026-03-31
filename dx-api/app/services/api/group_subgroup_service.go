@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"dx-api/app/consts"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/contracts/database/orm"
@@ -42,6 +43,19 @@ func VerifyGroupOwnership(userID, groupID string) error {
 func CreateSubgroup(userID, groupID, name string) (string, error) {
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return "", err
+	}
+
+	type countRow struct {
+		Count int64 `gorm:"column:count"`
+	}
+	var cnt countRow
+	if err := facades.Orm().Query().Raw(
+		`SELECT COUNT(*) AS count FROM game_subgroups WHERE game_group_id = ?`, groupID,
+	).Scan(&cnt); err != nil {
+		return "", fmt.Errorf("failed to count subgroups: %w", err)
+	}
+	if cnt.Count >= int64(consts.MaxGroupSubgroups) {
+		return "", ErrGroupSubgroupsFull
 	}
 
 	type maxOrderRow struct {

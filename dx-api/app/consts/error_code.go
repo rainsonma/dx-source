@@ -17,6 +17,8 @@ const (
 	CodeNicknameTaken     = 40008
 	CodeAlreadyMember     = 40009
 	CodeAlreadyApplied    = 40010
+	CodeGroupMembersFull   = 40011
+	CodeGroupSubgroupsFull = 40012
 
 	// 401xx: Auth
 	CodeUnauthorized        = 40100

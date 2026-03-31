@@ -225,6 +225,10 @@ func mapGroupError(ctx contractshttp.Context, err error) contractshttp.Response 
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "群主不能退出自己的群")
 	case errors.Is(err, services.ErrSubgroupNotFound):
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeNotFound, "小组不存在")
+	case errors.Is(err, services.ErrGroupMembersFull):
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeGroupMembersFull, "当前群组已满员")
+	case errors.Is(err, services.ErrGroupSubgroupsFull):
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeGroupSubgroupsFull, "每群最多 10 个小组")
 	default:
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}

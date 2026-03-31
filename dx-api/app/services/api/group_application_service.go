@@ -26,6 +26,10 @@ func ApplyToGroup(userID, groupID string) (string, error) {
 		return "", ErrGroupNotFound
 	}
 
+	if group.MemberCount >= consts.MaxGroupMembers {
+		return "", ErrGroupMembersFull
+	}
+
 	var member models.GameGroupMember
 	if err := facades.Orm().Query().Where("game_group_id", groupID).Where("user_id", userID).First(&member); err == nil && member.ID != "" {
 		return "", ErrAlreadyMember
@@ -157,6 +161,9 @@ func HandleApplication(userID, groupID, appID, action string) error {
 	}
 
 	if action == "accept" {
+		if group.MemberCount >= consts.MaxGroupMembers {
+			return ErrGroupMembersFull
+		}
 		return facades.Orm().Transaction(func(tx orm.Query) error {
 			if _, err := tx.Model(&models.GameGroupApplication{}).Where("id", appID).Update("status", consts.ApplicationStatusAccepted); err != nil {
 				return fmt.Errorf("failed to update application status: %w", err)

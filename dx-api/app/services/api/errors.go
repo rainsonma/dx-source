@@ -53,4 +53,6 @@ var (
 	ErrUnequalSubgroups        = errors.New("每个小组的成员数量必须相等")
 	ErrLastLevel               = errors.New("已是最后一关")
 	ErrNotGroupMemberForAction = errors.New("非群组成员")
+	ErrGroupMembersFull        = errors.New("当前群组已满员")
+	ErrGroupSubgroupsFull      = errors.New("每群最多 10 个小组")
 )
