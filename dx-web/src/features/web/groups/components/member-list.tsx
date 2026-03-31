@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, LogOut, Users, Loader2 } from "lucide-react";
+import { Check, Crown, X, LogOut, Users, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -149,7 +149,10 @@ export function MemberList({
                   <span className={`${m.is_owner ? "text-sm" : "text-xs"} font-semibold ${color.text}`}>{m.user_name[0]}</span>
                 </div>
                 <div className="flex flex-1 flex-col gap-0.5">
-                  <span className="text-[13px] font-semibold text-foreground">{m.user_name}</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[13px] font-semibold text-foreground">{m.user_name}</span>
+                    {m.is_last_winner && <Crown className="h-3.5 w-3.5 text-amber-400" />}
+                  </div>
                   {m.is_owner && <span className="text-[11px] text-muted-foreground">创建者</span>}
                 </div>
                 {isOwner && (
