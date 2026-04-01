@@ -156,33 +156,6 @@ func buildMockUsers() []mockUser {
 		"athena", "porter", "serena", "wade", "ivy", "brock", "elena",
 	}
 
-	lastNames := []string{
-		"smith", "johnson", "williams", "brown", "jones", "garcia", "miller",
-		"davis", "rodriguez", "martinez", "hernandez", "lopez", "gonzalez",
-		"wilson", "anderson", "thomas", "taylor", "moore", "jackson", "martin",
-		"lee", "perez", "thompson", "white", "harris", "sanchez", "clark",
-		"ramirez", "lewis", "robinson", "walker", "young", "allen", "king",
-		"wright", "scott", "torres", "nguyen", "hill", "flores", "green",
-		"adams", "nelson", "baker", "hall", "rivera", "campbell", "mitchell",
-		"carter", "roberts", "gomez", "phillips", "evans", "turner", "diaz",
-		"parker", "cruz", "edwards", "collins", "reyes", "stewart", "morris",
-		"morales", "murphy", "cook", "rogers", "gutierrez", "ortiz", "morgan",
-		"cooper", "peterson", "bailey", "reed", "kelly", "howard", "ramos",
-		"kim", "cox", "ward", "richardson", "watson", "brooks", "chavez",
-		"wood", "james", "bennett", "gray", "mendoza", "ruiz", "hughes",
-		"price", "alvarez", "castillo", "sanders", "patel", "myers", "long",
-		"ross", "foster", "jimenez", "powell", "jenkins", "perry", "russell",
-		"sullivan", "bell", "coleman", "butler", "henderson", "barnes", "gonzales",
-		"fisher", "vasquez", "simmons", "griffin", "mcdonald", "hayes", "murray",
-		"ford", "graham", "duncan", "stone", "logan", "hart", "webb",
-		"fields", "chambers", "burns", "hardy", "west", "burke", "walsh",
-		"lyons", "ramsey", "steele", "barton", "howe", "bishop", "larson",
-		"klein", "bauer", "lindgren", "sato", "tanaka", "nakamura", "ito",
-		"fischer", "weber", "schmidt", "meyer", "wagner", "becker", "schulz",
-		"hansen", "olsen", "berg", "lund", "dahl", "holm", "strand",
-		"dubois", "laurent", "moreau", "durand", "petit", "blanc", "garnier",
-	}
-
 	nickFirsts := []string{
 		"Emma", "Liam", "Olivia", "Noah", "Ava", "Ethan", "Sophia", "Mason",
 		"Isabella", "James", "Mia", "Logan", "Charlotte", "Benjamin", "Amelia",
@@ -216,46 +189,57 @@ func buildMockUsers() []mockUser {
 		"Milo", "Amber", "Harris", "Serena", "Porter", "Elena",
 	}
 
-	nickLasts := []string{
-		"S.", "J.", "W.", "B.", "D.", "G.", "M.", "T.", "R.", "L.",
-		"H.", "K.", "P.", "N.", "C.", "F.", "E.", "A.", "V.", "O.",
-	}
-
-	// Patterns for username generation.
-	patterns := []func(first, last string, idx int) string{
-		// first.last
-		func(f, l string, i int) string { return fmt.Sprintf("%s.%s", f, l) },
-		// first_last
-		func(f, l string, i int) string { return fmt.Sprintf("%s_%s", f, l) },
-		// firstlast
-		func(f, l string, i int) string { return fmt.Sprintf("%s%s", f, l) },
-		// first.last + digits
-		func(f, l string, i int) string { return fmt.Sprintf("%s.%s%d", f, l, rand.Intn(99)+1) },
-		// first + digits
-		func(f, l string, i int) string { return fmt.Sprintf("%s%d", f, rand.Intn(999)+1) },
-		// first_last + digits
-		func(f, l string, i int) string { return fmt.Sprintf("%s_%s%d", f, l, rand.Intn(99)+1) },
+	cnBases := []string{
+		"小明", "小红", "小华", "小丽", "小刚", "小芳", "小强", "小敏",
+		"小龙", "小凤", "小虎", "小雪", "小云", "小雨", "小鱼", "小白",
+		"大白", "大伟", "大力", "大勇", "大鹏", "大雄", "大海",
+		"天天", "甜甜", "乐乐", "安安", "萌萌", "豆豆", "果果", "星星",
+		"浩然", "子涵", "梓轩", "博文", "俊熙", "昊天", "逸飞", "明哲",
+		"诗涵", "雨桐", "欣怡", "梦瑶", "紫萱", "若曦", "思琪", "雅文",
+		"橘子", "柠檬", "草莓", "西瓜", "芒果", "葡萄", "樱桃", "桃子",
+		"奶茶", "咖啡", "抹茶", "可乐", "布丁", "饼干", "糖果",
+		"清风", "明月", "朝阳", "晨光", "暮雪", "青竹", "红枫",
+		"学霸", "咸鱼", "追风", "锦鲤", "佛系",
+		"龙腾", "虎啸", "凤舞", "鹤鸣", "鹰飞", "蝶舞",
+		"阿杰", "阿明", "阿飞", "阿宝", "阿亮",
+		"志远", "嘉诚", "鹏飞", "文杰", "建国",
+		"美玲", "秀英", "淑芬", "雪梅", "春花",
+		"书生", "墨客", "琴心", "画仙",
 	}
 
 	seen := make(map[string]bool)
 	users := make([]mockUser, 0, 1200)
 
 	for len(users) < 1200 {
-		fi := rand.Intn(len(firstNames))
-		li := rand.Intn(len(lastNames))
-		pi := rand.Intn(len(patterns))
-
-		username := patterns[pi](firstNames[fi], lastNames[li], len(users))
+		username := firstNames[rand.Intn(len(firstNames))]
+		if rand.Intn(2) == 0 {
+			username += firstNames[rand.Intn(len(firstNames))]
+		}
 		if seen[username] || username == "rainson" || username == "june" {
 			continue
 		}
 		seen[username] = true
 
-		nfi := rand.Intn(len(nickFirsts))
-		nli := rand.Intn(len(nickLasts))
-		nickname := fmt.Sprintf("%s %s", nickFirsts[nfi], nickLasts[nli])
-
+		nickname := nickFirsts[rand.Intn(len(nickFirsts))]
 		users = append(users, mockUser{Username: username, Nickname: nickname})
+	}
+
+	// Randomly assign Chinese nicknames to 200 users.
+	cnSuffixes := []string{"同学", "老师", "大王", "宝宝", "达人", "少年"}
+	cnPrefixes := []string{"超级", "快乐", "阳光", "无敌", "元气", "暴躁"}
+	cnNums := []string{"一", "二", "三", "五", "六", "七", "八", "九", "十", "百", "千", "万"}
+	cnPatterns := []func(string) string{
+		func(b string) string { return b },
+		func(b string) string { return fmt.Sprintf("%s%d", b, rand.Intn(999)+1) },
+		func(b string) string { return fmt.Sprintf("%s_%d", b, rand.Intn(99)+1) },
+		func(b string) string { return b + cnNums[rand.Intn(len(cnNums))] },
+		func(b string) string { return b + cnSuffixes[rand.Intn(len(cnSuffixes))] },
+		func(b string) string { return cnPrefixes[rand.Intn(len(cnPrefixes))] + b },
+		func(b string) string { return b + "_" + cnBases[rand.Intn(len(cnBases))] },
+	}
+	for _, idx := range rand.Perm(len(users))[:200] {
+		base := cnBases[rand.Intn(len(cnBases))]
+		users[idx].Nickname = cnPatterns[rand.Intn(len(cnPatterns))](base)
 	}
 
 	return users
