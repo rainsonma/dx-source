@@ -23,8 +23,10 @@ func (c *GameController) List(ctx contractshttp.Context) contractshttp.Response 
 	}
 
 	limit := req.Limit
-	if limit == 0 {
+	if limit <= 0 {
 		limit = helpers.DefaultCursorLimit
+	} else if limit > 50 {
+		limit = 50
 	}
 
 	games, nextCursor, hasMore, err := services.ListPublishedGames(req.Cursor, limit, req.CategoryIDs, req.PressID, req.Mode)
@@ -43,8 +45,10 @@ func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Respons
 	}
 
 	limit := req.Limit
-	if limit == 0 {
+	if limit <= 0 {
 		limit = 10
+	} else if limit > 50 {
+		limit = 50
 	}
 
 	games, err := services.SearchGames(req.Query, limit)

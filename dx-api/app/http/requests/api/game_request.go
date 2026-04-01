@@ -20,7 +20,6 @@ type ListGamesRequest struct {
 func (r *ListGamesRequest) Authorize(ctx http.Context) error { return nil }
 func (r *ListGamesRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"limit":   "min:1|max:50",
 		"pressId": "uuid",
 		"mode":    helpers.InEnum("mode"),
 	}
@@ -49,8 +48,7 @@ type SearchGamesRequest struct {
 func (r *SearchGamesRequest) Authorize(ctx http.Context) error { return nil }
 func (r *SearchGamesRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"q":     "required|min_len:1|max_len:50",
-		"limit": "min:1|max:50",
+		"q": "required|min_len:1|max_len:50",
 	}
 }
 func (r *SearchGamesRequest) Filters(ctx http.Context) map[string]string {

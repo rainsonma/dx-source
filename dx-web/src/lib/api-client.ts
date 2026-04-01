@@ -275,7 +275,7 @@ export const gameApi = {
   },
   /** Get current user's recently played games */
   async getRecentGames() {
-    return apiClient.get<unknown[]>("/api/games/recent");
+    return apiClient.get<unknown[]>("/api/games/played");
   },
   /** Get full game detail with levels */
   async getGameDetail(id: string) {

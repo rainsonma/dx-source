@@ -49,7 +49,7 @@ export async function searchGamesAction(
 /** Get current user's recently played games */
 export async function getRecentGamesAction(): Promise<GameSearchActionResult> {
   try {
-    const res = await apiClient.get<Record<string, unknown>[]>("/api/games/recent");
+    const res = await apiClient.get<Record<string, unknown>[]>("/api/games/played");
 
     if (res.code !== 0) {
       return { games: [], error: res.message };
