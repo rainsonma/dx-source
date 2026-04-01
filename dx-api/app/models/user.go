@@ -18,6 +18,7 @@ type User struct {
 	City              *string          `gorm:"column:city" json:"city"`
 	Introduction      *string          `gorm:"column:introduction" json:"introduction"`
 	IsActive          bool             `gorm:"column:is_active" json:"is_active"`
+	IsMock            bool             `gorm:"column:is_mock" json:"is_mock"`
 	Beans             int              `gorm:"column:beans" json:"beans"`
 	GrantedBeans      int              `gorm:"column:granted_beans" json:"granted_beans"`
 	Exp               int              `gorm:"column:exp" json:"exp"`

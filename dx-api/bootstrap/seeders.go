@@ -16,10 +16,6 @@ func Seeders() []seeder.Seeder {
 		&seeders.GameCategorySeeder{},
 		&seeders.GamePressSeeder{},
 		&seeders.UserSeeder{},
-		&seeders.GameSeeder{},
-		&seeders.GameLevelSeeder{},
-		&seeders.ContentMetaSeeder{},
-		&seeders.ContentItemSeeder{},
 		&seeders.UserBeanSeeder{},
 	}
 }

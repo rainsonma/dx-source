@@ -21,10 +21,6 @@ func (s *DatabaseSeeder) Run() error {
 		&GameCategorySeeder{},
 		&GamePressSeeder{},
 		&UserSeeder{},
-		&GameSeeder{},
-		&GameLevelSeeder{},
-		&ContentMetaSeeder{},
-		&ContentItemSeeder{},
 		&UserBeanSeeder{},
 	})
 }

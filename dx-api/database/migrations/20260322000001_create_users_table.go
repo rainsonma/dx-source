@@ -27,6 +27,7 @@ func (r *M20260322000001CreateUsersTable) Up() error {
 			table.Text("city").Nullable()
 			table.Text("introduction").Nullable()
 			table.Boolean("is_active").Default(true)
+			table.Boolean("is_mock").Default(false)
 			table.Integer("beans").Default(0)
 			table.Integer("granted_beans").Default(0)
 			table.Integer("exp").Default(0)
