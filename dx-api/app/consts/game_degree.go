@@ -14,6 +14,13 @@ var GameDegreeLabels = map[string]string{
 	GameDegreeAdvanced:     "高级",
 }
 
+// AllGameDegrees contains all game degree values.
+var AllGameDegrees = []string{
+	GameDegreeBeginner,
+	GameDegreeIntermediate,
+	GameDegreeAdvanced,
+}
+
 // DegreeContentTypes maps each degree to its allowed content types.
 // A nil slice means all content types are allowed.
 var DegreeContentTypes = map[string][]string{

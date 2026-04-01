@@ -7,9 +7,9 @@ import (
 	"dx-api/app/models"
 
 	"github.com/google/uuid"
-	"github.com/goravel/framework/facades"
-
 	"github.com/goravel/framework/contracts/database/orm"
+	"github.com/goravel/framework/facades"
+	"github.com/lib/pq"
 )
 
 // Content limits for course games.
@@ -344,6 +344,7 @@ func CreateLevel(userID, gameID, name string, description *string) (string, erro
 		Description:  description,
 		Order:        maxLevel.Order + 1000,
 		PassingScore: 60,
+		Degrees:      pq.StringArray(consts.AllGameDegrees),
 		IsActive:     true,
 	}
 

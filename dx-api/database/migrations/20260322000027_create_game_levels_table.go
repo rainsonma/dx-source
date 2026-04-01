@@ -22,6 +22,7 @@ func (r *M20260322000027CreateGameLevelsTable) Up() error {
 			table.Text("description").Nullable()
 			table.Double("order").Default(0)
 			table.Integer("passing_score").Default(0)
+			table.Column("degrees", "text[]").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
 			table.Index("game_id")

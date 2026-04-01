@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"log"
 
+	"dx-api/app/consts"
 	"dx-api/app/models"
 
 	"github.com/google/uuid"
 	"github.com/goravel/framework/facades"
+	"github.com/lib/pq"
 )
 
 type GameLevelSeeder struct{}
@@ -51,6 +53,7 @@ func (s *GameLevelSeeder) Run() error {
 					Name:         l.Name,
 					Order:        l.Order,
 					PassingScore: l.PassingScore,
+					Degrees:      pq.StringArray(consts.AllGameDegrees),
 					IsActive:     true,
 				}); err != nil {
 					return fmt.Errorf("failed to create level %s for game %s: %w", l.Name, game.Name, err)
