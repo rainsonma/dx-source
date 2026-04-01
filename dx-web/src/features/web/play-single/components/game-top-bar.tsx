@@ -12,13 +12,12 @@ import {
   Trophy,
   Flame,
   SkipForward,
-  SquareM,
   Plus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { StatRow } from "@/features/web/play-core/components/stat-row";
-import { GAME_DEGREES } from "@/consts/game-degree";
+import { GAME_DEGREE_LABELS, type GameDegree } from "@/consts/game-degree";
 
 const actionButtons = [
   { icon: Settings, label: "设置", action: "settings" },
@@ -120,17 +119,10 @@ export function GameTopBar({ player, levelName, elapsedTime, onExit, onReset, on
           {comboStreak >= 3 && (
             <span className="text-xs font-bold text-orange-500">连击 × {comboStreak}</span>
           )}
-          {degree === GAME_DEGREES.PRACTICE ? (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-700">
-              <SquareM className="h-3 w-3" />
-              练习
-            </span>
-          ) : (
-            <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
-              <Plus className="h-3 w-3" />
-              1v1
-            </span>
-          )}
+          <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-[11px] font-semibold text-orange-600">
+            <Plus className="h-3 w-3" />
+            {degree ? GAME_DEGREE_LABELS[degree as GameDegree] ?? degree : "1v1"}
+          </span>
         </div>
 
         {/* Progress bar */}

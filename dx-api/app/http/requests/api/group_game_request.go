@@ -42,7 +42,7 @@ type StartGroupGameRequest struct {
 func (r *StartGroupGameRequest) Authorize(ctx http.Context) error { return nil }
 func (r *StartGroupGameRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"degree": "required|in:practice,beginner,intermediate,advanced",
+		"degree": "required|in:beginner,intermediate,advanced",
 	}
 }
 func (r *StartGroupGameRequest) Filters(ctx http.Context) map[string]string {

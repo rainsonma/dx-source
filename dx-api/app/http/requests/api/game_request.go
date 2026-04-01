@@ -84,7 +84,7 @@ func (r *LevelContentRequest) Messages(ctx http.Context) map[string]string {
 func (r *LevelContentRequest) PrepareForValidation(ctx http.Context, data validation.Data) error {
 	degree, _ := data.Get("degree")
 	if degree == nil || degree == "" {
-		data.Set("degree", consts.GameDegreePractice)
+		data.Set("degree", consts.GameDegreeBeginner)
 	}
 	return nil
 }

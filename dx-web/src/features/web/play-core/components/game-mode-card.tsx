@@ -4,7 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   X,
-  BookOpen,
   Zap,
   Flame,
   Trophy,
@@ -41,14 +40,6 @@ interface ModeOption {
 }
 
 const modeOptions: ModeOption[] = [
-  {
-    value: GAME_DEGREES.PRACTICE,
-    title: "练习",
-    desc: "无对手，自由练习，不断提高",
-    icon: BookOpen,
-    iconColor: "text-teal-600",
-    iconBg: "bg-teal-600/[0.08]",
-  },
   {
     value: GAME_DEGREES.BEGINNER,
     title: "初级",
@@ -107,7 +98,7 @@ export function GameModeCard({
 }: GameModeCardProps) {
   const router = useRouter();
   const [selectedDegree, setSelectedDegree] = useState<GameDegree>(
-    (initialDegree as GameDegree) ?? GAME_DEGREES.PRACTICE
+    (initialDegree as GameDegree) ?? GAME_DEGREES.BEGINNER
   );
   const isLsrw = gameMode === GAME_MODES.LSRW;
   const [selectedPattern, setSelectedPattern] = useState<GamePattern>(

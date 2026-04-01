@@ -7,7 +7,7 @@ import (
 )
 
 var enumValues = map[string][]string{
-	"degree":        {consts.GameDegreePractice, consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
+	"degree":        {consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
 	"pattern":       {consts.GamePatternListen, consts.GamePatternSpeak, consts.GamePatternRead, consts.GamePatternWrite},
 	"mode":          {consts.GameModeLSRW, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination, consts.GameModeListeningChallenge},
 	"feedback_type": {consts.FeedbackTypeFeature, consts.FeedbackTypeContent, consts.FeedbackTypeUX, consts.FeedbackTypeBug, consts.FeedbackTypeOther},
