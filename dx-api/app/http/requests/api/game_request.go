@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	"github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/contracts/validation"
 
@@ -10,11 +12,27 @@ import (
 
 // ListGamesRequest holds query parameters for listing published games.
 type ListGamesRequest struct {
-	Cursor      string   `form:"cursor" json:"cursor"`
-	Limit       int      `form:"limit" json:"limit"`
-	CategoryIDs []string `form:"categoryIds" json:"categoryIds"`
-	PressID     string   `form:"pressId" json:"pressId"`
-	Mode        string   `form:"mode" json:"mode"`
+	Cursor      string `form:"cursor" json:"cursor"`
+	Limit       int    `form:"limit" json:"limit"`
+	CategoryIDs string `form:"categoryIds" json:"categoryIds"`
+	PressID     string `form:"pressId" json:"pressId"`
+	Mode        string `form:"mode" json:"mode"`
+}
+
+// ParseCategoryIDs splits the comma-separated categoryIds into individual IDs.
+func (r *ListGamesRequest) ParseCategoryIDs() []string {
+	if r.CategoryIDs == "" {
+		return nil
+	}
+	ids := strings.Split(r.CategoryIDs, ",")
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		id = strings.TrimSpace(id)
+		if id != "" {
+			result = append(result, id)
+		}
+	}
+	return result
 }
 
 func (r *ListGamesRequest) Authorize(ctx http.Context) error { return nil }
