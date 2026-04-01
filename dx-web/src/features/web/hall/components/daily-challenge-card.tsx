@@ -9,7 +9,7 @@ export function DailyChallengeCard() {
         <span className="text-xs font-semibold text-teal-100">今日挑战</span>
       </div>
       <p className="text-base font-bold leading-[1.5] text-white">
-        完成今天的听说读写
+        完成今天的连词成句
         <br />
         赢取双倍经验值！
       </p>

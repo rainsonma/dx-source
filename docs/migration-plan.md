@@ -394,7 +394,7 @@ Migrate all 18 files from `dx-web/src/consts/` → `dx-api/app/constants/`:
   ```
 
 - [x] **0.4.2** `game_degree.go` — practice, beginner, intermediate, advanced + content type mapping
-- [x] **0.4.3** `game_mode.go` — lsrw, vocab-battle, vocab-match, vocab-elimination, listening-challenge
+- [x] **0.4.3** `game_mode.go` — word-sentence, vocab-battle, vocab-match, vocab-elimination, listening-challenge
 - [x] **0.4.4** `game_pattern.go` — listen, speak, read, write (default: write)
 - [x] **0.4.5** `game_status.go` — draft, published, withdraw
 - [x] **0.4.6** `content_type.go` — word, block, phrase, sentence

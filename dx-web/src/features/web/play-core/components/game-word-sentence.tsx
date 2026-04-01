@@ -11,7 +11,7 @@ import {
   ListChecks,
   Keyboard,
 } from "lucide-react";
-import { useLsrw } from "@/features/web/play-core/hooks/use-lsrw";
+import { useWordSentence } from "@/features/web/play-core/hooks/use-word-sentence";
 import { SpellingInputRow } from "@/features/web/play-core/components/spelling-input-row";
 import type { SpellingItem } from "@/features/web/play-core/types/spelling";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
@@ -21,7 +21,7 @@ import {
 } from "@/features/web/play-core/actions/tracking.action";
 import { toast } from "sonner";
 
-export function GameLsrw() {
+export function GameWordSentence() {
   const {
     inputValue,
     setInputValue,
@@ -38,7 +38,7 @@ export function GameLsrw() {
     submitWord,
     skipItem,
     advanceAfterReveal,
-  } = useLsrw();
+  } = useWordSentence();
 
   const gameId = useGameStore((s) => s.gameId);
   const levelId = useGameStore((s) => s.levelId);

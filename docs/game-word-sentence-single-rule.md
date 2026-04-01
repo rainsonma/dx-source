@@ -1,4 +1,4 @@
-# LSWR Game Rules
+# Word-Sentence Game Rules
 
 ## Scoring
 
@@ -92,7 +92,7 @@ Total: 56 points
 ### Degree + Pattern (Game Mode Selection)
 
 - **Degree**: practice, beginner, intermediate, advanced
-- **Pattern** (LSRW only): listen, speak, read, write (default: write)
+- **Pattern** (Word-Sentence only): listen, speak, read, write (default: write)
 - The degree determines which content types are included in the level
 - The degree + pattern combination determines which session to create or resume
 

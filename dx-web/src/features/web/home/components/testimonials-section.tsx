@@ -9,7 +9,7 @@ const testimonials: {
   {
     socialIcon: Twitter,
     quote:
-      "\u201C听说读写和词汇对战让我彻底上瘾了！从几乎看不懂菜单到三个月内能进行完整对话。PvP 对战让我真的想每天练习。\u201D",
+      "\u201C连词成句和词汇对战让我彻底上瘾了！从几乎看不懂菜单到三个月内能进行完整对话。PvP 对战让我真的想每天练习。\u201D",
     author: "sarah.lin",
     level: "Lv.28",
   },

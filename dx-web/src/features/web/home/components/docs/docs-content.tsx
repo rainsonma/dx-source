@@ -54,7 +54,7 @@ const features = [
 const steps = [
   { num: 1, title: "注册账户", desc: "在官网注册你的斗学账户，完善个人学习偏好设置" },
   { num: 2, title: "选择课程", desc: "浏览课程列表，选择适合你等级和兴趣的英语课程" },
-  { num: 3, title: "开始游戏", desc: "通过词汇对战、听说读写等游戏模式开始你的学习之旅" },
+  { num: 3, title: "开始游戏", desc: "通过词汇对战、连词成句等游戏模式开始你的学习之旅" },
 ];
 
 const codeLines = [
@@ -136,7 +136,7 @@ export function DocsPageContent() {
             什么是斗学？
           </h2>
           <p className="text-[15px] leading-[1.7] text-slate-600">
-            斗学是一款创新的英语学习平台，将游戏化机制与 AI 驱动的个性化学习完美结合。通过词汇对战、听说读写、听力闯关等多种游戏模式，让学习过程变得轻松有趣。
+            斗学是一款创新的英语学习平台，将游戏化机制与 AI 驱动的个性化学习完美结合。通过词汇对战、连词成句、听力闯关等多种游戏模式，让学习过程变得轻松有趣。
           </p>
           <div className="flex gap-3 rounded-lg border border-teal-200 bg-teal-50 p-4">
             <Lightbulb className="h-5 w-5 shrink-0 text-teal-600" />

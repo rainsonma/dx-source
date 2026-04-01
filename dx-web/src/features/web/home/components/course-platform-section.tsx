@@ -50,7 +50,7 @@ export function CoursePlatformSection() {
         </h2>
       </div>
       <p className="max-w-[720px] text-center text-[15px] leading-relaxed text-slate-500">
-        涵盖单词配对、听说读写、听力闯关、语法探索、阅读理解等多种游戏类型。每个课程包含多个关卡，由浅入深，通关即解锁下一关。支持用户自定义创建课程，AI
+        涵盖单词配对、连词成句、听力闯关、语法探索、阅读理解等多种游戏类型。每个课程包含多个关卡，由浅入深，通关即解锁下一关。支持用户自定义创建课程，AI
         智能生成练习内容。
       </p>
       <div className="flex flex-wrap items-center justify-center gap-4">

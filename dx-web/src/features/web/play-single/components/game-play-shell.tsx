@@ -19,7 +19,7 @@ import { GamePauseOverlay } from "@/features/web/play-core/components/game-pause
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
-import { GameLsrw } from "@/features/web/play-core/components/game-lsrw";
+import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
 import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
@@ -31,7 +31,7 @@ import { getToken } from "@/lib/api-client";
 import type { ComponentType } from "react";
 
 const modeComponents: Record<string, ComponentType> = {
-  [GAME_MODES.LSRW]: GameLsrw,
+  [GAME_MODES.WORD_SENTENCE]: GameWordSentence,
   [GAME_MODES.VOCAB_MATCH]: GameVocabMatch,
   [GAME_MODES.LISTENING_CHALLENGE]: GameListening,
   [GAME_MODES.VOCAB_ELIMINATION]: GameVocabElimination,

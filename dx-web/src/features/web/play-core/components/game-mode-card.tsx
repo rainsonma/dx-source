@@ -100,7 +100,7 @@ export function GameModeCard({
   const [selectedDegree, setSelectedDegree] = useState<GameDegree>(
     (initialDegree as GameDegree) ?? GAME_DEGREES.BEGINNER
   );
-  const isLsrw = gameMode === GAME_MODES.LSRW;
+  const isWordSentence = gameMode === GAME_MODES.WORD_SENTENCE;
   const [selectedPattern, setSelectedPattern] = useState<GamePattern>(
     (initialPattern as GamePattern) ?? DEFAULT_GAME_PATTERN
   );
@@ -117,13 +117,13 @@ export function GameModeCard({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    const patternValue = isLsrw ? selectedPattern : null;
+    const patternValue = isWordSentence ? selectedPattern : null;
     checkActiveSessionAction(gameId, selectedDegree, patternValue).then((result) => {
       if (cancelled) return;
       setActiveSession(result.data ?? null);
     });
     return () => { cancelled = true; };
-  }, [open, gameId, selectedDegree, selectedPattern, isLsrw]);
+  }, [open, gameId, selectedDegree, selectedPattern, isWordSentence]);
 
   // When a specific level is selected, check for active level session
   useEffect(() => {
@@ -132,14 +132,14 @@ export function GameModeCard({
       return;
     }
     let cancelled = false;
-    const patternValue = isLsrw ? selectedPattern : null;
+    const patternValue = isWordSentence ? selectedPattern : null;
     checkActiveLevelSessionAction(gameId, selectedDegree, patternValue, levelId).then((result) => {
       if (cancelled) return;
       setHasActiveLevelSession(result.data !== null);
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSession.id is sufficient, full object would cause infinite loop
-  }, [open, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isLsrw]);
+  }, [open, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isWordSentence]);
 
   if (!open) return null;
 
@@ -148,7 +148,7 @@ export function GameModeCard({
   function handleStart() {
     startTransition(async () => {
       const params = new URLSearchParams({ degree: selectedDegree });
-      if (isLsrw) params.set("pattern", selectedPattern);
+      if (isWordSentence) params.set("pattern", selectedPattern);
       if (levelId) params.set("level", levelId);
       router.push(`/hall/play-single/${gameId}?${params}`);
     });
@@ -169,7 +169,7 @@ export function GameModeCard({
       await restartLevelSessionAction(activeSession.id, targetLevelId);
       setActiveSession(null);
       const params = new URLSearchParams({ degree: selectedDegree });
-      if (isLsrw) params.set("pattern", selectedPattern);
+      if (isWordSentence) params.set("pattern", selectedPattern);
       params.set("level", targetLevelId);
       router.push(`/hall/play-single/${gameId}?${params}`);
     });
@@ -245,8 +245,8 @@ export function GameModeCard({
             })}
           </div>
 
-          {/* Pattern options (LSRW only) */}
-          {isLsrw && (
+          {/* Pattern options (Word-Sentence only) */}
+          {isWordSentence && (
             <>
               <div className="mt-3 flex w-full overflow-hidden rounded-xl border border-border">
                 {patternOptions.map(({ value, label, icon: Icon }) => {

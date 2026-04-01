@@ -106,7 +106,7 @@ func (s *GameSeeder) Run() error {
 			if err := query.Create(&models.Game{
 				ID:             uuid.Must(uuid.NewV7()).String(),
 				Name:           g.Name,
-				Mode:           "lsrw",
+				Mode:           "word-sentence",
 				Status:         "published",
 				Order:          g.Order,
 				IsActive:       true,
@@ -118,7 +118,7 @@ func (s *GameSeeder) Run() error {
 			}
 		} else {
 			if _, err := query.Where("name", g.Name).Update(&models.Game{
-				Mode:           "lsrw",
+				Mode:           "word-sentence",
 				Status:         "published",
 				Order:          g.Order,
 				IsActive:       true,

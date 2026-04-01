@@ -9,7 +9,7 @@ import (
 var enumValues = map[string][]string{
 	"degree":        {consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
 	"pattern":       {consts.GamePatternListen, consts.GamePatternSpeak, consts.GamePatternRead, consts.GamePatternWrite},
-	"mode":          {consts.GameModeLSRW, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination, consts.GameModeListeningChallenge},
+	"mode":          {consts.GameModeWordSentence, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination, consts.GameModeListeningChallenge},
 	"feedback_type": {consts.FeedbackTypeFeature, consts.FeedbackTypeContent, consts.FeedbackTypeUX, consts.FeedbackTypeBug, consts.FeedbackTypeOther},
 	"content_type":  {consts.ContentTypeWord, consts.ContentTypeBlock, consts.ContentTypePhrase, consts.ContentTypeSentence},
 	"image_role":    {consts.ImageRoleAdmUserAvatar, consts.ImageRoleUserAvatar, consts.ImageRoleCategoryCover, consts.ImageRoleTemplateCover, consts.ImageRoleGameCover, consts.ImageRolePressCover, consts.ImageRoleGameGroupCover, consts.ImageRolePostImage},

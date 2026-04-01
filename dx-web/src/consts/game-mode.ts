@@ -1,5 +1,5 @@
 export const GAME_MODES = {
-  LSRW: "lsrw",
+  WORD_SENTENCE: "word-sentence",
   VOCAB_BATTLE: "vocab-battle",
   VOCAB_MATCH: "vocab-match",
   VOCAB_ELIMINATION: "vocab-elimination",
@@ -9,7 +9,7 @@ export const GAME_MODES = {
 export type GameMode = (typeof GAME_MODES)[keyof typeof GAME_MODES];
 
 export const GAME_MODE_LABELS: Record<GameMode, string> = {
-  "lsrw": "听说读写",
+  "word-sentence": "连词成句",
   "vocab-battle": "词汇对轰",
   "vocab-match": "词汇配对",
   "vocab-elimination": "消消乐",

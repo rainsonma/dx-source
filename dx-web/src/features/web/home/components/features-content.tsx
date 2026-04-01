@@ -17,7 +17,7 @@ import Link from "next/link";
 
 const gameCards = [
   { icon: Swords, iconBg: "bg-blue-600/10", iconColor: "text-blue-600", title: "单词配对", desc: "在限定时间内快速配对英文单词和中文释义，提升词汇反应速度。", bullets: ["限时挑战模式", "多人实时对战", "自动适配难度"] },
-  { icon: Keyboard, iconBg: "bg-purple-600/10", iconColor: "text-purple-600", title: "听说读写", desc: "听音拼写单词，比拼速度和正确率，训练英语听说读写能力。", bullets: ["听音拼写", "AI 语音播报", "拼写错误回顾"] },
+  { icon: Keyboard, iconBg: "bg-purple-600/10", iconColor: "text-purple-600", title: "连词成句", desc: "根据提示连词成句，比拼速度和正确率，训练英语组句能力。", bullets: ["连词组句", "AI 语音播报", "拼写错误回顾"] },
   { icon: Headphones, iconBg: "bg-amber-500/10", iconColor: "text-amber-500", title: "听力闯关", desc: "分级听力闯关，从句子听写到段落理解，系统化提升听力。", bullets: ["多级难度闯关", "原声音频素材", "智能评分反馈"] },
   { icon: Shuffle, iconBg: "bg-pink-500/10", iconColor: "text-pink-500", title: "单词消消乐", desc: "趣味消除游戏与词汇记忆结合，在娱乐中巩固单词记忆。", bullets: ["趣味消除玩法", "词汇巩固复习", "连击加分机制"] },
 ];
@@ -171,7 +171,7 @@ export function FeaturesContent() {
             ))}
           </div>
           <p className="max-w-[737px] text-center text-sm leading-[1.7] text-slate-600 md:text-base">
-            每个课程由多个主题单元组成，每个单元包含 5-10 个游戏关卡。关卡类型涵盖单词配对、听说读写、听力闯关、语法探索和阅读理解。通关当前关卡才能解锁下一关，每个单元结束后有综合测试，确保知识点真正掌握。支持用户自定义创建课程，AI 根据指定主题自动生成关卡内容与难度梯度。
+            每个课程由多个主题单元组成，每个单元包含 5-10 个游戏关卡。关卡类型涵盖单词配对、连词成句、听力闯关、语法探索和阅读理解。通关当前关卡才能解锁下一关，每个单元结束后有综合测试，确保知识点真正掌握。支持用户自定义创建课程，AI 根据指定主题自动生成关卡内容与难度梯度。
           </p>
         </div>
       </section>

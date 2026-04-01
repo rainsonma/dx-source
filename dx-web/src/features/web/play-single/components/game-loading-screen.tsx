@@ -32,8 +32,8 @@ interface LoadingConfig {
 }
 
 const loadingData: Record<GameMode, LoadingConfig> = {
-  [GAME_MODES.LSRW]: {
-    title: "听说读写",
+  [GAME_MODES.WORD_SENTENCE]: {
+    title: "连词成句",
     tip: "提示：连续正确拼写可获得额外奖励",
     icon: Keyboard,
     iconColor: "text-purple-400",

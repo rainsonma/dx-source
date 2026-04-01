@@ -7,7 +7,7 @@ import { getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer
 import { SCORING } from "@/consts/scoring";
 import type { SpellingItem, TypedWord } from "@/features/web/play-core/types/spelling";
 
-export function useLsrw() {
+export function useWordSentence() {
   const currentIndex = useGameStore((s) => s.currentIndex);
   const contentItems = useGameStore((s) => s.contentItems);
   const sessionId = useGameStore((s) => s.sessionId);

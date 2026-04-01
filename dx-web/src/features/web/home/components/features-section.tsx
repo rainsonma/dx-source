@@ -18,9 +18,9 @@ const features: {
     icon: Keyboard,
     iconClassName: "text-violet-600",
     bgClassName: "bg-violet-100",
-    title: "听说读写",
+    title: "连词成句",
     description:
-      "听说读写全方位训练，看看你能多快掌握正确拼写。速度与准确并重，越快越高分。",
+      "连词成句全方位训练，看看你能多快组成正确句子。速度与准确并重，越快越高分。",
   },
   {
     icon: Swords,

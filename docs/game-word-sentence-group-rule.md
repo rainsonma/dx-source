@@ -1,4 +1,4 @@
-# LSRW Group Game Rules
+# Word-Sentence Group Game Rules
 
 ## Overview
 
@@ -228,7 +228,7 @@ Minimum display time: 1.2 seconds
 
 ### Playing Phase
 
-- Game mode component renders (GameLsrw, GameVocabMatch, etc.)
+- Game mode component renders (GameWordSentence, GameVocabMatch, etc.)
 - Shared game components read state from `useGameStore` (play-core)
 - Actions are injected via `GamePlayContext`:
   - `recordAnswer` → `POST /api/play-group/{id}/answers`
@@ -631,7 +631,7 @@ features/web/
 ├── play-core/           ← Shared game engine
 │   ├── context/         ← GamePlayContext (dependency injection)
 │   ├── components/      ← Game mode components, modals, shared UI
-│   ├── hooks/           ← useGameStore, useLsrw, useGameTimer, etc.
+│   ├── hooks/           ← useGameStore, useWordSentence, useGameTimer, etc.
 │   ├── helpers/         ← Scoring logic
 │   ├── actions/         ← Shared tracking/content actions
 │   └── types/           ← Spelling types
@@ -655,7 +655,7 @@ features/web/
 
 ### Dependency Injection (GamePlayContext)
 
-Game mode components (GameLsrw, etc.) do NOT import API actions directly. Instead:
+Game mode components (GameWordSentence, etc.) do NOT import API actions directly. Instead:
 
 1. Each shell (play-single, play-group) wraps content with `<GamePlayProvider actions={...}>`
 2. The provider supplies implementation-specific action functions

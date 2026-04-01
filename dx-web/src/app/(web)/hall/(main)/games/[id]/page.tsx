@@ -10,7 +10,7 @@ import { MyStatsCard } from "@/features/web/games/components/my-stats-card";
 import { GameDetailContent } from "@/features/web/games/components/game-detail-content";
 
 const GAME_RULES: Record<string, string[]> = {
-  "lsrw": [
+  "word-sentence": [
     "根据提示拼写出单词、短语或句子",
     "难度逐级递增：单词→短语→句子",
     "连续正确拼写获得额外分数奖励",

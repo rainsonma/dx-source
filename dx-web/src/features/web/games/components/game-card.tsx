@@ -6,7 +6,7 @@ import type { GameMode } from "@/consts/game-mode";
 import type { PublicGameCard } from "@/features/web/games/actions/game.action";
 
 const modeColors: Record<string, string> = {
-  "lsrw": "bg-teal-600",
+  "word-sentence": "bg-teal-600",
   "vocab-battle": "bg-violet-600",
   "vocab-match": "bg-blue-600",
   "vocab-elimination": "bg-amber-600",
