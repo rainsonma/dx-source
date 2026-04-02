@@ -44,6 +44,11 @@ func (c *ImportCourses) Extend() command.Extend {
 				Name:  "force",
 				Usage: "Force reimport by deleting existing games first",
 			},
+			&command.StringFlag{
+				Name:  "category",
+				Value: "实用英语",
+				Usage: "Game category name to import under",
+			},
 		},
 	}
 }
@@ -53,13 +58,14 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 	dirPath := ctx.ArgumentString("path")
 	force := ctx.OptionBool("force")
 
-	// 1. Look up 实用英语 category
+	// 1. Look up category
+	categoryName := ctx.Option("category")
 	var category models.GameCategory
 	if err := facades.Orm().Query().
-		Where("name", "实用英语").
+		Where("name", categoryName).
 		WhereNull("parent_id").
 		First(&category); err != nil || category.ID == "" {
-		ctx.Error("category '实用英语' not found")
+		ctx.Error(fmt.Sprintf("category '%s' not found", categoryName))
 		return fmt.Errorf("failed to find category: %w", err)
 	}
 	ctx.Info(fmt.Sprintf("category: %s (%s)", category.Name, category.ID))
