@@ -58,17 +58,20 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 	dirPath := ctx.ArgumentString("path")
 	force := ctx.OptionBool("force")
 
-	// 1. Look up category
+	// 1. Look up category (supports both parent and child categories)
 	categoryName := ctx.Option("category")
 	var category models.GameCategory
 	if err := facades.Orm().Query().
 		Where("name", categoryName).
-		WhereNull("parent_id").
 		First(&category); err != nil || category.ID == "" {
 		ctx.Error(fmt.Sprintf("category '%s' not found", categoryName))
 		return fmt.Errorf("failed to find category: %w", err)
 	}
 	ctx.Info(fmt.Sprintf("category: %s (%s)", category.Name, category.ID))
+
+	// Load game presses for matching against folder names
+	pressMap := loadPressMap()
+	ctx.Info(fmt.Sprintf("loaded %d presses", len(pressMap)))
 
 	// 2. Load top 1202 user IDs
 	userIDs, err := loadUserIDs(1202)
@@ -158,6 +161,7 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 		// Create game
 		gameID := uuid.Must(uuid.NewV7()).String()
 		userID := userIDs[rand.IntN(len(userIDs))]
+		pressID := matchPress(folder.Name(), pressMap)
 		game := models.Game{
 			ID:             gameID,
 			Name:           gameName,
@@ -165,6 +169,7 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 			UserID:         &userID,
 			Mode:           "word-sentence",
 			GameCategoryID: &category.ID,
+			GamePressID:    pressID,
 			Order:          float64(folderIdx * 1000),
 			IsActive:       true,
 			Status:         "published",
@@ -375,5 +380,37 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 		}
 	}
 
+	return nil
+}
+
+// loadPressMap loads all game presses into a name→ID map.
+func loadPressMap() map[string]string {
+	var presses []models.GamePress
+	facades.Orm().Query().Get(&presses)
+	m := make(map[string]string, len(presses))
+	for _, p := range presses {
+		m[p.Name] = p.ID
+	}
+	return m
+}
+
+// matchPress finds a press name within the folder name (longest match first).
+func matchPress(folderName string, pressMap map[string]string) *string {
+	cleaned := folderPrefixRe.ReplaceAllString(folderName, "")
+
+	names := make([]string, 0, len(pressMap))
+	for name := range pressMap {
+		names = append(names, name)
+	}
+	sort.Slice(names, func(i, j int) bool {
+		return len([]rune(names[i])) > len([]rune(names[j]))
+	})
+
+	for _, name := range names {
+		if strings.Contains(cleaned, name) {
+			id := pressMap[name]
+			return &id
+		}
+	}
 	return nil
 }
