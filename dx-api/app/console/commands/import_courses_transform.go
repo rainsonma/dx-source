@@ -41,12 +41,34 @@ type Phonetic struct {
 }
 
 type SentenceStructure struct {
-	Start       int     `json:"start"`
-	End         int     `json:"end"`
-	Text        string  `json:"text"`
-	Role        string  `json:"role"`
-	Type        string  `json:"type"`
-	Explanation *string `json:"explanation"`
+	Start       int              `json:"start"`
+	End         int              `json:"end"`
+	Text        string           `json:"text"`
+	Role        string           `json:"role"`
+	Type        string           `json:"type"`
+	Explanation json.RawMessage  `json:"explanation"`
+}
+
+// explanationString extracts a string from Explanation which may be a JSON string or array of strings.
+func (s *SentenceStructure) explanationString() *string {
+	if len(s.Explanation) == 0 || string(s.Explanation) == "null" {
+		return nil
+	}
+
+	// Try string first
+	var str string
+	if err := json.Unmarshal(s.Explanation, &str); err == nil {
+		return &str
+	}
+
+	// Try array of strings
+	var arr []string
+	if err := json.Unmarshal(s.Explanation, &arr); err == nil {
+		joined := strings.Join(arr, "")
+		return &joined
+	}
+
+	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +250,7 @@ func transformStructure(structures []SentenceStructure) (*string, error) {
 			Content:     s.Text,
 			Role:        s.Role,
 			RoleEN:      s.Type,
-			Explanation: s.Explanation,
+			Explanation: s.explanationString(),
 		}
 
 		if s.Role == "标点符号" {

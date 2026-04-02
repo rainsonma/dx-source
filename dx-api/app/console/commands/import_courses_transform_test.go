@@ -256,8 +256,6 @@ func TestTransformItems(t *testing.T) {
 }
 
 func TestTransformStructure(t *testing.T) {
-	strPtr := func(s string) *string { return &s }
-
 	t.Run("nil input", func(t *testing.T) {
 		got, err := transformStructure(nil)
 		if err != nil {
@@ -280,10 +278,10 @@ func TestTransformStructure(t *testing.T) {
 
 	t.Run("normal input", func(t *testing.T) {
 		input := []SentenceStructure{
-			{Start: 0, End: 1, Text: "I", Role: "主语", Type: "subject", Explanation: strPtr("代词作主语")},
-			{Start: 2, End: 5, Text: "like", Role: "谓语", Type: "predicate", Explanation: nil},
-			{Start: 6, End: 10, Text: "food", Role: "宾语", Type: "object", Explanation: nil},
-			{Start: 10, End: 11, Text: ".", Role: "标点符号", Type: "punctuation", Explanation: nil},
+			{Start: 0, End: 1, Text: "I", Role: "主语", Type: "subject", Explanation: json.RawMessage(`"代词作主语"`)},
+			{Start: 2, End: 5, Text: "like", Role: "谓语", Type: "predicate", Explanation: json.RawMessage("null")},
+			{Start: 6, End: 10, Text: "food", Role: "宾语", Type: "object", Explanation: json.RawMessage("null")},
+			{Start: 10, End: 11, Text: ".", Role: "标点符号", Type: "punctuation", Explanation: json.RawMessage("null")},
 		}
 		result, err := transformStructure(input)
 		if err != nil {
