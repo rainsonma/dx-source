@@ -27,6 +27,7 @@ func Boot() contractsfoundation.Application {
 			return []console.Command{
 				&commands.UpdatePlayStreaks{},
 				&commands.ResetEnergyBeans{},
+				&commands.ImportCourses{},
 			}
 		}).
 		WithSchedule(func() []schedule.Event {
