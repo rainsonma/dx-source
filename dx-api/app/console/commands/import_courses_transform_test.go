@@ -278,10 +278,10 @@ func TestTransformStructure(t *testing.T) {
 
 	t.Run("normal input", func(t *testing.T) {
 		input := []SentenceStructure{
-			{Start: 0, End: 1, Text: "I", Role: "主语", Type: "subject", Explanation: json.RawMessage(`"代词作主语"`)},
-			{Start: 2, End: 5, Text: "like", Role: "谓语", Type: "predicate", Explanation: json.RawMessage("null")},
-			{Start: 6, End: 10, Text: "food", Role: "宾语", Type: "object", Explanation: json.RawMessage("null")},
-			{Start: 10, End: 11, Text: ".", Role: "标点符号", Type: "punctuation", Explanation: json.RawMessage("null")},
+			{Start: 0, End: 1, Text: "I", Role: json.RawMessage(`"主语"`), Type: json.RawMessage(`"subject"`), Explanation: json.RawMessage(`"代词作主语"`)},
+			{Start: 2, End: 5, Text: "like", Role: json.RawMessage(`"谓语"`), Type: json.RawMessage(`"predicate"`), Explanation: json.RawMessage("null")},
+			{Start: 6, End: 10, Text: "food", Role: json.RawMessage(`"宾语"`), Type: json.RawMessage(`"object"`), Explanation: json.RawMessage("null")},
+			{Start: 10, End: 11, Text: ".", Role: json.RawMessage(`"标点符号"`), Type: json.RawMessage(`"punctuation"`), Explanation: json.RawMessage("null")},
 		}
 		result, err := transformStructure(input)
 		if err != nil {
@@ -337,7 +337,7 @@ func TestTransformStructure(t *testing.T) {
 
 	t.Run("unknown role gets fallback color", func(t *testing.T) {
 		input := []SentenceStructure{
-			{Start: 0, End: 3, Text: "abc", Role: "未知角色", Type: "unknown"},
+			{Start: 0, End: 3, Text: "abc", Role: json.RawMessage(`"未知角色"`), Type: json.RawMessage(`"unknown"`)},
 		}
 		result, err := transformStructure(input)
 		if err != nil {

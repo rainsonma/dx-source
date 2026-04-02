@@ -41,34 +41,42 @@ type Phonetic struct {
 }
 
 type SentenceStructure struct {
-	Start       int              `json:"start"`
-	End         int              `json:"end"`
-	Text        string           `json:"text"`
-	Role        string           `json:"role"`
-	Type        string           `json:"type"`
-	Explanation json.RawMessage  `json:"explanation"`
+	Start       int             `json:"start"`
+	End         int             `json:"end"`
+	Text        string          `json:"text"`
+	Role        json.RawMessage `json:"role"`
+	Type        json.RawMessage `json:"type"`
+	Explanation json.RawMessage `json:"explanation"`
 }
 
-// explanationString extracts a string from Explanation which may be a JSON string or array of strings.
-func (s *SentenceStructure) explanationString() *string {
-	if len(s.Explanation) == 0 || string(s.Explanation) == "null" {
+// rawToString extracts a string from a json.RawMessage that may be a string or array of strings.
+func rawToString(raw json.RawMessage) string {
+	if len(raw) == 0 || string(raw) == "null" {
+		return ""
+	}
+	var str string
+	if err := json.Unmarshal(raw, &str); err == nil {
+		return str
+	}
+	var arr []string
+	if err := json.Unmarshal(raw, &arr); err == nil {
+		if len(arr) > 0 {
+			return arr[0]
+		}
+	}
+	return ""
+}
+
+// rawToStringPtr is like rawToString but returns nil for null/empty.
+func rawToStringPtr(raw json.RawMessage) *string {
+	if len(raw) == 0 || string(raw) == "null" {
 		return nil
 	}
-
-	// Try string first
-	var str string
-	if err := json.Unmarshal(s.Explanation, &str); err == nil {
-		return &str
+	s := rawToString(raw)
+	if s == "" {
+		return nil
 	}
-
-	// Try array of strings
-	var arr []string
-	if err := json.Unmarshal(s.Explanation, &arr); err == nil {
-		joined := strings.Join(arr, "")
-		return &joined
-	}
-
-	return nil
+	return &s
 }
 
 // ---------------------------------------------------------------------------
@@ -244,18 +252,19 @@ func transformStructure(structures []SentenceStructure) (*string, error) {
 
 	entries := make([]StructureEntry, 0, len(structures))
 	for _, s := range structures {
+		role := rawToString(s.Role)
 		entry := StructureEntry{
 			Start:       s.Start + 1,
 			End:         s.End + 1,
 			Content:     s.Text,
-			Role:        s.Role,
-			RoleEN:      s.Type,
-			Explanation: s.explanationString(),
+			Role:        role,
+			RoleEN:      rawToString(s.Type),
+			Explanation: rawToStringPtr(s.Explanation),
 		}
 
-		if s.Role == "标点符号" {
+		if role == "标点符号" {
 			entry.Color = nil
-		} else if c, ok := roleColors[s.Role]; ok {
+		} else if c, ok := roleColors[role]; ok {
 			entry.Color = &c
 		} else {
 			fallback := "#F5F5F5"
