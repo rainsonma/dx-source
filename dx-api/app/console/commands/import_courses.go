@@ -43,7 +43,7 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 	var category models.GameCategory
 	if err := facades.Orm().Query().
 		Where("name", "实用英语").
-		Where("parent_id IS NULL").
+		WhereNull("parent_id").
 		First(&category); err != nil || category.ID == "" {
 		ctx.Error("category '实用英语' not found")
 		return fmt.Errorf("failed to find category: %w", err)
@@ -156,7 +156,7 @@ func (c *ImportCourses) Handle(ctx console.Context) error {
 		}
 
 		// Insert levels and content items
-		if err := insertLevels(tx, gameID, levels, userIDs); err != nil {
+		if err := insertLevels(tx, gameID, levels); err != nil {
 			_ = tx.Rollback()
 			ctx.Error(fmt.Sprintf("[%d] %s: failed to insert levels: %v", folderIdx, gameName, err))
 			continue
@@ -291,7 +291,7 @@ func parseLevels(folderPath string) ([]CourseFile, int, map[string]int, error) {
 }
 
 // insertLevels creates game levels and their content items within a transaction.
-func insertLevels(tx orm.Query, gameID string, levels []CourseFile, userIDs []string) error {
+func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 	const batchSize = 100
 
 	for levelIdx, level := range levels {
@@ -305,7 +305,7 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile, userIDs []st
 			Name:         level.Title,
 			Description:  &desc,
 			Order:        float64(levelIdx * 1000),
-			PassingScore: 80,
+			PassingScore: 0,
 			Degrees:      pq.StringArray(degrees),
 			IsActive:     true,
 		}
