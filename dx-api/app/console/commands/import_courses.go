@@ -23,7 +23,7 @@ import (
 type ImportCourses struct{}
 
 func (c *ImportCourses) Signature() string {
-	return "app:import-courses {path} {--force}"
+	return "app:import-courses"
 }
 
 func (c *ImportCourses) Description() string {
@@ -31,12 +31,26 @@ func (c *ImportCourses) Description() string {
 }
 
 func (c *ImportCourses) Extend() command.Extend {
-	return command.Extend{}
+	return command.Extend{
+		Arguments: []command.Argument{
+			&command.ArgumentString{
+				Name:     "path",
+				Required: true,
+				Usage:    "Path to the course directory",
+			},
+		},
+		Flags: []command.Flag{
+			&command.BoolFlag{
+				Name:  "force",
+				Usage: "Force reimport by deleting existing games first",
+			},
+		},
+	}
 }
 
 func (c *ImportCourses) Handle(ctx console.Context) error {
 	start := time.Now()
-	dirPath := ctx.Argument(0)
+	dirPath := ctx.ArgumentString("path")
 	force := ctx.OptionBool("force")
 
 	// 1. Look up 实用英语 category
