@@ -37,6 +37,9 @@ func (c *GamePlaySingleController) Start(ctx contractshttp.Context) contractshtt
 		if errors.Is(err, services.ErrNoGameLevels) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
 		}
+		if errors.Is(err, services.ErrVipRequired) {
+			return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
+		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start session")
 	}
 
@@ -402,6 +405,9 @@ func mapSessionError(ctx contractshttp.Context, err error) contractshttp.Respons
 	}
 	if errors.Is(err, services.ErrRateLimited) {
 		return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
+	}
+	if errors.Is(err, services.ErrVipRequired) {
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
 	}
 	return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "internal server error")
 }

@@ -140,6 +140,17 @@ func StartSession(userID, gameID, degree string, pattern *string, levelID *strin
 		return nil, ErrNoGameLevels
 	}
 
+	// VIP guard: non-first levels require active VIP
+	targetLevelID := levelID
+	if targetLevelID == nil {
+		targetLevelID = &firstLevel.ID
+	}
+	if *targetLevelID != firstLevel.ID {
+		if err := requireVip(userID); err != nil {
+			return nil, err
+		}
+	}
+
 	// Check for existing active session
 	existing, err := findActiveSession(query, userID, gameID, degree, pattern)
 	if err != nil {
@@ -559,6 +570,15 @@ func StartLevel(userID, sessionID, gameLevelID, degree string, pattern *string) 
 		return nil, err
 	}
 
+	// VIP guard: non-first levels require active VIP
+	var sessionForVip models.GameSessionTotal
+	if err := facades.Orm().Query().Select("id", "game_id").Where("id", sessionID).First(&sessionForVip); err != nil || sessionForVip.ID == "" {
+		return nil, ErrSessionNotFound
+	}
+	if err := requireVipForLevel(userID, sessionForVip.GameID, gameLevelID); err != nil {
+		return nil, err
+	}
+
 	// Upsert level stats
 	if err := UpsertLevelStats(userID, gameLevelID); err != nil {
 		return nil, fmt.Errorf("failed to upsert level stats: %w", err)
@@ -731,6 +751,16 @@ func AdvanceLevel(userID, sessionID, nextLevelID string) error {
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return err
 	}
+
+	// VIP guard: non-first levels require active VIP
+	var sessionForVip models.GameSessionTotal
+	if err := facades.Orm().Query().Select("id", "game_id").Where("id", sessionID).First(&sessionForVip); err != nil || sessionForVip.ID == "" {
+		return ErrSessionNotFound
+	}
+	if err := requireVipForLevel(userID, sessionForVip.GameID, nextLevelID); err != nil {
+		return err
+	}
+
 	_, err := facades.Orm().Query().Model(&models.GameSessionTotal{}).Where("id", sessionID).
 		Update(map[string]any{
 			"current_level_id":        nextLevelID,
