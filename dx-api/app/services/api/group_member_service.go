@@ -59,6 +59,9 @@ func removeMemberFromGroup(groupID, targetUserID string) error {
 
 // ListGroupMembers returns a paginated list of members for a group.
 func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, string, bool, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, "", false, err
+	}
 	if err := verifyMembership(userID, groupID); err != nil {
 		return nil, "", false, err
 	}
@@ -121,6 +124,9 @@ func ListGroupMembers(userID, groupID, cursor string, limit int) ([]MemberItem, 
 
 // KickMember removes a member from the group (owner only).
 func KickMember(userID, groupID, targetUserID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -138,6 +144,9 @@ func KickMember(userID, groupID, targetUserID string) error {
 
 // LeaveGroup removes the current user from the group.
 func LeaveGroup(userID, groupID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -152,6 +161,9 @@ func LeaveGroup(userID, groupID string) error {
 
 // JoinByCode submits a join application for a group via invite code, returning the group ID.
 func JoinByCode(userID, code string) (string, error) {
+	if err := requireVip(userID); err != nil {
+		return "", err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("invite_code", code).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return "", ErrGroupNotFound

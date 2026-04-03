@@ -3,8 +3,8 @@ package api
 import "testing"
 
 func TestSearchGamesForGroupExists(t *testing.T) {
-	// Verify function signature: SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error)
-	var fn func(string, int) ([]GroupGameSearchItem, error) = SearchGamesForGroup
+	// Verify function signature: SearchGamesForGroup(userID, query string, limit int) ([]GroupGameSearchItem, error)
+	var fn func(string, string, int) ([]GroupGameSearchItem, error) = SearchGamesForGroup
 	_ = fn
 }
 

@@ -20,7 +20,10 @@ type GroupGameSearchItem struct {
 }
 
 // SearchGamesForGroup searches published active games by name for group game selection.
-func SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error) {
+func SearchGamesForGroup(userID, query string, limit int) ([]GroupGameSearchItem, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if limit <= 0 {
 		limit = 20
 	}
@@ -77,6 +80,9 @@ func SearchGamesForGroup(query string, limit int) ([]GroupGameSearchItem, error)
 
 // SetGroupGame sets the current game and game mode for a group.
 func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, startGameLevelID *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -117,6 +123,9 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, 
 
 // ClearGroupGame clears the current game and game mode for a group.
 func ClearGroupGame(userID, groupID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -179,6 +188,9 @@ type GroupGameStartEvent struct {
 
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
 func StartGroupGame(userID, groupID, degree string, pattern *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -351,6 +363,9 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 
 // ForceEndGroupGame ends all active sessions and determines winners.
 func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
@@ -439,6 +454,9 @@ type GroupNextLevelEvent struct {
 
 // NextGroupLevel finds the next level and broadcasts it to all group members.
 func NextGroupLevel(userID, groupID, currentLevelID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound

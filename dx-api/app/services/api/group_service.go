@@ -56,6 +56,9 @@ type GroupDetail struct {
 
 // CreateGroup creates a new group with the given user as owner and first member.
 func CreateGroup(userID, name string, description *string) (*CreateGroupResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	groupID := newID()
 	inviteCode := helpers.GenerateInviteCode(8)
 
@@ -210,6 +213,9 @@ func ListGroups(userID, tab, cursor string, limit int) ([]GroupListItem, string,
 
 // GetGroupDetail returns the full detail of a group for a member.
 func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, ErrGroupNotFound
@@ -304,6 +310,9 @@ func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 
 // UpdateGroup updates the name, description, and optionally the answer time limit of a group.
 func UpdateGroup(userID, groupID, name string, description *string, levelTimeLimit *int) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
@@ -329,6 +338,9 @@ func UpdateGroup(userID, groupID, name string, description *string, levelTimeLim
 // DismissGroup soft-dismisses a group by setting dismissed_at.
 // If a game is in progress, it is force-ended first.
 func DismissGroup(userID, groupID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound

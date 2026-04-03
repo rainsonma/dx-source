@@ -70,6 +70,9 @@ type GroupPlayRestoreSessionResult struct {
 // GroupPlayStartSession starts or resumes a group game session.
 // gameGroupID is always required.
 func GroupPlayStartSession(userID, gameID, degree string, pattern *string, levelID *string, gameGroupID string) (*GroupPlayStartSessionResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	query := facades.Orm().Query()
 
 	// Find the first active level
@@ -206,6 +209,9 @@ func GroupPlayStartSession(userID, gameID, degree string, pattern *string, level
 
 // GroupPlayStartLevel creates or resumes a level session within a group game session.
 func GroupPlayStartLevel(userID, sessionID, gameLevelID, degree string, pattern *string) (*GroupPlayStartLevelResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return nil, err
 	}
@@ -276,6 +282,9 @@ func GroupPlayStartLevel(userID, sessionID, gameLevelID, degree string, pattern 
 
 // GroupPlayCompleteLevel marks a level complete and triggers group winner determination.
 func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, totalItems int) (*GroupPlayCompleteLevelResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return nil, err
 	}
@@ -423,6 +432,9 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 
 // GroupPlayRecordAnswer records a single answer and updates session + level stats atomically.
 func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := verifyOwnership(userID, input.GameSessionTotalID); err != nil {
 		return err
 	}
@@ -567,6 +579,9 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 
 // GroupPlayRecordSkip records a skip and increments skip counts atomically.
 func GroupPlayRecordSkip(userID string, input RecordSkipInput) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := verifyOwnership(userID, input.GameSessionTotalID); err != nil {
 		return err
 	}
@@ -678,6 +693,9 @@ func broadcastPlayerAction(userID, sessionTotalID, action string, comboStreak in
 
 // GroupPlaySyncPlayTime syncs playtime to both session and active level.
 func GroupPlaySyncPlayTime(userID, sessionID, gameLevelID string, playTime int) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if playTime < 0 || playTime > 86400 {
 		return ErrInvalidPlayTime
 	}
@@ -721,6 +739,9 @@ func GroupPlaySyncPlayTime(userID, sessionID, gameLevelID string, playTime int) 
 
 // GroupPlayRestoreSessionData fetches accumulated stats for restoring client state on resume.
 func GroupPlayRestoreSessionData(userID, sessionID, gameLevelID string) (*GroupPlayRestoreSessionResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return nil, err
 	}
@@ -762,6 +783,9 @@ func GroupPlayRestoreSessionData(userID, sessionID, gameLevelID string) (*GroupP
 
 // GroupPlayUpdateContentItem updates the session's resume point within a level.
 func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return err
 	}
