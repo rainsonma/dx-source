@@ -43,7 +43,7 @@ function getAvatarColor(id: string) {
 const menuItems = [
   {
     group: [
-      { label: "升级会员", icon: Crown, href: "/auth/membership" },
+      { label: "升级会员", icon: Crown, href: "/purchase/membership" },
       { label: "兑换会员", icon: Ticket, href: "/hall/redeem" },
       { label: "推广邀请", icon: Gift, href: "/hall/invite" },
     ],

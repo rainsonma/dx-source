@@ -16,7 +16,7 @@ export function MembershipBlock({ profile }: { profile: MeProfile }) {
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-bold text-foreground">会员信息</h3>
         <Link
-          href="/auth/membership"
+          href="/purchase/membership"
           className="flex items-center gap-1 text-sm font-medium text-teal-600 hover:text-teal-700"
         >
           升级会员

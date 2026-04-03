@@ -18,7 +18,7 @@ export function AdCardsRow() {
           </p>
         </div>
         <Link
-          href="/auth/membership"
+          href="/purchase/membership"
           className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-5 py-2 text-[13px] font-semibold text-teal-700 hover:bg-white/90"
         >
           <Crown className="h-3.5 w-3.5" />

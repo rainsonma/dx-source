@@ -52,7 +52,7 @@ export function InsufficientBeansDialog({
           <AlertDialogCancel>取消</AlertDialogCancel>
           <AlertDialogAction
             className="bg-teal-600 hover:bg-teal-700"
-            onClick={() => router.push("/recharge")}
+            onClick={() => router.push("/purchase/beans")}
           >
             去充值
           </AlertDialogAction>

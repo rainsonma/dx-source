@@ -111,7 +111,7 @@ const ctaItems = [
     icon: ArrowUpCircle,
     label: "续费升级",
     subtitle: "选择会员套餐",
-    href: "/auth/membership",
+    href: "/purchase/membership",
     iconGradient: "from-amber-300 to-yellow-500",
     badge: { text: "VIP", gradient: "from-amber-300 to-yellow-500" },
   },
