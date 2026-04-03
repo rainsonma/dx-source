@@ -42,7 +42,7 @@ const statusStyles: Record<StatusVariant, { bg: string; label: string }> = {
   draft: { bg: "bg-slate-500", label: "未发布" },
 };
 
-export function GameCardItem({ game }: { game: GameCard }) {
+export function GameCardItem({ game, asDiv, onClick }: { game: GameCard; asDiv?: boolean; onClick?: () => void }) {
   const status = (game.status === "published" ? "published" : game.status === "withdraw" ? "withdraw" : "draft") as StatusVariant;
   const s = statusStyles[status];
   const modeLabel = GAME_MODE_LABELS[game.mode as GameMode] ?? game.mode;
@@ -53,11 +53,8 @@ export function GameCardItem({ game }: { game: GameCard }) {
       })
     : "";
 
-  return (
-    <Link
-      href={`/hall/ai-custom/${game.id}`}
-      className="flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
-    >
+  const cardContent = (
+    <>
       {/* Cover */}
       <div className={`relative flex h-[120px] items-center justify-center ${(game.coverUrl || game.cover?.url) ? "bg-border" : pickCoverColor(game.id)}`}>
         {(game.coverUrl || game.cover?.url) ? (
@@ -105,6 +102,26 @@ export function GameCardItem({ game }: { game: GameCard }) {
           </span>
         </div>
       </div>
+    </>
+  );
+
+  if (asDiv) {
+    return (
+      <div
+        onClick={onClick}
+        className="flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/hall/ai-custom/${game.id}`}
+      className="flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md"
+    >
+      {cardContent}
     </Link>
   );
 }

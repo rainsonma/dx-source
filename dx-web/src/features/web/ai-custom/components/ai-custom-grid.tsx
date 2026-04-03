@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import useSWR from "swr"
 import { Puzzle, Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
@@ -9,6 +9,10 @@ import { PageSpinner } from "@/components/in/page-spinner"
 import { CreateCourseForm } from "@/features/web/ai-custom/components/create-course-form"
 import { GameCardItem } from "@/features/web/ai-custom/components/game-card-item"
 import { useInfiniteGames } from "@/features/web/ai-custom/hooks/use-infinite-games"
+import { apiClient } from "@/lib/api-client"
+import { isVipActive } from "@/lib/vip"
+import type { UserGrade } from "@/consts/user-grade"
+import { UpgradeDialog } from "@/features/web/games/components/upgrade-dialog"
 
 type GameCounts = { all: number; published: number; withdraw: number; draft: number }
 type StatusFilter = "all" | "published" | "withdraw" | "draft"
@@ -23,6 +27,16 @@ const filterKeys: { key: StatusFilter; label: string; countKey: keyof GameCounts
 export function AiCustomGrid() {
   const [open, setOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<StatusFilter>("all")
+  const [isVip, setIsVip] = useState(false)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+
+  useEffect(() => {
+    apiClient.get<{ grade: string; vip_due_at: string | null }>("/api/user/profile").then((res) => {
+      if (res.code === 0 && res.data) {
+        setIsVip(isVipActive(res.data.grade as UserGrade, res.data.vip_due_at))
+      }
+    })
+  }, [])
 
   const { data: categories } = useSWR<{ id: string; name: string; depth: number; isLeaf: boolean }[]>("/api/game-categories")
   const { data: presses } = useSWR<{ id: string; name: string }[]>("/api/game-presses")
@@ -69,7 +83,7 @@ export function AiCustomGrid() {
         </div>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => isVip ? setOpen(true) : setUpgradeOpen(true)}
           className="flex items-center gap-1.5 rounded-[10px] bg-gradient-to-b from-teal-600 to-teal-700 px-4 py-2 text-[13px] font-semibold text-white"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -84,7 +98,12 @@ export function AiCustomGrid() {
       {!isLoading && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {games.map((game) => (
-            <GameCardItem key={game.id} game={game} />
+            <GameCardItem
+              key={game.id}
+              game={game}
+              asDiv={!isVip}
+              onClick={!isVip ? () => setUpgradeOpen(true) : undefined}
+            />
           ))}
         </div>
       )}
@@ -99,7 +118,7 @@ export function AiCustomGrid() {
           <p className="text-sm text-muted-foreground">还没有创建任何课程游戏</p>
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => isVip ? setOpen(true) : setUpgradeOpen(true)}
             className="mt-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white"
           >
             创建第一个游戏
@@ -127,6 +146,13 @@ export function AiCustomGrid() {
           />
         </DialogContent>
       </Dialog>
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="会员专属功能"
+        message="升级会员即可使用 AI 随心配，创建专属学习课程"
+      />
     </>
   )
 }
