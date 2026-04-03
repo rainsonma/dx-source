@@ -129,7 +129,6 @@ export const authApi = {
     } catch {
       // Ignore network errors on logout
     }
-    clearAccessToken();
   },
 };
 
@@ -559,47 +558,22 @@ export const contentSeekApi = {
 export const uploadApi = {
   /** Upload an image file via FormData */
   async uploadImage(file: File, role: string) {
-    const token = getAccessToken();
     const formData = new FormData();
     formData.append("file", file);
     formData.append("role", role);
 
-    const doUpload = async (authToken: string | null) => {
-      return fetch(`${API_URL}/api/uploads/images`, {
-        method: "POST",
-        headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-        body: formData,
-        credentials: "include",
-      });
-    };
-
-    let res = await doUpload(token);
+    const res = await fetch(`${API_URL}/api/uploads/images`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
 
     if (res.status === 401) {
       const errorData = await res.clone().json().catch(() => ({ code: 0 }));
-      if (errorData.code === 40104) {
-        clearAccessToken();
-        if (typeof window !== "undefined") {
-          alert("您的账号已在其他设备登录");
-          window.location.href = "/auth/signin";
-        }
-        throw new Error("Session replaced");
-      }
-      try {
-        const newToken = await refreshAccessToken();
-        res = await doUpload(newToken);
-      } catch {
-        clearAccessToken();
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth/signin";
-        }
-        throw new Error("Unauthorized");
-      }
-    }
-
-    if (res.status === 401) {
-      clearAccessToken();
-      if (typeof window !== "undefined") {
+      if (errorData.code === 40104 && typeof window !== "undefined") {
+        alert("您的账号已在其他设备登录");
+        window.location.href = "/auth/signin";
+      } else if (typeof window !== "undefined") {
         window.location.href = "/auth/signin";
       }
       throw new Error("Unauthorized");

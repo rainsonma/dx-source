@@ -8,7 +8,7 @@ export default async function GroupInvitePage({
 }) {
   const { code } = await params;
   const cookieStore = await cookies();
-  const isLoggedIn = !!cookieStore.get("dx_refresh")?.value;
+  const isLoggedIn = !!cookieStore.get("dx_token")?.value;
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
