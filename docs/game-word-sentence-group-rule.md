@@ -685,3 +685,26 @@ Injected actions:
 | Degree options | practice, beginner, intermediate, advanced | beginner, intermediate, advanced (no practice) |
 | Pattern | Optional | Required (default: write) |
 | EXP threshold | 60% accuracy | 60% accuracy (same) |
+
+## VIP Requirement
+
+### Access Control
+
+All group operations require an active VIP membership, with two exceptions:
+
+| Operation | VIP Required |
+|-----------|-------------|
+| View groups list (`ListGroups`) | No |
+| View invite info (`GetGroupByInviteCode`) | No |
+| All other operations | Yes |
+
+This includes: creating groups, joining groups, viewing group details, managing members, setting games, starting/playing group games, and all group play recording endpoints.
+
+### Enforcement
+
+- **Backend**: Every guarded service function calls `requireVip(userID)` at the top. Returns error code `40302` (`CodeVipRequired`) with HTTP 403 if the user is not VIP.
+- **Frontend**: The groups list page gates the "创建学习群" button, group card navigation, and join/apply actions behind VIP status. The invite page gates the "申请加入" button. All show an upgrade dialog directing to `/purchase/membership`.
+
+### VIP Definition
+
+Same as game level access control: `grade == "lifetime"` OR (`grade != "free"` AND `vipDueAt > now()`).

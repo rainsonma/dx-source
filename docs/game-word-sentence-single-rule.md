@@ -201,3 +201,26 @@ All content displayed across the game detail page, game loading screen, game pla
 - On tab close, `navigator.sendBeacon` flushes the latest play time
 - On resume, play time is restored from the server
 - At level/session completion, play time feeds into `GameStatsLevel.totalPlayTime` and `GameStatsTotal.totalPlayTime`
+
+## Level Access Control
+
+### VIP Gating
+
+- **Level 1** is free for all users (free, paid, and expired)
+- **Levels 2+** require an active VIP membership
+
+### VIP Definition
+
+A user is "active VIP" if:
+
+- `grade == "lifetime"` (never expires), OR
+- `grade != "free"` AND `vipDueAt` is not null AND `vipDueAt > now()`
+
+### Enforcement
+
+- **Backend**: `StartSession`, `StartLevel`, `AdvanceLevel`, and `GetLevelContent` all check VIP status when the target level is not the first level. Returns error code `40302` (`CodeVipRequired`) with HTTP 403 if the user is not VIP.
+- **Frontend**: The `LevelGrid` component shows lock icons on levels 2+ for non-VIP users. Clicking a locked level opens an upgrade dialog directing to `/purchase/membership`. The play page redirects non-VIP users back to the game detail page if they attempt to access a non-first level via URL.
+
+### First Level Determination
+
+The "first level" is the active level with the lowest `order` value for the game. This is queried as: `SELECT ... FROM game_levels WHERE game_id = ? AND is_active = true ORDER BY "order" ASC LIMIT 1`.
