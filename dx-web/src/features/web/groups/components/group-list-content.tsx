@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
+import { apiClient } from "@/lib/api-client";
+import { isVipActive } from "@/lib/vip";
+import type { UserGrade } from "@/consts/user-grade";
 import { Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,6 +22,7 @@ import { groupApi } from "../actions/group.action";
 import type { Group } from "../types/group";
 import { GroupCard } from "./group-card";
 import { CreateGroupDialog } from "./create-group-dialog";
+import { UpgradeDialog } from "@/features/web/games/components/upgrade-dialog";
 
 type Tab = "all" | "created" | "joined";
 
@@ -39,6 +43,16 @@ export function GroupListContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [applyTarget, setApplyTarget] = useState<Group | null>(null);
   const [applying, setApplying] = useState(false);
+  const [isVip, setIsVip] = useState(true); // optimistic default
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  useEffect(() => {
+    apiClient.get<{ grade: string; vip_due_at: string | null }>("/api/user/profile").then((res) => {
+      if (res.code === 0 && res.data) {
+        setIsVip(isVipActive(res.data.grade as UserGrade, res.data.vip_due_at));
+      }
+    });
+  }, []);
 
   const swrKey = `/api/groups?tab=${tab}`;
   const { data, isLoading } = useSWR<GroupListResponse>(swrKey);
@@ -87,7 +101,7 @@ export function GroupListContent() {
         <div className="hidden flex-1 md:block" />
         <button
           type="button"
-          onClick={() => setCreateOpen(true)}
+          onClick={() => isVip ? setCreateOpen(true) : setUpgradeOpen(true)}
           className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-teal-700 md:w-auto"
         >
           <Plus className="h-4 w-4" />
@@ -118,7 +132,9 @@ export function GroupListContent() {
               key={group.id}
               group={group}
               isMember={group.is_member}
-              onJoin={() => setApplyTarget(group)}
+              isVip={isVip}
+              onJoin={() => isVip ? setApplyTarget(group) : setUpgradeOpen(true)}
+              onUpgrade={() => setUpgradeOpen(true)}
             />
           ))}
         </div>
@@ -129,6 +145,13 @@ export function GroupListContent() {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreated={() => swrMutate("/api/groups")}
+      />
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="会员专属功能"
+        message="升级会员即可创建和加入学习群，与同学一起学习"
       />
 
       {/* Apply confirm dialog */}

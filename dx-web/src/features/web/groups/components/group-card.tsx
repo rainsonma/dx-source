@@ -28,11 +28,13 @@ function hashToVariant(str: string): GroupVariant {
 interface GroupCardProps {
   group: Group;
   isMember?: boolean;
+  isVip?: boolean;
   highlighted?: boolean;
   onJoin?: () => void;
+  onUpgrade?: () => void;
 }
 
-export function GroupCard({ group, isMember = true, highlighted = false, onJoin }: GroupCardProps) {
+export function GroupCard({ group, isMember = true, isVip = true, highlighted = false, onJoin, onUpgrade }: GroupCardProps) {
   const variant = hashToVariant(group.id);
   const v = variantClasses[variant];
   const letter = group.name[0];
@@ -92,7 +94,10 @@ export function GroupCard({ group, isMember = true, highlighted = false, onJoin 
   );
 
   if (isMember) {
-    return <Link href={`/hall/groups/${group.id}`} className="block">{cardContent}</Link>;
+    if (isVip) {
+      return <Link href={`/hall/groups/${group.id}`} className="block">{cardContent}</Link>;
+    }
+    return <div className="block cursor-pointer" onClick={onUpgrade}>{cardContent}</div>;
   }
   return <div className="block">{cardContent}</div>;
 }

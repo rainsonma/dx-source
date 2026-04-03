@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Users, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client";
+import { isVipActive } from "@/lib/vip";
+import type { UserGrade } from "@/consts/user-grade";
 import { groupMemberApi } from "../actions/group-member.action";
+import { UpgradeDialog } from "@/features/web/games/components/upgrade-dialog";
 
 interface GroupInfo {
   id: string;
@@ -25,6 +29,8 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
   const [fetching, setFetching] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [isVip, setIsVip] = useState(true);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     async function loadGroup() {
@@ -38,6 +44,15 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
     }
     loadGroup();
   }, [code]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    apiClient.get<{ grade: string; vip_due_at: string | null }>("/api/user/profile").then((res) => {
+      if (res.code === 0 && res.data) {
+        setIsVip(isVipActive(res.data.grade as UserGrade, res.data.vip_due_at));
+      }
+    });
+  }, [isLoggedIn]);
 
   async function handleApply() {
     setApplying(true);
@@ -118,7 +133,7 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
         {isLoggedIn ? (
           <button
             type="button"
-            onClick={handleApply}
+            onClick={() => isVip ? handleApply() : setUpgradeOpen(true)}
             disabled={applying}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
           >
@@ -135,6 +150,13 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
           </button>
         )}
       </div>
+
+      <UpgradeDialog
+        open={upgradeOpen}
+        onOpenChange={setUpgradeOpen}
+        title="会员专属功能"
+        message="升级会员即可创建和加入学习群，与同学一起学习"
+      />
     </div>
   );
 }
