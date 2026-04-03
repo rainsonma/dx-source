@@ -181,7 +181,7 @@ export function GameModeCard({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/[0.38] px-4">
-      <div className="flex w-full max-w-[720px] flex-col overflow-hidden rounded-[20px] bg-card shadow-[0_12px_40px_rgba(15,23,42,0.19)] md:min-h-[520px] md:flex-row md:max-h-[90vh]">
+      <div className="flex w-full max-w-[720px] flex-col overflow-hidden rounded-[20px] bg-card shadow-[0_12px_40px_rgba(15,23,42,0.19)] md:min-h-[560px] md:flex-row md:max-h-[90vh]">
         {/* Left: Cover image */}
         <div className="flex h-40 items-center justify-center bg-gradient-to-br from-teal-100 via-sky-100 to-purple-100 md:h-auto md:w-[280px] md:shrink-0 md:rounded-l-[20px]">
           <span className="text-6xl">🎮</span>
@@ -190,7 +190,7 @@ export function GameModeCard({
         {/* Right: Content */}
         <div className="flex flex-1 flex-col justify-between p-6 md:p-8 md:px-9">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1.5">
               <h2 className="text-xl font-bold text-foreground md:text-[22px]">
                 选择游戏模式
@@ -200,7 +200,7 @@ export function GameModeCard({
             <button
               type="button"
               aria-label="关闭"
-              className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-muted"
+              className="mt-[-2px] flex h-9 w-9 items-center justify-center rounded-[10px] bg-muted"
               onClick={onClose}
             >
               <X className="h-[18px] w-[18px] text-muted-foreground" />
@@ -208,7 +208,7 @@ export function GameModeCard({
           </div>
 
           {/* Mode options */}
-          <div className="flex flex-col gap-3 py-6 md:py-0">
+          <div className="flex flex-col gap-3 py-6">
             {modeOptions.map((mode) => {
               const isSelected = selectedDegree === mode.value;
               return (
