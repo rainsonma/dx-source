@@ -19,7 +19,6 @@ func Adm() {
 		// Admin auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {
 			auth.Post("/login", admAuthController.Login)
-			auth.Post("/refresh", admAuthController.Refresh)
 			auth.Post("/logout", admAuthController.Logout)
 		})
 

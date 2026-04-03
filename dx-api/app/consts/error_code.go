@@ -23,11 +23,9 @@ const (
 	CodeInvalidProduct     = 40014
 
 	// 401xx: Auth
-	CodeUnauthorized        = 40100
-	CodeTokenExpired        = 40101
-	CodeInvalidToken        = 40102
-	CodeInvalidRefreshToken = 40103
-	CodeSessionReplaced     = 40104
+	CodeUnauthorized    = 40100
+	CodeInvalidToken    = 40102
+	CodeSessionReplaced = 40104
 
 	// 403xx: Permission
 	CodeForbidden      = 40300

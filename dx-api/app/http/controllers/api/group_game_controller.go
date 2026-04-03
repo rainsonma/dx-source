@@ -162,14 +162,9 @@ func (c *GroupGameController) NextLevel(ctx contractshttp.Context) contractshttp
 
 // Events establishes a persistent SSE connection for group events.
 func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Response {
-	token := ctx.Request().Query("token", "")
-	if token == "" {
-		return helpers.Error(ctx, nethttp.StatusUnauthorized, 0, "missing token")
-	}
-
-	userID, err := helpers.ParseJWTUserID(token)
-	if err != nil {
-		return helpers.Error(ctx, nethttp.StatusUnauthorized, 0, "invalid token")
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, 0, "unauthorized")
 	}
 
 	groupID := ctx.Request().Route("id")

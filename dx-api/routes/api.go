@@ -61,7 +61,6 @@ func Api() {
 		router.Prefix("/auth").Group(func(auth route.Router) {
 			auth.Post("/signup", authController.SignUp)
 			auth.Post("/signin", authController.SignIn)
-			auth.Post("/refresh", authController.Refresh)
 			auth.Post("/logout", authController.Logout)
 		})
 
@@ -74,14 +73,6 @@ func Api() {
 		// Public group invite info (no auth required)
 		publicGroupMemberController := apicontrollers.NewGroupMemberController()
 		router.Get("/groups/invite/{code}", publicGroupMemberController.GetInviteInfo)
-
-		// Group SSE events (query-param auth, not JWT middleware)
-		groupGameController := apicontrollers.NewGroupGameController()
-		router.Get("/groups/{id}/events", groupGameController.Events)
-
-		// Group detail notification SSE (query-param auth, not JWT middleware)
-		groupNotifyController := apicontrollers.NewGroupNotifyController()
-		router.Get("/groups/{id}/notify", groupNotifyController.Notify)
 
 		// Public payment callbacks (no JWT required)
 		paymentController := apicontrollers.NewPaymentController()
@@ -97,6 +88,12 @@ func Api() {
 		router.Middleware(middleware.JwtAuth()).Group(func(protected route.Router) {
 			// Upload routes
 			protected.Post("/uploads/images", uploadController.UploadImage)
+
+			// Group SSE events (cookie auth via JwtAuth middleware)
+			sseGroupGameController := apicontrollers.NewGroupGameController()
+			protected.Get("/groups/{id}/events", sseGroupGameController.Events)
+			sseGroupNotifyController := apicontrollers.NewGroupNotifyController()
+			protected.Get("/groups/{id}/notify", sseGroupNotifyController.Notify)
 
 			// Protected game routes
 			contentController := &apicontrollers.ContentController{}
