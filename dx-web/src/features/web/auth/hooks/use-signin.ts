@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { authApi } from "@/lib/api-client";
-import { setAccessToken } from "@/lib/token";
 import {
   sendSignInCodeSchema,
   emailSignInSchema,
@@ -121,7 +120,6 @@ export function useSignIn() {
         if (res.code !== 0) {
           setEmailState({ error: res.message || "登录失败" });
         } else {
-          setAccessToken(res.data.access_token);
           setEmailState({ success: true });
         }
       } catch {
@@ -158,7 +156,6 @@ export function useSignIn() {
         if (res.code !== 0) {
           setAccountState({ error: res.message || "登录失败" });
         } else {
-          setAccessToken(res.data.access_token);
           setAccountState({ success: true });
         }
       } catch {

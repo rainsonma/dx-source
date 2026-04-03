@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { authApi, removeToken } from "@/lib/api-client";
+import { authApi } from "@/lib/api-client";
 import {
   Zap,
   Coins,
@@ -71,7 +71,6 @@ export function UserProfileMenu({ profile }: { profile: UserProfile }) {
     } catch {
       // Ignore logout API errors — clear local state regardless
     }
-    removeToken();
     window.location.href = "/";
   }
 

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api-client";
-import { setAccessToken } from "@/lib/token";
 import { sendCodeSchema, signUpSchema } from "@/features/web/auth/schemas/signup.schema";
 
 type ActionResult = {
@@ -106,7 +105,6 @@ export function useSignup() {
         if (res.code !== 0) {
           setSignUpState({ error: res.message || "注册失败" });
         } else {
-          setAccessToken(res.data.access_token);
           setSignUpState({ success: true });
         }
       } catch {
