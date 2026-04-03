@@ -22,6 +22,10 @@ type ApplicationItem struct {
 
 // ApplyToGroup creates a pending application for a user to join a group.
 func ApplyToGroup(userID, groupID string) (string, error) {
+	if err := requireVip(userID); err != nil {
+		return "", err
+	}
+
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return "", ErrGroupNotFound
@@ -62,6 +66,10 @@ func ApplyToGroup(userID, groupID string) (string, error) {
 
 // CancelApplication deletes a pending application for a user+group.
 func CancelApplication(userID, groupID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+
 	var app models.GameGroupApplication
 	if err := facades.Orm().Query().
 		Where("game_group_id", groupID).
@@ -89,6 +97,10 @@ type applicationRow struct {
 
 // ListApplications returns a paginated list of pending applications for a group.
 func ListApplications(userID, groupID, cursor string, limit int) ([]ApplicationItem, string, bool, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, "", false, err
+	}
+
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return nil, "", false, ErrGroupNotFound
@@ -147,6 +159,10 @@ func ListApplications(userID, groupID, cursor string, limit int) ([]ApplicationI
 
 // HandleApplication accepts or rejects a pending application.
 func HandleApplication(userID, groupID, appID, action string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+
 	var group models.GameGroup
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound

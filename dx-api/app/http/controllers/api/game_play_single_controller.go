@@ -109,7 +109,7 @@ func (c *GamePlaySingleController) StartLevel(ctx contractshttp.Context) contrac
 
 	result, err := services.StartLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start level")
+		return mapSessionError(ctx, err)
 	}
 
 	return helpers.Success(ctx, result)

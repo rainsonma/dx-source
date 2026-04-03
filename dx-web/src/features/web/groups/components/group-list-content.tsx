@@ -43,7 +43,7 @@ export function GroupListContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [applyTarget, setApplyTarget] = useState<Group | null>(null);
   const [applying, setApplying] = useState(false);
-  const [isVip, setIsVip] = useState(true); // optimistic default
+  const [isVip, setIsVip] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {

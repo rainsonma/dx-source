@@ -29,7 +29,7 @@ export function GroupInviteContent({ code, isLoggedIn }: Props) {
   const [fetching, setFetching] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [isVip, setIsVip] = useState(true);
+  const [isVip, setIsVip] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {

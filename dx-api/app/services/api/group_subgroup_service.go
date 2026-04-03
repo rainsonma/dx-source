@@ -42,6 +42,9 @@ func VerifyGroupOwnership(userID, groupID string) error {
 
 // CreateSubgroup creates a new subgroup in the given group.
 func CreateSubgroup(userID, groupID, name string) (string, error) {
+	if err := requireVip(userID); err != nil {
+		return "", err
+	}
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return "", err
 	}
@@ -92,6 +95,9 @@ type subgroupRow struct {
 
 // ListSubgroups returns all subgroups for a group, with member counts.
 func ListSubgroups(userID, groupID string) ([]SubgroupItem, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := verifyMembership(userID, groupID); err != nil {
 		return nil, err
 	}
@@ -130,6 +136,9 @@ func ListSubgroups(userID, groupID string) ([]SubgroupItem, error) {
 
 // UpdateSubgroup updates the name of a subgroup.
 func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
@@ -148,6 +157,9 @@ func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
 
 // DeleteSubgroup removes a subgroup and all its members.
 func DeleteSubgroup(userID, groupID, subgroupID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
@@ -182,6 +194,9 @@ type subgroupMemberRow struct {
 
 // ListSubgroupMembers returns all members of a subgroup.
 func ListSubgroupMembers(userID, groupID, subgroupID string) ([]SubgroupMemberItem, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := verifyMembership(userID, groupID); err != nil {
 		return nil, err
 	}
@@ -211,6 +226,9 @@ func ListSubgroupMembers(userID, groupID, subgroupID string) ([]SubgroupMemberIt
 
 // AssignSubgroupMembers adds a list of group members to a subgroup.
 func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
@@ -261,6 +279,9 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 
 // RemoveSubgroupMember removes a single member from a subgroup.
 func RemoveSubgroupMember(userID, groupID, subgroupID, targetUserID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	if err := VerifyGroupOwnership(userID, groupID); err != nil {
 		return err
 	}
