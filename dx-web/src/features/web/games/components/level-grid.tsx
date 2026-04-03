@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Lock, Star } from "lucide-react";
+import { UpgradeDialog } from "@/features/web/games/components/upgrade-dialog";
 
 function LevelCell({
   level,
@@ -44,7 +46,10 @@ function LevelCell({
   }
 
   return (
-    <div className="relative flex h-[67px] w-[67px] flex-col items-center justify-center gap-0.5 rounded-[10px] bg-muted">
+    <div
+      onClick={onClick}
+      className={`relative flex h-[67px] w-[67px] flex-col items-center justify-center gap-0.5 rounded-[10px] bg-muted${onClick ? " cursor-pointer" : ""}`}
+    >
       <div className="absolute -left-[5px] -top-[5px] flex h-4 w-4 items-center justify-center rounded-full bg-amber-500">
         <Lock className="h-[9px] w-[9px] text-white" />
       </div>
@@ -76,12 +81,15 @@ function StarGroup({ count }: { count: number }) {
 export function LevelGrid({
   levels,
   completedLevels,
+  isVip,
   onLevelClick,
 }: {
   levels: { id: string; name: string; order: number }[];
   completedLevels: number;
+  isVip: boolean;
   onLevelClick?: (levelId: string, levelName: string) => void;
 }) {
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const totalLevels = levels.length;
 
   return (
@@ -98,8 +106,9 @@ export function LevelGrid({
       <div className="grid grid-cols-4 gap-1.5 md:grid-cols-5 lg:grid-cols-4 xl:grid-cols-7 2xl:grid-cols-10">
         {levels.map((lv, idx) => {
           const levelNum = idx + 1;
-          const status =
-            levelNum <= completedLevels
+          const status = isVip
+            ? "current"
+            : levelNum <= completedLevels
               ? "completed"
               : levelNum === completedLevels + 1
                 ? "current"
@@ -112,14 +121,18 @@ export function LevelGrid({
               name={lv.name}
               status={status}
               onClick={
-                status !== "locked" && onLevelClick
-                  ? () => onLevelClick(lv.id, lv.name)
-                  : undefined
+                status === "locked"
+                  ? () => setUpgradeOpen(true)
+                  : onLevelClick
+                    ? () => onLevelClick(lv.id, lv.name)
+                    : undefined
               }
             />
           );
         })}
       </div>
+
+      <UpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </div>
   );
 }
