@@ -12,6 +12,7 @@ export const BEAN_REASONS = {
   AI_BREAK_REFUND: "分解失败退还",
   AI_GEN_ITEMS_CONSUME: "生成消耗",
   AI_GEN_ITEMS_REFUND: "生成失败退还",
+  PURCHASE_GRANT: "能量豆充值",
 } as const;
 
 export type BeanReason = (typeof BEAN_REASONS)[keyof typeof BEAN_REASONS];

@@ -796,4 +796,44 @@ export const courseGameApi = {
   },
 };
 
+// Order API functions
+export const orderApi = {
+  async createMembershipOrder(data: { grade: string; paymentMethod: string }) {
+    return apiClient.post<{
+      id: string;
+      type: string;
+      product: string;
+      amount: number;
+      status: string;
+      paymentMethod: string;
+      expiresAt: string;
+      createdAt: string;
+    }>("/api/orders/membership", data);
+  },
+  async createBeansOrder(data: { package: string; paymentMethod: string }) {
+    return apiClient.post<{
+      id: string;
+      type: string;
+      product: string;
+      amount: number;
+      status: string;
+      paymentMethod: string;
+      expiresAt: string;
+      createdAt: string;
+    }>("/api/orders/beans", data);
+  },
+  async getOrder(id: string) {
+    return apiClient.get<{
+      id: string;
+      type: string;
+      product: string;
+      amount: number;
+      status: string;
+      paymentMethod: string | null;
+      expiresAt: string;
+      createdAt: string;
+    }>(`/api/orders/${id}`);
+  },
+};
+
 export type { ApiResponse, CursorPaginated, OffsetPaginated };

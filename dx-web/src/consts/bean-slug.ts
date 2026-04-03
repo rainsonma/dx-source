@@ -12,6 +12,7 @@ export const BEAN_SLUGS = {
   AI_BREAK_REFUND: "ai-break-refund",
   AI_GEN_ITEMS_CONSUME: "ai-gen-items-consume",
   AI_GEN_ITEMS_REFUND: "ai-gen-items-refund",
+  PURCHASE_GRANT: "purchase-grant",
 } as const;
 
 export type BeanSlug = (typeof BEAN_SLUGS)[keyof typeof BEAN_SLUGS];
@@ -30,4 +31,5 @@ export const BEAN_SLUG_LABELS: Record<BeanSlug, string> = {
   "ai-break-refund": "分解失败退还",
   "ai-gen-items-consume": "生成消耗",
   "ai-gen-items-refund": "生成失败退还",
+  "purchase-grant": "能量豆充值",
 };
