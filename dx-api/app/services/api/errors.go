@@ -55,4 +55,7 @@ var (
 	ErrNotGroupMemberForAction = errors.New("非群组成员")
 	ErrGroupMembersFull        = errors.New("当前群组已满员")
 	ErrGroupSubgroupsFull      = errors.New("每群最多 10 个小组")
+	ErrOrderNotFound           = errors.New("订单不存在")
+	ErrOrderNotPending         = errors.New("订单状态异常")
+	ErrInvalidProduct          = errors.New("无效的商品")
 )
