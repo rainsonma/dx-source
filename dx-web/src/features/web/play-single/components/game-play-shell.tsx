@@ -27,7 +27,6 @@ import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-
 import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
 import { useGameTimer, getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
-import { getToken } from "@/lib/api-client";
 import type { ComponentType } from "react";
 
 const modeComponents: Record<string, ComponentType> = {
@@ -101,13 +100,11 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
       if (!sid || !lid) return;
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-      const token = getToken();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
 
       fetch(`${apiUrl}/api/play-single/${sid}/sync-playtime`, {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           game_level_id: lid,
           play_time: getElapsedSeconds(),

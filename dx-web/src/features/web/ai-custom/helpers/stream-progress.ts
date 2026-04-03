@@ -1,5 +1,3 @@
-import { getToken } from "@/lib/api-client";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export type ProgressEvent = {
@@ -23,13 +21,10 @@ export async function fetchWithProgress(
   onProgress: (event: ProgressEvent) => void
 ): Promise<StreamResult> {
   try {
-    const token = getToken();
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(body),
       signal,
     });

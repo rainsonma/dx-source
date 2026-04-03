@@ -1,5 +1,4 @@
 import type { SourceType } from "@/consts/source-type";
-import { getToken } from "@/lib/api-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -13,13 +12,10 @@ export async function formatMetadata(
   formatType: "sentence" | "vocab"
 ): Promise<FormatResult> {
   try {
-    const token = getToken();
     const res = await fetch(`${API_URL}/api/ai-custom/format-metadata`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ content, formatType }),
     });
 

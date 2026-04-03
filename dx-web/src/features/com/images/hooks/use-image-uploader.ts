@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Uppy from "@uppy/core";
 import XHRUpload from "@uppy/xhr-upload";
 
-import { getToken } from "@/lib/api-client";
 import type { ImageRole } from "@/consts/image-role";
 import type { UploadedImage } from "@/features/com/images/types/image.types";
 
@@ -49,10 +48,7 @@ export function useImageUploader({
       endpoint: `${API_URL}/api/uploads/images`,
       fieldName: "file",
       formData: true,
-      headers: (() => {
-        const token = getToken();
-        return token ? { Authorization: `Bearer ${token}` } : {};
-      }) as unknown as Record<string, string>,
+      withCredentials: true,
       allowedMetaFields: ["role"],
       getResponseData(xhr: XMLHttpRequest) {
         const parsed = JSON.parse(xhr.responseText);
