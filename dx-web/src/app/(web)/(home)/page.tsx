@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { LandingHeader } from "@/components/in/landing-header";
 import { HeroSection } from "@/features/web/home/components/hero-section";
 import { FeaturesSection } from "@/features/web/home/components/features-section";
@@ -10,12 +11,15 @@ import { TestimonialsSection } from "@/features/web/home/components/testimonials
 import { FinalCtaSection } from "@/features/web/home/components/final-cta-section";
 import { Footer } from "@/components/in/footer";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const isLoggedIn = !!cookieStore.get("dx_token")?.value;
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       {/* Hero wrapper with gradient background */}
       <div className="flex w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white">
-        <LandingHeader />
+        <LandingHeader isLoggedIn={isLoggedIn} />
         <HeroSection />
       </div>
       <FeaturesSection />

@@ -1,17 +1,12 @@
-"use client";
-
 import Link from "next/link";
 import { GraduationCap, SquareArrowRightEnter } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getAccessToken } from "@/lib/token";
 import { MobileNav } from "@/components/in/mobile-nav";
 
-export function LandingHeader() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+interface LandingHeaderProps {
+  isLoggedIn?: boolean;
+}
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only token check, cannot derive during SSR
-  useEffect(() => { setIsLoggedIn(!!getAccessToken()); }, []);
-
+export function LandingHeader({ isLoggedIn = false }: LandingHeaderProps) {
   return (
     <header className="flex h-20 w-full items-center justify-between px-5 lg:px-20">
       <Link href="/" className="flex items-center gap-2.5">
