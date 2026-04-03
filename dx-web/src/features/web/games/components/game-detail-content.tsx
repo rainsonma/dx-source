@@ -19,6 +19,7 @@ interface GameDetailContentProps {
     playerCount: string;
     levels: Level[];
     completedLevels: number;
+    isVip: boolean;
   };
   heroSession: {
     degree: string;
@@ -81,6 +82,7 @@ export function GameDetailContent({
           <LevelGrid
             levels={game.levels}
             completedLevels={game.completedLevels}
+            isVip={game.isVip}
             onLevelClick={handleLevelClick}
           />
         </div>

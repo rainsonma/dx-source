@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { use } from "react";
 import { notFound } from "next/navigation";
 import { apiClient, sessionApi } from "@/lib/api-client";
+import { isVipActive } from "@/lib/vip";
+import type { UserGrade } from "@/consts/user-grade";
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar";
 import { RulesCard } from "@/features/web/games/components/rules-card";
 import { MyStatsCard } from "@/features/web/games/components/my-stats-card";
@@ -104,6 +106,7 @@ export default function GameDetailPage({
   } | null>(null);
   const [myStats, setMyStats] = useState<GameStats | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [vip, setVip] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -130,10 +133,11 @@ export default function GameDetailPage({
         })),
       };
 
-      const [activeSessionRes, statsRes, favoritedRes] = await Promise.all([
+      const [activeSessionRes, statsRes, favoritedRes, profileRes] = await Promise.all([
         sessionApi.checkAnyActive(mapped.id),
         apiClient.get<GameStats>(`/api/games/${mapped.id}/stats`),
         apiClient.get<{ favorited: boolean }>(`/api/games/${mapped.id}/favorited`),
+        apiClient.get<{ grade: string; vip_due_at: string | null }>("/api/user/profile"),
       ]);
 
       const activeSession = activeSessionRes.code === 0
@@ -141,6 +145,10 @@ export default function GameDetailPage({
         : null;
       const stats = statsRes.code === 0 ? statsRes.data : null;
       const favorited = favoritedRes.code === 0 ? favoritedRes.data.favorited : false;
+      const profile = profileRes.code === 0 ? profileRes.data : null;
+      const isVip = profile
+        ? isVipActive(profile.grade as UserGrade, profile.vip_due_at)
+        : false;
 
       if (activeSession) {
         const level = mapped.levels.find((l) => l.id === activeSession.currentLevelId);
@@ -156,6 +164,7 @@ export default function GameDetailPage({
       setGame(mapped);
       setMyStats(stats);
       setIsFavorited(favorited);
+      setVip(isVip);
       setLoaded(true);
     }
 
@@ -190,6 +199,7 @@ export default function GameDetailPage({
           playerCount: String(myStats?.totalSessions ?? 0),
           levels: game.levels,
           completedLevels: 0,
+          isVip: vip,
         }}
         heroSession={heroSession}
         isFavorited={isFavorited}
