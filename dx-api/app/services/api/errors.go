@@ -57,4 +57,5 @@ var (
 	ErrOrderNotFound           = errors.New("订单不存在")
 	ErrOrderNotPending         = errors.New("订单状态异常")
 	ErrInvalidProduct          = errors.New("无效的商品")
+	ErrVipRequired             = errors.New("升级会员解锁此功能")
 )

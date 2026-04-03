@@ -30,6 +30,7 @@ const (
 	// 403xx: Permission
 	CodeForbidden      = 40300
 	CodeGroupForbidden = 40301
+	CodeVipRequired    = 40302
 
 	// 404xx: Not Found
 	CodeNotFound            = 40400
