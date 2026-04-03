@@ -149,6 +149,8 @@ func (c *AiCustomController) GenerateContentItems(ctx contractshttp.Context) con
 // mapAIServiceError maps service errors to HTTP responses.
 func mapAIServiceError(ctx contractshttp.Context, err error, serviceLabel string) contractshttp.Response {
 	switch {
+	case errors.Is(err, services.ErrVipRequired):
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
 	case errors.Is(err, services.ErrInsufficientBeans):
 		return helpers.Error(ctx, http.StatusPaymentRequired, consts.CodeInsufficientBeans, "能量豆不足")
 	case errors.Is(err, services.ErrEmptyContent):

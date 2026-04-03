@@ -163,6 +163,9 @@ func getCourseGameOwned(userID, gameID string) (*models.Game, error) {
 
 // CreateGame creates a new course game in draft status.
 func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverID *string) (string, error) {
+	if err := requireVip(userID); err != nil {
+		return "", err
+	}
 	id := uuid.Must(uuid.NewV7()).String()
 
 	game := models.Game{
@@ -188,6 +191,9 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 
 // UpdateGame updates a course game's properties. Rejects edits to published games.
 func UpdateGame(userID, gameID, name string, description *string, mode string, categoryID, pressID, coverID *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -213,6 +219,9 @@ func UpdateGame(userID, gameID, name string, description *string, mode string, c
 
 // DeleteGame deletes a course game and cascades to levels and content. Rejects published games.
 func DeleteGame(userID, gameID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -260,6 +269,9 @@ func DeleteGame(userID, gameID string) error {
 
 // PublishGame validates readiness and sets status to published.
 func PublishGame(userID, gameID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -303,6 +315,9 @@ func PublishGame(userID, gameID string) error {
 
 // WithdrawGame sets a published game back to withdraw status.
 func WithdrawGame(userID, gameID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -321,6 +336,9 @@ func WithdrawGame(userID, gameID string) error {
 
 // CreateLevel adds a new level to a course game with auto-incremented order.
 func CreateLevel(userID, gameID, name string, description *string) (string, error) {
+	if err := requireVip(userID); err != nil {
+		return "", err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return "", err
@@ -357,6 +375,9 @@ func CreateLevel(userID, gameID, name string, description *string) (string, erro
 
 // DeleteLevel removes a level and its content from a course game.
 func DeleteLevel(userID, gameID, levelID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -421,6 +442,9 @@ func GetUserGameCounts(userID string) (*CourseGameCounts, error) {
 
 // GetCourseGameDetail returns a user's game detail with levels for editing.
 func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return nil, err

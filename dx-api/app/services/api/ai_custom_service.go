@@ -69,6 +69,9 @@ type SSEProgressEvent struct {
 // GenerateMetadata generates an English story from keywords using DeepSeek AI.
 // Consumes 5 beans. Refunds on AI failure.
 func GenerateMetadata(userID string, difficulty string, keywords []string) (*GenerateMetadataResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	if err := ConsumeBeans(userID, aiGenerateCost, consts.BeanSlugAIGenerateConsume, consts.BeanReasonAIGenerateConsume); err != nil {
 		return nil, err
 	}
@@ -134,6 +137,9 @@ RULES:
 // FormatMetadata formats raw user text into structured learning content.
 // Bean cost = word count of input.
 func FormatMetadata(userID string, content string, formatType string) (*FormatMetadataResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	wordCount := helpers.CountWords(content)
 	if wordCount == 0 {
 		return nil, ErrEmptyContent
@@ -298,6 +304,10 @@ func validateFormatCounts(sourceTypes []string) string {
 
 // BreakMetadata processes content metas for a game level: breaks them into learning units via SSE.
 func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
+	if err := requireVip(userID); err != nil {
+		writeSSEError(writer, err)
+		return
+	}
 	game, level, err := verifyLevelOwnership(userID, gameLevelID)
 	if err != nil {
 		writeSSEError(writer, err)
@@ -529,6 +539,10 @@ Example output:
 
 // GenerateContentItems generates word-level phonetics/POS/translations for content items via SSE.
 func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter) {
+	if err := requireVip(userID); err != nil {
+		writeSSEError(writer, err)
+		return
+	}
 	game, level, err := verifyLevelOwnership(userID, gameLevelID)
 	if err != nil {
 		writeSSEError(writer, err)
@@ -790,6 +804,8 @@ func verifyLevelOwnership(userID, gameLevelID string) (*models.Game, *models.Gam
 func writeSSEError(writer *helpers.SSEWriter, err error) {
 	msg := "服务异常"
 	switch {
+	case errors.Is(err, ErrVipRequired):
+		msg = "升级会员解锁此功能"
 	case errors.Is(err, ErrGamePublished):
 		msg = "已发布的游戏不可编辑，请先撤回"
 	case errors.Is(err, ErrInsufficientBeans):

@@ -49,6 +49,9 @@ type ContentMetaData struct {
 
 // SaveMetadataBatch creates content metadata entries in batch with capacity validation.
 func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEntry, sourceFrom string) (int, error) {
+	if err := requireVip(userID); err != nil {
+		return 0, err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return 0, err
@@ -136,6 +139,9 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 
 // ReorderMetadata updates the order of a content metadata entry.
 func ReorderMetadata(userID, gameID, metaID string, newOrder float64) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -159,6 +165,9 @@ func ReorderMetadata(userID, gameID, metaID string, newOrder float64) error {
 
 // GetContentItemsByMeta returns content items grouped by their metadata for a given level.
 func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentData, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	_, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return nil, err
@@ -243,6 +252,9 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 
 // InsertContentItem inserts a content item at a calculated position.
 func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, content, contentType string, translation *string, referenceItemID, direction string) (*CourseContentItemData, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return nil, err
@@ -317,6 +329,9 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 
 // UpdateContentItemText updates the text and translation of a content item.
 func UpdateContentItemText(userID, gameID, itemID, content string, translation *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -342,6 +357,9 @@ func UpdateContentItemText(userID, gameID, itemID, content string, translation *
 
 // ReorderContentItems updates the order of a content item.
 func ReorderContentItems(userID, gameID, itemID string, newOrder float64) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -364,6 +382,9 @@ func ReorderContentItems(userID, gameID, itemID string, newOrder float64) error 
 
 // DeleteContentItem removes a single content item.
 func DeleteContentItem(userID, gameID, itemID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
@@ -386,6 +407,9 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 
 // DeleteAllLevelContent removes all content items and metas from a level.
 func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
 	game, err := getCourseGameOwned(userID, gameID)
 	if err != nil {
 		return err
