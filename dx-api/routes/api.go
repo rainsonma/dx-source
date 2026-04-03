@@ -83,6 +83,11 @@ func Api() {
 		groupNotifyController := apicontrollers.NewGroupNotifyController()
 		router.Get("/groups/{id}/notify", groupNotifyController.Notify)
 
+		// Public payment callbacks (no JWT required)
+		paymentController := apicontrollers.NewPaymentController()
+		router.Post("/payments/callback/wechat", paymentController.WechatCallback)
+		router.Post("/payments/callback/alipay", paymentController.AlipayCallback)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)
@@ -196,6 +201,12 @@ func Api() {
 			userRedeemController := apicontrollers.NewUserRedeemController()
 			protected.Get("/redeems", userRedeemController.GetRedeems)
 			protected.Post("/redeems", userRedeemController.RedeemCode)
+
+			// Orders
+			orderController := apicontrollers.NewOrderController()
+			protected.Post("/orders/membership", orderController.CreateMembershipOrder)
+			protected.Post("/orders/beans", orderController.CreateBeansOrder)
+			protected.Get("/orders/{id}", paymentController.GetOrder)
 
 			// Content Seek
 			contentSeekController := apicontrollers.NewContentSeekController()

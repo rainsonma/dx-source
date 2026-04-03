@@ -28,12 +28,14 @@ func Boot() contractsfoundation.Application {
 				&commands.UpdatePlayStreaks{},
 				&commands.ResetEnergyBeans{},
 				&commands.ImportCourses{},
+				&commands.ExpireStaleOrders{},
 			}
 		}).
 		WithSchedule(func() []schedule.Event {
 			return []schedule.Event{
 				facades.Schedule().Command("app:reset-energy-beans").DailyAt("01:00").SkipIfStillRunning().Name("reset-energy-beans"),
 				facades.Schedule().Command("app:update-play-streaks").DailyAt("02:00").SkipIfStillRunning().Name("update-play-streaks"),
+				facades.Schedule().Command("app:expire-stale-orders").EveryFiveMinutes().SkipIfStillRunning().Name("expire-stale-orders"),
 			}
 		}).
 		WithRules(Rules).
