@@ -16,4 +16,5 @@ const (
 	BeanReasonAIGenItemsConsume       = "生成消耗"
 	BeanReasonAIGenItemsRefund        = "生成失败退还"
 	BeanReasonSeederGrant             = "种子数据赠送能量豆"
+	BeanReasonPurchaseGrant           = "能量豆充值"
 )

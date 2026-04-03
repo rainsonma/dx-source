@@ -19,6 +19,8 @@ const (
 	CodeAlreadyApplied     = 40010
 	CodeGroupMembersFull   = 40011
 	CodeGroupSubgroupsFull = 40012
+	CodeOrderNotPending    = 40013
+	CodeInvalidProduct     = 40014
 
 	// 401xx: Auth
 	CodeUnauthorized        = 40100
@@ -43,6 +45,7 @@ const (
 	CodeApplicationNotFound = 40408
 	CodePostNotFound        = 40409
 	CodeCommentNotFound     = 40410
+	CodeOrderNotFound       = 40411
 
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900

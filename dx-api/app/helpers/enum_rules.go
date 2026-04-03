@@ -15,6 +15,9 @@ var enumValues = map[string][]string{
 	"image_role":    {consts.ImageRoleAdmUserAvatar, consts.ImageRoleUserAvatar, consts.ImageRoleCategoryCover, consts.ImageRoleTemplateCover, consts.ImageRoleGameCover, consts.ImageRolePressCover, consts.ImageRoleGameGroupCover, consts.ImageRolePostImage},
 	"source_from":   {consts.SourceFromManual, consts.SourceFromAI},
 	"source_type":   {consts.SourceTypeSentence, consts.SourceTypeVocab},
+	"grade":          {consts.UserGradeMonth, consts.UserGradeSeason, consts.UserGradeYear, consts.UserGradeLifetime},
+	"payment_method": {consts.PaymentMethodWechat, consts.PaymentMethodAlipay},
+	"bean_package":   consts.BeanPackageSlugs,
 }
 
 // InEnum returns an "in:val1,val2,..." rule string for the named enum.
