@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
@@ -31,8 +32,14 @@ func (c *ContentController) LevelContent(ctx contractshttp.Context) contractshtt
 		return resp
 	}
 
-	items, err := services.GetLevelContent(levelID, req.Degree)
+	items, err := services.GetLevelContent(userID, levelID, req.Degree)
 	if err != nil {
+		if errors.Is(err, services.ErrVipRequired) {
+			return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
+		}
+		if errors.Is(err, services.ErrLevelNotFound) {
+			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡不存在")
+		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get level content")
 	}
 

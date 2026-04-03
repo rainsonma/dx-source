@@ -24,7 +24,16 @@ type ContentItemData struct {
 }
 
 // GetLevelContent returns content items for a game level, filtered by degree.
-func GetLevelContent(gameLevelID string, degree string) ([]ContentItemData, error) {
+func GetLevelContent(userID, gameLevelID string, degree string) ([]ContentItemData, error) {
+	// VIP guard: non-first levels require active VIP
+	var level models.GameLevel
+	if err := facades.Orm().Query().Select("id", "game_id").Where("id", gameLevelID).First(&level); err != nil || level.ID == "" {
+		return nil, ErrLevelNotFound
+	}
+	if err := requireVipForLevel(userID, level.GameID, gameLevelID); err != nil {
+		return nil, err
+	}
+
 	// Determine allowed content types from degree
 	allowedTypes, hasDegree := consts.DegreeContentTypes[degree]
 
