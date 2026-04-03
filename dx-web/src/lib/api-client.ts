@@ -22,67 +22,15 @@ interface OffsetPaginated<T> {
   pageSize: number;
 }
 
-import { getAccessToken, setAccessToken, clearAccessToken } from "@/lib/token";
-
-/** Alias for clearAccessToken — removes the in-memory access token */
-export const removeToken = clearAccessToken;
-
-/** Alias for getAccessToken — returns the in-memory access token */
-export const getToken = getAccessToken;
-
-/** Alias for setAccessToken — stores the in-memory access token */
-export const setToken = setAccessToken;
-
-let refreshPromise: Promise<string> | null = null;
-
-export async function refreshAccessToken(): Promise<string> {
-  if (refreshPromise) return refreshPromise;
-
-  refreshPromise = fetch(`${API_URL}/api/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-  })
-    .then(async (res) => {
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ code: 0 }));
-        if (errorData.code === 40104) {
-          clearAccessToken();
-          if (typeof window !== "undefined") {
-            alert("您的账号已在其他设备登录");
-            window.location.href = "/auth/signin";
-          }
-        }
-        throw new Error("refresh failed");
-      }
-      return res.json();
-    })
-    .then((data: ApiResponse<{ access_token: string }>) => {
-      if (data.code !== 0) throw new Error("refresh failed");
-      setAccessToken(data.data.access_token);
-      return data.data.access_token;
-    })
-    .finally(() => {
-      refreshPromise = null;
-    });
-
-  return refreshPromise;
-}
-
 // Base fetch wrapper
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = getAccessToken();
-
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...options.headers,
   };
-
-  if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-  }
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
@@ -90,46 +38,16 @@ async function apiFetch<T>(
     credentials: "include",
   });
 
-  // On 401, check if kicked out by another device first
   if (res.status === 401) {
     const errorData: ApiResponse<null> = await res.clone().json().catch(() => ({ code: 0, message: "", data: null }));
 
-    if (errorData.code === 40104) {
-      clearAccessToken();
-      if (typeof window !== "undefined") {
-        alert("您的账号已在其他设备登录");
-        window.location.href = "/auth/signin";
-      }
-      throw new Error("Session replaced");
+    if (errorData.code === 40104 && typeof window !== "undefined") {
+      alert("您的账号已在其他设备登录");
+      window.location.href = "/auth/signin";
+    } else if (typeof window !== "undefined") {
+      window.location.href = "/auth/signin";
     }
-
-    try {
-      const newToken = await refreshAccessToken();
-      const retryHeaders = { ...headers } as Record<string, string>;
-      retryHeaders["Authorization"] = `Bearer ${newToken}`;
-
-      const retryRes = await fetch(`${API_URL}${path}`, {
-        ...options,
-        headers: retryHeaders,
-        credentials: "include",
-      });
-
-      if (retryRes.status === 401) {
-        clearAccessToken();
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth/signin";
-        }
-        throw new Error("Unauthorized");
-      }
-
-      return retryRes.json();
-    } catch {
-      clearAccessToken();
-      if (typeof window !== "undefined") {
-        window.location.href = "/auth/signin";
-      }
-      throw new Error("Unauthorized");
-    }
+    throw new Error("Unauthorized");
   }
 
   return res.json();

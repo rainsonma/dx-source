@@ -1,5 +1,5 @@
-import { AuthGuard } from "@/components/in/auth-guard";
 import { HallThemeProvider } from "@/features/web/hall/components/hall-theme-provider";
+import { SWRProvider } from "@/lib/swr";
 
 export default function HallLayout({
   children,
@@ -8,7 +8,7 @@ export default function HallLayout({
 }) {
   return (
     <HallThemeProvider>
-      <AuthGuard>{children}</AuthGuard>
+      <SWRProvider>{children}</SWRProvider>
     </HallThemeProvider>
   );
 }
