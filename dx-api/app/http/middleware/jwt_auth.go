@@ -84,7 +84,7 @@ func setTokenCookie(ctx contractshttp.Context, name, token string) {
 		MaxAge:   ttl * 60,
 		Secure:   secure,
 		HttpOnly: true,
-		SameSite: "Lax",
+		SameSite: "lax",
 	})
 }
 
@@ -96,7 +96,7 @@ func clearTokenCookie(ctx contractshttp.Context, name string) {
 		MaxAge:   -1,
 		Secure:   facades.Config().GetBool("jwt_cookie.secure", true),
 		HttpOnly: true,
-		SameSite: "Lax",
+		SameSite: "lax",
 	})
 }
 
