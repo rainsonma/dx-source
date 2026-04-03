@@ -229,6 +229,8 @@ func mapGroupError(ctx contractshttp.Context, err error) contractshttp.Response 
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeGroupMembersFull, "当前群组已满员")
 	case errors.Is(err, services.ErrGroupSubgroupsFull):
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeGroupSubgroupsFull, "每群最多 10 个小组")
+	case errors.Is(err, services.ErrVipRequired):
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
 	default:
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}

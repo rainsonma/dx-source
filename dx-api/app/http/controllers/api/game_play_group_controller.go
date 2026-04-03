@@ -254,5 +254,8 @@ func mapGroupPlayError(ctx contractshttp.Context, err error) contractshttp.Respo
 	if errors.Is(err, services.ErrRateLimited) {
 		return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 	}
+	if errors.Is(err, services.ErrVipRequired) {
+		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
+	}
 	return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "internal server error")
 }

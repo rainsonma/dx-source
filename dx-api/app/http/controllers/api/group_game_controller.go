@@ -39,9 +39,9 @@ func (c *GroupGameController) SearchGames(ctx contractshttp.Context) contractsht
 
 	q := ctx.Request().Query("q", "")
 	limit := ctx.Request().QueryInt("limit", 20)
-	items, err := services.SearchGamesForGroup(q, limit)
+	items, err := services.SearchGamesForGroup(userID, q, limit)
 	if err != nil {
-		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, "操作失败")
+		return mapGroupGameError(ctx, err)
 	}
 
 	return helpers.Success(ctx, items)
@@ -278,6 +278,8 @@ func mapGroupGameError(ctx contractshttp.Context, err error) contractshttp.Respo
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, err.Error())
 	case errors.Is(err, services.ErrNotGroupMemberForAction):
 		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeGroupForbidden, "非群组成员")
+	case errors.Is(err, services.ErrVipRequired):
+		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
 	default:
 		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, "操作失败")
 	}
