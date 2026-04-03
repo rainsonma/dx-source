@@ -3,7 +3,6 @@ package api
 import "errors"
 
 var (
-	ErrInvalidRefreshToken     = errors.New("invalid or expired refresh token")
 	ErrSessionReplaced         = errors.New("session replaced by another device")
 	ErrRateLimited             = errors.New("rate limited")
 	ErrInvalidCode             = errors.New("验证码无效或已过期")
