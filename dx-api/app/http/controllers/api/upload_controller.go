@@ -82,7 +82,7 @@ func (c *UploadController) ServeImage(ctx contractshttp.Context) contractshttp.R
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片文件不存在")
 	}
 
-	// Serve the file with caching headers (images are immutable — ULID names never change)
+	// Serve the file with caching headers (images are immutable — UUID names never change)
 	return ctx.Response().
 		Header("Content-Type", contentType).
 		Header("Cache-Control", "public, max-age=31536000, immutable").
