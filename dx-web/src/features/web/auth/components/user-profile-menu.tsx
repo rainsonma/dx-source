@@ -134,10 +134,13 @@ export function UserProfileMenu({ profile }: { profile: UserProfile }) {
               {profile.exp.toLocaleString()}
             </span>
           </DropdownMenuItem>
-          <DropdownMenuItem className="flex items-center justify-between" onSelect={(e) => e.preventDefault()}>
+          <DropdownMenuItem className="flex cursor-pointer items-center justify-between" onClick={() => handleNavigate("/purchase/beans")}>
             <span className="flex items-center gap-2">
               <Coins className="h-4 w-4 text-amber-500" />
               能量豆
+              <span className="rounded bg-teal-100 px-1 py-0.5 text-[10px] font-medium text-teal-600">
+                充值
+              </span>
             </span>
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-600">
               {profile.beans.toLocaleString()}

@@ -18,7 +18,7 @@ import {
   MessageCircle,
   Gift,
   ChevronRight,
-  ArrowUpCircle,
+  Crown,
   RotateCcw,
   CheckCircle2,
   Ticket,
@@ -100,19 +100,11 @@ function NavItem({
 /** CTA card configurations for the sidebar bottom section. */
 const ctaItems = [
   {
-    icon: Gift,
-    label: "推广有奖",
-    subtitle: "推广、邀请、赚佣金",
-    href: "/hall/invite",
-    iconGradient: "from-orange-400 to-red-500",
-    badge: { text: "HOT", gradient: "from-orange-400 to-red-500" },
-  },
-  {
-    icon: ArrowUpCircle,
+    icon: Crown,
     label: "续费升级",
     subtitle: "选择会员套餐",
     href: "/purchase/membership",
-    iconGradient: "from-amber-300 to-yellow-500",
+    iconGradient: "from-teal-400 to-teal-600",
     badge: { text: "VIP", gradient: "from-amber-300 to-yellow-500" },
   },
   {
@@ -121,6 +113,14 @@ const ctaItems = [
     subtitle: "兑换码兑换会员",
     href: "/hall/redeem",
     iconGradient: "from-violet-400 to-purple-600",
+  },
+  {
+    icon: Gift,
+    label: "推广有奖",
+    subtitle: "推广、邀请、赚佣金",
+    href: "/hall/invite",
+    iconGradient: "from-orange-400 to-red-500",
+    badge: { text: "HOT", gradient: "from-orange-400 to-red-500" },
   },
 ];
 
