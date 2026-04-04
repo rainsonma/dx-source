@@ -105,7 +105,7 @@ export function GroupListContent() {
           className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-teal-700 md:w-auto"
         >
           <Plus className="h-4 w-4" />
-          创建学习群
+          创建群组
         </button>
       </div>
 
@@ -120,7 +120,7 @@ export function GroupListContent() {
       {!isLoading && groups.length === 0 && (
         <div className="flex flex-col items-center justify-center gap-2 py-20 text-muted-foreground">
           <p className="text-sm">暂无群组</p>
-          <p className="text-xs">点击上方按钮创建一个学习群吧</p>
+          <p className="text-xs">点击上方按钮创建一个群组吧</p>
         </div>
       )}
 
@@ -151,7 +151,7 @@ export function GroupListContent() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         title="会员专属功能"
-        message="升级会员即可创建和加入学习群，与同学一起学习"
+        message="升级会员即可创建和加入游戏群组，与同学一起学习"
       />
 
       {/* Apply confirm dialog */}

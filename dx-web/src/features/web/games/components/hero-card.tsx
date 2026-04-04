@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Play, Heart, Layers, Users } from "lucide-react";
 import { GAME_MODE_LABELS, type GameMode } from "@/consts/game-mode";
 
@@ -101,6 +102,13 @@ export function HeroCard({
               {resumeLabel ? `继续学习「${resumeLabel}」` : "开始游戏"}
               <Play className="h-4 w-4" />
             </button>
+            <Link
+              href="/hall/groups"
+              className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+            >
+              <Users className="h-4 w-4" />
+              群组
+            </Link>
             <button
               type="button"
               onClick={onFavoriteToggle}
