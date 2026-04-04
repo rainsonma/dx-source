@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Play, Heart, Layers, Users } from "lucide-react";
+import { Play, Heart, Layers, Users, Swords } from "lucide-react";
 import { GAME_MODE_LABELS, type GameMode } from "@/consts/game-mode";
 
 const GRADIENT_COVERS = [
@@ -27,6 +27,7 @@ export function HeroCard({
   coverUrl,
   resumeLabel,
   onStart,
+  onPkStart,
   isFavorited,
   onFavoriteToggle,
   isFavoritePending,
@@ -40,6 +41,7 @@ export function HeroCard({
   coverUrl: string | null;
   resumeLabel?: string | null;
   onStart?: () => void;
+  onPkStart?: () => void;
   isFavorited: boolean;
   onFavoriteToggle: () => void;
   isFavoritePending: boolean;
@@ -101,6 +103,14 @@ export function HeroCard({
             >
               {resumeLabel ? `继续学习「${resumeLabel}」` : "开始游戏"}
               <Play className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onPkStart}
+              className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
+            >
+              <Swords className="h-4 w-4" />
+              PK
             </button>
             <Link
               href="/hall/groups"
