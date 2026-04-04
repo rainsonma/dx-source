@@ -274,7 +274,7 @@ export function GameModeCard({
                   游戏类型
                 </p>
               )}
-              <div className={`${isPk ? "" : "mt-3 "}flex w-full overflow-hidden rounded-xl border border-border`}>
+              <div className="mt-3 flex w-full overflow-hidden rounded-xl border border-border">
                 {patternOptions.map(({ value, label, icon: Icon }) => {
                   const isWrite = value === GAME_PATTERNS.WRITE;
                   const isPatternSelected = selectedPattern === value;
@@ -298,6 +298,7 @@ export function GameModeCard({
                   );
                 })}
               </div>
+              {!isPk && <div className="h-px bg-border my-5" />}
             </>
           )}
 
