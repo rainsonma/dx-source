@@ -28,6 +28,7 @@ type GameSessionLevel struct {
 	PlayedItemsCount     int        `gorm:"column:played_items_count" json:"played_items_count"`
 	GameGroupID          *string    `gorm:"column:game_group_id" json:"game_group_id"`
 	GameSubgroupID       *string    `gorm:"column:game_subgroup_id" json:"game_subgroup_id"`
+	GamePkID             *string    `gorm:"column:game_pk_id" json:"game_pk_id"`
 }
 
 func (g *GameSessionLevel) TableName() string {
