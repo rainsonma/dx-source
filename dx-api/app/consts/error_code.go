@@ -21,6 +21,9 @@ const (
 	CodeGroupSubgroupsFull = 40012
 	CodeOrderNotPending    = 40013
 	CodeInvalidProduct     = 40014
+	CodePkIsPlaying        = 40015
+	CodePkNotPlaying       = 40016
+	CodeNoMockUser         = 40017
 
 	// 401xx: Auth
 	CodeUnauthorized    = 40100
@@ -45,6 +48,7 @@ const (
 	CodePostNotFound        = 40409
 	CodeCommentNotFound     = 40410
 	CodeOrderNotFound       = 40411
+	CodePkNotFound          = 40412
 
 	// 429xx: Rate Limit
 	CodeRateLimited = 42900

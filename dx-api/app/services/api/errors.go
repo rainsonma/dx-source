@@ -58,4 +58,8 @@ var (
 	ErrOrderNotPending         = errors.New("订单状态异常")
 	ErrInvalidProduct          = errors.New("无效的商品")
 	ErrVipRequired             = errors.New("升级会员解锁此功能")
+	ErrPkNotFound              = errors.New("PK对战不存在")
+	ErrPkIsPlaying             = errors.New("PK对战进行中")
+	ErrPkNotPlaying            = errors.New("没有进行中的PK对战")
+	ErrNoMockUserAvail         = errors.New("没有可用的对手，请稍后再试")
 )
