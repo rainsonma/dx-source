@@ -269,12 +269,10 @@ export function GameModeCard({
           {/* Pattern options (Word-Sentence only) */}
           {isWordSentence && (
             <>
-              {isPk && (
-                <p className="mb-1 text-xs font-medium text-muted-foreground">
-                  游戏类型
-                </p>
-              )}
-              <div className="mt-3 flex w-full overflow-hidden rounded-xl border border-border">
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                游戏方式
+              </p>
+              <div className="flex w-full overflow-hidden rounded-xl border border-border">
                 {patternOptions.map(({ value, label, icon: Icon }) => {
                   const isWrite = value === GAME_PATTERNS.WRITE;
                   const isPatternSelected = selectedPattern === value;
