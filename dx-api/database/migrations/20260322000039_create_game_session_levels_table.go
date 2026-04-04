@@ -21,6 +21,7 @@ func (r *M20260322000039CreateGameSessionLevelsTable) Up() error {
 			table.Uuid("game_level_id")
 			table.Uuid("game_group_id").Nullable()
 			table.Uuid("game_subgroup_id").Nullable()
+			table.Uuid("game_pk_id").Nullable()
 			table.Uuid("current_content_item_id").Nullable()
 			table.Text("degree").Default("")
 			table.Text("pattern").Nullable()
