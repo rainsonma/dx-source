@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Keyboard,
   Swords,
@@ -108,7 +108,11 @@ export function PkPlayLoadingScreen({
   const degreeLabel = GAME_DEGREE_LABELS[degree as GameDegree] ?? degree;
   const subtitle = [gameName, degreeLabel, levelName].filter(Boolean).join(" · ");
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
     let cancelled = false;
 
     loadGameData();

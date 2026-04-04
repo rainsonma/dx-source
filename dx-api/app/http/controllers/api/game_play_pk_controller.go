@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -356,6 +357,7 @@ func mapPkError(ctx contractshttp.Context, err error) contractshttp.Response {
 	case errors.Is(err, services.ErrLastLevel):
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, err.Error())
 	default:
+		fmt.Printf("[PK] unhandled error: %v\n", err)
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "internal server error")
 	}
 }
