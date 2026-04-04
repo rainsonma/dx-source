@@ -73,10 +73,17 @@ const patternOptions: { value: GamePattern; label: string; icon: LucideIcon }[] 
   { value: GAME_PATTERNS.WRITE, label: "写", icon: PenLine },
 ];
 
+const difficultyOptions = [
+  { value: "easy", title: "简单", desc: "对手较弱，适合新手", icon: Zap, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/[0.08]" },
+  { value: "normal", title: "普通", desc: "旗鼓相当，适度挑战", icon: Flame, iconColor: "text-amber-500", iconBg: "bg-amber-500/[0.08]" },
+  { value: "hard", title: "困难", desc: "强力对手，极限挑战", icon: Trophy, iconColor: "text-red-500", iconBg: "bg-red-500/[0.08]" },
+];
+
 interface GameModeCardProps {
   gameId: string;
   gameName: string;
   gameMode: string;
+  mode?: "single" | "pk";
   levelId?: string;
   levelLabel?: string;
   initialDegree?: string;
@@ -89,6 +96,7 @@ export function GameModeCard({
   gameId,
   gameName,
   gameMode,
+  mode = "single",
   levelId,
   levelLabel,
   initialDegree,
@@ -104,6 +112,8 @@ export function GameModeCard({
   const [selectedPattern, setSelectedPattern] = useState<GamePattern>(
     (initialPattern as GamePattern) ?? DEFAULT_GAME_PATTERN
   );
+  const isPk = mode === "pk";
+  const [selectedDifficulty, setSelectedDifficulty] = useState("normal");
   const [activeSession, setActiveSession] = useState<{
     id: string;
     degree: string;
@@ -113,9 +123,9 @@ export function GameModeCard({
   const [hasActiveLevelSession, setHasActiveLevelSession] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Re-check for active session when degree/pattern selection changes
+  // Re-check for active session when degree/pattern selection changes (single mode only)
   useEffect(() => {
-    if (!open) return;
+    if (!open || isPk) return;
     let cancelled = false;
     const patternValue = isWordSentence ? selectedPattern : null;
     checkActiveSessionAction(gameId, selectedDegree, patternValue).then((result) => {
@@ -123,11 +133,11 @@ export function GameModeCard({
       setActiveSession(result.data ?? null);
     });
     return () => { cancelled = true; };
-  }, [open, gameId, selectedDegree, selectedPattern, isWordSentence]);
+  }, [open, isPk, gameId, selectedDegree, selectedPattern, isWordSentence]);
 
-  // When a specific level is selected, check for active level session
+  // When a specific level is selected, check for active level session (single mode only)
   useEffect(() => {
-    if (!open || !activeSession || !levelId) {
+    if (!open || isPk || !activeSession || !levelId) {
       setHasActiveLevelSession(false);
       return;
     }
@@ -139,11 +149,22 @@ export function GameModeCard({
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSession.id is sufficient, full object would cause infinite loop
-  }, [open, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isWordSentence]);
+  }, [open, isPk, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isWordSentence]);
 
   if (!open) return null;
 
-  const subtitle = levelLabel ?? gameName;
+  const subtitle = isPk
+    ? `${levelLabel ?? gameName} · PK 对战`
+    : (levelLabel ?? gameName);
+
+  function handlePkStart() {
+    startTransition(() => {
+      const params = new URLSearchParams({ degree: selectedDegree, difficulty: selectedDifficulty });
+      if (isWordSentence) params.set("pattern", selectedPattern);
+      if (levelId) params.set("level", levelId);
+      router.push(`/hall/play-pk/${gameId}?${params}`);
+    });
+  }
 
   function handleStart() {
     startTransition(async () => {
@@ -276,9 +297,76 @@ export function GameModeCard({
             </>
           )}
 
+          {/* Difficulty options (PK mode only) */}
+          {isPk && (
+            <>
+              <div className="h-px bg-border my-5" />
+              <div className="flex flex-col gap-3">
+                {difficultyOptions.map((opt) => {
+                  const isSelected = selectedDifficulty === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSelectedDifficulty(opt.value)}
+                      className={`flex items-center gap-4 rounded-[14px] border-2 px-4 py-3.5 md:px-5 md:py-[18px] ${
+                        isSelected
+                          ? "border-teal-600/30 bg-teal-50"
+                          : "border-border bg-card"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${opt.iconBg}`}
+                      >
+                        <opt.icon
+                          className={`h-[22px] w-[22px] ${opt.iconColor}`}
+                        />
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1 text-left">
+                        <span className="text-base font-bold text-foreground">
+                          {opt.title}
+                        </span>
+                        <span className="text-[13px] text-muted-foreground">
+                          {opt.desc}
+                        </span>
+                      </div>
+                      <ChevronRight
+                        className={`h-[18px] w-[18px] shrink-0 ${isSelected ? "text-teal-600" : "text-muted-foreground"}`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
           {/* Action buttons */}
           <div className="flex h-[48px] items-center gap-3">
-            {showResumeButtons ? (
+            {isPk ? (
+              <>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border-[1.5px] border-border bg-card py-3"
+                >
+                  <X className="h-[18px] w-[18px] text-muted-foreground" />
+                  <span className="text-[15px] font-semibold text-muted-foreground">
+                    取消游戏
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePkStart}
+                  disabled={isPending}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 disabled:opacity-50"
+                >
+                  <Play className="h-[18px] w-[18px] text-white" />
+                  <span className="text-[15px] font-semibold text-white">
+                    开始 PK
+                  </span>
+                </button>
+              </>
+            ) : showResumeButtons ? (
               <>
                 <button
                   type="button"
