@@ -272,7 +272,7 @@ export function GameModeCard({
               <p className="mb-1 text-xs font-medium text-muted-foreground">
                 游戏方式
               </p>
-              <div className="flex w-full overflow-hidden rounded-xl border border-border">
+              <div className="flex w-full overflow-hidden border border-border">
                 {patternOptions.map(({ value, label, icon: Icon }) => {
                   const isWrite = value === GAME_PATTERNS.WRITE;
                   const isPatternSelected = selectedPattern === value;
@@ -306,7 +306,7 @@ export function GameModeCard({
               <p className="mt-4 mb-1 text-xs font-medium text-muted-foreground">
                 对手强度
               </p>
-              <div className="flex w-full overflow-hidden rounded-xl border border-border">
+              <div className="flex w-full overflow-hidden border border-border">
                 {difficultyOptions.map(({ value, label, icon: Icon }) => {
                   const isDiffSelected = selectedDifficulty === value;
                   return (
