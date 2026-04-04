@@ -40,6 +40,7 @@ export function GameDetailContent({
 }: GameDetailContentProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
+  const [modalMode, setModalMode] = useState<"single" | "pk">("single");
   const [selectedLevel, setSelectedLevel] = useState<{
     id: string;
     label: string;
@@ -47,6 +48,14 @@ export function GameDetailContent({
 
   const handleStart = useCallback(() => {
     setSelectedLevel(null);
+    setModalMode("single");
+    setModalKey((k) => k + 1);
+    setModalOpen(true);
+  }, []);
+
+  const handlePkStart = useCallback(() => {
+    setSelectedLevel(null);
+    setModalMode("pk");
     setModalKey((k) => k + 1);
     setModalOpen(true);
   }, []);
@@ -72,6 +81,7 @@ export function GameDetailContent({
         coverUrl={game.coverUrl}
         resumeLabel={heroSession?.levelName ?? null}
         onStart={handleStart}
+        onPkStart={handlePkStart}
         isFavorited={favorited}
         onFavoriteToggle={toggle}
         isFavoritePending={isFavoritePending}
@@ -97,6 +107,7 @@ export function GameDetailContent({
         gameId={game.id}
         gameName={game.name}
         gameMode={game.mode}
+        mode={modalMode}
         levelId={selectedLevel?.id}
         levelLabel={selectedLevel?.label}
         initialDegree={heroSession?.degree}
