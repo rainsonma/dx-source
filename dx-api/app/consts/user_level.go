@@ -8,7 +8,9 @@ import (
 // Level progression consts.
 const (
 	MaxLevel   = 100
-	baseExp    = 1000
+	// introExp is the flat EXP cost for Lv.0 → Lv.1, separate from the exponential curve.
+	introExp = 100
+	baseExp    = 100
 	multiplier = 1.05
 )
 
@@ -27,10 +29,11 @@ func init() {
 
 // generateLevels builds the full level progression table.
 func generateLevels() []UserLevel {
-	levels := make([]UserLevel, 0, MaxLevel)
-	levels = append(levels, UserLevel{Level: 1, ExpRequired: 0})
+	levels := make([]UserLevel, 0, MaxLevel+1)
+	levels = append(levels, UserLevel{Level: 0, ExpRequired: 0})
+	levels = append(levels, UserLevel{Level: 1, ExpRequired: introExp})
 
-	cumulative := 0
+	cumulative := introExp
 	for i := 2; i <= MaxLevel; i++ {
 		cumulative += int(math.Floor(baseExp * math.Pow(multiplier, float64(i-2))))
 		levels = append(levels, UserLevel{Level: i, ExpRequired: cumulative})
@@ -49,13 +52,14 @@ func GetLevel(exp int) (int, error) {
 			return userLevels[i].Level, nil
 		}
 	}
-	return 1, nil
+	// Unreachable: userLevels[0].ExpRequired is always 0 and exp is non-negative.
+	return 0, nil
 }
 
 // GetExpForLevel returns the cumulative exp required to reach the given level.
 func GetExpForLevel(level int) (int, error) {
-	if level < 1 || level > MaxLevel {
-		return 0, fmt.Errorf("failed to get exp for level: level must be between 1 and %d, got %d", MaxLevel, level)
+	if level < 0 || level > MaxLevel {
+		return 0, fmt.Errorf("failed to get exp for level: level must be between 0 and %d, got %d", MaxLevel, level)
 	}
-	return userLevels[level-1].ExpRequired, nil
+	return userLevels[level].ExpRequired, nil
 }
