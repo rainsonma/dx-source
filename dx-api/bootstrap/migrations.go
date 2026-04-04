@@ -58,5 +58,7 @@ func Migrations() []schema.Migration {
 		&migrations.M20260324000002CreateGameGroupApplicationsTable{},
 		&migrations.M20260325000002AddSessionIndexes{},
 		&migrations.M20260403000001CreateOrdersTable{},
+		&migrations.M20260404000001CreateGamePksTable{},
+		&migrations.M20260404000002AddGamePkIdToSessions{},
 	}
 }
