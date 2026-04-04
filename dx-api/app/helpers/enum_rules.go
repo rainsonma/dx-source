@@ -18,6 +18,7 @@ var enumValues = map[string][]string{
 	"grade":          {consts.UserGradeMonth, consts.UserGradeSeason, consts.UserGradeYear, consts.UserGradeLifetime},
 	"payment_method": {consts.PaymentMethodWechat, consts.PaymentMethodAlipay},
 	"bean_package":   consts.BeanPackageSlugs,
+	"pk_difficulty":  consts.PkDifficultySlugs,
 }
 
 // InEnum returns an "in:val1,val2,..." rule string for the named enum.
