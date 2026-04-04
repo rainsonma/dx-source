@@ -339,6 +339,8 @@ func mapPkError(ctx contractshttp.Context, err error) contractshttp.Response {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeNoMockUser, "没有可用的对手，请稍后再试")
 	case errors.Is(err, services.ErrGameNotFound):
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "游戏不存在")
+	case errors.Is(err, services.ErrGameNotPublished):
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游戏未发布")
 	case errors.Is(err, services.ErrNoGameLevels):
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
 	case errors.Is(err, services.ErrLevelNotFound):

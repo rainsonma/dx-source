@@ -18,10 +18,10 @@ import (
 
 // PkStartResult is returned after starting a PK match.
 type PkStartResult struct {
-	PkID         string `json:"pkId"`
-	SessionID    string `json:"sessionId"`
-	OpponentID   string `json:"opponentId"`
-	OpponentName string `json:"opponentName"`
+	PkID         string `json:"pk_id"`
+	SessionID    string `json:"session_id"`
+	OpponentID   string `json:"opponent_id"`
+	OpponentName string `json:"opponent_name"`
 }
 
 // PkPlayerCompleteEvent is the SSE payload for pk_player_complete.
