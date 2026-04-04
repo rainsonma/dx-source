@@ -270,11 +270,11 @@ export function GameModeCard({
           {isWordSentence && (
             <>
               {isPk && (
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                <p className="mb-1 text-xs font-medium text-muted-foreground">
                   游戏类型
                 </p>
               )}
-              <div className="mt-3 flex w-full overflow-hidden rounded-xl border border-border">
+              <div className={`${isPk ? "" : "mt-3 "}flex w-full overflow-hidden rounded-xl border border-border`}>
                 {patternOptions.map(({ value, label, icon: Icon }) => {
                   const isWrite = value === GAME_PATTERNS.WRITE;
                   const isPatternSelected = selectedPattern === value;
@@ -298,14 +298,13 @@ export function GameModeCard({
                   );
                 })}
               </div>
-              <div className="h-px bg-border my-5" />
             </>
           )}
 
           {/* Difficulty options (PK mode only) */}
           {isPk && (
             <>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">
+              <p className="mt-4 mb-1 text-xs font-medium text-muted-foreground">
                 对手强度
               </p>
               <div className="flex w-full overflow-hidden rounded-xl border border-border">
