@@ -73,10 +73,10 @@ const patternOptions: { value: GamePattern; label: string; icon: LucideIcon }[] 
   { value: GAME_PATTERNS.WRITE, label: "写", icon: PenLine },
 ];
 
-const difficultyOptions = [
-  { value: "easy", title: "简单", desc: "对手较弱，适合新手", icon: Zap, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/[0.08]" },
-  { value: "normal", title: "普通", desc: "旗鼓相当，适度挑战", icon: Flame, iconColor: "text-amber-500", iconBg: "bg-amber-500/[0.08]" },
-  { value: "hard", title: "困难", desc: "强力对手，极限挑战", icon: Trophy, iconColor: "text-red-500", iconBg: "bg-red-500/[0.08]" },
+const difficultyOptions: { value: string; label: string; icon: LucideIcon }[] = [
+  { value: "easy", label: "简单", icon: Zap },
+  { value: "normal", label: "标准", icon: Flame },
+  { value: "hard", label: "困难", icon: Trophy },
 ];
 
 interface GameModeCardProps {
@@ -269,6 +269,11 @@ export function GameModeCard({
           {/* Pattern options (Word-Sentence only) */}
           {isWordSentence && (
             <>
+              {isPk && (
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  游戏类型
+                </p>
+              )}
               <div className="mt-3 flex w-full overflow-hidden rounded-xl border border-border">
                 {patternOptions.map(({ value, label, icon: Icon }) => {
                   const isWrite = value === GAME_PATTERNS.WRITE;
@@ -300,43 +305,30 @@ export function GameModeCard({
           {/* Difficulty options (PK mode only) */}
           {isPk && (
             <>
-              <div className="h-px bg-border my-5" />
-              <div className="flex flex-col gap-3">
-                {difficultyOptions.map((opt) => {
-                  const isSelected = selectedDifficulty === opt.value;
+              <p className="mb-2 text-xs font-medium text-muted-foreground">
+                对手强度
+              </p>
+              <div className="flex w-full overflow-hidden rounded-xl border border-border">
+                {difficultyOptions.map(({ value, label, icon: Icon }) => {
+                  const isDiffSelected = selectedDifficulty === value;
                   return (
                     <button
-                      key={opt.value}
+                      key={value}
                       type="button"
-                      onClick={() => setSelectedDifficulty(opt.value)}
-                      className={`flex items-center gap-4 rounded-[14px] border-2 px-4 py-3.5 md:px-5 md:py-[18px] ${
-                        isSelected
-                          ? "border-teal-600/30 bg-teal-50"
-                          : "border-border bg-card"
+                      onClick={() => setSelectedDifficulty(value)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 border-r border-border py-2.5 text-sm font-medium transition-colors last:border-r-0 ${
+                        isDiffSelected
+                          ? "bg-teal-600 text-white"
+                          : "bg-card text-muted-foreground hover:bg-accent"
                       }`}
                     >
-                      <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${opt.iconBg}`}
-                      >
-                        <opt.icon
-                          className={`h-[22px] w-[22px] ${opt.iconColor}`}
-                        />
-                      </div>
-                      <div className="flex flex-1 flex-col gap-1 text-left">
-                        <span className="text-base font-bold text-foreground">
-                          {opt.title}
-                        </span>
-                        <span className="text-[13px] text-muted-foreground">
-                          {opt.desc}
-                        </span>
-                      </div>
-                      <ChevronRight
-                        className={`h-[18px] w-[18px] shrink-0 ${isSelected ? "text-teal-600" : "text-muted-foreground"}`}
-                      />
+                      <Icon className="h-4 w-4" />
+                      {label}
                     </button>
                   );
                 })}
               </div>
+              <div className="h-px bg-border my-5" />
             </>
           )}
 
