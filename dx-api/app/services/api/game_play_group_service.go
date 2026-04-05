@@ -39,11 +39,13 @@ type GroupPlayCompleteLevelResult struct {
 
 // GroupPlayerCompleteEvent is the SSE payload for group_player_complete.
 type GroupPlayerCompleteEvent struct {
-	UserID       string                `json:"user_id"`
-	UserName     string                `json:"user_name"`
-	GameLevelID  string                `json:"game_level_id"`
-	Score        int                   `json:"score"`
-	Participants []GroupParticipantInfo `json:"participants"`
+	UserID        string                `json:"user_id"`
+	UserName      string                `json:"user_name"`
+	GameLevelID   string                `json:"game_level_id"`
+	Score         int                   `json:"score"`
+	Participants  []GroupParticipantInfo `json:"participants"`
+	NextLevelID   *string               `json:"next_level_id"`
+	NextLevelName *string               `json:"next_level_name"`
 }
 
 // GroupParticipantInfo holds a participant's score snapshot.
@@ -272,12 +274,16 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 				})
 			}
 
+			nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, gameLevelID)
+
 			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_complete", GroupPlayerCompleteEvent{
-				UserID:       userID,
-				UserName:     userName,
-				GameLevelID:  gameLevelID,
-				Score:        score,
-				Participants: participants,
+				UserID:        userID,
+				UserName:      userName,
+				GameLevelID:   gameLevelID,
+				Score:         score,
+				Participants:  participants,
+				NextLevelID:   nextLevelID,
+				NextLevelName: nextLevelName,
 			})
 		}
 

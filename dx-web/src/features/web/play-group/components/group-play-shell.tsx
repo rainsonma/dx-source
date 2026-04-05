@@ -164,6 +164,9 @@ export function GroupPlayShell({
         const store = useGroupPlayStore.getState();
         if (store.groupPhase !== "result") {
           setGroupResultFromWinner(event, event.participants);
+          if (event.next_level_id && event.next_level_name) {
+            setNextLevel(event.next_level_id, event.next_level_name);
+          }
           setPhase("result");
         }
       }

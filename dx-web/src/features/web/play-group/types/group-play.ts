@@ -50,6 +50,8 @@ export type GroupPlayerCompleteEvent = {
   game_level_id: string;
   score: number;
   participants: { user_id: string; user_name: string; score: number }[];
+  next_level_id: string | null;
+  next_level_name: string | null;
 };
 
 export type GroupPlayerActionEvent = {
