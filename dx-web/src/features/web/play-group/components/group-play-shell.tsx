@@ -123,22 +123,25 @@ export function GroupPlayShell({
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
     });
-    // Retry once on failure — the backend must know we completed so the
-    // winner check can proceed.
-    if (result.error) {
-      const retry = await completeLevelAction(sessionId, targetLevelId, {
-        score,
-        maxCombo: combo.maxCombo,
-        totalItems: contentItems?.length ?? 0,
-      });
-      if (retry.data) {
-        if (retry.data.nextLevelId && retry.data.nextLevelName) {
-          setNextLevel(retry.data.nextLevelId, retry.data.nextLevelName);
-        }
+
+    const data = result.error
+      ? (await completeLevelAction(sessionId, targetLevelId, {
+          score, maxCombo: combo.maxCombo, totalItems: contentItems?.length ?? 0,
+        })).data
+      : result.data;
+
+    if (data) {
+      if (data.nextLevelId && data.nextLevelName) {
+        setNextLevel(data.nextLevelId, data.nextLevelName);
       }
-    } else if (result.data) {
-      if (result.data.nextLevelId && result.data.nextLevelName) {
-        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
+      // Immediately show group result for the winner — don't wait for SSE
+      // to prevent the single-play result card from flashing.
+      const store = useGroupPlayStore.getState();
+      if (store.groupPhase !== "result") {
+        setGroupResultFromWinner(
+          { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: data.nextLevelId ?? null, next_level_name: data.nextLevelName ?? null },
+          [{ user_id: player.id, user_name: player.nickname, score }],
+        );
       }
     }
   }
