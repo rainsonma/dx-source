@@ -221,9 +221,10 @@ interface SessionStartResponse {
 
 interface ActiveSessionResponse {
   id: string;
+  gameLevelId: string;
   degree: string;
   pattern: string | null;
-  currentLevelId: string;
+  currentContentItemId: string | null;
 }
 
 interface SessionRestoreResponse {

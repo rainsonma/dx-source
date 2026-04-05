@@ -117,7 +117,7 @@ export function GameModeCard({
     id: string;
     degree: string;
     pattern: string | null;
-    currentLevelId: string;
+    gameLevelId: string;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -161,14 +161,14 @@ export function GameModeCard({
     if (!activeSession) return;
     const params = new URLSearchParams({ degree: activeSession.degree });
     if (activeSession.pattern) params.set("pattern", activeSession.pattern);
-    params.set("level", levelId ?? activeSession.currentLevelId);
+    params.set("level", levelId ?? activeSession.gameLevelId);
     router.push(`/hall/play-single/${gameId}?${params}`);
   }
 
   function handleRestart() {
     if (!activeSession) return;
     startTransition(async () => {
-      const targetLevelId = levelId ?? activeSession.currentLevelId;
+      const targetLevelId = levelId ?? activeSession.gameLevelId;
       await restartLevelSessionAction(activeSession.id, targetLevelId);
       setActiveSession(null);
       const params = new URLSearchParams({ degree: selectedDegree });

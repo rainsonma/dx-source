@@ -87,7 +87,7 @@ type GameStats = {
 };
 
 type ActiveSession = {
-  currentLevelId: string;
+  gameLevelId: string;
   degree: string;
   pattern: string | null;
 };
@@ -151,7 +151,7 @@ export default function GameDetailPage({
         : false;
 
       if (activeSession) {
-        const level = mapped.levels.find((l) => l.id === activeSession.currentLevelId);
+        const level = mapped.levels.find((l) => l.id === activeSession.gameLevelId);
         if (level) {
           setHeroSession({
             degree: activeSession.degree,
