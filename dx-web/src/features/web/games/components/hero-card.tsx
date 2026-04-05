@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Play, Heart, Layers, Users, Swords } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { GAME_MODE_LABELS, type GameMode } from "@/consts/game-mode";
 
 const GRADIENT_COVERS = [
@@ -96,14 +97,32 @@ export function HeroCard({
 
           {/* Action buttons */}
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onStart}
-              className="flex items-center gap-2 rounded-[10px] bg-teal-600 px-7 py-3 text-[15px] font-bold text-white hover:bg-teal-700"
-            >
-              {resumeLabel ? `继续学习「${resumeLabel.length > 5 ? resumeLabel.slice(0, 5) + "…" : resumeLabel}」` : "开始游戏"}
-              <Play className="h-4 w-4" />
-            </button>
+            {resumeLabel && resumeLabel.length > 5 ? (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onStart}
+                    className="flex items-center gap-2 rounded-[10px] bg-teal-600 px-7 py-3 text-[15px] font-bold text-white hover:bg-teal-700"
+                  >
+                    继续学习「{resumeLabel.slice(0, 5)}…」
+                    <Play className="h-4 w-4" />
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="bottom">
+                  {resumeLabel}
+                </HoverCardContent>
+              </HoverCard>
+            ) : (
+              <button
+                type="button"
+                onClick={onStart}
+                className="flex items-center gap-2 rounded-[10px] bg-teal-600 px-7 py-3 text-[15px] font-bold text-white hover:bg-teal-700"
+              >
+                {resumeLabel ? `继续学习「${resumeLabel}」` : "开始游戏"}
+                <Play className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={onPkStart}
