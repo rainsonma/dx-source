@@ -348,6 +348,8 @@ func mapPkError(ctx contractshttp.Context, err error) contractshttp.Response {
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡不存在")
 	case errors.Is(err, services.ErrSessionNotFound):
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "会话不存在")
+	case errors.Is(err, services.ErrSessionLevelNotFound):
+		return helpers.Error(ctx, http.StatusNotFound, consts.CodeSessionNotFound, "关卡会话不存在")
 	case errors.Is(err, services.ErrVipRequired):
 		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
 	case errors.Is(err, services.ErrForbidden):
