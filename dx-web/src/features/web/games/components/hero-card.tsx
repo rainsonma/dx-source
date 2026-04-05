@@ -129,14 +129,14 @@ export function HeroCard({
               className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
             >
               <Swords className="h-4 w-4" />
-              PK
+              双人PK
             </button>
             <Link
               href="/hall/groups"
               className="flex items-center gap-2 rounded-[10px] border border-border bg-card px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent"
             >
               <Users className="h-4 w-4" />
-              群组
+              群组PK
             </Link>
             <button
               type="button"
