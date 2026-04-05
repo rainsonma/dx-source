@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Gamepad2, Search, User, Users, Check, X, Loader2, Clock } from "lucide-react";
+import { Gamepad2, Search, User, Users, Check, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,7 +16,6 @@ interface SetGameDialogProps {
   groupId: string;
   currentGameId?: string | null;
   currentGameMode?: string | null;
-  currentLevelTimeLimit?: number;
   currentStartLevelId?: string | null;
 }
 
@@ -26,12 +25,10 @@ export function SetGameDialog({
   groupId,
   currentGameId,
   currentGameMode,
-  currentLevelTimeLimit,
   currentStartLevelId,
 }: SetGameDialogProps) {
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<"group_solo" | "group_team">("group_solo");
-  const [levelTimeLimit, setLevelTimeLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [games, setGames] = useState<GroupGameSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,12 +52,11 @@ export function SetGameDialog({
     if (open) {
       setSelectedGameId(currentGameId ?? null);
       setSelectedMode(currentGameMode === "group_team" ? "group_team" : "group_solo");
-      setLevelTimeLimit(currentLevelTimeLimit ?? 10);
       setSearchQuery("");
       setIsSearching(false);
       fetchGames("", 3);
     }
-  }, [open, currentGameId, currentGameMode, currentLevelTimeLimit, fetchGames]);
+  }, [open, currentGameId, currentGameMode, fetchGames]);
 
   // Debounced search
   useEffect(() => {
@@ -101,12 +97,8 @@ export function SetGameDialog({
       toast.error("请选择一个游戏");
       return;
     }
-    if (levelTimeLimit < 1) {
-      toast.error("每关卡限时必须大于 0");
-      return;
-    }
     setConfirming(true);
-    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, levelTimeLimit, selectedLevelId ?? undefined);
+    const res = await groupApi.setGame(groupId, selectedGameId, selectedMode, selectedLevelId ?? undefined);
     setConfirming(false);
     if (res.code !== 0) {
       toast.error(res.message);
@@ -231,23 +223,6 @@ export function SetGameDialog({
               </Select>
             </div>
           )}
-
-          {/* Level time limit */}
-          <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="shrink-0 text-[13px] font-medium text-foreground">每关卡限时</span>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min={1}
-                max={60}
-                value={levelTimeLimit}
-                onChange={(e) => setLevelTimeLimit(Math.max(1, Math.min(60, Number(e.target.value) || 1)))}
-                className="h-9 w-16 rounded-lg border border-border bg-slate-50 px-2 text-center text-sm text-foreground outline-none focus:border-teal-500"
-              />
-              <span className="text-xs text-muted-foreground">分钟</span>
-            </div>
-          </div>
 
           {/* Mode selector */}
           <div className="flex gap-1 rounded-[10px] bg-slate-100 p-1">

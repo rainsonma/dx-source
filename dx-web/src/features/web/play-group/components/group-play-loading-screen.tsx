@@ -85,7 +85,6 @@ interface GroupPlayLoadingScreenProps {
   levelId: string;
   levelName?: string;
   gameGroupId: string;
-  levelTimeLimit: number;
 }
 
 export function GroupPlayLoadingScreen({
@@ -97,7 +96,6 @@ export function GroupPlayLoadingScreen({
   levelId,
   levelName,
   gameGroupId,
-  levelTimeLimit,
 }: GroupPlayLoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -210,7 +208,6 @@ export function GroupPlayLoadingScreen({
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
           gameGroupId,
-          levelTimeLimit,
           ...(restored && { restored }),
           ...(participants && { participants }),
         };
@@ -238,7 +235,6 @@ export function GroupPlayLoadingScreen({
     pattern,
     levelId,
     gameGroupId,
-    levelTimeLimit,
     initGroupSession,
     initGameSession,
     retryCount,

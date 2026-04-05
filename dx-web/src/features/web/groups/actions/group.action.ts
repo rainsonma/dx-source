@@ -45,8 +45,8 @@ export const groupApi = {
     const qs = params.toString();
     return apiClient.get<GroupGameSearchItem[]>(`/api/groups/${groupId}/games/search${qs ? `?${qs}` : ""}`);
   },
-  async setGame(groupId: string, gameId: string, gameMode: string, levelTimeLimit: number, startGameLevelId?: string) {
-    return apiClient.put<null>(`/api/groups/${groupId}/game`, { game_id: gameId, game_mode: gameMode, level_time_limit: levelTimeLimit, start_game_level_id: startGameLevelId });
+  async setGame(groupId: string, gameId: string, gameMode: string, startGameLevelId?: string) {
+    return apiClient.put<null>(`/api/groups/${groupId}/game`, { game_id: gameId, game_mode: gameMode, start_game_level_id: startGameLevelId });
   },
   async clearGame(groupId: string) {
     return apiClient.delete<null>(`/api/groups/${groupId}/game`);

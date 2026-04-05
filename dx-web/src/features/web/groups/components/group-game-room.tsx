@@ -72,7 +72,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
         // sessionStorage may be unavailable; play-group will still work without roster
       }
       router.push(
-        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${event.game_mode}${event.level_id ? `&level=${event.level_id}` : ""}`
+        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&gameMode=${event.game_mode}${event.level_id ? `&level=${event.level_id}` : ""}`
       );
     },
     onRoomMemberJoined: () => {

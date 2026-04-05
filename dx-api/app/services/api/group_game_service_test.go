@@ -9,8 +9,8 @@ func TestSearchGamesForGroupExists(t *testing.T) {
 }
 
 func TestSetGroupGameExists(t *testing.T) {
-	// Verify function signature: SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, startGameLevelID *string) error
-	var fn func(string, string, string, string, int, *string) error = SetGroupGame
+	// Verify function signature: SetGroupGame(userID, groupID, gameID, gameMode string, startGameLevelID *string) error
+	var fn func(string, string, string, string, *string) error = SetGroupGame
 	_ = fn
 }
 

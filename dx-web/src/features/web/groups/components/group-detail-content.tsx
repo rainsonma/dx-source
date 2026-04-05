@@ -510,7 +510,6 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
           groupId={id}
           currentGameId={group.current_game_id}
           currentGameMode={group.game_mode}
-          currentLevelTimeLimit={group.level_time_limit}
           currentStartLevelId={group.start_game_level_id}
         />
       )}

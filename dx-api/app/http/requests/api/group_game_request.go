@@ -9,16 +9,14 @@ import (
 type SetGroupGameRequest struct {
 	GameID           string  `form:"game_id" json:"game_id"`
 	GameMode         string  `form:"game_mode" json:"game_mode"`
-	LevelTimeLimit   int     `form:"level_time_limit" json:"level_time_limit"`
 	StartGameLevelID *string `form:"start_game_level_id" json:"start_game_level_id"`
 }
 
 func (r *SetGroupGameRequest) Authorize(ctx http.Context) error { return nil }
 func (r *SetGroupGameRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_id":          "required",
-		"game_mode":        "required|in:group_solo,group_team",
-		"level_time_limit": "required|min:1|max:60",
+		"game_id":   "required",
+		"game_mode": "required|in:group_solo,group_team",
 	}
 }
 func (r *SetGroupGameRequest) Filters(ctx http.Context) map[string]string {

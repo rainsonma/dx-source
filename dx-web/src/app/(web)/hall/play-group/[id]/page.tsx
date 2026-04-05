@@ -19,8 +19,6 @@ export default function GroupPlayPage({
   const degree = searchParams.get("degree");
   const pattern = searchParams.get("pattern");
   const level = searchParams.get("level");
-  const levelTimeLimitRaw = searchParams.get("levelTimeLimit");
-  const levelTimeLimit = levelTimeLimitRaw ? Number(levelTimeLimitRaw) : null;
   const gameMode = searchParams.get("gameMode");
 
   type GameData = {
@@ -97,8 +95,8 @@ export default function GroupPlayPage({
     return null;
   }
 
-  // groupId, degree, and levelTimeLimit are required for group play
-  if (!groupId || !degree || levelTimeLimit === null) {
+  // groupId and degree are required for group play
+  if (!groupId || !degree) {
     notFound();
     return null;
   }
@@ -113,7 +111,6 @@ export default function GroupPlayPage({
       pattern={pattern}
       levelId={targetLevelId}
       groupId={groupId}
-      levelTimeLimit={levelTimeLimit}
       gameMode={gameMode}
     />
   );

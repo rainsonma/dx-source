@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Settings,
@@ -9,7 +9,6 @@ import {
   Flag,
   Maximize,
   Minimize,
-  Clock,
   Trophy,
   Flame,
   Check,
@@ -32,28 +31,24 @@ interface GroupPlayTopBarProps {
   player: { nickname: string; avatarUrl: string | null };
   playerId: string;
   levelName: string;
-  levelTimeLimit: number;
   onExit: () => void;
   onReset: () => void;
   onSettings: () => void;
   onReport: () => void;
   onFullscreen: () => void;
   isFullscreen: boolean;
-  onLevelTimeUp: () => void;
 }
 
 export function GroupPlayTopBar({
   player,
   playerId,
   levelName,
-  levelTimeLimit,
   onExit,
   onReset,
   onSettings,
   onReport,
   onFullscreen,
   isFullscreen,
-  onLevelTimeUp,
 }: GroupPlayTopBarProps) {
   const actionHandlers: Record<string, (() => void) | undefined> = {
     settings: onSettings,
@@ -74,7 +69,7 @@ export function GroupPlayTopBar({
   const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
   const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
 
-  /* eslint-disable react-hooks/set-state-in-effect -- SSE event handlers and countdown timer require setState in effects */
+  /* eslint-disable react-hooks/set-state-in-effect -- SSE event handlers require setState in effects */
 
   useEffect(() => {
     if (!lastPlayerAction) return;
@@ -92,34 +87,10 @@ export function GroupPlayTopBar({
     }
   }, [lastPlayerAction]);
 
-  const progressPercent =
-    totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
-
-  const [countdown, setCountdown] = useState(levelTimeLimit * 60);
-  const onLevelTimeUpRef = useRef(onLevelTimeUp);
-  useEffect(() => { onLevelTimeUpRef.current = onLevelTimeUp; });
-
-  useEffect(() => {
-    setCountdown(levelTimeLimit * 60);
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setTimeout(() => onLevelTimeUpRef.current(), 0);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [levelTimeLimit]);
-
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const countdownMins = Math.floor(countdown / 60);
-  const countdownSecs = countdown % 60;
-  const countdownStr = `${String(countdownMins).padStart(2, "0")}:${String(countdownSecs).padStart(2, "0")}`;
-  const countdownLow = countdown <= 60;
+  const progressPercent =
+    totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
 
   return (
     <div className="relative flex w-full flex-col bg-card border-b border-border">
@@ -137,23 +108,6 @@ export function GroupPlayTopBar({
           </button>
           <span className="text-sm font-semibold text-foreground">
             {levelName}
-          </span>
-        </div>
-
-        {/* Center: group countdown timer */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5">
-          <Clock
-            className={`h-4 w-4 ${countdownLow ? "text-red-500" : "text-teal-600"}`}
-          />
-          <span
-            className={`text-xs font-medium ${countdownLow ? "text-red-500" : "text-muted-foreground"}`}
-          >
-            Group:
-          </span>
-          <span
-            className={`text-base font-extrabold tracking-tight tabular-nums ${countdownLow ? "text-red-500" : "text-foreground"}`}
-          >
-            {countdownStr}
           </span>
         </div>
 

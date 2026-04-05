@@ -79,7 +79,7 @@ func SearchGamesForGroup(userID, query string, limit int) ([]GroupGameSearchItem
 }
 
 // SetGroupGame sets the current game and game mode for a group.
-func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, startGameLevelID *string) error {
+func SetGroupGame(userID, groupID, gameID, gameMode string, startGameLevelID *string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -112,7 +112,6 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(map[string]any{
 		"current_game_id":     gameID,
 		"game_mode":           gameMode,
-		"level_time_limit":    levelTimeLimit,
 		"start_game_level_id": startGameLevelID,
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
@@ -174,16 +173,15 @@ type TeamParticipants struct {
 
 // GroupGameStartEvent is the SSE payload for group_game_start.
 type GroupGameStartEvent struct {
-	GameGroupID    string  `json:"game_group_id"`
-	GameID         string  `json:"game_id"`
-	GameName       string  `json:"game_name"`
-	GameMode       string  `json:"game_mode"`
-	Degree         string  `json:"degree"`
-	Pattern        *string `json:"pattern"`
-	LevelTimeLimit int     `json:"level_time_limit"`
-	LevelID        *string `json:"level_id"`
-	LevelName      string  `json:"level_name"`
-	Participants   any     `json:"participants"`
+	GameGroupID  string  `json:"game_group_id"`
+	GameID       string  `json:"game_id"`
+	GameName     string  `json:"game_name"`
+	GameMode     string  `json:"game_mode"`
+	Degree       string  `json:"degree"`
+	Pattern      *string `json:"pattern"`
+	LevelID      *string `json:"level_id"`
+	LevelName    string  `json:"level_name"`
+	Participants any     `json:"participants"`
 }
 
 // StartGroupGame validates and initiates a group game round, broadcasting via SSE.
@@ -342,16 +340,15 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 
 	// Broadcast SSE event
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_start", GroupGameStartEvent{
-		GameGroupID:    groupID,
-		GameID:         *group.CurrentGameID,
-		GameName:       game.Name,
-		GameMode:       *group.GameMode,
-		Degree:         degree,
-		Pattern:        pattern,
-		LevelTimeLimit: group.LevelTimeLimit,
-		LevelID:        levelID,
-		LevelName:      startLevel.Name,
-		Participants:   participants,
+		GameGroupID:  groupID,
+		GameID:       *group.CurrentGameID,
+		GameName:     game.Name,
+		GameMode:     *group.GameMode,
+		Degree:       degree,
+		Pattern:      pattern,
+		LevelID:      levelID,
+		LevelName:    startLevel.Name,
+		Participants: participants,
 	})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
 
@@ -396,13 +393,12 @@ func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 
 // GroupNextLevelEvent is the SSE payload for group_next_level.
 type GroupNextLevelEvent struct {
-	GameGroupID    string  `json:"game_group_id"`
-	GameID         string  `json:"game_id"`
-	LevelID        string  `json:"level_id"`
-	LevelName      string  `json:"level_name"`
-	Degree         string  `json:"degree"`
-	Pattern        *string `json:"pattern"`
-	LevelTimeLimit int     `json:"level_time_limit"`
+	GameGroupID string  `json:"game_group_id"`
+	GameID      string  `json:"game_id"`
+	LevelID     string  `json:"level_id"`
+	LevelName   string  `json:"level_name"`
+	Degree      string  `json:"degree"`
+	Pattern     *string `json:"pattern"`
 }
 
 // NextGroupLevel finds the next level and broadcasts it to all group members.
@@ -470,13 +466,12 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 		groupID, userID).Scan(&si)
 
 	helpers.GroupSSEHub.Broadcast(groupID, "group_next_level", GroupNextLevelEvent{
-		GameGroupID:    groupID,
-		GameID:         *group.CurrentGameID,
-		LevelID:        nextLevel.ID,
-		LevelName:      nextLevel.Name,
-		Degree:         si.Degree,
-		Pattern:        si.Pattern,
-		LevelTimeLimit: group.LevelTimeLimit,
+		GameGroupID: groupID,
+		GameID:      *group.CurrentGameID,
+		LevelID:     nextLevel.ID,
+		LevelName:   nextLevel.Name,
+		Degree:      si.Degree,
+		Pattern:     si.Pattern,
 	})
 
 	return nil

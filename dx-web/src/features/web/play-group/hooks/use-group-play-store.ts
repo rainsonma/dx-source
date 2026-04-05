@@ -30,7 +30,6 @@ interface GroupPlayState {
   wrongCount: number;
   playTime: number;
   gameGroupId: string | null;
-  levelTimeLimit: number | null;
   groupPhase: "playing" | "result" | null;
   groupResult: GroupLevelCompleteEvent | null;
   participants: Participants | null;
@@ -51,7 +50,6 @@ interface GroupPlayActions {
     contentItems: ContentItem[];
     startFromIndex: number;
     gameGroupId: string;
-    levelTimeLimit: number;
     participants?: Participants | null;
     restored?: {
       score: number;
@@ -95,7 +93,6 @@ const initialState: GroupPlayState = {
   wrongCount: 0,
   playTime: 0,
   gameGroupId: null,
-  levelTimeLimit: null,
   groupPhase: null,
   groupResult: null,
   participants: null,
@@ -134,7 +131,6 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
         wrongCount: data.restored?.wrongCount ?? 0,
         playTime: data.restored?.playTime ?? 0,
         gameGroupId: data.gameGroupId,
-        levelTimeLimit: data.levelTimeLimit,
         groupPhase: "playing",
         groupResult: null,
         participants: data.participants ?? null,

@@ -17,7 +17,6 @@ export type GroupDetail = Group & {
   game_mode: string | null;
   current_game_name: string | null;
   invite_qrcode_url: string | null;
-  level_time_limit: number;
   is_playing: boolean;
   start_game_level_id: string | null;
   start_game_level_name: string | null;
@@ -60,7 +59,6 @@ export type GroupGameStartEvent = {
   game_mode: "group_solo" | "group_team";
   degree: string;
   pattern: string | null;
-  level_time_limit: number;
   level_id: string | null;
   level_name: string;
   participants: Participants;

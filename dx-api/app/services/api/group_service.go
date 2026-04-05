@@ -46,9 +46,8 @@ type GroupDetail struct {
 	CreatedAt       string  `json:"created_at"`
 	CurrentGameID   *string `json:"current_game_id"`
 	GameMode        *string `json:"game_mode"`
-	CurrentGameName  string  `json:"current_game_name"`
-	InviteQrcodeURL  string  `json:"invite_qrcode_url"`
-	LevelTimeLimit     int     `json:"level_time_limit"`
+	CurrentGameName    string  `json:"current_game_name"`
+	InviteQrcodeURL    string  `json:"invite_qrcode_url"`
 	IsPlaying          bool    `json:"is_playing"`
 	StartGameLevelID   *string `json:"start_game_level_id"`
 	StartGameLevelName *string `json:"start_game_level_name"`
@@ -271,7 +270,6 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 		GameMode:        group.GameMode,
 		CurrentGameName:  currentGameName,
 		InviteQrcodeURL:  inviteQrcodeURL,
-		LevelTimeLimit:     group.LevelTimeLimit,
 		IsPlaying:          group.IsPlaying,
 		StartGameLevelID:   group.StartGameLevelID,
 		StartGameLevelName: startGameLevelName,
@@ -308,8 +306,8 @@ func GetGroupByInviteCode(code string) (*GroupInviteInfo, error) {
 	}, nil
 }
 
-// UpdateGroup updates the name, description, and optionally the answer time limit of a group.
-func UpdateGroup(userID, groupID, name string, description *string, levelTimeLimit *int) error {
+// UpdateGroup updates the name and description of a group.
+func UpdateGroup(userID, groupID, name string, description *string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -324,9 +322,6 @@ func UpdateGroup(userID, groupID, name string, description *string, levelTimeLim
 	updates := map[string]any{"name": name}
 	if description != nil {
 		updates["description"] = *description
-	}
-	if levelTimeLimit != nil {
-		updates["level_time_limit"] = *levelTimeLimit
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(updates); err != nil {

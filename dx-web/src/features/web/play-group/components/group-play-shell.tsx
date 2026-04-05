@@ -52,7 +52,6 @@ interface GroupPlayShellProps {
   pattern: string | null;
   levelId: string;
   groupId: string;
-  levelTimeLimit: number;
   gameMode: string | null;
 }
 
@@ -63,7 +62,6 @@ export function GroupPlayShell({
   pattern,
   levelId,
   groupId,
-  levelTimeLimit,
 }: GroupPlayShellProps) {
   const router = useRouter();
 
@@ -235,7 +233,6 @@ export function GroupPlayShell({
         levelId={targetLevelId}
         levelName={levelName}
         gameGroupId={groupId}
-        levelTimeLimit={levelTimeLimit}
       />
       </GamePlayProvider>
     );
@@ -263,17 +260,12 @@ export function GroupPlayShell({
         player={player}
         playerId={player.id}
         levelName={levelName}
-        levelTimeLimit={levelTimeLimit}
         onExit={() => showOverlay("exit")}
         onReset={() => showOverlay("reset")}
         onSettings={() => showOverlay("settings")}
         onReport={() => showOverlay("report")}
         onFullscreen={toggleFullscreen}
         isFullscreen={isFullscreen}
-        onLevelTimeUp={() => {
-          setPhase("result");
-          completeAndWait();
-        }}
       />
       <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-10">
         <GameComponent />
