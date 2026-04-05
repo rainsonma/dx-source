@@ -224,18 +224,39 @@ func CheckActiveSession(userID, gameLevelID, degree string, pattern *string) (*A
 // CheckAnyActiveSession finds any active single-play session for a game.
 // Excludes group and PK sessions.
 func CheckAnyActiveSession(userID, gameID string) (*ActiveSessionData, error) {
-	var session models.GameSession
-	if err := facades.Orm().Query().Where("user_id", userID).Where("game_id", gameID).
+	query := facades.Orm().Query()
+
+	// First: check for an active (unfinished) session
+	var active models.GameSession
+	if err := query.Where("user_id", userID).Where("game_id", gameID).
 		Where("ended_at IS NULL").Where("game_group_id IS NULL").Where("game_pk_id IS NULL").
-		Order("last_played_at desc").First(&session); err != nil || session.ID == "" {
+		Order("last_played_at desc").First(&active); err == nil && active.ID != "" {
+		return &ActiveSessionData{
+			ID:                   active.ID,
+			GameLevelID:          active.GameLevelID,
+			Degree:               active.Degree,
+			Pattern:              active.Pattern,
+			CurrentContentItemID: active.CurrentContentItemID,
+		}, nil
+	}
+
+	// Fallback: find the latest completed session and suggest the next level
+	var latest models.GameSession
+	if err := query.Where("user_id", userID).Where("game_id", gameID).
+		Where("ended_at IS NOT NULL").Where("game_group_id IS NULL").Where("game_pk_id IS NULL").
+		Order("last_played_at desc").First(&latest); err != nil || latest.ID == "" {
 		return nil, nil
 	}
+
+	levelID := latest.GameLevelID
+	if nextLevelID, _, err := findNextLevel(gameID, latest.GameLevelID); err == nil && nextLevelID != nil {
+		levelID = *nextLevelID
+	}
+
 	return &ActiveSessionData{
-		ID:                   session.ID,
-		GameLevelID:          session.GameLevelID,
-		Degree:               session.Degree,
-		Pattern:              session.Pattern,
-		CurrentContentItemID: session.CurrentContentItemID,
+		GameLevelID: levelID,
+		Degree:      latest.Degree,
+		Pattern:     latest.Pattern,
 	}, nil
 }
 
