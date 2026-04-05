@@ -48,7 +48,7 @@ func GetLeaderboard(lbType, period, userID string) (*LeaderboardResult, error) {
 	return getWindowedPlayTime(period, userID)
 }
 
-// getAllTimeExp ranks active users by total exp.
+// getAllTimeExp ranks active users by total exp from the users table.
 func getAllTimeExp(userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(`
@@ -58,41 +58,37 @@ func getAllTimeExp(userID string) (*LeaderboardResult, error) {
 			FROM users u
 			WHERE u.is_active = true AND u.exp > 0
 		)
-		SELECT * FROM ranked
-		WHERE rank <= 100 OR id = ?
-		ORDER BY rank
-	`, safeUID(userID)).Scan(&rows); err != nil {
+		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
+	`).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query all-time exp leaderboard: %w", err)
 	}
 
 	return buildLeaderboardResult(rows, userID), nil
 }
 
-// getAllTimePlayTime ranks active users by total play time across all games.
+// getAllTimePlayTime ranks active users by total play time from game_sessions.
 func getAllTimePlayTime(userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(`
 		WITH ranked AS (
 			SELECT u.id, u.username, u.nickname, u.avatar_id,
-			       COALESCE(SUM(g.total_play_time), 0)::int AS value,
-			       RANK() OVER (ORDER BY COALESCE(SUM(g.total_play_time), 0) DESC)::int AS rank
+			       COALESCE(SUM(s.play_time), 0)::int AS value,
+			       RANK() OVER (ORDER BY COALESCE(SUM(s.play_time), 0) DESC)::int AS rank
 			FROM users u
-			INNER JOIN game_stats_totals g ON g.user_id = u.id
+			INNER JOIN game_sessions s ON s.user_id = u.id
 			WHERE u.is_active = true
 			GROUP BY u.id, u.username, u.nickname, u.avatar_id
-			HAVING COALESCE(SUM(g.total_play_time), 0) > 0
+			HAVING COALESCE(SUM(s.play_time), 0) > 0
 		)
-		SELECT * FROM ranked
-		WHERE rank <= 100 OR id = ?
-		ORDER BY rank
-	`, safeUID(userID)).Scan(&rows); err != nil {
+		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
+	`).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query all-time playtime leaderboard: %w", err)
 	}
 
 	return buildLeaderboardResult(rows, userID), nil
 }
 
-// getWindowedExp ranks active users by exp earned within a time window.
+// getWindowedExp ranks active users by exp earned within a time window from game_sessions.
 func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(fmt.Sprintf(`
@@ -101,24 +97,22 @@ func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
 			       COALESCE(SUM(s.exp), 0)::int AS value,
 			       RANK() OVER (ORDER BY COALESCE(SUM(s.exp), 0) DESC)::int AS rank
 			FROM users u
-			INNER JOIN game_session_totals s ON s.user_id = u.id
+			INNER JOIN game_sessions s ON s.user_id = u.id
 			  AND s.last_played_at >= %s
 			  AND s.last_played_at < NOW()
 			WHERE u.is_active = true
 			GROUP BY u.id, u.username, u.nickname, u.avatar_id
 			HAVING COALESCE(SUM(s.exp), 0) > 0
 		)
-		SELECT * FROM ranked
-		WHERE rank <= 100 OR id = ?
-		ORDER BY rank
-	`, windowStartSQL(period)), safeUID(userID)).Scan(&rows); err != nil {
+		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
+	`, windowStartSQL(period))).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query windowed exp leaderboard: %w", err)
 	}
 
 	return buildLeaderboardResult(rows, userID), nil
 }
 
-// getWindowedPlayTime ranks active users by play time within a time window.
+// getWindowedPlayTime ranks active users by play time within a time window from game_sessions.
 func getWindowedPlayTime(period, userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(fmt.Sprintf(`
@@ -127,17 +121,15 @@ func getWindowedPlayTime(period, userID string) (*LeaderboardResult, error) {
 			       COALESCE(SUM(s.play_time), 0)::int AS value,
 			       RANK() OVER (ORDER BY COALESCE(SUM(s.play_time), 0) DESC)::int AS rank
 			FROM users u
-			INNER JOIN game_session_totals s ON s.user_id = u.id
+			INNER JOIN game_sessions s ON s.user_id = u.id
 			  AND s.last_played_at >= %s
 			  AND s.last_played_at < NOW()
 			WHERE u.is_active = true
 			GROUP BY u.id, u.username, u.nickname, u.avatar_id
 			HAVING COALESCE(SUM(s.play_time), 0) > 0
 		)
-		SELECT * FROM ranked
-		WHERE rank <= 100 OR id = ?
-		ORDER BY rank
-	`, windowStartSQL(period)), safeUID(userID)).Scan(&rows); err != nil {
+		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
+	`, windowStartSQL(period))).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query windowed playtime leaderboard: %w", err)
 	}
 
@@ -158,18 +150,9 @@ func windowStartSQL(period string) string {
 	}
 }
 
-// safeUID returns a non-matchable placeholder if userID is empty.
-func safeUID(userID string) string {
-	if userID == "" {
-		return "___none___"
-	}
-	return userID
-}
-
-// buildLeaderboardResult splits rows into top-100 entries and current user's rank.
+// buildLeaderboardResult converts raw rows into entries and finds the current user's rank.
 func buildLeaderboardResult(rows []leaderboardRow, userID string) *LeaderboardResult {
 	entries := make([]LeaderboardEntry, 0, len(rows))
-	var myRank *LeaderboardEntry
 
 	for _, r := range rows {
 		var avatarURL *string
@@ -178,20 +161,21 @@ func buildLeaderboardResult(rows []leaderboardRow, userID string) *LeaderboardRe
 			avatarURL = &url
 		}
 
-		entry := LeaderboardEntry{
+		entries = append(entries, LeaderboardEntry{
 			ID:        r.ID,
 			Username:  r.Username,
 			Nickname:  r.Nickname,
 			AvatarURL: avatarURL,
 			Value:     r.Value,
 			Rank:      r.Rank,
-		}
-		if r.Rank <= 100 {
-			entries = append(entries, entry)
-		}
-		if userID != "" && r.ID == userID {
-			e := entry
-			myRank = &e
+		})
+	}
+
+	var myRank *LeaderboardEntry
+	for i := range entries {
+		if entries[i].ID == userID {
+			myRank = &entries[i]
+			break
 		}
 	}
 
