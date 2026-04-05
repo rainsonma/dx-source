@@ -133,13 +133,9 @@ export function GroupPlayShell({
     onLevelComplete: (event) => {
       setGroupResult(event);
     },
-    onForceEnd: (event) => {
-      // Force-end: show the last level result (or first if available)
-      const lastResult = event.results[event.results.length - 1];
-      if (lastResult) {
-        setGroupResult(lastResult);
-      }
-      setPhase("result");
+    onForceEnd: () => {
+      toast("游戏已被强制结束");
+      router.push(`/hall/groups/${groupId}`);
     },
     onPlayerComplete: (event) => {
       const currentLevelId = useGroupPlayStore.getState().levelId;
