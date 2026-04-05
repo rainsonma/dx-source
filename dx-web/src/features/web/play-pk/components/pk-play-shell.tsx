@@ -151,6 +151,10 @@ export function PkPlayShell({
       if (event.game_level_id === currentLevelId) {
         // First-to-complete: build result and immediately show result
         const store = usePkPlayStore.getState();
+        const winnerIsOpponent = event.user_id === store.opponentId;
+        const loser = winnerIsOpponent
+          ? { user_id: player.id, user_name: player.nickname, score: store.score }
+          : { user_id: store.opponentId ?? "", user_name: store.opponentName ?? "", score: store.opponentScore };
         const result: PkLevelCompleteEvent = {
           game_level_id: event.game_level_id,
           winner: {
@@ -160,7 +164,7 @@ export function PkPlayShell({
           },
           participants: [
             { user_id: event.user_id, user_name: event.user_name, score: event.score },
-            { user_id: store.opponentId ?? "", user_name: store.opponentName ?? "", score: store.opponentScore },
+            loser,
           ],
         };
         setPkResult(result, store.nextLevelId, store.nextLevelName);
