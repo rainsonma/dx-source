@@ -177,11 +177,14 @@ export function PkPlayTopBar({
       <div className="absolute right-1 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-card shadow-sm md:right-1.5 md:w-64">
         {/* Avatar row: avatar + score + combo */}
         <div className="flex items-center gap-2.5 px-3 pt-2">
-          <Avatar size="sm" className="bg-teal-600">
+          <Avatar size="sm" style={{ backgroundColor: getAvatarColor(playerId) }}>
             {player.avatarUrl && (
               <AvatarImage src={player.avatarUrl} alt={player.nickname} />
             )}
-            <AvatarFallback className="bg-teal-600 text-white text-xs font-bold">
+            <AvatarFallback
+              className="text-white text-xs font-bold"
+              style={{ backgroundColor: getAvatarColor(playerId) }}
+            >
               {player.nickname[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
