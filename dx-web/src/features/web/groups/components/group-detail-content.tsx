@@ -30,6 +30,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAvatarColor } from "@/lib/avatar";
 import { swrMutate } from "@/lib/swr";
 import { groupApi } from "../actions/group.action";
 import { groupMemberApi } from "../actions/group-member.action";
@@ -260,7 +262,14 @@ export function GroupDetailContent({ id }: GroupDetailContentProps) {
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <span className="text-lg font-bold text-foreground">{group.name}</span>
-              <span className="text-xs text-muted-foreground">由 {group.owner_name} 创建</span>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Avatar size="xs" style={{ backgroundColor: getAvatarColor(group.owner_id) }}>
+                  <AvatarFallback className="text-white text-[9px] font-bold" style={{ backgroundColor: getAvatarColor(group.owner_id) }}>
+                    {group.owner_name[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {group.owner_name} 创建
+              </span>
             </div>
             {isOwner && (
               <div className="flex shrink-0 items-center gap-1.5">

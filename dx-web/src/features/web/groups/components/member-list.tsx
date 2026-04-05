@@ -153,7 +153,7 @@ export function MemberList({
                     <span className="text-[13px] font-semibold text-foreground">{m.user_name}</span>
                     {m.is_last_winner && <Crown className="h-3.5 w-3.5 text-amber-400" />}
                   </div>
-                  {m.is_owner && <span className="text-[11px] text-muted-foreground">创建者</span>}
+                  {m.is_owner && <span className="text-[11px] text-muted-foreground">群主</span>}
                 </div>
                 {isOwner && (
                   <button
