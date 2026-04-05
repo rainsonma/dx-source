@@ -272,10 +272,8 @@ func Api() {
 			protected.Get("/play-pk/{id}/events", playPkController.Events)
 			protected.Prefix("/play-pk").Group(func(pk route.Router) {
 				pk.Post("/start", playPkController.Start)
-				pk.Post("/{id}/levels/start", playPkController.StartLevel)
 				pk.Post("/{id}/levels/{levelId}/complete", playPkController.CompleteLevel)
 				pk.Post("/{id}/answers", playPkController.RecordAnswer)
-				pk.Post("/{id}/skips", playPkController.RecordSkip)
 				pk.Post("/{id}/sync-playtime", playPkController.SyncPlayTime)
 				pk.Get("/{id}/restore", playPkController.Restore)
 				pk.Put("/{id}/content-item", playPkController.UpdateContentItem)

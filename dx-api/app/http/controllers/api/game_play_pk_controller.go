@@ -33,29 +33,7 @@ func (c *GamePlayPkController) Start(ctx contractshttp.Context) contractshttp.Re
 		return resp
 	}
 
-	result, err := services.StartPk(userID, req.GameID, req.Degree, req.Pattern, req.LevelID, req.Difficulty)
-	if err != nil {
-		return mapPkError(ctx, err)
-	}
-
-	return helpers.Success(ctx, result)
-}
-
-// StartLevel starts a level within a PK session.
-func (c *GamePlayPkController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-
-	var req requests.StartLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.StartPkLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
+	result, err := services.StartPk(userID, req.GameID, req.GameLevelID, req.Degree, req.Pattern, req.Difficulty)
 	if err != nil {
 		return mapPkError(ctx, err)
 	}
@@ -71,14 +49,13 @@ func (c *GamePlayPkController) CompleteLevel(ctx contractshttp.Context) contract
 	}
 
 	sessionID := ctx.Request().Route("id")
-	gameLevelID := ctx.Request().Route("levelId")
 
 	var req requests.CompleteLevelRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
-	result, err := services.CompletePkLevel(userID, sessionID, gameLevelID, req.Score, req.MaxCombo, req.TotalItems)
+	result, err := services.CompletePk(userID, sessionID, req.Score, req.MaxCombo, req.TotalItems)
 	if err != nil {
 		return mapPkError(ctx, err)
 	}
@@ -93,55 +70,25 @@ func (c *GamePlayPkController) RecordAnswer(ctx contractshttp.Context) contracts
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	sessionID := ctx.Request().Route("id")
-
 	var req requests.RecordAnswerRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
 	err = services.PkRecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionTotalID: sessionID,
-		GameSessionLevelID: req.GameSessionLevelID,
-		GameLevelID:        req.GameLevelID,
-		ContentItemID:      req.ContentItemID,
-		IsCorrect:          req.IsCorrect,
-		UserAnswer:         req.UserAnswer,
-		SourceAnswer:       req.SourceAnswer,
-		BaseScore:          req.BaseScore,
-		ComboScore:         req.ComboScore,
-		Score:              req.Score,
-		MaxCombo:           req.MaxCombo,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
-		Duration:           req.Duration,
-	})
-	if err != nil {
-		return mapPkError(ctx, err)
-	}
-
-	return helpers.Success(ctx, nil)
-}
-
-// RecordSkip records a skip in a PK session.
-func (c *GamePlayPkController) RecordSkip(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-
-	var req requests.RecordSkipRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	err = services.PkRecordSkip(userID, services.RecordSkipInput{
-		GameSessionTotalID: sessionID,
-		GameLevelID:        req.GameLevelID,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
+		GameSessionID:     req.GameSessionId,
+		GameLevelID:       req.GameLevelID,
+		ContentItemID:     req.ContentItemID,
+		IsCorrect:         req.IsCorrect,
+		UserAnswer:        req.UserAnswer,
+		SourceAnswer:      req.SourceAnswer,
+		BaseScore:         req.BaseScore,
+		ComboScore:        req.ComboScore,
+		Score:             req.Score,
+		MaxCombo:          req.MaxCombo,
+		PlayTime:          req.PlayTime,
+		NextContentItemID: req.NextContentItemID,
+		Duration:          req.Duration,
 	})
 	if err != nil {
 		return mapPkError(ctx, err)
@@ -164,7 +111,7 @@ func (c *GamePlayPkController) SyncPlayTime(ctx contractshttp.Context) contracts
 		return resp
 	}
 
-	if err := services.PkSyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
+	if err := services.PkSyncPlayTime(userID, sessionID, req.PlayTime); err != nil {
 		if errors.Is(err, services.ErrInvalidPlayTime) {
 			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游玩时长必须在0到86400秒之间")
 		}
@@ -183,12 +130,7 @@ func (c *GamePlayPkController) Restore(ctx contractshttp.Context) contractshttp.
 
 	sessionID := ctx.Request().Route("id")
 
-	var req requests.RestoreSessionRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.PkRestoreSessionData(userID, sessionID, req.GameLevelID)
+	result, err := services.PkRestoreSessionData(userID, sessionID)
 	if err != nil {
 		return mapPkError(ctx, err)
 	}
@@ -242,16 +184,12 @@ func (c *GamePlayPkController) NextLevel(ctx contractshttp.Context) contractshtt
 
 	pkID := ctx.Request().Route("id")
 
-	var req requests.PkNextLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	if err := services.NextPkLevel(userID, pkID, req.CurrentLevelID); err != nil {
+	result, err := services.NextPkLevel(userID, pkID)
+	if err != nil {
 		return mapPkError(ctx, err)
 	}
 
-	return helpers.Success(ctx, nil)
+	return helpers.Success(ctx, result)
 }
 
 // Pause pauses the robot goroutine in a PK match.
