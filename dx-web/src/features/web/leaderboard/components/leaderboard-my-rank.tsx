@@ -12,7 +12,7 @@ interface LeaderboardMyRankProps {
 /** Current user's rank bar — always visible at the top */
 export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
   const displayName = entry ? (entry.nickname ?? entry.username) : "我";
-  const rank = entry?.rank ?? "—";
+  const rank = entry?.rank ?? null;
   const value = entry ? formatLeaderboardValue(entry.value, type) : "0";
   const Icon = type === "exp" ? Zap : Clock;
   const fallbackChar = displayName.charAt(0).toUpperCase();
@@ -20,7 +20,11 @@ export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
 
   return (
     <div className="flex w-full items-center gap-4 rounded-full border-[1.5px] border-teal-600 bg-teal-50 px-4 py-3.5 md:px-6">
-      <span className="text-base font-bold text-teal-600">{rank}</span>
+      {rank !== null ? (
+        <span className="text-base font-bold text-teal-600">{rank}</span>
+      ) : (
+        <span className="text-sm font-medium text-muted-foreground">未上榜</span>
+      )}
       <Avatar>
         {entry?.avatarUrl && (
           <AvatarImage src={entry.avatarUrl} alt={displayName} />

@@ -7,18 +7,14 @@ import { GAME_MODE_LABELS, type GameMode } from "@/consts/game-mode";
 import { DataTablePagination } from "@/components/in/data-table-pagination";
 import { getProgressColor } from "@/features/web/hall/helpers/progress-color.helper";
 type SessionProgressItem = {
-  id: string;
   gameId: string;
   gameName: string;
   gameMode: string;
-  degree: string;
-  pattern: string | null;
-  playedLevelsCount: number;
-  totalLevelsCount: number;
+  completedLevels: number;
+  totalLevels: number;
   score: number;
   exp: number;
   lastPlayedAt: Date;
-  endedAt: Date | null;
 };
 
 const PAGE_SIZE = 5;
@@ -77,14 +73,14 @@ export function GameProgressCard({ sessions }: GameProgressCardProps) {
                 GAME_MODE_LABELS[session.gameMode as GameMode] ??
                 session.gameMode;
               const progress = calcProgress(
-                session.playedLevelsCount,
-                session.totalLevelsCount
+                session.completedLevels,
+                session.totalLevels
               );
               const color = getProgressColor(start + i);
 
               return (
                 <Link
-                  key={session.id}
+                  key={`${session.gameId}-${session.gameMode}`}
                   href={`/hall/games/${session.gameId}`}
                   className="flex flex-col gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-accent"
                 >

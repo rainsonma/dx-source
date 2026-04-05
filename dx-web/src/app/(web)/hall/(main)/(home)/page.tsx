@@ -19,18 +19,14 @@ type DashboardData = {
   masterStats: { total: number; thisWeek: number };
   reviewStats: { pending: number };
   sessions: {
-    id: string;
     gameId: string;
     gameName: string;
     gameMode: string;
-    degree: string;
-    pattern: string | null;
-    playedLevelsCount: number;
-    totalLevelsCount: number;
+    completedLevels: number;
+    totalLevels: number;
     score: number;
     exp: number;
     lastPlayedAt: Date;
-    endedAt: Date | null;
   }[];
   todayAnswers: number;
 };
