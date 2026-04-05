@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"dx-api/app/consts"
@@ -392,11 +393,11 @@ func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 			Score    int     `gorm:"column:score"`
 		}
 		facades.Orm().Query().Raw(
-			`SELECT gs.user_id, u.username, u.nickname, gs.score
+			`SELECT DISTINCT ON (gs.user_id) gs.user_id, u.username, u.nickname, gs.score
 			 FROM game_sessions gs
 			 JOIN users u ON u.id = gs.user_id
 			 WHERE gs.game_group_id = ? AND gs.game_level_id = ?
-			 ORDER BY gs.score DESC`,
+			 ORDER BY gs.user_id, gs.created_at DESC`,
 			groupID, *group.StartGameLevelID,
 		).Scan(&rows)
 		for _, p := range rows {
@@ -408,6 +409,9 @@ func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 				UserID: p.UserID, UserName: name, Score: p.Score,
 			})
 		}
+		sort.Slice(participants, func(i, j int) bool {
+			return participants[i].Score > participants[j].Score
+		})
 	}
 
 	// Broadcast force end event with participants

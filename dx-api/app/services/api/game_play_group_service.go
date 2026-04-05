@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"dx-api/app/consts"
@@ -253,11 +254,11 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 				Score    int    `gorm:"column:score"`
 			}
 			facades.Orm().Query().Raw(
-				`SELECT gs.user_id, u.username, u.nickname, gs.score
+				`SELECT DISTINCT ON (gs.user_id) gs.user_id, u.username, u.nickname, gs.score
 				 FROM game_sessions gs
 				 JOIN users u ON u.id = gs.user_id
 				 WHERE gs.game_group_id = ? AND gs.game_level_id = ?
-				 ORDER BY gs.score DESC`,
+				 ORDER BY gs.user_id, gs.created_at DESC`,
 				*session.GameGroupID, gameLevelID,
 			).Scan(&participantRows)
 
@@ -273,6 +274,9 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 					Score:    p.Score,
 				})
 			}
+			sort.Slice(participants, func(i, j int) bool {
+				return participants[i].Score > participants[j].Score
+			})
 
 			nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, gameLevelID)
 
