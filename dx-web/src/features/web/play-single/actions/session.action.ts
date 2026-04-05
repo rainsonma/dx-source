@@ -86,6 +86,7 @@ export async function recordAnswerAction(data: {
 }) {
   try {
     const res = await sessionApi.recordAnswer(data.gameSessionId, {
+      game_session_id: data.gameSessionId,
       game_level_id: data.gameLevelId,
       content_item_id: data.contentItemId,
       is_correct: data.isCorrect,
@@ -114,6 +115,7 @@ export async function recordSkipAction(data: {
 }) {
   try {
     const res = await sessionApi.recordSkip(data.gameSessionId, {
+      game_session_id: data.gameSessionId,
       game_level_id: data.gameLevelId,
       play_time: data.playTime,
       next_content_item_id: data.nextContentItemId,

@@ -300,6 +300,7 @@ export const sessionApi = {
   async recordAnswer(
     sessionId: string,
     data: {
+      game_session_id: string;
       game_level_id: string;
       content_item_id: string;
       is_correct: boolean;
@@ -320,6 +321,7 @@ export const sessionApi = {
   async recordSkip(
     sessionId: string,
     data: {
+      game_session_id: string;
       game_level_id: string;
       play_time: number;
       next_content_item_id: string | null;

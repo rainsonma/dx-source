@@ -68,6 +68,7 @@ export async function recordAnswerAction(data: {
     const res = await apiClient.post<unknown>(
       `/api/play-pk/${data.gameSessionId}/answers`,
       {
+        game_session_id: data.gameSessionId,
         game_level_id: data.gameLevelId,
         content_item_id: data.contentItemId,
         is_correct: data.isCorrect,
