@@ -57,22 +57,6 @@ func (r *M20260405000002CreateGameSessionsTable) Up() error {
 		return err
 	}
 
-	// Create game_sessions indexes via raw SQL
-	indexes := []string{
-		`CREATE UNIQUE INDEX idx_game_sessions_active_single ON game_sessions (user_id, game_level_id, degree, COALESCE(pattern, '')) WHERE ended_at IS NULL AND game_group_id IS NULL AND game_pk_id IS NULL`,
-		`CREATE UNIQUE INDEX idx_game_sessions_active_group ON game_sessions (user_id, game_level_id, degree, COALESCE(pattern, ''), game_group_id) WHERE ended_at IS NULL AND game_group_id IS NOT NULL`,
-		`CREATE UNIQUE INDEX idx_game_sessions_active_pk ON game_sessions (user_id, game_level_id, degree, COALESCE(pattern, ''), game_pk_id) WHERE ended_at IS NULL AND game_pk_id IS NOT NULL`,
-		`CREATE INDEX idx_game_sessions_group ON game_sessions (game_group_id) WHERE game_group_id IS NOT NULL`,
-		`CREATE INDEX idx_game_sessions_pk ON game_sessions (game_pk_id) WHERE game_pk_id IS NOT NULL`,
-		`CREATE INDEX idx_game_sessions_leaderboard ON game_sessions (user_id, last_played_at)`,
-		`CREATE INDEX idx_game_sessions_user_game ON game_sessions (user_id, game_id)`,
-	}
-	for _, sql := range indexes {
-		if _, err := facades.Orm().Query().Exec(sql); err != nil {
-			return err
-		}
-	}
-
 	// Recreate game_records table with game_session_id
 	if err := facades.Schema().Create("game_records", func(table schema.Blueprint) {
 		table.Uuid("id")
