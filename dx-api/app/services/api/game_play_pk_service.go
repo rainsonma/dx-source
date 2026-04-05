@@ -18,11 +18,11 @@ import (
 
 // PkStartResult is returned after starting a PK match.
 type PkStartResult struct {
-	PkID              string `json:"pk_id"`
-	SessionID         string `json:"session_id"`
-	OpponentID        string `json:"opponent_id"`
-	OpponentName      string `json:"opponent_name"`
-	RobotCompleted    bool   `json:"robot_completed"`
+	PkID         string `json:"pk_id"`
+	SessionID    string `json:"session_id"`
+	GameLevelID  string `json:"game_level_id"`
+	OpponentID   string `json:"opponent_id"`
+	OpponentName string `json:"opponent_name"`
 }
 
 // PkPlayerCompleteEvent is the SSE payload for pk_player_complete.
@@ -39,11 +39,6 @@ type PkPlayerActionEvent struct {
 	UserName    string `json:"user_name"`
 	Action      string `json:"action"`
 	ComboStreak int    `json:"combo_streak,omitempty"`
-}
-
-// PkNextLevelEvent is the SSE payload for pk_next_level.
-type PkNextLevelEvent struct {
-	GameLevelID string `json:"game_level_id"`
 }
 
 // PkTimeoutEvent is the SSE payload for pk_timeout / pk_timeout_warning.
@@ -86,19 +81,20 @@ func deleteRobotState(pkID string) {
 
 // --- PK Lifecycle ---
 
-// StartPk starts a new PK match against a robot opponent.
-func StartPk(userID, gameID, degree string, pattern *string, levelID *string, difficulty string) (*PkStartResult, error) {
+// StartPk starts a new PK match against a robot opponent for a single level.
+func StartPk(userID, gameID, gameLevelID, degree string, pattern *string, difficulty string) (*PkStartResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
 
 	query := facades.Orm().Query()
 
-	// Check for existing active PK for this user/game (idempotent for concurrent calls)
+	// Check for existing active PK for this user/game/level (idempotent for concurrent calls)
 	var existingPk models.GamePk
-	query.Where("user_id", userID).Where("game_id", gameID).Where("is_playing", true).First(&existingPk)
+	query.Where("user_id", userID).Where("game_id", gameID).
+		Where("game_level_id", gameLevelID).Where("is_playing", true).First(&existingPk)
 	if existingPk.ID != "" {
-		var existingSession models.GameSessionTotal
+		var existingSession models.GameSession
 		query.Where("game_pk_id", existingPk.ID).Where("user_id", userID).First(&existingSession)
 		if existingSession.ID != "" {
 			var opponent models.User
@@ -107,25 +103,12 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 			if opponent.Nickname != nil && *opponent.Nickname != "" {
 				opName = *opponent.Nickname
 			}
-			// Check if robot already completed current level
-			robotDone := false
-			if existingPk.CurrentLevelID != nil {
-				var robotLevel models.GameSessionLevel
-				query.Raw(
-					`SELECT gsl.id FROM game_session_levels gsl
-					 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-					 WHERE gsl.game_pk_id = ? AND gsl.game_level_id = ? AND gst.user_id = ? AND gsl.ended_at IS NOT NULL
-					 LIMIT 1`,
-					existingPk.ID, *existingPk.CurrentLevelID, existingPk.OpponentID).Scan(&robotLevel)
-				robotDone = robotLevel.ID != ""
-			}
-
 			return &PkStartResult{
-				PkID:           existingPk.ID,
-				SessionID:      existingSession.ID,
-				OpponentID:     existingPk.OpponentID,
-				OpponentName:   opName,
-				RobotCompleted: robotDone,
+				PkID:         existingPk.ID,
+				SessionID:    existingSession.ID,
+				GameLevelID:  existingPk.GameLevelID,
+				OpponentID:   existingPk.OpponentID,
+				OpponentName: opName,
 			}, nil
 		}
 	}
@@ -139,28 +122,16 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 		return nil, ErrGameNotPublished
 	}
 
-	// Find first active level
-	var firstLevel models.GameLevel
-	if err := query.Where("game_id", gameID).Where("is_active", true).
-		Order("\"order\" asc").First(&firstLevel); err != nil || firstLevel.ID == "" {
-		return nil, ErrNoGameLevels
-	}
-
 	// Find or create mock user
 	mockUser, err := FindOrCreateMockUser()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find mock user: %w", err)
 	}
 
-	// Resolve starting level
-	resolvedLevelID := &firstLevel.ID
-	if levelID != nil {
-		resolvedLevelID = levelID
-	}
-
-	totalLevelsCount, err := query.Model(&models.GameLevel{}).Where("game_id", gameID).Where("is_active", true).Count()
+	// Count content items for this level
+	totalItemsCount, err := countLevelItems(query, gameLevelID, degree)
 	if err != nil {
-		return nil, fmt.Errorf("failed to count levels: %w", err)
+		return nil, fmt.Errorf("failed to count content items: %w", err)
 	}
 
 	// Create game_pks record
@@ -170,18 +141,19 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 		UserID:          userID,
 		OpponentID:      mockUser.ID,
 		GameID:          gameID,
+		GameLevelID:     gameLevelID,
 		Degree:          degree,
 		Pattern:         pattern,
 		RobotDifficulty: difficulty,
-		CurrentLevelID:  resolvedLevelID,
 		IsPlaying:       true,
 	}
 	if err := query.Create(&pk); err != nil {
 		// Unique constraint violation — concurrent call already created a PK
 		var fallback models.GamePk
-		query.Where("user_id", userID).Where("game_id", gameID).Where("is_playing", true).First(&fallback)
+		query.Where("user_id", userID).Where("game_id", gameID).
+			Where("game_level_id", gameLevelID).Where("is_playing", true).First(&fallback)
 		if fallback.ID != "" {
-			var fbSession models.GameSessionTotal
+			var fbSession models.GameSession
 			query.Where("game_pk_id", fallback.ID).Where("user_id", userID).First(&fbSession)
 			if fbSession.ID != "" {
 				var fbOpponent models.User
@@ -193,6 +165,7 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 				return &PkStartResult{
 					PkID:         fallback.ID,
 					SessionID:    fbSession.ID,
+					GameLevelID:  fallback.GameLevelID,
 					OpponentID:   fallback.OpponentID,
 					OpponentName: fbName,
 				}, nil
@@ -201,27 +174,22 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 		return nil, fmt.Errorf("failed to create pk record: %w", err)
 	}
 
-	// Create human's session total
+	// Create human's game session
 	now := time.Now()
-	session := models.GameSessionTotal{
-		ID:               newID(),
-		UserID:           userID,
-		GameID:           gameID,
-		CurrentLevelID:   resolvedLevelID,
-		Degree:           degree,
-		Pattern:          pattern,
-		TotalLevelsCount: int(totalLevelsCount),
-		StartedAt:        now,
-		LastPlayedAt:     now,
-		GamePkID:         &pkID,
+	session := models.GameSession{
+		ID:              newID(),
+		UserID:          userID,
+		GameID:          gameID,
+		GameLevelID:     gameLevelID,
+		Degree:          degree,
+		Pattern:         pattern,
+		TotalItemsCount: int(totalItemsCount),
+		StartedAt:       now,
+		LastPlayedAt:    now,
+		GamePkID:        &pkID,
 	}
 	if err := query.Create(&session); err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
-	}
-
-	// Upsert game stats
-	if err := UpsertGameStats(userID, gameID); err != nil {
-		return nil, fmt.Errorf("failed to upsert game stats: %w", err)
 	}
 
 	opponentName := mockUser.Username
@@ -229,16 +197,20 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 		opponentName = *mockUser.Nickname
 	}
 
+	// Spawn robot goroutine for this level
+	go spawnRobotForLevel(pkID, mockUser.ID, gameID, gameLevelID, degree, pattern, difficulty, int(totalItemsCount))
+
 	return &PkStartResult{
 		PkID:         pkID,
 		SessionID:    session.ID,
+		GameLevelID:  gameLevelID,
 		OpponentID:   mockUser.ID,
 		OpponentName: opponentName,
 	}, nil
 }
 
-// StartPkLevel creates a level session and spawns the robot goroutine.
-func StartPkLevel(userID, sessionID, gameLevelID, degree string, pattern *string) (*StartLevelResult, error) {
+// CompletePk marks the level complete for the human player. First-to-complete wins.
+func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*CompleteLevelResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
@@ -248,95 +220,29 @@ func StartPkLevel(userID, sessionID, gameLevelID, degree string, pattern *string
 
 	query := facades.Orm().Query()
 
-	// Verify session has GamePkID
-	var parentSession models.GameSessionTotal
-	if err := query.Where("id", sessionID).First(&parentSession); err != nil || parentSession.ID == "" {
+	// Find the active session
+	var session models.GameSession
+	if err := query.Where("id", sessionID).Where("ended_at IS NULL").
+		First(&session); err != nil || session.ID == "" {
 		return nil, ErrSessionNotFound
 	}
-	if parentSession.GamePkID == nil {
+	if session.GamePkID == nil {
 		return nil, ErrPkNotFound
 	}
+	pkID := *session.GamePkID
 
-	// Upsert level stats
-	if err := UpsertLevelStats(userID, gameLevelID); err != nil {
-		return nil, fmt.Errorf("failed to upsert level stats: %w", err)
+	// Calculate accuracy and EXP
+	var accuracy float64
+	if totalItems > 0 {
+		accuracy = float64(session.CorrectCount) / float64(totalItems)
+	}
+	meetsThreshold := accuracy >= consts.ExpAccuracyThreshold
+	expAmount := 0
+	if meetsThreshold {
+		expAmount = consts.LevelCompleteExp
 	}
 
-	// Count content items with degree filtering
-	contentTypes := consts.DegreeContentTypes[degree]
-	totalItemsCount, err := countActiveContentItems(gameLevelID, contentTypes)
-	if err != nil {
-		return nil, fmt.Errorf("failed to count content items: %w", err)
-	}
-
-	// Check for existing incomplete level session
-	var existing models.GameSessionLevel
-	if err := query.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&existing); err == nil && existing.ID != "" {
-		if _, err := query.Model(&models.GameSessionLevel{}).Where("id", existing.ID).
-			Update("last_played_at", time.Now()); err != nil {
-			return nil, fmt.Errorf("failed to touch level session: %w", err)
-		}
-		return &StartLevelResult{
-			ID:                   existing.ID,
-			GameSessionTotalID:   existing.GameSessionTotalID,
-			GameLevelID:          existing.GameLevelID,
-			CurrentContentItemID: existing.CurrentContentItemID,
-		}, nil
-	}
-
-	// Create human's level session
-	now := time.Now()
-	levelSession := models.GameSessionLevel{
-		ID:                 newID(),
-		GameSessionTotalID: sessionID,
-		GameLevelID:        gameLevelID,
-		Degree:             degree,
-		Pattern:            pattern,
-		TotalItemsCount:    int(totalItemsCount),
-		StartedAt:          now,
-		LastPlayedAt:       now,
-		GamePkID:           parentSession.GamePkID,
-	}
-	if err := query.Create(&levelSession); err != nil {
-		return nil, fmt.Errorf("failed to create level session: %w", err)
-	}
-
-	// Update session's current_level_id
-	if _, err := query.Model(&models.GameSessionTotal{}).Where("id", sessionID).
-		Update("current_level_id", gameLevelID); err != nil {
-		return nil, fmt.Errorf("failed to update current level: %w", err)
-	}
-
-	// Fetch PK record for robot params
-	pkID := *parentSession.GamePkID
-	var pk models.GamePk
-	if err := query.Where("id", pkID).First(&pk); err != nil || pk.ID == "" {
-		return nil, ErrPkNotFound
-	}
-
-	// Spawn robot goroutine
-	go spawnRobotForLevel(pkID, pk.OpponentID, pk.GameID, gameLevelID, degree, pattern, pk.RobotDifficulty, int(totalItemsCount))
-
-	return &StartLevelResult{
-		ID:                   levelSession.ID,
-		GameSessionTotalID:   levelSession.GameSessionTotalID,
-		GameLevelID:          levelSession.GameLevelID,
-		CurrentContentItemID: nil,
-	}, nil
-}
-
-// CompletePkLevel marks a level complete for the human player and checks for winner.
-func CompletePkLevel(userID, sessionID, gameLevelID string, score, maxCombo, totalItems int) (*CompleteLevelResult, error) {
-	if err := requireVip(userID); err != nil {
-		return nil, err
-	}
-	if err := verifyOwnership(userID, sessionID); err != nil {
-		return nil, err
-	}
-
-	tx, err := facades.Orm().Query().Begin()
+	tx, err := query.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -347,36 +253,9 @@ func CompletePkLevel(userID, sessionID, gameLevelID string, score, maxCombo, tot
 		}
 	}()
 
-	// Find active session level
-	var sessionLevel models.GameSessionLevel
-	if err := tx.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err != nil || sessionLevel.ID == "" {
-		_ = tx.Rollback()
-		return nil, ErrSessionLevelNotFound
-	}
-
-	// Find parent session
-	var session models.GameSessionTotal
-	if err := tx.Where("id", sessionID).First(&session); err != nil || session.ID == "" {
-		_ = tx.Rollback()
-		return nil, ErrSessionNotFound
-	}
-
-	// Calculate accuracy and EXP
-	var accuracy float64
-	if totalItems > 0 {
-		accuracy = float64(sessionLevel.CorrectCount) / float64(totalItems)
-	}
-	meetsThreshold := accuracy >= consts.ExpAccuracyThreshold
-	expAmount := 0
-	if meetsThreshold {
-		expAmount = consts.LevelCompleteExp
-	}
-
-	// 1. Complete session level
+	// 1. Set ended_at on winner's session
 	now := time.Now()
-	if _, err := tx.Model(&models.GameSessionLevel{}).Where("id", sessionLevel.ID).
+	if _, err := tx.Model(&models.GameSession{}).Where("id", sessionID).
 		Update(map[string]any{
 			"ended_at":  now,
 			"score":     score,
@@ -384,41 +263,10 @@ func CompletePkLevel(userID, sessionID, gameLevelID string, score, maxCombo, tot
 			"max_combo": maxCombo,
 		}); err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to complete session level: %w", err)
+		return nil, fmt.Errorf("failed to complete session: %w", err)
 	}
 
-	// 2. Update session total
-	if meetsThreshold {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET score = ?, max_combo = ?, played_levels_count = played_levels_count + 1, exp = exp + ?, updated_at = now() WHERE id = ?",
-			score, maxCombo, expAmount, sessionID,
-		); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("failed to update session total: %w", err)
-		}
-	} else {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET score = ?, max_combo = ?, played_levels_count = played_levels_count + 1, updated_at = now() WHERE id = ?",
-			score, maxCombo, sessionID,
-		); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("failed to update session total: %w", err)
-		}
-	}
-
-	// 3. Complete level stats
-	if err := completeLevelStatsInTx(tx, userID, gameLevelID, score, sessionLevel.PlayTime); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to complete level stats: %w", err)
-	}
-
-	// 4. Update game stats
-	if err := updateGameStatsOnLevelCompleteInTx(tx, userID, session.GameID, score, sessionLevel.PlayTime, expAmount); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to update game stats: %w", err)
-	}
-
-	// 5. Increment user EXP if threshold met
+	// 2. Increment user EXP if threshold met
 	if meetsThreshold {
 		if _, err := tx.Exec(
 			"UPDATE users SET exp = exp + ?, updated_at = now() WHERE id = ?",
@@ -433,92 +281,61 @@ func CompletePkLevel(userID, sessionID, gameLevelID string, score, maxCombo, tot
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Broadcast player complete
-	if session.GamePkID != nil {
-		pkID := *session.GamePkID
-		var user models.User
-		if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user); err == nil && user.ID != "" {
-			userName := user.Username
-			if user.Nickname != nil && *user.Nickname != "" {
-				userName = *user.Nickname
-			}
-			helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
-				UserID:      userID,
-				UserName:    userName,
-				GameLevelID: gameLevelID,
-				Score:       score,
-			})
+	// Broadcast player complete via SSE
+	var user models.User
+	if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user); err == nil && user.ID != "" {
+		userName := user.Username
+		if user.Nickname != nil && *user.Nickname != "" {
+			userName = *user.Nickname
 		}
-
-		// Check for winner
-		result, winErr := DeterminePkWinner(pkID, gameLevelID)
-		if winErr != nil {
-			fmt.Printf("[PK] Winner check error for pk=%s level=%s: %v\n", pkID, gameLevelID, winErr)
-		}
-		if winErr == nil && result != nil {
-			helpers.PkHub.Broadcast(pkID, "pk_level_complete", result)
-
-			// Cancel robot timeout since both players finished
-			if rs := getRobotState(pkID); rs != nil {
-				rs.cancel()
-			}
-		}
-
-		// Check if all levels completed
-		totalLevels, countErr := facades.Orm().Query().Model(&models.GameLevel{}).
-			Where("game_id", session.GameID).Where("is_active", true).Count()
-		if countErr == nil && totalLevels > 0 && int64(session.PlayedLevelsCount+1) >= totalLevels {
-			facades.Orm().Query().Model(&models.GamePk{}).
-				Where("id", pkID).Update("is_playing", false)
-		}
+		helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
+			UserID:      userID,
+			UserName:    userName,
+			GameLevelID: session.GameLevelID,
+			Score:       score,
+		})
 	}
+
+	// First-to-complete wins: force-end opponent's session
+	if err := ForceEndPkLoser(pkID, userID); err != nil {
+		fmt.Printf("[PK] Failed to force-end loser for pk=%s: %v\n", pkID, err)
+	}
+
+	// Set PK as finished and record winner
+	facades.Orm().Query().Model(&models.GamePk{}).Where("id", pkID).
+		Update(map[string]any{
+			"is_playing":     false,
+			"last_winner_id": userID,
+		})
+
+	// Cancel robot goroutine since human won
+	cancelRobot(pkID)
+
+	// Find next level for client navigation
+	nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, session.GameLevelID)
 
 	return &CompleteLevelResult{
 		ExpEarned:      expAmount,
 		Accuracy:       accuracy,
 		MeetsThreshold: meetsThreshold,
+		NextLevelID:    nextLevelID,
+		NextLevelName:  nextLevelName,
 	}, nil
 }
 
-// NextPkLevel advances the PK match to the next level.
-func NextPkLevel(userID, pkID, currentLevelID string) error {
-	query := facades.Orm().Query()
-
+// NextPkLevel creates a new PK for the next level.
+func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 	var pk models.GamePk
-	if err := query.Where("id", pkID).First(&pk); err != nil || pk.ID == "" {
-		return ErrPkNotFound
-	}
-	if pk.UserID != userID {
-		return ErrForbidden
-	}
-	if !pk.IsPlaying {
-		return ErrPkNotPlaying
+	if err := facades.Orm().Query().Where("id", pkID).First(&pk); err != nil || pk.ID == "" {
+		return nil, ErrPkNotFound
 	}
 
-	// Find next level by order
-	var currentLevel models.GameLevel
-	if err := query.Where("id", currentLevelID).First(&currentLevel); err != nil || currentLevel.ID == "" {
-		return ErrLevelNotFound
+	nextLevelID, _, err := findNextLevel(pk.GameID, pk.GameLevelID)
+	if err != nil || nextLevelID == nil {
+		return nil, fmt.Errorf("no next level available")
 	}
 
-	var nextLevel models.GameLevel
-	if err := query.Where("game_id", pk.GameID).Where("is_active", true).
-		Where("\"order\" > ?", currentLevel.Order).
-		Order("\"order\" asc").First(&nextLevel); err != nil || nextLevel.ID == "" {
-		return ErrLastLevel
-	}
-
-	// Update current level
-	if _, err := query.Model(&models.GamePk{}).Where("id", pkID).
-		Update("current_level_id", nextLevel.ID); err != nil {
-		return fmt.Errorf("failed to update pk level: %w", err)
-	}
-
-	helpers.PkHub.Broadcast(pkID, "pk_next_level", PkNextLevelEvent{
-		GameLevelID: nextLevel.ID,
-	})
-
-	return nil
+	return StartPk(userID, pk.GameID, *nextLevelID, pk.Degree, pk.Pattern, pk.RobotDifficulty)
 }
 
 // EndPk forcefully ends a PK match.
@@ -613,28 +430,20 @@ func PkRecordAnswer(userID string, input RecordAnswerInput) error {
 	return RecordAnswer(userID, input)
 }
 
-// PkRecordSkip records a skip in a PK match.
-func PkRecordSkip(userID string, input RecordSkipInput) error {
-	if err := requireVip(userID); err != nil {
-		return err
-	}
-	return RecordSkip(userID, input)
-}
-
 // PkSyncPlayTime syncs playtime in a PK match.
-func PkSyncPlayTime(userID, sessionID, gameLevelID string, playTime int) error {
+func PkSyncPlayTime(userID, sessionID string, playTime int) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	return SyncPlayTime(userID, sessionID, gameLevelID, playTime)
+	return SyncPlayTime(userID, sessionID, playTime)
 }
 
 // PkRestoreSessionData restores session data for a PK match.
-func PkRestoreSessionData(userID, sessionID, gameLevelID string) (*SessionRestoreData, error) {
+func PkRestoreSessionData(userID, sessionID string) (*SessionRestoreData, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
-	return RestoreSessionData(userID, sessionID, gameLevelID)
+	return RestoreSessionData(userID, sessionID)
 }
 
 // PkUpdateContentItem updates the current content item in a PK session.
@@ -666,45 +475,22 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 
 	query := facades.Orm().Query()
 
-	// Find or create robot's session total
-	var robotSession models.GameSessionTotal
-	if err := query.Where("user_id", robotUserID).Where("game_pk_id", pkID).
-		Where("ended_at IS NULL").First(&robotSession); err != nil || robotSession.ID == "" {
-		totalLevels, _ := query.Model(&models.GameLevel{}).Where("game_id", gameID).Where("is_active", true).Count()
-		now := time.Now()
-		robotSession = models.GameSessionTotal{
-			ID:               newID(),
-			UserID:           robotUserID,
-			GameID:           gameID,
-			CurrentLevelID:   &gameLevelID,
-			Degree:           degree,
-			Pattern:          pattern,
-			TotalLevelsCount: int(totalLevels),
-			StartedAt:        now,
-			LastPlayedAt:     now,
-			GamePkID:         &pkID,
-		}
-		if err := query.Create(&robotSession); err != nil {
-			fmt.Printf("[PK] Failed to create robot session for pk=%s: %v\n", pkID, err)
-			return
-		}
-	}
-
-	// Create robot's level session
+	// Create robot's game session
 	now := time.Now()
-	robotLevelSession := models.GameSessionLevel{
-		ID:                 newID(),
-		GameSessionTotalID: robotSession.ID,
-		GameLevelID:        gameLevelID,
-		Degree:             degree,
-		Pattern:            pattern,
-		TotalItemsCount:    totalItems,
-		StartedAt:          now,
-		LastPlayedAt:       now,
-		GamePkID:           &pkID,
+	robotSession := models.GameSession{
+		ID:              newID(),
+		UserID:          robotUserID,
+		GameID:          gameID,
+		GameLevelID:     gameLevelID,
+		Degree:          degree,
+		Pattern:         pattern,
+		TotalItemsCount: totalItems,
+		StartedAt:       now,
+		LastPlayedAt:    now,
+		GamePkID:        &pkID,
 	}
-	if err := query.Create(&robotLevelSession); err != nil {
-		fmt.Printf("[PK] Failed to create robot level session for pk=%s: %v\n", pkID, err)
+	if err := query.Create(&robotSession); err != nil {
+		fmt.Printf("[PK] Failed to create robot session for pk=%s: %v\n", pkID, err)
 		return
 	}
 
@@ -780,20 +566,19 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			correctCount++
 		}
 
-		// Write game record via upsert
+		// Write game record
 		record := models.GameRecord{
-			ID:                 newID(),
-			UserID:             robotUserID,
-			GameSessionTotalID: robotSession.ID,
-			GameSessionLevelID: robotLevelSession.ID,
-			GameLevelID:        gameLevelID,
-			ContentItemID:      item.ID,
-			IsCorrect:          isCorrect,
-			SourceAnswer:       item.Content,
-			UserAnswer:         item.Content,
-			BaseScore:          consts.CorrectAnswer,
-			ComboScore:         result.ComboBonus,
-			Duration:           delayMs / 1000,
+			ID:            newID(),
+			UserID:        robotUserID,
+			GameSessionID: robotSession.ID,
+			GameLevelID:   gameLevelID,
+			ContentItemID: item.ID,
+			IsCorrect:     isCorrect,
+			SourceAnswer:  item.Content,
+			UserAnswer:    item.Content,
+			BaseScore:     consts.CorrectAnswer,
+			ComboScore:    result.ComboBonus,
+			Duration:      delayMs / 1000,
 		}
 		if !isCorrect {
 			record.BaseScore = 0
@@ -801,7 +586,7 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		}
 		facades.Orm().Query().Create(&record)
 
-		// Update robot's level session stats
+		// Update robot's session stats
 		var countCol string
 		if isCorrect {
 			countCol = "correct_count = correct_count + 1"
@@ -816,13 +601,13 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 
 		if nextItemID != nil {
 			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_session_levels SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, *nextItemID, robotLevelSession.ID,
+				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
+				combo.TotalScore, combo.MaxCombo, *nextItemID, robotSession.ID,
 			)
 		} else {
 			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_session_levels SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, robotLevelSession.ID,
+				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
+				combo.TotalScore, combo.MaxCombo, robotSession.ID,
 			)
 		}
 
@@ -839,7 +624,7 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		})
 	}
 
-	// Robot finished all items — complete the level
+	// Robot finished all items — first-to-complete wins
 	robotAccuracy := float64(0)
 	if totalItems > 0 {
 		robotAccuracy = float64(correctCount) / float64(totalItems)
@@ -850,19 +635,13 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	}
 
 	endNow := time.Now()
-	facades.Orm().Query().Model(&models.GameSessionLevel{}).Where("id", robotLevelSession.ID).
+	facades.Orm().Query().Model(&models.GameSession{}).Where("id", robotSession.ID).
 		Update(map[string]any{
 			"ended_at":  endNow,
 			"score":     combo.TotalScore,
 			"exp":       robotExp,
 			"max_combo": combo.MaxCombo,
 		})
-
-	// Update robot's session total
-	facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET score = ?, max_combo = ?, played_levels_count = played_levels_count + 1, updated_at = now() WHERE id = ?",
-		combo.TotalScore, combo.MaxCombo, robotSession.ID,
-	)
 
 	// Broadcast robot completion
 	helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
@@ -872,14 +651,19 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		Score:       combo.TotalScore,
 	})
 
-	// Check if human already finished
-	winResult, winErr := DeterminePkWinner(pkID, gameLevelID)
-	if winErr == nil && winResult != nil {
-		helpers.PkHub.Broadcast(pkID, "pk_level_complete", winResult)
-		return
+	// Robot won — force-end human's session
+	if err := ForceEndPkLoser(pkID, robotUserID); err != nil {
+		fmt.Printf("[PK] Failed to force-end human for pk=%s: %v\n", pkID, err)
 	}
 
-	// Human hasn't finished — start timeout
+	// Set PK as finished and record robot as winner
+	facades.Orm().Query().Model(&models.GamePk{}).Where("id", pkID).
+		Update(map[string]any{
+			"is_playing":     false,
+			"last_winner_id": robotUserID,
+		})
+
+	// Start timeout countdown — if human is still playing, warn and then force-end
 	waitDuration := time.Duration(consts.PkTimeoutDuration-consts.PkTimeoutWarning) * time.Second
 	select {
 	case <-ctx.Done():
@@ -900,14 +684,11 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	case <-time.After(time.Duration(consts.PkTimeoutWarning) * time.Second):
 	}
 
-	// Timeout — auto-end human's level
+	// Timeout — broadcast timeout event
 	helpers.PkHub.Broadcast(pkID, "pk_timeout", PkTimeoutEvent{
 		GameLevelID: gameLevelID,
 		SecondsLeft: 0,
 	})
-
-	// Force-complete human's active level session for this level
-	autoEndHumanLevel(pkID, gameLevelID)
 }
 
 // --- Internal helpers ---
@@ -924,51 +705,7 @@ func cancelRobot(pkID string) {
 func endPkSessions(pkID string) {
 	now := time.Now()
 	facades.Orm().Query().Exec(
-		"UPDATE game_session_levels SET ended_at = ? WHERE game_pk_id = ? AND ended_at IS NULL",
+		"UPDATE game_sessions SET ended_at = ?, updated_at = now() WHERE game_pk_id = ? AND ended_at IS NULL",
 		now, pkID,
 	)
-	facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET ended_at = ? WHERE game_pk_id = ? AND ended_at IS NULL",
-		now, pkID,
-	)
-}
-
-// autoEndHumanLevel force-completes the human's active level on timeout.
-func autoEndHumanLevel(pkID, gameLevelID string) {
-	var pk models.GamePk
-	if err := facades.Orm().Query().Where("id", pkID).First(&pk); err != nil || pk.ID == "" {
-		return
-	}
-
-	// Find the human's active level session
-	var levelSession models.GameSessionLevel
-	err := facades.Orm().Query().Raw(
-		`SELECT gsl.* FROM game_session_levels gsl
-		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-		 WHERE gsl.game_pk_id = ? AND gsl.game_level_id = ? AND gsl.ended_at IS NULL
-		   AND gst.user_id = ?
-		 LIMIT 1`,
-		pkID, gameLevelID, pk.UserID).Scan(&levelSession)
-	if err != nil || levelSession.ID == "" {
-		return
-	}
-
-	now := time.Now()
-	facades.Orm().Query().Model(&models.GameSessionLevel{}).Where("id", levelSession.ID).
-		Update(map[string]any{
-			"ended_at": now,
-			"score":    levelSession.Score,
-		})
-
-	// Update session total played_levels_count
-	facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET played_levels_count = played_levels_count + 1, updated_at = now() WHERE id = ?",
-		levelSession.GameSessionTotalID,
-	)
-
-	// Determine winner after auto-end
-	winResult, winErr := DeterminePkWinner(pkID, gameLevelID)
-	if winErr == nil && winResult != nil {
-		helpers.PkHub.Broadcast(pkID, "pk_level_complete", winResult)
-	}
 }
