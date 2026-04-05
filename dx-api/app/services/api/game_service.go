@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"sort"
+	"time"
 
 	"dx-api/app/consts"
 	"dx-api/app/models"
@@ -253,22 +255,36 @@ func SearchGames(queryStr string, limit int) ([]GameSearchResultData, error) {
 
 // GetPlayedGames returns all games the user has played.
 func GetPlayedGames(userID string) ([]PlayedGameData, error) {
-	var stats []models.GameStatsTotal
-	if err := facades.Orm().Query().
-		Where("user_id", userID).
-		Order("last_played_at DESC").
-		Limit(10).
-		Get(&stats); err != nil {
+	var results []struct {
+		GameID       string    `gorm:"column:game_id"`
+		LastPlayedAt time.Time `gorm:"column:last_played_at"`
+	}
+
+	if err := facades.Orm().Query().Raw(
+		`SELECT DISTINCT ON (game_id) game_id, last_played_at
+		 FROM game_sessions
+		 WHERE user_id = ?
+		 ORDER BY game_id, last_played_at DESC`,
+		userID,
+	).Scan(&results); err != nil {
 		return nil, fmt.Errorf("failed to get recent games: %w", err)
 	}
 
-	if len(stats) == 0 {
+	if len(results) == 0 {
 		return []PlayedGameData{}, nil
 	}
 
+	// Sort by last_played_at DESC and limit to 10
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].LastPlayedAt.After(results[j].LastPlayedAt)
+	})
+	if len(results) > 10 {
+		results = results[:10]
+	}
+
 	// Collect game IDs
-	gameIDs := make([]string, 0, len(stats))
-	for _, s := range stats {
+	gameIDs := make([]string, 0, len(results))
+	for _, s := range results {
 		gameIDs = append(gameIDs, s.GameID)
 	}
 
@@ -302,9 +318,9 @@ func GetPlayedGames(userID string) ([]PlayedGameData, error) {
 		}
 	}
 
-	// Build result preserving order from stats (last_played_at DESC)
-	result := make([]PlayedGameData, 0, len(stats))
-	for _, s := range stats {
+	// Build result preserving order from results (last_played_at DESC)
+	result := make([]PlayedGameData, 0, len(results))
+	for _, s := range results {
 		g, ok := gameMap[s.GameID]
 		if !ok {
 			continue

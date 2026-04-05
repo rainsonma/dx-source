@@ -50,18 +50,14 @@ type ReviewStats struct {
 
 // SessionProgress represents a recent game session with progress.
 type SessionProgress struct {
-	ID                string  `json:"id"`
-	GameID            string  `json:"gameId"`
-	GameName          string  `json:"gameName"`
-	GameMode          string  `json:"gameMode"`
-	Degree            string  `json:"degree"`
-	Pattern           *string `json:"pattern"`
-	PlayedLevelsCount int     `json:"playedLevelsCount"`
-	TotalLevelsCount  int     `json:"totalLevelsCount"`
-	Score             int     `json:"score"`
-	Exp               int     `json:"exp"`
-	LastPlayedAt      any     `json:"lastPlayedAt"`
-	EndedAt           any     `json:"endedAt"`
+	GameID          string    `json:"gameId"`
+	GameName        string    `json:"gameName"`
+	GameMode        string    `json:"gameMode"`
+	CompletedLevels int       `json:"completedLevels"`
+	TotalLevels     int       `json:"totalLevels"`
+	Score           int       `json:"score"`
+	Exp             int       `json:"exp"`
+	LastPlayedAt    time.Time `json:"lastPlayedAt"`
 }
 
 // HeatmapData contains daily activity counts for a given year.
@@ -204,34 +200,33 @@ func getReviewStats(userID string) (*ReviewStats, error) {
 
 // getSessionProgress returns recent game session progress entries.
 func getSessionProgress(userID string) ([]SessionProgress, error) {
-	type sessionRow struct {
-		ID                string  `gorm:"column:id"`
-		GameID            string  `gorm:"column:game_id"`
-		GameName          string  `gorm:"column:game_name"`
-		GameMode          string  `gorm:"column:game_mode"`
-		Degree            string  `gorm:"column:degree"`
-		Pattern           *string `gorm:"column:pattern"`
-		PlayedLevelsCount int     `gorm:"column:played_levels_count"`
-		TotalLevelsCount  int     `gorm:"column:total_levels_count"`
-		Score             int     `gorm:"column:score"`
-		Exp               int     `gorm:"column:exp"`
-		LastPlayedAt      any     `gorm:"column:last_played_at"`
-		EndedAt           any     `gorm:"column:ended_at"`
+	type SessionProgressItem struct {
+		GameID          string    `gorm:"column:game_id"`
+		GameName        string    `gorm:"column:game_name"`
+		GameMode        string    `gorm:"column:game_mode"`
+		CompletedLevels int       `gorm:"column:completed_levels"`
+		TotalLevels     int       `gorm:"column:total_levels"`
+		Score           int       `gorm:"column:score"`
+		Exp             int       `gorm:"column:exp"`
+		LastPlayedAt    time.Time `gorm:"column:last_played_at"`
 	}
 
-	var rows []sessionRow
+	var rows []SessionProgressItem
 	if err := facades.Orm().Query().Raw(`
 		SELECT
-			s.id, s.game_id, g.name AS game_name, g.mode AS game_mode,
-			s.degree, s.pattern,
-			s.played_levels_count, s.total_levels_count,
-			s.score, s.exp,
-			s.last_played_at, s.ended_at
-		FROM game_session_totals s
+		  s.game_id,
+		  g.name AS game_name,
+		  g.mode AS game_mode,
+		  COUNT(DISTINCT s.game_level_id) FILTER (WHERE s.ended_at IS NOT NULL)::int AS completed_levels,
+		  (SELECT COUNT(*)::int FROM game_levels gl WHERE gl.game_id = s.game_id AND gl.is_active = true) AS total_levels,
+		  COALESCE(SUM(s.score), 0)::int AS score,
+		  COALESCE(SUM(s.exp), 0)::int AS exp,
+		  MAX(s.last_played_at) AS last_played_at
+		FROM game_sessions s
 		INNER JOIN games g ON g.id = s.game_id
-		WHERE s.user_id = ?
-			AND s.game_group_id IS NULL
-		ORDER BY s.last_played_at DESC
+		WHERE s.user_id = ? AND s.game_group_id IS NULL AND s.game_pk_id IS NULL
+		GROUP BY s.game_id, g.name, g.mode
+		ORDER BY MAX(s.last_played_at) DESC
 		LIMIT 20
 	`, userID).Scan(&rows); err != nil {
 		return nil, fmt.Errorf("failed to query session progress: %w", err)
@@ -240,18 +235,14 @@ func getSessionProgress(userID string) ([]SessionProgress, error) {
 	results := make([]SessionProgress, 0, len(rows))
 	for _, r := range rows {
 		results = append(results, SessionProgress{
-			ID:                r.ID,
-			GameID:            r.GameID,
-			GameName:          r.GameName,
-			GameMode:          r.GameMode,
-			Degree:            r.Degree,
-			Pattern:           r.Pattern,
-			PlayedLevelsCount: r.PlayedLevelsCount,
-			TotalLevelsCount:  r.TotalLevelsCount,
-			Score:             r.Score,
-			Exp:               r.Exp,
-			LastPlayedAt:      r.LastPlayedAt,
-			EndedAt:           r.EndedAt,
+			GameID:          r.GameID,
+			GameName:        r.GameName,
+			GameMode:        r.GameMode,
+			CompletedLevels: r.CompletedLevels,
+			TotalLevels:     r.TotalLevels,
+			Score:           r.Score,
+			Exp:             r.Exp,
+			LastPlayedAt:    r.LastPlayedAt,
 		})
 	}
 
