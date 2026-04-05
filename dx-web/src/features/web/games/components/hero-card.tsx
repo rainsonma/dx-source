@@ -109,7 +109,7 @@ export function HeroCard({
                     <Play className="h-4 w-4" />
                   </button>
                 </HoverCardTrigger>
-                <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="bottom">
+                <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
                   {resumeLabel}
                 </HoverCardContent>
               </HoverCard>
