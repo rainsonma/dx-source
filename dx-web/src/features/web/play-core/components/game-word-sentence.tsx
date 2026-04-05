@@ -11,6 +11,7 @@ import {
   ListChecks,
   Keyboard,
 } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useWordSentence } from "@/features/web/play-core/hooks/use-word-sentence";
 import { SpellingInputRow } from "@/features/web/play-core/components/spelling-input-row";
 import type { SpellingItem } from "@/features/web/play-core/types/spelling";
@@ -220,39 +221,65 @@ export function GameWordSentence() {
           <span className="text-xs font-medium text-muted-foreground">掌握</span>
         </button>
         {/* Answer toggle — disabled in competitive modes */}
-        <button
-          type="button"
-          onClick={competitive ? undefined : toggleAnswer}
-          disabled={competitive}
-          className={`flex items-center gap-2 rounded-xl px-5 py-3 ${
-            competitive
-              ? "border border-border bg-muted opacity-40 cursor-not-allowed"
-              : showAnswer
+        {competitive ? (
+          <HoverCard openDelay={200}>
+            <HoverCardTrigger asChild>
+              <button
+                type="button"
+                disabled
+                className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 opacity-40 cursor-not-allowed"
+              >
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">答案</span>
+              </button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
+              竞技模式禁用
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <button
+            type="button"
+            onClick={toggleAnswer}
+            className={`flex items-center gap-2 rounded-xl px-5 py-3 ${
+              showAnswer
                 ? "border border-teal-600 bg-muted"
                 : "border border-border bg-muted"
-          }`}
-        >
-          <BookOpen
-            className={`h-4 w-4 ${!competitive && showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
-          />
-          <span
-            className={`text-xs font-medium ${!competitive && showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
+            }`}
           >
-            答案
-          </span>
-        </button>
+            <BookOpen className={`h-4 w-4 ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`} />
+            <span className={`text-xs font-medium ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`}>
+              答案
+            </span>
+          </button>
+        )}
         {/* Skip — disabled in competitive modes */}
-        <button
-          type="button"
-          onClick={competitive ? undefined : skipItem}
-          disabled={competitive}
-          className={`flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 ${
-            competitive ? "opacity-40 cursor-not-allowed" : ""
-          }`}
-        >
-          <SkipForward className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">跳过</span>
-        </button>
+        {competitive ? (
+          <HoverCard openDelay={200}>
+            <HoverCardTrigger asChild>
+              <button
+                type="button"
+                disabled
+                className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 opacity-40 cursor-not-allowed"
+              >
+                <SkipForward className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">跳过</span>
+              </button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
+              竞技模式禁用
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <button
+            type="button"
+            onClick={skipItem}
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+          >
+            <SkipForward className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">跳过</span>
+          </button>
+        )}
         {/* Confirm */}
         <button
           type="button"
