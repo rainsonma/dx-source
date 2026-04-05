@@ -111,6 +111,9 @@ export function PkPlayTopBar({
 
         {/* Center: player VS opponent */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3">
+          <span className="text-xs font-semibold text-foreground">
+            {player.nickname}
+          </span>
           <Avatar size="sm" style={{ backgroundColor: getAvatarColor(playerId) }}>
             {player.avatarUrl && (
               <AvatarImage src={player.avatarUrl} alt={player.nickname} />
@@ -122,14 +125,8 @@ export function PkPlayTopBar({
               {player.nickname[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs font-semibold text-foreground">
-            {player.nickname}
-          </span>
           <span className="text-xs font-bold text-muted-foreground">
             VS
-          </span>
-          <span className="text-xs font-semibold text-foreground">
-            {opponentName}
           </span>
           <Avatar size="sm" style={{ backgroundColor: opponentAvatarBg }}>
             <AvatarFallback
@@ -139,6 +136,9 @@ export function PkPlayTopBar({
               {opponentName[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
+          <span className="text-xs font-semibold text-foreground">
+            {opponentName}
+          </span>
         </div>
 
         {/* Right: action buttons */}
