@@ -301,18 +301,10 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 			"UPDATE game_group_members SET last_won_at = ? WHERE game_group_id = ? AND user_id = ?",
 			time.Now(), *session.GameGroupID, userID)
 
-		// If this was the last level, set is_playing = false
-		totalLevels, countErr := facades.Orm().Query().Model(&models.GameLevel{}).
-			Where("game_id", session.GameID).Where("is_active", true).Count()
-		_, _, nextErr := findNextLevel(session.GameID, gameLevelID)
-		if countErr == nil && totalLevels > 0 && nextErr == nil {
-			nextID, _, _ := findNextLevel(session.GameID, gameLevelID)
-			if nextID == nil {
-				facades.Orm().Query().Model(&models.GameGroup{}).
-					Where("id", *session.GameGroupID).Update("is_playing", false)
-				helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
-			}
-		}
+		// Round is over — reset is_playing so room shows "开始游戏" again
+		facades.Orm().Query().Model(&models.GameGroup{}).
+			Where("id", *session.GameGroupID).Update("is_playing", false)
+		helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
 	}
 
 	// Find next level
