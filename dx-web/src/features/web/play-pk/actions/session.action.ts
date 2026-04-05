@@ -13,6 +13,7 @@ export async function startPkAction(
       session_id: string;
       opponent_id: string;
       opponent_name: string;
+      robot_completed: boolean;
     }>("/api/play-pk/start", {
       game_id: gameId,
       degree,

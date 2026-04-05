@@ -227,6 +227,11 @@ export function PkPlayLoadingScreen({
         initPkSession(sessionInit);
         // Init game store (required by shared game components)
         initGameSession(sessionInit);
+
+        // If robot already completed (e.g. page refresh), update store
+        if (pkResult.data.robot_completed) {
+          usePkPlayStore.getState().setOpponentCompleted();
+        }
       } catch {
         if (!cancelled) setError("加载失败，请重试");
       }

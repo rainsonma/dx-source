@@ -18,10 +18,11 @@ import (
 
 // PkStartResult is returned after starting a PK match.
 type PkStartResult struct {
-	PkID         string `json:"pk_id"`
-	SessionID    string `json:"session_id"`
-	OpponentID   string `json:"opponent_id"`
-	OpponentName string `json:"opponent_name"`
+	PkID              string `json:"pk_id"`
+	SessionID         string `json:"session_id"`
+	OpponentID        string `json:"opponent_id"`
+	OpponentName      string `json:"opponent_name"`
+	RobotCompleted    bool   `json:"robot_completed"`
 }
 
 // PkPlayerCompleteEvent is the SSE payload for pk_player_complete.
@@ -106,11 +107,25 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 			if opponent.Nickname != nil && *opponent.Nickname != "" {
 				opName = *opponent.Nickname
 			}
+			// Check if robot already completed current level
+			robotDone := false
+			if existingPk.CurrentLevelID != nil {
+				var robotLevel models.GameSessionLevel
+				query.Raw(
+					`SELECT gsl.id FROM game_session_levels gsl
+					 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
+					 WHERE gsl.game_pk_id = ? AND gsl.game_level_id = ? AND gst.user_id = ? AND gsl.ended_at IS NOT NULL
+					 LIMIT 1`,
+					existingPk.ID, *existingPk.CurrentLevelID, existingPk.OpponentID).Scan(&robotLevel)
+				robotDone = robotLevel.ID != ""
+			}
+
 			return &PkStartResult{
-				PkID:         existingPk.ID,
-				SessionID:    existingSession.ID,
-				OpponentID:   existingPk.OpponentID,
-				OpponentName: opName,
+				PkID:           existingPk.ID,
+				SessionID:      existingSession.ID,
+				OpponentID:     existingPk.OpponentID,
+				OpponentName:   opName,
+				RobotCompleted: robotDone,
 			}, nil
 		}
 	}
