@@ -32,7 +32,7 @@ func (c *GamePlayGroupController) Start(ctx contractshttp.Context) contractshttp
 		return resp
 	}
 
-	result, err := services.GroupPlayStartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID, req.GameGroupID)
+	result, err := services.GroupPlayStartSession(userID, req.GameID, req.GameLevelID, req.Degree, req.Pattern, req.GameGroupID)
 	if err != nil {
 		if errors.Is(err, services.ErrNoGameLevels) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
@@ -44,28 +44,6 @@ func (c *GamePlayGroupController) Start(ctx contractshttp.Context) contractshttp
 			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "member not in any subgroup")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start session")
-	}
-
-	return helpers.Success(ctx, result)
-}
-
-// StartLevel starts a level within a group game session.
-func (c *GamePlayGroupController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-
-	var req requests.StartLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.GroupPlayStartLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to start level")
 	}
 
 	return helpers.Success(ctx, result)
@@ -107,28 +85,25 @@ func (c *GamePlayGroupController) RecordAnswer(ctx contractshttp.Context) contra
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	sessionID := ctx.Request().Route("id")
-
 	var req requests.RecordAnswerRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
 	err = services.GroupPlayRecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionTotalID: sessionID,
-		GameSessionLevelID: req.GameSessionLevelID,
-		GameLevelID:        req.GameLevelID,
-		ContentItemID:      req.ContentItemID,
-		IsCorrect:          req.IsCorrect,
-		UserAnswer:         req.UserAnswer,
-		SourceAnswer:       req.SourceAnswer,
-		BaseScore:          req.BaseScore,
-		ComboScore:         req.ComboScore,
-		Score:              req.Score,
-		MaxCombo:           req.MaxCombo,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
-		Duration:           req.Duration,
+		GameSessionID:     req.GameSessionId,
+		GameLevelID:       req.GameLevelID,
+		ContentItemID:     req.ContentItemID,
+		IsCorrect:         req.IsCorrect,
+		UserAnswer:        req.UserAnswer,
+		SourceAnswer:      req.SourceAnswer,
+		BaseScore:         req.BaseScore,
+		ComboScore:        req.ComboScore,
+		Score:             req.Score,
+		MaxCombo:          req.MaxCombo,
+		PlayTime:          req.PlayTime,
+		NextContentItemID: req.NextContentItemID,
+		Duration:          req.Duration,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -138,39 +113,6 @@ func (c *GamePlayGroupController) RecordAnswer(ctx contractshttp.Context) contra
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
 		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record answer")
-	}
-
-	return helpers.Success(ctx, nil)
-}
-
-// RecordSkip records a skip in a group game session.
-func (c *GamePlayGroupController) RecordSkip(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-
-	var req requests.RecordSkipRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	err = services.GroupPlayRecordSkip(userID, services.RecordSkipInput{
-		GameSessionTotalID: sessionID,
-		GameLevelID:        req.GameLevelID,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
-	})
-	if err != nil {
-		if errors.Is(err, services.ErrRateLimited) {
-			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
-		}
-		if errors.Is(err, services.ErrSessionLevelNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
-		}
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to record skip")
 	}
 
 	return helpers.Success(ctx, nil)
@@ -190,7 +132,7 @@ func (c *GamePlayGroupController) SyncPlayTime(ctx contractshttp.Context) contra
 		return resp
 	}
 
-	if err := services.GroupPlaySyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
+	if err := services.GroupPlaySyncPlayTime(userID, sessionID, req.PlayTime); err != nil {
 		if errors.Is(err, services.ErrInvalidPlayTime) {
 			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游玩时长必须在0到86400秒之间")
 		}
@@ -209,12 +151,7 @@ func (c *GamePlayGroupController) Restore(ctx contractshttp.Context) contractsht
 
 	sessionID := ctx.Request().Route("id")
 
-	var req requests.RestoreSessionRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.GroupPlayRestoreSessionData(userID, sessionID, req.GameLevelID)
+	result, err := services.GroupPlayRestoreSessionData(userID, sessionID)
 	if err != nil {
 		return mapGroupPlayError(ctx, err)
 	}

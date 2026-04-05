@@ -258,10 +258,8 @@ func Api() {
 			playGroupController := apicontrollers.NewGamePlayGroupController()
 			protected.Prefix("/play-group").Group(func(gp route.Router) {
 				gp.Post("/start", playGroupController.Start)
-				gp.Post("/{id}/levels/start", playGroupController.StartLevel)
 				gp.Post("/{id}/levels/{levelId}/complete", playGroupController.CompleteLevel)
 				gp.Post("/{id}/answers", playGroupController.RecordAnswer)
-				gp.Post("/{id}/skips", playGroupController.RecordSkip)
 				gp.Post("/{id}/sync-playtime", playGroupController.SyncPlayTime)
 				gp.Get("/{id}/restore", playGroupController.Restore)
 				gp.Put("/{id}/content-item", playGroupController.UpdateContentItem)
