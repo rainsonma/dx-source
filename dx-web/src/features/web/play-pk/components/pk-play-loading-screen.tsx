@@ -165,7 +165,8 @@ export function PkPlayLoadingScreen({
 
         if (levelSessionResumeItemId) {
           const restoreResult = await restoreSessionDataAction(
-            pkResult.data.session_id
+            pkResult.data.session_id,
+            levelId
           );
           if (!cancelled && restoreResult.data?.sessionLevel) {
             const sl = restoreResult.data.sessionLevel;

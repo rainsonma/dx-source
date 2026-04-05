@@ -137,10 +137,10 @@ type RestoreData = {
   };
 };
 
-export async function restoreSessionDataAction(sessionId: string) {
+export async function restoreSessionDataAction(sessionId: string, gameLevelId: string) {
   try {
     const res = await apiClient.get<RestoreData>(
-      `/api/play-pk/${sessionId}/restore`
+      `/api/play-pk/${sessionId}/restore?game_level_id=${gameLevelId}`
     );
     if (res.code !== 0) return { data: null, error: res.message || "恢复会话数据失败" };
     return { data: res.data, error: null };
