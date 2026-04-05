@@ -277,7 +277,7 @@ func CheckActiveSession(userID, gameID, degree string, pattern *string) (*Active
 func CheckAnyActiveSession(userID, gameID string) (*ActiveSessionData, error) {
 	var session models.GameSessionTotal
 	if err := facades.Orm().Query().Where("user_id", userID).Where("game_id", gameID).
-		Where("ended_at IS NULL").Where("game_group_id IS NULL").
+		Where("ended_at IS NULL").Where("game_group_id IS NULL").Where("game_pk_id IS NULL").
 		Order("last_played_at desc").First(&session); err != nil || session.ID == "" {
 		return nil, nil
 	}
@@ -909,7 +909,7 @@ func findActiveSession(query orm.Query, userID, gameID, degree string, pattern *
 	var session models.GameSessionTotal
 	q := query.Where("user_id", userID).Where("game_id", gameID).
 		Where("degree", degree).Where("ended_at IS NULL").
-		Where("game_group_id IS NULL").
+		Where("game_group_id IS NULL").Where("game_pk_id IS NULL").
 		Order("started_at desc")
 
 	if pattern != nil {
