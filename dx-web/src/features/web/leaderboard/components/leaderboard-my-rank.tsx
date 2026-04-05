@@ -33,7 +33,7 @@ export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
       </Avatar>
       <div className="flex flex-1 items-center gap-1.5">
         <span className="text-sm font-semibold text-foreground">
-          {displayName} (我)
+          {displayName}
         </span>
       </div>
       <span className="hidden rounded-xl bg-teal-600 px-3 py-1 text-[11px] font-semibold text-white sm:inline">
