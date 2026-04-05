@@ -79,7 +79,8 @@ export async function recordAnswerAction(data: {
   }
 }
 
-export async function recordSkipAction(_data: {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function recordSkipAction(data: {
   gameSessionId: string;
   gameLevelId: string;
   playTime: number;
