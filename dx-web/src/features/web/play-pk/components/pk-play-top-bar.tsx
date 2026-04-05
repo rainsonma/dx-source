@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Settings,
   Pause,
+  RotateCcw,
   Flag,
   Maximize,
   Minimize,
@@ -13,16 +14,18 @@ import {
   Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { getAvatarColor } from "@/lib/avatar";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
 import type { PkPlayerActionEvent } from "../types/pk-play";
 
 const actionButtons = [
-  { icon: Settings, label: "设置", action: "settings" },
-  { icon: Pause, label: "暂停", action: "pause" },
-  { icon: Flag, label: "反馈", action: "report" },
-  { icon: Maximize, label: "全屏", action: "fullscreen" },
+  { icon: Settings, label: "设置", action: "settings", disabled: false },
+  { icon: Pause, label: "暂停", action: "pause", disabled: true },
+  { icon: RotateCcw, label: "重置", action: "reset", disabled: true },
+  { icon: Flag, label: "反馈", action: "report", disabled: false },
+  { icon: Maximize, label: "全屏", action: "fullscreen", disabled: false },
 ] as const;
 
 interface PkPlayTopBarProps {
@@ -149,6 +152,25 @@ export function PkPlayTopBar({
           {actionButtons.map((btn) => {
             const Icon =
               btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
+            if (btn.disabled) {
+              return (
+                <HoverCard key={btn.label} openDelay={200}>
+                  <HoverCardTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={btn.label}
+                      disabled
+                      className="flex h-8 w-8 items-center justify-center rounded-lg opacity-40 cursor-not-allowed"
+                    >
+                      <Icon className="h-[18px] w-[18px] text-muted-foreground" />
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="bottom">
+                    PK 模式禁用
+                  </HoverCardContent>
+                </HoverCard>
+              );
+            }
             return (
               <button
                 key={btn.label}
