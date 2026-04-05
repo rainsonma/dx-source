@@ -111,15 +111,16 @@ export function GroupPlayShell({
   const contentItems = useGameStore((s) => s.contentItems);
 
   // Submit completion to backend when all items answered (phase → "result").
-  // The backend broadcasts SSE to all participants and determines the winner.
+  // Only fires for the player who actually finished — skip if result was
+  // already pushed via SSE (another player won first).
   useEffect(() => {
     if (phase !== "result" || completedRef.current) return;
+    if (useGroupPlayStore.getState().groupPhase === "result") return; // SSE already set result
     const sessionId = useGroupPlayStore.getState().sessionId;
     if (!sessionId || !targetLevelId) return;
     if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
 
-    // Notify backend — SSE broadcast handles showing the result to all players
     completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
