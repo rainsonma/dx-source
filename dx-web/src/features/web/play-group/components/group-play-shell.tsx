@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
@@ -79,19 +79,12 @@ export function GroupPlayShell({
   const groupResult = useGroupPlayStore((s) => s.groupResult);
   const setGroupResult = useGroupPlayStore((s) => s.setGroupResult);
   const setGroupResultFromWinner = useGroupPlayStore((s) => s.setGroupResultFromWinner);
-  const sessionId = useGroupPlayStore((s) => s.sessionId);
   const addCompletedPlayer = useGroupPlayStore((s) => s.addCompletedPlayer);
   const setLastPlayerAction = useGroupPlayStore((s) => s.setLastPlayerAction);
   const setNextLevel = useGroupPlayStore((s) => s.setNextLevel);
   const nextLevelId = useGroupPlayStore((s) => s.nextLevelId);
   const nextLevelName = useGroupPlayStore((s) => s.nextLevelName);
 
-  // Score/combo are updated by shared game components via useGameStore
-  const score = useGameStore((s) => s.score);
-  const combo = useGameStore((s) => s.combo);
-  const contentItems = useGameStore((s) => s.contentItems);
-
-  const completedRef = useRef(false);
 
   const playActions = useMemo<GamePlayActions>(() => ({
     recordAnswer: recordAnswerAction,
@@ -125,25 +118,6 @@ export function GroupPlayShell({
   const levelName = targetLevel?.name ?? game.name;
 
   const { isFullscreen, toggleFullscreen } = useFullscreen();
-
-  async function completeAndWait() {
-    if (completedRef.current || !sessionId || !targetLevelId) return;
-    if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
-    completedRef.current = true;
-    // Fallback: if the completeLevel wrapper in playActions didn't fire
-    // (e.g. phase changed without going through the game component),
-    // call the backend directly so the SSE event is broadcast.
-    const result = await completeLevelAction(sessionId, targetLevelId, {
-      score,
-      maxCombo: combo.maxCombo,
-      totalItems: contentItems?.length ?? 0,
-    });
-    if (result.data) {
-      if (result.data.nextLevelId && result.data.nextLevelName) {
-        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
-      }
-    }
-  }
 
   // SSE: listen for group level complete, force-end, and player events
   useGroupPlayEvents(groupId, {
@@ -190,7 +164,6 @@ export function GroupPlayShell({
 
     if (isDifferentGame || isDifferentLevel || isStaleState) {
       exitGame();
-      completedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, targetLevelId]);
@@ -217,14 +190,6 @@ export function GroupPlayShell({
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
-
-  // Trigger completeAndWait when entering result phase
-  useEffect(() => {
-    if (phase === "result") {
-      completeAndWait();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- completeAndWait uses refs and store state, not a stable dep
-  }, [phase]);
 
   if (phase === "loading") {
     return (
