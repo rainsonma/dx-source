@@ -6,14 +6,15 @@ import (
 	"github.com/goravel/framework/database/orm"
 )
 
-type GameSessionLevel struct {
+type GameSession struct {
 	orm.Timestamps
 	ID                   string     `gorm:"column:id;primaryKey" json:"id"`
-	GameSessionTotalID   string     `gorm:"column:game_session_total_id" json:"game_session_total_id"`
+	UserID               string     `gorm:"column:user_id" json:"user_id"`
+	GameID               string     `gorm:"column:game_id" json:"game_id"`
 	GameLevelID          string     `gorm:"column:game_level_id" json:"game_level_id"`
-	CurrentContentItemID *string    `gorm:"column:current_content_item_id" json:"current_content_item_id"`
 	Degree               string     `gorm:"column:degree" json:"degree"`
 	Pattern              *string    `gorm:"column:pattern" json:"pattern"`
+	CurrentContentItemID *string    `gorm:"column:current_content_item_id" json:"current_content_item_id"`
 	StartedAt            time.Time  `gorm:"column:started_at" json:"started_at"`
 	LastPlayedAt         time.Time  `gorm:"column:last_played_at" json:"last_played_at"`
 	EndedAt              *time.Time `gorm:"column:ended_at" json:"ended_at"`
@@ -31,6 +32,6 @@ type GameSessionLevel struct {
 	GamePkID             *string    `gorm:"column:game_pk_id" json:"game_pk_id"`
 }
 
-func (g *GameSessionLevel) TableName() string {
-	return "game_session_levels"
+func (g *GameSession) TableName() string {
+	return "game_sessions"
 }
