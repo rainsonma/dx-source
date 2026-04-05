@@ -20,10 +20,8 @@ export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
 
   return (
     <div className="flex w-full items-center gap-4 rounded-full border-[1.5px] border-teal-600 bg-teal-50 px-4 py-3.5 md:px-6">
-      {rank !== null ? (
+      {rank !== null && (
         <span className="text-base font-bold text-teal-600">{rank}</span>
-      ) : (
-        <span className="text-sm font-medium text-muted-foreground">未上榜</span>
       )}
       <Avatar>
         {entry?.avatarUrl && (
@@ -39,7 +37,7 @@ export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
         </span>
       </div>
       <span className="hidden rounded-xl bg-teal-600 px-3 py-1 text-[11px] font-semibold text-white sm:inline">
-        我的排名
+        {rank !== null ? "我的排名" : "未上榜"}
       </span>
       <div className="flex items-center gap-1">
         <Icon className="h-3.5 w-3.5 text-amber-500" />
