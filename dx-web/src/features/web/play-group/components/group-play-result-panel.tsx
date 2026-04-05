@@ -104,10 +104,8 @@ export function GroupPlayResultPanel({
     if (res.error) {
       toast.error(res.error);
       setLoadingNext(false);
-    } else {
-      // Navigate back to group room — the room will start the next level
-      window.location.href = `/hall/groups/${groupId}/room`;
     }
+    // SSE group_next_level event will navigate ALL members automatically
   }
 
   const isSolo = result.mode === "group_solo";

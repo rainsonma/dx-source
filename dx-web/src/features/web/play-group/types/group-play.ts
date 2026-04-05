@@ -60,3 +60,12 @@ export type GroupPlayerActionEvent = {
   action: "score" | "combo";
   combo_streak?: number;
 };
+
+export type GroupNextLevelEvent = {
+  game_group_id: string;
+  game_id: string;
+  level_id: string;
+  level_name: string;
+  degree: string;
+  pattern: string | null;
+};

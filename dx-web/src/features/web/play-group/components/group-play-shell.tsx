@@ -156,6 +156,17 @@ export function GroupPlayShell({
     onPlayerAction: (event) => {
       setLastPlayerAction(event);
     },
+    onNextLevel: (event) => {
+      // All members navigate to the next level play page
+      const params = new URLSearchParams({
+        groupId,
+        degree: event.degree,
+        gameMode: "group_solo",
+      });
+      if (event.pattern) params.set("pattern", event.pattern);
+      params.set("level", event.level_id);
+      window.location.href = `/hall/play-group/${event.game_id}?${params}`;
+    },
     onDismissed: () => {
       toast.error("群组已被解散");
       router.push("/hall/groups");

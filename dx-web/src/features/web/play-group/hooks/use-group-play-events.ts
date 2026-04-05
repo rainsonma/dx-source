@@ -7,6 +7,7 @@ import type {
   GroupForceEndEvent,
   GroupPlayerCompleteEvent,
   GroupPlayerActionEvent,
+  GroupNextLevelEvent,
 } from "../types/group-play";
 
 type GroupPlayEventHandlers = {
@@ -14,6 +15,7 @@ type GroupPlayEventHandlers = {
   onForceEnd?: (event: GroupForceEndEvent) => void;
   onPlayerComplete?: (event: GroupPlayerCompleteEvent) => void;
   onPlayerAction?: (event: GroupPlayerActionEvent) => void;
+  onNextLevel?: (event: GroupNextLevelEvent) => void;
   onDismissed?: () => void;
 };
 
@@ -33,6 +35,8 @@ export function useGroupPlayEvents(
       handlersRef.current.onPlayerComplete?.(data as GroupPlayerCompleteEvent),
     group_player_action: (data: unknown) =>
       handlersRef.current.onPlayerAction?.(data as GroupPlayerActionEvent),
+    group_next_level: (data: unknown) =>
+      handlersRef.current.onNextLevel?.(data as GroupNextLevelEvent),
     group_dismissed: () => handlersRef.current.onDismissed?.(),
   }), []);
 
