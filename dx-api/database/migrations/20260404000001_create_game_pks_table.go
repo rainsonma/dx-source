@@ -14,7 +14,7 @@ func (r *M20260404000001CreateGamePksTable) Signature() string {
 
 func (r *M20260404000001CreateGamePksTable) Up() error {
 	if !facades.Schema().HasTable("game_pks") {
-		if err := facades.Schema().Create("game_pks", func(table schema.Blueprint) {
+		return facades.Schema().Create("game_pks", func(table schema.Blueprint) {
 			table.Uuid("id")
 			table.Primary("id")
 			table.Uuid("user_id")
@@ -31,16 +31,7 @@ func (r *M20260404000001CreateGamePksTable) Up() error {
 			table.Index("opponent_id")
 			table.Index("game_id")
 			table.Index("is_playing")
-		}); err != nil {
-			return err
-		}
-	}
-	// Only one active PK per user per game
-	if _, err := facades.Orm().Query().Exec(
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_game_pks_unique_active
-		 ON game_pks (user_id, game_id)
-		 WHERE is_playing = true`); err != nil {
-		return err
+		})
 	}
 	return nil
 }
