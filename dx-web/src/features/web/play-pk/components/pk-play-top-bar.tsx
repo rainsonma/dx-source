@@ -29,7 +29,6 @@ const actionButtons = [
 interface PkPlayTopBarProps {
   player: { nickname: string; avatarUrl: string | null };
   playerId: string;
-  levelName: string;
   opponentName: string;
   lastOpponentAction: PkPlayerActionEvent | null;
   onExit: () => void;
@@ -43,7 +42,6 @@ interface PkPlayTopBarProps {
 export function PkPlayTopBar({
   player,
   playerId,
-  levelName,
   opponentName,
   lastOpponentAction,
   onExit,
@@ -101,8 +99,8 @@ export function PkPlayTopBar({
     <div className="relative flex w-full flex-col bg-card border-b border-border">
       {/* Nav row */}
       <div className="flex items-center justify-between px-4 py-2.5 md:px-6">
-        {/* Left: back + level name */}
-        <div className="flex items-center gap-3.5">
+        {/* Left: back + player avatar + nickname */}
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             aria-label="返回"
@@ -111,18 +109,41 @@ export function PkPlayTopBar({
           >
             <ArrowLeft className="h-[18px] w-[18px] text-muted-foreground" />
           </button>
+          <Avatar size="sm" style={{ backgroundColor: getAvatarColor(playerId) }}>
+            {player.avatarUrl && (
+              <AvatarImage src={player.avatarUrl} alt={player.nickname} />
+            )}
+            <AvatarFallback
+              className="text-white text-xs font-bold"
+              style={{ backgroundColor: getAvatarColor(playerId) }}
+            >
+              {player.nickname[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <span className="text-sm font-semibold text-foreground">
-            {levelName}
+            {player.nickname}
           </span>
         </div>
 
-        {/* Center: PK label */}
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-          PK
+        {/* Center: VS label */}
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+          VS
         </span>
 
-        {/* Right: action buttons */}
-        <div className="flex items-center gap-1">
+        {/* Right: opponent avatar + nickname + action buttons */}
+        <div className="flex items-center gap-2.5">
+          <span className="text-sm font-semibold text-foreground">
+            {opponentName}
+          </span>
+          <Avatar size="sm" style={{ backgroundColor: opponentAvatarBg }}>
+            <AvatarFallback
+              className="text-white text-xs font-bold"
+              style={{ backgroundColor: opponentAvatarBg }}
+            >
+              {opponentName[0]?.toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="ml-1 flex items-center gap-1">
           {actionButtons.map((btn) => {
             const Icon =
               btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
@@ -142,6 +163,7 @@ export function PkPlayTopBar({
               </button>
             );
           })}
+          </div>
         </div>
       </div>
 
