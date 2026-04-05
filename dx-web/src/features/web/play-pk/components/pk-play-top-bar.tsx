@@ -59,7 +59,7 @@ export function PkPlayTopBar({
   };
 
   const score = usePkPlayStore((s) => s.score);
-  const comboStreak = usePkPlayStore((s) => s.combo.current);
+  const comboStreak = usePkPlayStore((s) => s.combo.streak);
   const currentIndex = usePkPlayStore((s) => s.currentIndex);
   const totalItems = usePkPlayStore((s) => s.contentItems?.length ?? 0);
   const opponentId = usePkPlayStore((s) => s.opponentId);
