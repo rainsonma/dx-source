@@ -13,7 +13,7 @@ import {
   SkipForward,
   Check,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
@@ -64,6 +64,9 @@ export function PkPlayTopBar({
   const totalItems = usePkPlayStore((s) => s.contentItems?.length ?? 0);
   const opponentId = usePkPlayStore((s) => s.opponentId);
   const opponentCompleted = usePkPlayStore((s) => s.opponentCompleted);
+  const opponentScore = usePkPlayStore((s) => s.opponentScore);
+  const opponentCombo = usePkPlayStore((s) => s.opponentCombo);
+  const opponentItemsPlayed = usePkPlayStore((s) => s.opponentItemsPlayed);
 
   const opponentAvatarBg = opponentId ? getAvatarColor(opponentId) : "#6b7280";
 
@@ -94,6 +97,11 @@ export function PkPlayTopBar({
 
   const progressPercent =
     totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
+  const opponentProgressPercent = opponentCompleted
+    ? 100
+    : totalItems > 0
+      ? Math.round((opponentItemsPlayed / totalItems) * 100)
+      : 0;
 
   return (
     <div className="relative flex w-full flex-col bg-card border-b border-border">
@@ -195,43 +203,34 @@ export function PkPlayTopBar({
           </div>
         </div>
 
-        {/* Member roster: human + robot */}
-        <div className="border-t border-border px-3 py-2">
-          <div className="flex flex-wrap gap-1.5">
-            {/* Human player */}
-            <Avatar
-              size="sm"
-              className="overflow-visible"
-              style={{ backgroundColor: getAvatarColor(playerId) }}
-            >
-              {player.avatarUrl && (
-                <AvatarImage src={player.avatarUrl} alt={player.nickname} />
-              )}
+        {/* Opponent: avatar + score + combo + progress */}
+        <div className="border-t border-border px-3 pt-2">
+          <div className="flex items-center gap-2.5">
+            <Avatar size="sm" style={{ backgroundColor: opponentAvatarBg }}>
               <AvatarFallback
-                className="text-white text-[10px] font-bold"
-                style={{ backgroundColor: getAvatarColor(playerId) }}
-              >
-                {player.nickname[0]?.toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {/* Opponent (robot) */}
-            <Avatar
-              size="sm"
-              className="overflow-visible"
-              style={{ backgroundColor: opponentAvatarBg }}
-            >
-              <AvatarFallback
-                className="text-white text-[10px] font-bold"
+                className="text-white text-xs font-bold"
                 style={{ backgroundColor: opponentAvatarBg }}
               >
                 {opponentName[0]?.toUpperCase()}
               </AvatarFallback>
-              {opponentCompleted && (
-                <AvatarBadge className="bg-green-500 ring-0">
-                  <Check className="h-2 w-2 text-white" />
-                </AvatarBadge>
-              )}
             </Avatar>
+            <span className="text-sm font-extrabold text-foreground">{opponentScore}</span>
+            {opponentCombo >= 3 && (
+              <span className="text-xs font-bold text-orange-500">
+                连击 × {opponentCombo}
+              </span>
+            )}
+            {opponentCompleted && (
+              <Check className="h-3.5 w-3.5 text-green-500" />
+            )}
+          </div>
+          <div className="pb-2 pt-1.5">
+            <div className="h-1.5 w-full rounded-sm bg-border">
+              <div
+                className="h-1.5 rounded-sm bg-orange-500 transition-all duration-300"
+                style={{ width: `${opponentProgressPercent}%` }}
+              />
+            </div>
           </div>
         </div>
 

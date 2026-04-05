@@ -84,7 +84,7 @@ export function PkPlayShell({
   const setPkWaiting = usePkPlayStore((s) => s.setPkWaiting);
   const setPkResult = usePkPlayStore((s) => s.setPkResult);
   const setOpponentCompleted = usePkPlayStore((s) => s.setOpponentCompleted);
-  const setLastOpponentAction = usePkPlayStore((s) => s.setLastOpponentAction);
+  const trackOpponentAction = usePkPlayStore((s) => s.trackOpponentAction);
   const setTimeoutCountdown = usePkPlayStore((s) => s.setTimeoutCountdown);
 
   const score = useGameStore((s) => s.score);
@@ -153,11 +153,11 @@ export function PkPlayShell({
     onPlayerComplete: (event) => {
       const currentLevelId = usePkPlayStore.getState().levelId;
       if (event.game_level_id === currentLevelId) {
-        setOpponentCompleted();
+        setOpponentCompleted(event.score);
       }
     },
     onPlayerAction: (event) => {
-      setLastOpponentAction(event);
+      trackOpponentAction(event);
     },
     onTimeoutWarning: (event) => {
       setTimeoutCountdown(event.countdown);

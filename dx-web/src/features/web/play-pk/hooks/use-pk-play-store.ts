@@ -40,6 +40,9 @@ interface PkPlayState {
   pkPhase: "playing" | "waiting" | "result" | null;
   pkResult: PkLevelCompleteEvent | null;
   opponentCompleted: boolean;
+  opponentScore: number;
+  opponentCombo: number;
+  opponentItemsPlayed: number;
   lastOpponentAction: PkPlayerActionEvent | null;
   timeoutCountdown: number | null;
 }
@@ -73,8 +76,9 @@ interface PkPlayActions {
   recordSkip: () => void;
   setPkWaiting: () => void;
   setPkResult: (result: PkLevelCompleteEvent) => void;
-  setOpponentCompleted: () => void;
+  setOpponentCompleted: (score?: number) => void;
   setLastOpponentAction: (action: PkPlayerActionEvent) => void;
+  trackOpponentAction: (action: PkPlayerActionEvent) => void;
   setTimeoutCountdown: (seconds: number | null) => void;
   exitGame: () => void;
 }
@@ -103,6 +107,9 @@ const initialState: PkPlayState = {
   pkPhase: null,
   pkResult: null,
   opponentCompleted: false,
+  opponentScore: 0,
+  opponentCombo: 0,
+  opponentItemsPlayed: 0,
   lastOpponentAction: null,
   timeoutCountdown: null,
 };
@@ -143,6 +150,9 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
         pkPhase: "playing",
         pkResult: null,
         opponentCompleted: false,
+        opponentScore: 0,
+        opponentCombo: 0,
+        opponentItemsPlayed: 0,
         lastOpponentAction: null,
         timeoutCountdown: null,
       }),
@@ -171,9 +181,29 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
     setPkResult: (result) =>
       set({ pkPhase: "result", pkResult: result, opponentCompleted: false }),
 
-    setOpponentCompleted: () => set({ opponentCompleted: true }),
+    setOpponentCompleted: (score) =>
+      set({
+        opponentCompleted: true,
+        ...(score !== undefined ? { opponentScore: score } : {}),
+      }),
 
     setLastOpponentAction: (action) => set({ lastOpponentAction: action }),
+
+    trackOpponentAction: (action) =>
+      set((s) => {
+        const isScore = action.action === "score";
+        const isCombo = action.action === "combo";
+        return {
+          lastOpponentAction: action,
+          opponentItemsPlayed: s.opponentItemsPlayed + 1,
+          opponentScore: isScore ? s.opponentScore + 1 : s.opponentScore,
+          opponentCombo: isCombo
+            ? (action.combo_streak ?? s.opponentCombo)
+            : isScore
+              ? s.opponentCombo
+              : 0,
+        };
+      }),
 
     setTimeoutCountdown: (seconds) => set({ timeoutCountdown: seconds }),
 
