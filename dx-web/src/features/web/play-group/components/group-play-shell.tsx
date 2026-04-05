@@ -119,23 +119,11 @@ export function GroupPlayShell({
     if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
 
+    // Notify backend — SSE broadcast handles showing the result to all players
     completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
-    }).then((result) => {
-      if (!result.data) return;
-      if (result.data.nextLevelId && result.data.nextLevelName) {
-        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
-      }
-      // Show result immediately for the winner (SSE updates all others)
-      const store = useGroupPlayStore.getState();
-      if (store.groupPhase !== "result") {
-        setGroupResultFromWinner(
-          { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
-          [{ user_id: player.id, user_name: player.nickname, score }],
-        );
-      }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -157,15 +145,12 @@ export function GroupPlayShell({
       const currentLevelId = useGroupPlayStore.getState().levelId;
       if (event.game_level_id === currentLevelId) {
         addCompletedPlayer(event.user_id);
-        // First-to-complete: winner event triggers immediate result
-        const store = useGroupPlayStore.getState();
-        if (store.groupPhase !== "result") {
-          setGroupResultFromWinner(event, event.participants);
-          if (event.next_level_id && event.next_level_name) {
-            setNextLevel(event.next_level_id, event.next_level_name);
-          }
-          setPhase("result");
+        // Always update result from SSE (has full participant list from backend)
+        setGroupResultFromWinner(event, event.participants);
+        if (event.next_level_id && event.next_level_name) {
+          setNextLevel(event.next_level_id, event.next_level_name);
         }
+        setPhase("result");
       }
     },
     onPlayerAction: (event) => {
