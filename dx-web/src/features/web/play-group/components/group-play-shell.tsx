@@ -103,6 +103,7 @@ export function GroupPlayShell({
     completeLevel: completeLevelAction,
     endSession: endSessionAction,
     restartLevel: restartLevelAction,
+    competitive: true,
   }), []);
 
   const targetLevel =

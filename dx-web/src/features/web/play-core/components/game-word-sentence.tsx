@@ -15,6 +15,7 @@ import { useWordSentence } from "@/features/web/play-core/hooks/use-word-sentenc
 import { SpellingInputRow } from "@/features/web/play-core/components/spelling-input-row";
 import type { SpellingItem } from "@/features/web/play-core/types/spelling";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import { useGamePlayActions } from "@/features/web/play-core/context/game-play-context";
 import {
   markAsMasteredAction,
   markAsUnknownAction,
@@ -39,6 +40,8 @@ export function GameWordSentence() {
     skipItem,
     advanceAfterReveal,
   } = useWordSentence();
+
+  const { competitive } = useGamePlayActions();
 
   const gameId = useGameStore((s) => s.gameId);
   const levelId = useGameStore((s) => s.levelId);
@@ -216,34 +219,38 @@ export function GameWordSentence() {
           <Check className="h-4 w-4 text-muted-foreground" />
           <span className="text-xs font-medium text-muted-foreground">掌握</span>
         </button>
-        {/* Answer toggle — border-only highlight when active */}
-        <button
-          type="button"
-          onClick={toggleAnswer}
-          className={`flex items-center gap-2 rounded-xl px-5 py-3 ${
-            showAnswer
-              ? "border border-teal-600 bg-muted"
-              : "border border-border bg-muted"
-          }`}
-        >
-          <BookOpen
-            className={`h-4 w-4 ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
-          />
-          <span
-            className={`text-xs font-medium ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
+        {/* Answer toggle — hidden in competitive modes */}
+        {!competitive && (
+          <button
+            type="button"
+            onClick={toggleAnswer}
+            className={`flex items-center gap-2 rounded-xl px-5 py-3 ${
+              showAnswer
+                ? "border border-teal-600 bg-muted"
+                : "border border-border bg-muted"
+            }`}
           >
-            答案
-          </span>
-        </button>
-        {/* Skip */}
-        <button
-          type="button"
-          onClick={skipItem}
-          className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
-        >
-          <SkipForward className="h-4 w-4 text-muted-foreground" />
-          <span className="text-xs font-medium text-muted-foreground">跳过</span>
-        </button>
+            <BookOpen
+              className={`h-4 w-4 ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
+            />
+            <span
+              className={`text-xs font-medium ${showAnswer ? "text-teal-600" : "text-muted-foreground"}`}
+            >
+              答案
+            </span>
+          </button>
+        )}
+        {/* Skip — hidden in competitive modes */}
+        {!competitive && (
+          <button
+            type="button"
+            onClick={skipItem}
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+          >
+            <SkipForward className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">跳过</span>
+          </button>
+        )}
         {/* Confirm */}
         <button
           type="button"

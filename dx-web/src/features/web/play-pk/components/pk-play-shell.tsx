@@ -105,6 +105,7 @@ export function PkPlayShell({
     completeLevel: completeLevelAction,
     endSession: noopEndSession,
     restartLevel: noopRestartLevel,
+    competitive: true,
   }), [noopSkip, noopEndSession, noopRestartLevel]);
 
   const targetLevel =

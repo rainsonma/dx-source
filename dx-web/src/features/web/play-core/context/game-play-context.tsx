@@ -62,6 +62,8 @@ export interface GamePlayActions {
   completeLevel: CompleteLevelFn;
   endSession: EndSessionFn;
   restartLevel: RestartLevelFn;
+  /** True in PK and group competitive modes — hides skip/answer buttons */
+  competitive?: boolean;
 }
 
 const GamePlayContext = createContext<GamePlayActions | null>(null);
