@@ -136,7 +136,7 @@ export function PkPlayResultPanel({
               >
                 {winner.user_name}
               </span>
-              <span className="text-xs font-bold text-foreground">
+              <span className="mt-2.5 text-xs font-bold text-foreground">
                 {winner.score} 分
               </span>
               <div
@@ -170,7 +170,7 @@ export function PkPlayResultPanel({
               >
                 {loser.user_name}
               </span>
-              <span className="text-xs font-bold text-foreground">
+              <span className="mt-2.5 text-xs font-bold text-foreground">
                 {loser.score} 分
               </span>
               <div

@@ -164,7 +164,7 @@ export function GroupPlayResultPanel({
                 >
                   {entry.name}
                 </span>
-                <span className="text-xs font-bold text-foreground">
+                <span className="mt-2.5 text-xs font-bold text-foreground">
                   {entry.score} 分
                 </span>
                 <div
