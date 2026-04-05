@@ -90,7 +90,7 @@ export function GameResultCard({ game, elapsedTime }: GameResultCardProps) {
 
   /** Navigate to home page */
   function handleHome() {
-    router.push("/");
+    router.push("/hall");
   }
 
   /** Navigate to games list */
