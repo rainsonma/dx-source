@@ -13,20 +13,6 @@ func (r *M20260405000002CreateGameSessionsTable) Signature() string {
 }
 
 func (r *M20260405000002CreateGameSessionsTable) Up() error {
-	// Drop old tables in dependency order
-	for _, table := range []string{
-		"game_stats_levels",
-		"game_stats_totals",
-		"game_records",
-		"game_session_levels",
-		"game_session_totals",
-		"game_pks",
-	} {
-		if err := facades.Schema().DropIfExists(table); err != nil {
-			return err
-		}
-	}
-
 	return facades.Schema().Create("game_sessions", func(table schema.Blueprint) {
 		table.Uuid("id")
 		table.Primary("id")
