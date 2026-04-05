@@ -64,7 +64,6 @@ export function GroupPlayShell({
   levelId,
   groupId,
   levelTimeLimit,
-  gameMode,
 }: GroupPlayShellProps) {
   const router = useRouter();
 

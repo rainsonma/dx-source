@@ -79,7 +79,7 @@ export async function recordAnswerAction(data: {
   }
 }
 
-export async function recordSkipAction(data: {
+export async function recordSkipAction(_data: {
   gameSessionId: string;
   gameLevelId: string;
   playTime: number;

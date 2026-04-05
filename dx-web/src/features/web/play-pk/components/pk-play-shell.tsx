@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useMemo, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { GAME_MODES } from "@/consts/game-mode";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
@@ -59,8 +58,6 @@ export function PkPlayShell({
   levelId,
   difficulty,
 }: PkPlayShellProps) {
-  const router = useRouter();
-
   // Phase and overlay managed via useGameStore so shared modals work
   const phase = useGameStore((s) => s.phase);
   const overlay = useGameStore((s) => s.overlay);
@@ -77,12 +74,10 @@ export function PkPlayShell({
   const pkId = usePkPlayStore((s) => s.pkId);
   const sessionId = usePkPlayStore((s) => s.sessionId);
   const opponentName = usePkPlayStore((s) => s.opponentName);
-  const opponentId = usePkPlayStore((s) => s.opponentId);
   const lastOpponentAction = usePkPlayStore((s) => s.lastOpponentAction);
   const timeoutCountdown = usePkPlayStore((s) => s.timeoutCountdown);
   const pkNextLevelId = usePkPlayStore((s) => s.nextLevelId);
   const setPkResult = usePkPlayStore((s) => s.setPkResult);
-  const setOpponentCompleted = usePkPlayStore((s) => s.setOpponentCompleted);
   const trackOpponentAction = usePkPlayStore((s) => s.trackOpponentAction);
   const setTimeoutCountdown = usePkPlayStore((s) => s.setTimeoutCountdown);
 

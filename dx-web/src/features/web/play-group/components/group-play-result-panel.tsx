@@ -95,7 +95,6 @@ export function GroupPlayResultPanel({
   groupId,
   levelName,
   nextLevelId,
-  nextLevelName,
 }: GroupPlayResultPanelProps) {
   const [loadingNext, setLoadingNext] = useState(false);
 

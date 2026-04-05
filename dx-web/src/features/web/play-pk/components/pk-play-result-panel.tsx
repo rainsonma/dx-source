@@ -5,7 +5,6 @@ import { Crown, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { nextPkLevelAction, endPkAction } from "../actions/session.action";
