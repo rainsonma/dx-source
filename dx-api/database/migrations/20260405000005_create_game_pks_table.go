@@ -34,9 +34,7 @@ func (r *M20260405000005CreateGamePksTable) Up() error {
 		return err
 	}
 
-	_, err := facades.Orm().Query().Exec(
-		`CREATE UNIQUE INDEX idx_game_pks_unique_active ON game_pks (user_id, game_id) WHERE is_playing = true`)
-	return err
+	return nil
 }
 
 func (r *M20260405000005CreateGamePksTable) Down() error {
