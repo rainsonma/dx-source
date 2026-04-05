@@ -14,7 +14,6 @@ import { GAME_MODES, type GameMode } from "@/consts/game-mode";
 import { GAME_DEGREE_LABELS, type GameDegree } from "@/consts/game-degree";
 import {
   startPkAction,
-  startLevelAction,
   restoreSessionDataAction,
   fetchLevelContentAction,
 } from "../actions/session.action";
@@ -121,12 +120,12 @@ export function PkPlayLoadingScreen({
       try {
         setProgress(0);
 
-        // Step 1: Start PK
+        // Step 1: Start PK (now includes level)
         const pkResult = await startPkAction(
           gameId,
+          levelId,
           degree,
           pattern,
-          levelId,
           difficulty
         );
         if (cancelled) return;
@@ -134,58 +133,39 @@ export function PkPlayLoadingScreen({
           setError(pkResult.error ?? "无法开始PK");
           return;
         }
-        setProgress(25);
+        setProgress(33);
 
-        // Step 2: Start level session
-        const levelResult = await startLevelAction(
-          pkResult.data.session_id,
-          levelId,
-          degree,
-          pattern
-        );
-        if (cancelled) return;
-        if (levelResult.error || !levelResult.data) {
-          setError(levelResult.error ?? "开始关卡失败");
-          return;
-        }
-        setProgress(50);
-
-        // Step 3: Restore data if resuming
-        const levelSessionResumeItemId =
-          levelResult.data.currentContentItemId ?? null;
-
+        // Step 2: Restore data if resuming (session has currentContentItemId from start response)
         let restored: {
           score: number;
           maxCombo: number;
           correctCount: number;
           wrongCount: number;
-          skipCount: number;
           playTime: number;
         } | null = null;
 
-        if (levelSessionResumeItemId) {
-          const restoreResult = await restoreSessionDataAction(
-            pkResult.data.session_id,
-            levelId
-          );
-          if (!cancelled && restoreResult.data?.sessionLevel) {
-            const sl = restoreResult.data.sessionLevel;
+        // Try restore — if session already had progress, the API returns data
+        const restoreResult = await restoreSessionDataAction(
+          pkResult.data.session_id
+        );
+        if (!cancelled && restoreResult.data) {
+          const rd = restoreResult.data;
+          if (rd.score > 0 || rd.correctCount > 0 || rd.wrongCount > 0) {
             restored = {
-              score: sl.score,
-              maxCombo: sl.maxCombo,
-              correctCount: sl.correctCount,
-              wrongCount: sl.wrongCount,
-              skipCount: sl.skipCount,
-              playTime: sl.playTime,
+              score: rd.score,
+              maxCombo: rd.maxCombo,
+              correctCount: rd.correctCount,
+              wrongCount: rd.wrongCount,
+              playTime: rd.playTime,
             };
           }
         }
-        setProgress(75);
+        setProgress(66);
 
-        // Step 4: Fetch content
+        // Step 3: Fetch content
         const contentResult = await fetchLevelContentAction(
           gameId,
-          levelId,
+          pkResult.data.game_level_id,
           degree
         );
         if (cancelled) return;
@@ -195,26 +175,19 @@ export function PkPlayLoadingScreen({
         }
         setProgress(100);
 
-        let startFromIndex = 0;
-        if (levelSessionResumeItemId) {
-          const idx = contentResult.data.findIndex(
-            (item) => item.id === levelSessionResumeItemId
-          );
-          if (idx > 0) startFromIndex = idx;
-        }
+        const startFromIndex = 0;
 
         await timerPromise;
         if (cancelled) return;
 
-        const sessionInit = {
+        const pkSessionInit = {
           pkId: pkResult.data.pk_id,
           sessionId: pkResult.data.session_id,
-          levelSessionId: levelResult.data.id,
           gameId,
           gameMode,
           degree,
           pattern,
-          levelId,
+          levelId: pkResult.data.game_level_id,
           difficulty,
           opponentId: pkResult.data.opponent_id,
           opponentName: pkResult.data.opponent_name,
@@ -224,9 +197,19 @@ export function PkPlayLoadingScreen({
         };
 
         // Init PK store (shell state management)
-        initPkSession(sessionInit);
+        initPkSession(pkSessionInit);
         // Init game store (required by shared game components)
-        initGameSession(sessionInit);
+        initGameSession({
+          sessionId: pkSessionInit.sessionId,
+          gameId: pkSessionInit.gameId,
+          gameMode: pkSessionInit.gameMode,
+          degree: pkSessionInit.degree,
+          pattern: pkSessionInit.pattern,
+          levelId: pkSessionInit.levelId,
+          contentItems: pkSessionInit.contentItems,
+          startFromIndex: pkSessionInit.startFromIndex,
+          ...(restored && { restored: { ...restored, skipCount: 0 } }),
+        });
 
         // If robot already completed (e.g. page refresh), update store
         if (pkResult.data.robot_completed) {

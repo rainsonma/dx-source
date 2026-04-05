@@ -2,23 +2,24 @@ import { apiClient } from "@/lib/api-client";
 
 export async function startPkAction(
   gameId: string,
+  gameLevelId: string,
   degree: string,
   pattern: string | null,
-  levelId: string,
   difficulty: string
 ) {
   try {
     const res = await apiClient.post<{
       pk_id: string;
       session_id: string;
+      game_level_id: string;
       opponent_id: string;
       opponent_name: string;
       robot_completed: boolean;
     }>("/api/play-pk/start", {
       game_id: gameId,
+      game_level_id: gameLevelId,
       degree,
       pattern,
-      level_id: levelId,
       difficulty,
     });
     if (res.code !== 0) return { data: null, error: res.message || "无法开始PK" };
@@ -28,31 +29,16 @@ export async function startPkAction(
   }
 }
 
-export async function startLevelAction(
-  sessionId: string,
-  gameLevelId: string,
-  degree: string,
-  pattern: string | null
-) {
-  try {
-    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>(
-      `/api/play-pk/${sessionId}/levels/start`,
-      { game_level_id: gameLevelId, degree, pattern }
-    );
-    if (res.code !== 0) return { data: null, error: res.message || "开始关卡失败" };
-    return { data: res.data, error: null };
-  } catch {
-    return { data: null, error: "开始关卡失败" };
-  }
-}
-
 export async function completeLevelAction(
   sessionId: string,
   gameLevelId: string,
   data: { score: number; maxCombo: number; totalItems: number }
 ) {
   try {
-    const res = await apiClient.post<unknown>(
+    const res = await apiClient.post<{
+      next_level_id: string | null;
+      next_level_name: string | null;
+    }>(
       `/api/play-pk/${sessionId}/levels/${gameLevelId}/complete`,
       { score: data.score, max_combo: data.maxCombo, total_items: data.totalItems }
     );
@@ -64,8 +50,7 @@ export async function completeLevelAction(
 }
 
 export async function recordAnswerAction(data: {
-  gameSessionTotalId: string;
-  gameSessionLevelId: string;
+  gameSessionId: string;
   gameLevelId: string;
   contentItemId: string;
   isCorrect: boolean;
@@ -81,9 +66,8 @@ export async function recordAnswerAction(data: {
 }) {
   try {
     const res = await apiClient.post<unknown>(
-      `/api/play-pk/${data.gameSessionTotalId}/answers`,
+      `/api/play-pk/${data.gameSessionId}/answers`,
       {
-        game_session_level_id: data.gameSessionLevelId,
         game_level_id: data.gameLevelId,
         content_item_id: data.contentItemId,
         is_correct: data.isCorrect,
@@ -105,43 +89,18 @@ export async function recordAnswerAction(data: {
   }
 }
 
-export async function recordSkipAction(data: {
-  gameSessionTotalId: string;
-  gameLevelId: string;
-  playTime: number;
-  nextContentItemId: string | null;
-}) {
-  try {
-    const res = await apiClient.post<unknown>(
-      `/api/play-pk/${data.gameSessionTotalId}/skips`,
-      {
-        game_level_id: data.gameLevelId,
-        play_time: data.playTime,
-        next_content_item_id: data.nextContentItemId,
-      }
-    );
-    if (res.code !== 0) return { data: null, error: res.message || "跳过失败" };
-    return { data: res.data, error: null };
-  } catch {
-    return { data: null, error: "跳过失败" };
-  }
-}
-
 type RestoreData = {
-  sessionLevel?: {
-    score: number;
-    maxCombo: number;
-    correctCount: number;
-    wrongCount: number;
-    skipCount: number;
-    playTime: number;
-  };
+  score: number;
+  maxCombo: number;
+  correctCount: number;
+  wrongCount: number;
+  playTime: number;
 };
 
-export async function restoreSessionDataAction(sessionId: string, gameLevelId: string) {
+export async function restoreSessionDataAction(sessionId: string) {
   try {
     const res = await apiClient.get<RestoreData>(
-      `/api/play-pk/${sessionId}/restore?game_level_id=${gameLevelId}`
+      `/api/play-pk/${sessionId}/restore`
     );
     if (res.code !== 0) return { data: null, error: res.message || "恢复会话数据失败" };
     return { data: res.data, error: null };
@@ -160,12 +119,16 @@ export async function endPkAction(pkId: string) {
   }
 }
 
-export async function nextLevelAction(pkId: string, currentLevelId: string) {
+export async function nextPkLevelAction(pkId: string) {
   try {
-    const res = await apiClient.post<unknown>(
-      `/api/play-pk/${pkId}/next-level`,
-      { current_level_id: currentLevelId }
-    );
+    const res = await apiClient.post<{
+      pk_id: string;
+      session_id: string;
+      game_level_id: string;
+      opponent_id: string;
+      opponent_name: string;
+      robot_completed: boolean;
+    }>(`/api/play-pk/${pkId}/next-level`);
     if (res.code !== 0) return { data: null, error: res.message || "下一关失败" };
     return { data: res.data, error: null };
   } catch {

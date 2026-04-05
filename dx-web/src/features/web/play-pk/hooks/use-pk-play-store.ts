@@ -13,7 +13,6 @@ interface PkPlayState {
   // Session
   pkId: string | null;
   sessionId: string | null;
-  levelSessionId: string | null;
   gameId: string | null;
   gameMode: string | null;
   degree: string | null;
@@ -31,14 +30,15 @@ interface PkPlayState {
   combo: ComboState;
   correctCount: number;
   wrongCount: number;
-  skipCount: number;
   playTime: number;
 
   // PK-specific
   opponentId: string | null;
   opponentName: string | null;
-  pkPhase: "playing" | "waiting" | "result" | null;
+  pkPhase: "playing" | "result" | null;
   pkResult: PkLevelCompleteEvent | null;
+  nextLevelId: string | null;
+  nextLevelName: string | null;
   opponentCompleted: boolean;
   opponentScore: number;
   opponentCombo: number;
@@ -51,7 +51,6 @@ interface PkPlayActions {
   initSession: (data: {
     pkId: string;
     sessionId: string;
-    levelSessionId: string;
     gameId: string;
     gameMode: string;
     degree: string;
@@ -67,15 +66,12 @@ interface PkPlayActions {
       maxCombo: number;
       correctCount: number;
       wrongCount: number;
-      skipCount: number;
       playTime: number;
     };
   }) => void;
   nextItem: () => void;
   recordResult: (isCorrect: boolean) => void;
-  recordSkip: () => void;
-  setPkWaiting: () => void;
-  setPkResult: (result: PkLevelCompleteEvent) => void;
+  setPkResult: (result: PkLevelCompleteEvent, nextLevelId?: string | null, nextLevelName?: string | null) => void;
   setOpponentCompleted: (score?: number) => void;
   setLastOpponentAction: (action: PkPlayerActionEvent) => void;
   trackOpponentAction: (action: PkPlayerActionEvent) => void;
@@ -86,7 +82,6 @@ interface PkPlayActions {
 const initialState: PkPlayState = {
   pkId: null,
   sessionId: null,
-  levelSessionId: null,
   gameId: null,
   gameMode: null,
   degree: null,
@@ -100,12 +95,13 @@ const initialState: PkPlayState = {
   combo: createComboState(),
   correctCount: 0,
   wrongCount: 0,
-  skipCount: 0,
   playTime: 0,
   opponentId: null,
   opponentName: null,
   pkPhase: null,
   pkResult: null,
+  nextLevelId: null,
+  nextLevelName: null,
   opponentCompleted: false,
   opponentScore: 0,
   opponentCombo: 0,
@@ -122,7 +118,6 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
       set({
         pkId: data.pkId,
         sessionId: data.sessionId,
-        levelSessionId: data.levelSessionId,
         gameId: data.gameId,
         gameMode: data.gameMode,
         degree: data.degree,
@@ -145,10 +140,11 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
           : createComboState(),
         correctCount: data.restored?.correctCount ?? 0,
         wrongCount: data.restored?.wrongCount ?? 0,
-        skipCount: data.restored?.skipCount ?? 0,
         playTime: data.restored?.playTime ?? 0,
         pkPhase: "playing",
         pkResult: null,
+        nextLevelId: null,
+        nextLevelName: null,
         opponentCompleted: false,
         opponentScore: 0,
         opponentCombo: 0,
@@ -170,16 +166,14 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
         };
       }),
 
-    recordSkip: () =>
-      set((s) => ({
-        combo: { ...s.combo, streak: 0, cyclePosition: 0 },
-        skipCount: s.skipCount + 1,
-      })),
-
-    setPkWaiting: () => set({ pkPhase: "waiting" }),
-
-    setPkResult: (result) =>
-      set({ pkPhase: "result", pkResult: result, opponentCompleted: false }),
+    setPkResult: (result, nextLevelId, nextLevelName) =>
+      set({
+        pkPhase: "result",
+        pkResult: result,
+        nextLevelId: nextLevelId ?? null,
+        nextLevelName: nextLevelName ?? null,
+        opponentCompleted: false,
+      }),
 
     setOpponentCompleted: (score) =>
       set({

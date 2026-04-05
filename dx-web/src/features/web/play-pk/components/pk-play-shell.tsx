@@ -8,7 +8,6 @@ import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { GamePlayProvider, type GamePlayActions } from "@/features/web/play-core/context/game-play-context";
 import { PkPlayLoadingScreen } from "./pk-play-loading-screen";
 import { PkPlayTopBar } from "./pk-play-top-bar";
-import { PkPlayWaitingScreen } from "./pk-play-waiting-screen";
 import { PkPlayResultPanel } from "./pk-play-result-panel";
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
@@ -22,13 +21,13 @@ import { usePkPlayEvents } from "../hooks/use-pk-play-events";
 import {
   completeLevelAction,
   recordAnswerAction,
-  recordSkipAction,
   markAsReviewAction,
   pausePkAction,
   resumePkAction,
 } from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
 import type { ComponentType } from "react";
+import type { PkLevelCompleteEvent } from "../types/pk-play";
 
 const modeComponents: Record<string, ComponentType> = {
   [GAME_MODES.WORD_SENTENCE]: GameWordSentence,
@@ -81,7 +80,7 @@ export function PkPlayShell({
   const opponentId = usePkPlayStore((s) => s.opponentId);
   const lastOpponentAction = usePkPlayStore((s) => s.lastOpponentAction);
   const timeoutCountdown = usePkPlayStore((s) => s.timeoutCountdown);
-  const setPkWaiting = usePkPlayStore((s) => s.setPkWaiting);
+  const pkNextLevelId = usePkPlayStore((s) => s.nextLevelId);
   const setPkResult = usePkPlayStore((s) => s.setPkResult);
   const setOpponentCompleted = usePkPlayStore((s) => s.setOpponentCompleted);
   const trackOpponentAction = usePkPlayStore((s) => s.trackOpponentAction);
@@ -95,65 +94,81 @@ export function PkPlayShell({
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
 
   // No-op stubs for actions not applicable to PK mode
+  const noopSkip = useCallback(async () => ({ data: null, error: null }), []);
   const noopEndSession = useCallback(async () => ({ data: null, error: null }), []);
   const noopRestartLevel = useCallback(async () => ({ data: null, error: null }), []);
 
   const playActions = useMemo<GamePlayActions>(() => ({
     recordAnswer: recordAnswerAction,
-    recordSkip: recordSkipAction,
+    recordSkip: noopSkip,
     markAsReview: markAsReviewAction,
     completeLevel: completeLevelAction,
     endSession: noopEndSession,
     restartLevel: noopRestartLevel,
-  }), [noopEndSession, noopRestartLevel]);
+  }), [noopSkip, noopEndSession, noopRestartLevel]);
 
   const targetLevel =
     game.levels.find((l) => l.id === levelId) ?? game.levels[0];
   const targetLevelId = targetLevel?.id ?? levelId;
   const levelName = targetLevel?.name ?? game.name;
 
-  const currentLevelIndex = game.levels.findIndex((l) => l.id === targetLevelId);
-  const nextLevel = currentLevelIndex >= 0 ? game.levels[currentLevelIndex + 1] : undefined;
-  const nextLevelId = nextLevel?.id ?? null;
-
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
-  async function completeAndWait() {
+  async function completeAndSetResult() {
     if (completedRef.current || !sessionId || !targetLevelId) return;
     if (usePkPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
-    setPkWaiting();
     const result = await completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
     });
     if (result.error) {
+      // Retry once
       await completeLevelAction(sessionId, targetLevelId, {
         score,
         maxCombo: combo.maxCombo,
         totalItems: contentItems?.length ?? 0,
       });
     }
+    // Store next level info from complete response for result panel
+    if (result.data) {
+      const store = usePkPlayStore.getState();
+      if (!store.pkResult) {
+        // Result not yet set via SSE — will be set when pk_player_complete arrives
+        // But store nextLevel info for when it does
+        usePkPlayStore.setState({
+          nextLevelId: result.data.next_level_id ?? null,
+          nextLevelName: result.data.next_level_name ?? null,
+        });
+      }
+    }
   }
 
   // SSE: listen for PK events
   usePkPlayEvents(pkId, {
-    onLevelComplete: (event) => {
-      setPkResult(event);
-    },
     onForceEnd: () => {
       setPhase("result");
-    },
-    onNextLevel: (event) => {
-      router.push(
-        `/hall/play-pk/${event.game_id}?degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&difficulty=${difficulty}${event.level_id ? `&level=${event.level_id}` : ""}`
-      );
     },
     onPlayerComplete: (event) => {
       const currentLevelId = usePkPlayStore.getState().levelId;
       if (event.game_level_id === currentLevelId) {
-        setOpponentCompleted();
+        // First-to-complete: build result and immediately show result
+        const store = usePkPlayStore.getState();
+        const result: PkLevelCompleteEvent = {
+          game_level_id: event.game_level_id,
+          winner: {
+            user_id: event.user_id,
+            user_name: event.user_name,
+            score: event.score,
+          },
+          participants: [
+            { user_id: event.user_id, user_name: event.user_name, score: event.score },
+            { user_id: store.opponentId ?? "", user_name: store.opponentName ?? "", score: store.opponentScore },
+          ],
+        };
+        setPkResult(result, store.nextLevelId, store.nextLevelName);
+        setPhase("result");
       }
     },
     onPlayerAction: (event) => {
@@ -164,7 +179,7 @@ export function PkPlayShell({
     },
     onTimeout: () => {
       setPhase("result");
-      completeAndWait();
+      completeAndSetResult();
     },
   });
 
@@ -224,10 +239,10 @@ export function PkPlayShell({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
-  // Trigger completeAndWait when entering result phase
+  // Trigger completeAndSetResult when entering result phase
   useEffect(() => {
     if (phase === "result" && pkPhase !== "result") {
-      completeAndWait();
+      completeAndSetResult();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, pkPhase]);
@@ -261,23 +276,13 @@ export function PkPlayShell({
   }
 
   if (phase === "result") {
-    if (pkPhase !== "result") {
-      return (
-        <PkPlayWaitingScreen
-          opponentId={opponentId}
-          opponentName={opponentName ?? "对手"}
-          lastOpponentAction={lastOpponentAction}
-        />
-      );
-    }
     return (
       <PkPlayResultPanel
-        result={pkResult!}
+        result={pkResult}
         pkId={pkId!}
         gameId={game.id}
         levelName={levelName}
-        nextLevelId={nextLevelId}
-        currentLevelId={targetLevelId}
+        nextLevelId={pkNextLevelId}
       />
     );
   }

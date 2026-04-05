@@ -10,7 +10,6 @@ import {
   Minimize,
   Trophy,
   Flame,
-  SkipForward,
   Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -70,7 +69,6 @@ export function PkPlayTopBar({
 
   const opponentAvatarBg = opponentId ? getAvatarColor(opponentId) : "#6b7280";
 
-  const [skipFlash, setSkipFlash] = useState({ key: 0, name: null as string | null });
   const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
   const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
 
@@ -78,9 +76,6 @@ export function PkPlayTopBar({
   useEffect(() => {
     if (!lastOpponentAction) return;
     switch (lastOpponentAction.action) {
-      case "skip":
-        setSkipFlash((prev) => ({ key: prev.key + 1, name: lastOpponentAction.user_name }));
-        break;
       case "score":
         setScoreFlash((prev) => ({ key: prev.key + 1, name: lastOpponentAction.user_name }));
         break;
@@ -239,14 +234,6 @@ export function PkPlayTopBar({
 
         {/* Stats: opponent action flashes */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">
-          <GroupStatRow
-            icon={SkipForward}
-            iconClass="text-muted-foreground"
-            label="跳过"
-            displayText={skipFlash.name}
-            flashKey={skipFlash.key}
-            flashColorClass="bg-pink-400"
-          />
           <GroupStatRow
             icon={Trophy}
             iconClass="text-teal-600"

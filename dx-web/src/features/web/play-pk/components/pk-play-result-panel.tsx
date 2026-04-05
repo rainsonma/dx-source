@@ -8,7 +8,7 @@ import { getAvatarColor } from "@/lib/avatar";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { nextLevelAction, endPkAction } from "../actions/session.action";
+import { nextPkLevelAction, endPkAction } from "../actions/session.action";
 import type { PkLevelCompleteEvent } from "../types/pk-play";
 
 /** Teal palette for podium columns — 1st (winner) and 2nd (loser) */
@@ -36,12 +36,11 @@ const PODIUM_STYLES = [
 ];
 
 interface PkPlayResultPanelProps {
-  result: PkLevelCompleteEvent;
+  result: PkLevelCompleteEvent | null;
   pkId: string;
   gameId: string;
   levelName: string;
   nextLevelId: string | null;
-  currentLevelId: string;
 }
 
 export function PkPlayResultPanel({
@@ -50,7 +49,6 @@ export function PkPlayResultPanel({
   gameId,
   levelName,
   nextLevelId,
-  currentLevelId,
 }: PkPlayResultPanelProps) {
   const router = useRouter();
   const [loadingNext, setLoadingNext] = useState(false);
@@ -59,12 +57,22 @@ export function PkPlayResultPanel({
   async function handleNextLevel() {
     setLoadingNext(true);
     try {
-      const res = await nextLevelAction(pkId, currentLevelId);
+      const res = await nextPkLevelAction(pkId);
       if (res.error) {
         toast.error(res.error);
         setLoadingNext(false);
+        return;
       }
-      // SSE will navigate both players away
+      if (res.data) {
+        // Navigate to new PK with the returned level
+        const store = await import("../hooks/use-pk-play-store").then(m => m.usePkPlayStore.getState());
+        const degree = store.degree ?? "";
+        const pattern = store.pattern;
+        const difficulty = store.difficulty ?? "";
+        router.push(
+          `/hall/play-pk/${gameId}?degree=${degree}${pattern ? `&pattern=${pattern}` : ""}&difficulty=${difficulty}&level=${res.data.game_level_id}`
+        );
+      }
     } catch {
       toast.error("进入下一关失败");
       setLoadingNext(false);
@@ -80,6 +88,20 @@ export function PkPlayResultPanel({
       toast.error("结束PK失败");
       setLoadingEnd(false);
     }
+  }
+
+  // While waiting for SSE result
+  if (!result) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center px-4 py-12">
+        <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-border bg-card p-6">
+          <Loader2 className="h-8 w-8 animate-spin text-teal-500" />
+          <p className="text-sm font-medium text-muted-foreground">
+            等待结果...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Sort participants: winner first, then loser
@@ -167,14 +189,17 @@ export function PkPlayResultPanel({
 
         {/* Action buttons */}
         <div className="h-px w-full bg-border" />
-        {nextLevelId ? (
-          <div className="flex w-full gap-2">
-            <Button variant="outline" asChild className="flex-1">
-              <Link href={`/hall/games/${gameId}`}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                返回
-              </Link>
-            </Button>
+        <div className="flex w-full gap-2">
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={handleEnd}
+            disabled={loadingEnd}
+          >
+            {loadingEnd ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
+            结束
+          </Button>
+          {nextLevelId && (
             <Button
               className="flex-1 bg-teal-600 hover:bg-teal-700"
               onClick={handleNextLevel}
@@ -183,17 +208,8 @@ export function PkPlayResultPanel({
               {loadingNext ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               下一关
             </Button>
-          </div>
-        ) : (
-          <Button
-            className="w-full bg-teal-600 hover:bg-teal-700"
-            onClick={handleEnd}
-            disabled={loadingEnd}
-          >
-            {loadingEnd ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            结束
-          </Button>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

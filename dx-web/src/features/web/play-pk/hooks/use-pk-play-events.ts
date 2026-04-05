@@ -3,9 +3,7 @@
 import { useRef, useMemo, useEffect } from "react";
 import { usePkSSE } from "@/hooks/use-pk-sse";
 import type {
-  PkLevelCompleteEvent,
   PkForceEndEvent,
-  PkNextLevelEvent,
   PkPlayerCompleteEvent,
   PkPlayerActionEvent,
   PkTimeoutWarningEvent,
@@ -13,9 +11,7 @@ import type {
 } from "../types/pk-play";
 
 type PkPlayEventHandlers = {
-  onLevelComplete?: (event: PkLevelCompleteEvent) => void;
   onForceEnd?: (event: PkForceEndEvent) => void;
-  onNextLevel?: (event: PkNextLevelEvent) => void;
   onPlayerComplete?: (event: PkPlayerCompleteEvent) => void;
   onPlayerAction?: (event: PkPlayerActionEvent) => void;
   onTimeoutWarning?: (event: PkTimeoutWarningEvent) => void;
@@ -30,12 +26,8 @@ export function usePkPlayEvents(
   useEffect(() => { handlersRef.current = handlers; });
 
   const listeners = useMemo(() => ({
-    pk_level_complete: (data: unknown) =>
-      handlersRef.current.onLevelComplete?.(data as PkLevelCompleteEvent),
     pk_force_end: (data: unknown) =>
       handlersRef.current.onForceEnd?.(data as PkForceEndEvent),
-    pk_next_level: (data: unknown) =>
-      handlersRef.current.onNextLevel?.(data as PkNextLevelEvent),
     pk_player_complete: (data: unknown) =>
       handlersRef.current.onPlayerComplete?.(data as PkPlayerCompleteEvent),
     pk_player_action: (data: unknown) =>
