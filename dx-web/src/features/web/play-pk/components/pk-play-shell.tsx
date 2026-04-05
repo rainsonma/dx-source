@@ -153,7 +153,7 @@ export function PkPlayShell({
     onPlayerComplete: (event) => {
       const currentLevelId = usePkPlayStore.getState().levelId;
       if (event.game_level_id === currentLevelId) {
-        setOpponentCompleted(event.score);
+        setOpponentCompleted();
       }
     },
     onPlayerAction: (event) => {
