@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { GAME_MODES } from "@/consts/game-mode";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
@@ -86,31 +86,17 @@ export function GroupPlayShell({
   const nextLevelName = useGroupPlayStore((s) => s.nextLevelName);
 
 
+  const completedRef = useRef(false);
+
   const playActions = useMemo<GamePlayActions>(() => ({
     recordAnswer: recordAnswerAction,
     recordSkip: recordSkipAction,
     markAsReview: markAsReviewAction,
-    completeLevel: async (...args: Parameters<typeof completeLevelAction>) => {
-      const result = await completeLevelAction(...args);
-      if (result.data) {
-        if (result.data.nextLevelId && result.data.nextLevelName) {
-          setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
-        }
-        // Immediately show group result for the winner before phase changes
-        const store = useGroupPlayStore.getState();
-        if (store.groupPhase !== "result") {
-          setGroupResultFromWinner(
-            { user_id: player.id, user_name: player.nickname, game_level_id: args[1], score: useGameStore.getState().score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
-            [{ user_id: player.id, user_name: player.nickname, score: useGameStore.getState().score }],
-          );
-        }
-      }
-      return result;
-    },
+    completeLevel: completeLevelAction,
     endSession: endSessionAction,
     restartLevel: restartLevelAction,
     competitive: true,
-  }), [player.id, player.nickname, setNextLevel, setGroupResultFromWinner]);
+  }), []);
 
   const targetLevel =
     game.levels.find((l) => l.id === levelId) ?? game.levels[0];
@@ -118,6 +104,44 @@ export function GroupPlayShell({
   const levelName = targetLevel?.name ?? game.name;
 
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  // Score/combo from game store for completeAndWait
+  const score = useGameStore((s) => s.score);
+  const combo = useGameStore((s) => s.combo);
+  const contentItems = useGameStore((s) => s.contentItems);
+
+  // Complete level when phase transitions to "result" (all items answered)
+  useEffect(() => {
+    if (phase !== "result" || completedRef.current) return;
+    const sessionId = useGroupPlayStore.getState().sessionId;
+    if (!sessionId || !targetLevelId) return;
+    if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
+    completedRef.current = true;
+
+    async function complete() {
+      const result = await completeLevelAction(sessionId!, targetLevelId, {
+        score,
+        maxCombo: combo.maxCombo,
+        totalItems: contentItems?.length ?? 0,
+      });
+      if (result.data) {
+        if (result.data.nextLevelId && result.data.nextLevelName) {
+          setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
+        }
+        // Immediately show group result for the winner
+        const store = useGroupPlayStore.getState();
+        if (store.groupPhase !== "result") {
+          setGroupResultFromWinner(
+            { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
+            [{ user_id: player.id, user_name: player.nickname, score }],
+          );
+        }
+      }
+    }
+
+    complete();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   // SSE: listen for group level complete, force-end, and player events
   useGroupPlayEvents(groupId, {
@@ -164,6 +188,7 @@ export function GroupPlayShell({
 
     if (isDifferentGame || isDifferentLevel || isStaleState) {
       exitGame();
+      completedRef.current = false;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.id, targetLevelId]);
