@@ -10,10 +10,13 @@ import {
   Minimize,
   Trophy,
   Flame,
+  SkipForward,
+  Check,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
+import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
 import type { PkPlayerActionEvent } from "../types/pk-play";
 
 const actionButtons = [
@@ -58,60 +61,48 @@ export function PkPlayTopBar({
   };
 
   const score = usePkPlayStore((s) => s.score);
-  const comboStreak = usePkPlayStore((s) => s.combo.streak);
+  const comboStreak = usePkPlayStore((s) => s.combo.current);
+  const currentIndex = usePkPlayStore((s) => s.currentIndex);
+  const totalItems = usePkPlayStore((s) => s.contentItems?.length ?? 0);
   const opponentId = usePkPlayStore((s) => s.opponentId);
+  const opponentCompleted = usePkPlayStore((s) => s.opponentCompleted);
 
-  const playerAvatarBg = getAvatarColor(playerId);
   const opponentAvatarBg = opponentId ? getAvatarColor(opponentId) : "#6b7280";
 
-  // Flash state for opponent actions
-  const [opponentFlash, setOpponentFlash] = useState<{
-    key: number;
-    text: string | null;
-    type: "score" | "skip" | "combo" | null;
-  }>({ key: 0, text: null, type: null });
+  const [skipFlash, setSkipFlash] = useState({ key: 0, name: null as string | null });
+  const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
+  const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
 
-  /* eslint-disable react-hooks/set-state-in-effect -- SSE event handler requires setState in effect */
+  /* eslint-disable react-hooks/set-state-in-effect -- SSE event handlers require setState in effects */
   useEffect(() => {
     if (!lastOpponentAction) return;
     switch (lastOpponentAction.action) {
       case "skip":
-        setOpponentFlash((prev) => ({
-          key: prev.key + 1,
-          text: "跳过",
-          type: "skip",
-        }));
+        setSkipFlash((prev) => ({ key: prev.key + 1, name: lastOpponentAction.user_name }));
         break;
       case "score":
-        setOpponentFlash((prev) => ({
-          key: prev.key + 1,
-          text: "得分",
-          type: "score",
-        }));
+        setScoreFlash((prev) => ({ key: prev.key + 1, name: lastOpponentAction.user_name }));
         break;
       case "combo":
-        setOpponentFlash((prev) => ({
+        setComboFlash((prev) => ({
           key: prev.key + 1,
-          text: `连击 x${lastOpponentAction.combo_streak}`,
-          type: "combo",
+          name: lastOpponentAction.user_name,
+          text: `${lastOpponentAction.user_name} ×${lastOpponentAction.combo_streak}`,
         }));
         break;
     }
   }, [lastOpponentAction]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const flashColorClass =
-    opponentFlash.type === "skip"
-      ? "text-pink-400"
-      : opponentFlash.type === "combo"
-        ? "text-orange-500"
-        : "text-teal-500";
+  const progressPercent =
+    totalItems > 0 ? Math.round((currentIndex / totalItems) * 100) : 0;
 
   return (
-    <div className="flex w-full flex-col bg-card border-b border-border">
+    <div className="relative flex w-full flex-col bg-card border-b border-border">
+      {/* Nav row */}
       <div className="flex items-center justify-between px-4 py-2.5 md:px-6">
-        {/* Left: player info */}
-        <div className="flex items-center gap-2.5">
+        {/* Left: back + level name */}
+        <div className="flex items-center gap-3.5">
           <button
             type="button"
             aria-label="返回"
@@ -120,90 +111,136 @@ export function PkPlayTopBar({
           >
             <ArrowLeft className="h-[18px] w-[18px] text-muted-foreground" />
           </button>
-          <Avatar size="sm" style={{ backgroundColor: playerAvatarBg }}>
+          <span className="text-sm font-semibold text-foreground">
+            {levelName}
+          </span>
+        </div>
+
+        {/* Center: PK label */}
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+          PK
+        </span>
+
+        {/* Right: action buttons */}
+        <div className="flex items-center gap-1">
+          {actionButtons.map((btn) => {
+            const Icon =
+              btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
+            return (
+              <button
+                key={btn.label}
+                type="button"
+                aria-label={
+                  btn.action === "fullscreen" && isFullscreen
+                    ? "退出全屏"
+                    : btn.label
+                }
+                onClick={actionHandlers[btn.action]}
+                className="flex h-8 w-8 items-center justify-center rounded-lg"
+              >
+                <Icon className="h-[18px] w-[18px] text-muted-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Floating player panel — same as group play */}
+      <div className="absolute right-1 top-full z-20 mt-1 w-56 rounded-xl border border-border bg-card shadow-sm md:right-1.5 md:w-64">
+        {/* Avatar row: avatar + score + combo */}
+        <div className="flex items-center gap-2.5 px-3 pt-2">
+          <Avatar size="sm" className="bg-teal-600">
             {player.avatarUrl && (
               <AvatarImage src={player.avatarUrl} alt={player.nickname} />
             )}
-            <AvatarFallback
-              className="text-white text-xs font-bold"
-              style={{ backgroundColor: playerAvatarBg }}
-            >
+            <AvatarFallback className="bg-teal-600 text-white text-xs font-bold">
               {player.nickname[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold text-foreground leading-tight">
-              {player.nickname}
+          <span className="text-sm font-extrabold text-foreground">{score}</span>
+          {comboStreak >= 3 && (
+            <span className="text-xs font-bold text-orange-500">
+              连击 × {comboStreak}
             </span>
-            <div className="flex items-center gap-1.5">
-              <Trophy className="h-3 w-3 text-teal-600" />
-              <span className="text-xs font-extrabold text-foreground">{score}</span>
-              {comboStreak >= 3 && (
-                <>
-                  <Flame className="h-3 w-3 text-orange-500" />
-                  <span className="text-[10px] font-bold text-orange-500">
-                    x{comboStreak}
-                  </span>
-                </>
-              )}
-            </div>
+          )}
+        </div>
+
+        {/* Progress bar */}
+        <div className="px-3 pb-2 pt-1.5">
+          <div className="h-1.5 w-full rounded-sm bg-border">
+            <div
+              className="h-1.5 rounded-sm bg-teal-600 transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
           </div>
         </div>
 
-        {/* Center: level name */}
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-semibold text-foreground">
-          {levelName}
-        </span>
-
-        {/* Right: opponent info + action buttons */}
-        <div className="flex items-center gap-2.5">
-          {/* Action buttons */}
-          <div className="flex items-center gap-1">
-            {actionButtons.map((btn) => {
-              const Icon =
-                btn.action === "fullscreen" && isFullscreen ? Minimize : btn.icon;
-              return (
-                <button
-                  key={btn.label}
-                  type="button"
-                  aria-label={
-                    btn.action === "fullscreen" && isFullscreen
-                      ? "退出全屏"
-                      : btn.label
-                  }
-                  onClick={actionHandlers[btn.action]}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg"
-                >
-                  <Icon className="h-[18px] w-[18px] text-muted-foreground" />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Opponent info */}
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-semibold text-foreground leading-tight">
-                {opponentName}
-              </span>
-              {opponentFlash.text && opponentFlash.key > 0 && (
-                <span
-                  key={opponentFlash.key}
-                  className={`text-[10px] font-bold ${flashColorClass} animate-pulse`}
-                >
-                  {opponentFlash.text}
-                </span>
+        {/* Member roster: human + robot */}
+        <div className="border-t border-border px-3 py-2">
+          <div className="flex flex-wrap gap-1.5">
+            {/* Human player */}
+            <Avatar
+              size="sm"
+              className="overflow-visible"
+              style={{ backgroundColor: getAvatarColor(playerId) }}
+            >
+              {player.avatarUrl && (
+                <AvatarImage src={player.avatarUrl} alt={player.nickname} />
               )}
-            </div>
-            <Avatar size="sm" style={{ backgroundColor: opponentAvatarBg }}>
               <AvatarFallback
-                className="text-white text-xs font-bold"
+                className="text-white text-[10px] font-bold"
+                style={{ backgroundColor: getAvatarColor(playerId) }}
+              >
+                {player.nickname[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {/* Opponent (robot) */}
+            <Avatar
+              size="sm"
+              className="overflow-visible"
+              style={{ backgroundColor: opponentAvatarBg }}
+            >
+              <AvatarFallback
+                className="text-white text-[10px] font-bold"
                 style={{ backgroundColor: opponentAvatarBg }}
               >
                 {opponentName[0]?.toUpperCase()}
               </AvatarFallback>
+              {opponentCompleted && (
+                <AvatarBadge className="bg-green-500 ring-0">
+                  <Check className="h-2 w-2 text-white" />
+                </AvatarBadge>
+              )}
             </Avatar>
           </div>
+        </div>
+
+        {/* Stats: opponent action flashes */}
+        <div className="border-t border-border px-3 py-2 space-y-1.5">
+          <GroupStatRow
+            icon={SkipForward}
+            iconClass="text-muted-foreground"
+            label="跳过"
+            displayText={skipFlash.name}
+            flashKey={skipFlash.key}
+            flashColorClass="bg-pink-400"
+          />
+          <GroupStatRow
+            icon={Trophy}
+            iconClass="text-teal-600"
+            label="得分"
+            displayText={scoreFlash.name}
+            flashKey={scoreFlash.key}
+            flashColorClass="bg-teal-400"
+          />
+          <GroupStatRow
+            icon={Flame}
+            iconClass="text-orange-500"
+            label="连击"
+            displayText={comboFlash.text}
+            flashKey={comboFlash.key}
+            flashColorClass="bg-orange-400"
+          />
         </div>
       </div>
     </div>
