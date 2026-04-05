@@ -40,6 +40,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
   const { data: group, isLoading } = useSWR<GroupDetail>(`/api/groups/${groupId}`);
 
   const [startGameOpen, setStartGameOpen] = useState(false);
+  const [gameStarting, setGameStarting] = useState(false);
   const [forceEnding, setForceEnding] = useState(false);
   const [roomMembers, setRoomMembers] = useState<RoomMember[]>([]);
 
@@ -222,7 +223,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
         </div>
 
         {/* Owner controls */}
-        {isOwner && (
+        {isOwner && !gameStarting && (
           group.is_playing ? (
             <button
               type="button"
@@ -253,7 +254,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
           groupId={groupId}
           open={startGameOpen}
           onOpenChange={setStartGameOpen}
-          onStarted={() => swrMutate(`/api/groups/${groupId}`)}
+          onStarted={() => { setGameStarting(true); swrMutate(`/api/groups/${groupId}`); }}
         />
       )}
     </div>
