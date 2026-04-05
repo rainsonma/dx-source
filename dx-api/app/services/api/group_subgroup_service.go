@@ -49,6 +49,9 @@ func CreateSubgroup(userID, groupID, name string) (string, error) {
 		return "", err
 	}
 
+	type countRow struct {
+		Count int64 `gorm:"column:count"`
+	}
 	var cnt countRow
 	if err := facades.Orm().Query().Raw(
 		`SELECT COUNT(*) AS count FROM game_subgroups WHERE game_group_id = ?`, groupID,

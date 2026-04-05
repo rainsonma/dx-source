@@ -110,9 +110,9 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, levelTimeLimit int, 
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update(map[string]any{
-		"current_game_id":    gameID,
-		"game_mode":          gameMode,
-		"level_time_limit":   levelTimeLimit,
+		"current_game_id":     gameID,
+		"game_mode":           gameMode,
+		"level_time_limit":    levelTimeLimit,
 		"start_game_level_id": startGameLevelID,
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
@@ -257,13 +257,10 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		levelID = &startLevel.ID
 	}
 
-	// End any stale sessions from a previous round (auto-end doesn't clean these up)
+	// Force-end any existing active sessions from a previous round
 	now := time.Now()
 	facades.Orm().Query().Exec(
-		"UPDATE game_session_levels SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
-		now, groupID)
-	facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		"UPDATE game_sessions SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
 		now, groupID)
 
 	// Set is_playing = true
@@ -361,8 +358,8 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 	return nil
 }
 
-// ForceEndGroupGame ends all active sessions and determines winners.
-func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
+// ForceEndGroupGame ends all active sessions and sets is_playing = false.
+func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
@@ -377,56 +374,12 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 		return nil, ErrGroupNotPlaying
 	}
 
-	// Collect active session IDs before ending (these scope winner queries to current round)
-	type sessionIDRow struct {
-		ID string `gorm:"column:id"`
-	}
-	var activeRows []sessionIDRow
-	if err := facades.Orm().Query().Raw(
-		"SELECT id FROM game_session_totals WHERE game_group_id = ? AND ended_at IS NULL",
-		groupID).Scan(&activeRows); err != nil {
-		return nil, fmt.Errorf("failed to collect session ids: %w", err)
-	}
-	sessionIDs := make([]string, len(activeRows))
-	for i, r := range activeRows {
-		sessionIDs[i] = r.ID
-	}
-
+	// End all active sessions
 	now := time.Now()
-
-	// End all active session levels
 	if _, err := facades.Orm().Query().Exec(
-		"UPDATE game_session_levels SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
+		"UPDATE game_sessions SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
 		now, groupID); err != nil {
-		return nil, fmt.Errorf("failed to end session levels: %w", err)
-	}
-
-	// End all active session totals
-	if _, err := facades.Orm().Query().Exec(
-		"UPDATE game_session_totals SET ended_at = ? WHERE game_group_id = ? AND ended_at IS NULL",
-		now, groupID); err != nil {
-		return nil, fmt.Errorf("failed to end session totals: %w", err)
-	}
-
-	// Collect completed level IDs for winner determination (current round only)
-	type levelIDRow struct {
-		GameLevelID string `gorm:"column:game_level_id"`
-	}
-	var levelIDs []levelIDRow
-	if len(sessionIDs) > 0 {
-		if err := facades.Orm().Query().Raw(
-			"SELECT DISTINCT game_level_id FROM game_session_levels WHERE game_group_id = ? AND ended_at IS NOT NULL AND game_session_total_id IN ?",
-			groupID, sessionIDs).Scan(&levelIDs); err != nil {
-			return nil, fmt.Errorf("failed to query levels: %w", err)
-		}
-	}
-
-	var results []LevelWinnerResult
-	for _, lid := range levelIDs {
-		result, err := DetermineWinnerForLevel(groupID, lid.GameLevelID, sessionIDs)
-		if err == nil && result != nil {
-			results = append(results, *result)
-		}
+		return nil, fmt.Errorf("failed to end sessions: %w", err)
 	}
 
 	// Set is_playing = false
@@ -434,11 +387,11 @@ func ForceEndGroupGame(userID, groupID string) ([]LevelWinnerResult, error) {
 
 	// Broadcast force end event
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_force_end", map[string]any{
-		"results": results,
+		"results": []map[string]any{},
 	})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
 
-	return results, nil
+	return nil, nil
 }
 
 // GroupNextLevelEvent is the SSE payload for group_next_level.
@@ -453,6 +406,7 @@ type GroupNextLevelEvent struct {
 }
 
 // NextGroupLevel finds the next level and broadcasts it to all group members.
+// Any group member can trigger this (no ownership check).
 func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
@@ -499,6 +453,10 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	}
 	_ = facades.Cache().Store("redis").Put(cacheKey, "1", 30*time.Second)
 
+	// Update start_game_level_id to the next level
+	facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).
+		Update("start_game_level_id", nextLevel.ID)
+
 	// Get degree/pattern from caller's most recent session
 	type sessionInfo struct {
 		Degree  string  `gorm:"column:degree"`
@@ -506,7 +464,7 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	}
 	var si sessionInfo
 	facades.Orm().Query().Raw(
-		`SELECT degree, pattern FROM game_session_totals
+		`SELECT degree, pattern FROM game_sessions
 		 WHERE game_group_id = ? AND user_id = ?
 		 ORDER BY last_played_at DESC LIMIT 1`,
 		groupID, userID).Scan(&si)

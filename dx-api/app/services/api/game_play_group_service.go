@@ -16,25 +16,16 @@ import (
 
 // GroupPlayStartSessionResult is returned after starting or resuming a group game session.
 type GroupPlayStartSessionResult struct {
-	ID                   string    `json:"id"`
-	Degree               string    `json:"degree"`
-	Pattern              *string   `json:"pattern"`
-	Score                int       `json:"score"`
-	Exp                  int       `json:"exp"`
-	MaxCombo             int       `json:"maxCombo"`
-	CorrectCount         int       `json:"correctCount"`
-	WrongCount           int       `json:"wrongCount"`
-	StartedAt            time.Time `json:"startedAt"`
-	LevelID              *string   `json:"levelId"`
-	CurrentContentItemID *string   `json:"currentContentItemId"`
-}
-
-// GroupPlayStartLevelResult is returned after starting or resuming a group level session.
-type GroupPlayStartLevelResult struct {
-	ID                   string  `json:"id"`
-	GameSessionTotalID   string  `json:"gameSessionTotalId"`
-	GameLevelID          string  `json:"gameLevelId"`
-	CurrentContentItemID *string `json:"currentContentItemId"`
+	ID        string    `json:"id"`
+	Degree    string    `json:"degree"`
+	Pattern   *string   `json:"pattern"`
+	Score     int       `json:"score"`
+	Exp       int       `json:"exp"`
+	MaxCombo  int       `json:"maxCombo"`
+	CorrectCount int   `json:"correctCount"`
+	WrongCount   int   `json:"wrongCount"`
+	StartedAt time.Time `json:"startedAt"`
+	GameLevelID string  `json:"gameLevelId"`
 }
 
 // GroupPlayCompleteLevelResult is returned after completing a level in a group game.
@@ -42,6 +33,8 @@ type GroupPlayCompleteLevelResult struct {
 	ExpEarned      int     `json:"expEarned"`
 	Accuracy       float64 `json:"accuracy"`
 	MeetsThreshold bool    `json:"meetsThreshold"`
+	NextLevelID    *string `json:"nextLevelId"`
+	NextLevelName  *string `json:"nextLevelName"`
 }
 
 // GroupPlayerCompleteEvent is the SSE payload for group_player_complete.
@@ -49,6 +42,7 @@ type GroupPlayerCompleteEvent struct {
 	UserID      string `json:"user_id"`
 	UserName    string `json:"user_name"`
 	GameLevelID string `json:"game_level_id"`
+	Score       int    `json:"score"`
 }
 
 // GroupPlayerActionEvent is the SSE payload for group_player_action.
@@ -59,82 +53,14 @@ type GroupPlayerActionEvent struct {
 	ComboStreak int    `json:"combo_streak,omitempty"`
 }
 
-// GroupPlayRestoreSessionResult holds accumulated stats for restoring client state in a group game.
-type GroupPlayRestoreSessionResult struct {
-	Session      *SessionStats `json:"session"`
-	SessionLevel *SessionStats `json:"sessionLevel"`
-}
-
 // --- Session Lifecycle ---
 
-// GroupPlayStartSession starts or resumes a group game session.
-// gameGroupID is always required.
-func GroupPlayStartSession(userID, gameID, degree string, pattern *string, levelID *string, gameGroupID string) (*GroupPlayStartSessionResult, error) {
+// GroupPlayStartSession starts or resumes a group game session for a specific level.
+func GroupPlayStartSession(userID, gameID, gameLevelID, degree string, pattern *string, gameGroupID string) (*GroupPlayStartSessionResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
 	query := facades.Orm().Query()
-
-	// Find the first active level
-	var firstLevel models.GameLevel
-	if err := query.Where("game_id", gameID).Where("is_active", true).
-		Order("\"order\" asc").First(&firstLevel); err != nil || firstLevel.ID == "" {
-		return nil, ErrNoGameLevels
-	}
-
-	// Check for existing active group session
-	existing, err := findGroupPlayActiveSession(query, userID, gameID, degree, pattern, gameGroupID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check active session: %w", err)
-	}
-
-	if existing != nil {
-		// Touch lastPlayedAt
-		if _, err := query.Model(&models.GameSessionTotal{}).Where("id", existing.ID).
-			Update("last_played_at", time.Now()); err != nil {
-			return nil, fmt.Errorf("failed to touch session: %w", err)
-		}
-
-		resolvedLevelID := existing.CurrentLevelID
-		contentItemID := existing.CurrentContentItemID
-
-		if levelID != nil && (existing.CurrentLevelID == nil || *levelID != *existing.CurrentLevelID) {
-			if _, err := query.Model(&models.GameSessionTotal{}).Where("id", existing.ID).
-				Update(map[string]any{
-					"current_level_id":        *levelID,
-					"current_content_item_id": nil,
-				}); err != nil {
-				return nil, fmt.Errorf("failed to update resume point: %w", err)
-			}
-			resolvedLevelID = levelID
-			contentItemID = nil
-		}
-
-		return &GroupPlayStartSessionResult{
-			ID:                   existing.ID,
-			Degree:               existing.Degree,
-			Pattern:              existing.Pattern,
-			Score:                existing.Score,
-			Exp:                  existing.Exp,
-			MaxCombo:             existing.MaxCombo,
-			CorrectCount:         existing.CorrectCount,
-			WrongCount:           existing.WrongCount,
-			StartedAt:            existing.StartedAt,
-			LevelID:              resolvedLevelID,
-			CurrentContentItemID: contentItemID,
-		}, nil
-	}
-
-	// Resolve starting level
-	resolvedLevelID := &firstLevel.ID
-	if levelID != nil {
-		resolvedLevelID = levelID
-	}
-
-	totalLevelsCount, err := query.Model(&models.GameLevel{}).Where("game_id", gameID).Where("is_active", true).Count()
-	if err != nil {
-		return nil, fmt.Errorf("failed to count levels: %w", err)
-	}
 
 	// Verify group exists
 	var group models.GameGroup
@@ -155,132 +81,85 @@ func GroupPlayStartSession(userID, gameID, degree string, pattern *string, level
 		gameSubgroupID = &subMember.GameSubgroupID
 	}
 
-	now := time.Now()
-	gid := gameGroupID
-	session := models.GameSessionTotal{
-		ID:               newID(),
-		UserID:           userID,
-		GameID:           gameID,
-		CurrentLevelID:   resolvedLevelID,
-		Degree:           degree,
-		Pattern:          pattern,
-		TotalLevelsCount: int(totalLevelsCount),
-		StartedAt:        now,
-		LastPlayedAt:     now,
-		GameGroupID:      &gid,
-		GameSubgroupID:   gameSubgroupID,
+	// Check for existing active group session for this level
+	existing, err := findGroupPlayActiveSession(query, userID, gameLevelID, degree, pattern, gameGroupID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check active session: %w", err)
 	}
 
-	if err := query.Create(&session); err != nil {
-		// Concurrent request may have already created the session — return it.
-		existing, findErr := findGroupPlayActiveSession(query, userID, gameID, degree, pattern, gameGroupID)
-		if findErr != nil || existing == nil {
-			return nil, fmt.Errorf("failed to create session: %w", err)
+	if existing != nil {
+		// Touch lastPlayedAt
+		if _, err := query.Model(&models.GameSession{}).Where("id", existing.ID).
+			Update("last_played_at", time.Now()); err != nil {
+			return nil, fmt.Errorf("failed to touch session: %w", err)
 		}
+
 		return &GroupPlayStartSessionResult{
-			ID:                   existing.ID,
-			Degree:               existing.Degree,
-			Pattern:              existing.Pattern,
-			Score:                existing.Score,
-			Exp:                  existing.Exp,
-			MaxCombo:             existing.MaxCombo,
-			CorrectCount:         existing.CorrectCount,
-			WrongCount:           existing.WrongCount,
-			StartedAt:            existing.StartedAt,
-			LevelID:              existing.CurrentLevelID,
-			CurrentContentItemID: existing.CurrentContentItemID,
+			ID:           existing.ID,
+			Degree:       existing.Degree,
+			Pattern:      existing.Pattern,
+			Score:        existing.Score,
+			Exp:          existing.Exp,
+			MaxCombo:     existing.MaxCombo,
+			CorrectCount: existing.CorrectCount,
+			WrongCount:   existing.WrongCount,
+			StartedAt:    existing.StartedAt,
+			GameLevelID:  existing.GameLevelID,
 		}, nil
 	}
 
-	// Upsert game stats only after successful session creation
-	if err := UpsertGameStats(userID, gameID); err != nil {
-		return nil, fmt.Errorf("failed to upsert game stats: %w", err)
-	}
-
-	return &GroupPlayStartSessionResult{
-		ID:                   session.ID,
-		Degree:               session.Degree,
-		Pattern:              session.Pattern,
-		StartedAt:            session.StartedAt,
-		LevelID:              resolvedLevelID,
-		CurrentContentItemID: nil,
-	}, nil
-}
-
-// GroupPlayStartLevel creates or resumes a level session within a group game session.
-func GroupPlayStartLevel(userID, sessionID, gameLevelID, degree string, pattern *string) (*GroupPlayStartLevelResult, error) {
-	if err := requireVip(userID); err != nil {
-		return nil, err
-	}
-	if err := verifyOwnership(userID, sessionID); err != nil {
-		return nil, err
-	}
-
-	// Upsert level stats
-	if err := UpsertLevelStats(userID, gameLevelID); err != nil {
-		return nil, fmt.Errorf("failed to upsert level stats: %w", err)
-	}
-
-	// Count content items for this level with degree-based filtering
-	contentTypes := consts.DegreeContentTypes[degree]
-	totalItemsCount, err := countActiveContentItems(gameLevelID, contentTypes)
+	// Count content items for this level
+	totalItemsCount, err := countLevelItems(query, gameLevelID, degree)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count content items: %w", err)
 	}
 
-	query := facades.Orm().Query()
+	now := time.Now()
+	gid := gameGroupID
+	session := models.GameSession{
+		ID:              newID(),
+		UserID:          userID,
+		GameID:          gameID,
+		GameLevelID:     gameLevelID,
+		Degree:          degree,
+		Pattern:         pattern,
+		TotalItemsCount: int(totalItemsCount),
+		StartedAt:       now,
+		LastPlayedAt:    now,
+		GameGroupID:     &gid,
+		GameSubgroupID:  gameSubgroupID,
+	}
 
-	// Check for existing incomplete level session
-	var existing models.GameSessionLevel
-	if err := query.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&existing); err == nil && existing.ID != "" {
-		// Touch lastPlayedAt
-		if _, err := query.Model(&models.GameSessionLevel{}).Where("id", existing.ID).
-			Update("last_played_at", time.Now()); err != nil {
-			return nil, fmt.Errorf("failed to touch level session: %w", err)
+	if err := query.Create(&session); err != nil {
+		// Concurrent request may have already created the session
+		existing, findErr := findGroupPlayActiveSession(query, userID, gameLevelID, degree, pattern, gameGroupID)
+		if findErr != nil || existing == nil {
+			return nil, fmt.Errorf("failed to create session: %w", err)
 		}
-		return &GroupPlayStartLevelResult{
-			ID:                   existing.ID,
-			GameSessionTotalID:   existing.GameSessionTotalID,
-			GameLevelID:          existing.GameLevelID,
-			CurrentContentItemID: existing.CurrentContentItemID,
+		return &GroupPlayStartSessionResult{
+			ID:           existing.ID,
+			Degree:       existing.Degree,
+			Pattern:      existing.Pattern,
+			Score:        existing.Score,
+			Exp:          existing.Exp,
+			MaxCombo:     existing.MaxCombo,
+			CorrectCount: existing.CorrectCount,
+			WrongCount:   existing.WrongCount,
+			StartedAt:    existing.StartedAt,
+			GameLevelID:  existing.GameLevelID,
 		}, nil
 	}
 
-	// Inherit group fields from parent session
-	var parentSession models.GameSessionTotal
-	if err := query.Where("id", sessionID).First(&parentSession); err != nil || parentSession.ID == "" {
-		return nil, ErrSessionNotFound
-	}
-
-	now := time.Now()
-	levelSession := models.GameSessionLevel{
-		ID:                 newID(),
-		GameSessionTotalID: sessionID,
-		GameLevelID:        gameLevelID,
-		Degree:             degree,
-		Pattern:            pattern,
-		TotalItemsCount:    int(totalItemsCount),
-		StartedAt:          now,
-		LastPlayedAt:       now,
-		GameGroupID:        parentSession.GameGroupID,
-		GameSubgroupID:     parentSession.GameSubgroupID,
-	}
-
-	if err := query.Create(&levelSession); err != nil {
-		return nil, fmt.Errorf("failed to create level session: %w", err)
-	}
-
-	return &GroupPlayStartLevelResult{
-		ID:                   levelSession.ID,
-		GameSessionTotalID:   levelSession.GameSessionTotalID,
-		GameLevelID:          levelSession.GameLevelID,
-		CurrentContentItemID: nil,
+	return &GroupPlayStartSessionResult{
+		ID:          session.ID,
+		Degree:      session.Degree,
+		Pattern:     session.Pattern,
+		StartedAt:   session.StartedAt,
+		GameLevelID: session.GameLevelID,
 	}, nil
 }
 
-// GroupPlayCompleteLevel marks a level complete and triggers group winner determination.
+// GroupPlayCompleteLevel marks a level complete — first-to-complete wins.
 func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCombo, totalItems int) (*GroupPlayCompleteLevelResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
@@ -300,18 +179,10 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		}
 	}()
 
-	// Find active session level
-	var sessionLevel models.GameSessionLevel
-	if err := tx.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err != nil || sessionLevel.ID == "" {
-		_ = tx.Rollback()
-		return nil, ErrSessionLevelNotFound
-	}
-
-	// Find parent session to get gameID and group info
-	var session models.GameSessionTotal
-	if err := tx.Where("id", sessionID).First(&session); err != nil || session.ID == "" {
+	// Find active session
+	var session models.GameSession
+	if err := tx.Where("id", sessionID).Where("ended_at IS NULL").
+		First(&session); err != nil || session.ID == "" {
 		_ = tx.Rollback()
 		return nil, ErrSessionNotFound
 	}
@@ -319,7 +190,7 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 	// Calculate accuracy and EXP
 	var accuracy float64
 	if totalItems > 0 {
-		accuracy = float64(sessionLevel.CorrectCount) / float64(totalItems)
+		accuracy = float64(session.CorrectCount) / float64(totalItems)
 	}
 	meetsThreshold := accuracy >= consts.ExpAccuracyThreshold
 	expAmount := 0
@@ -327,9 +198,9 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		expAmount = consts.LevelCompleteExp
 	}
 
-	// 1. Complete session level
+	// 1. Complete session
 	now := time.Now()
-	if _, err := tx.Model(&models.GameSessionLevel{}).Where("id", sessionLevel.ID).
+	if _, err := tx.Model(&models.GameSession{}).Where("id", sessionID).
 		Update(map[string]any{
 			"ended_at":  now,
 			"score":     score,
@@ -337,41 +208,10 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 			"max_combo": maxCombo,
 		}); err != nil {
 		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to complete session level: %w", err)
+		return nil, fmt.Errorf("failed to complete session: %w", err)
 	}
 
-	// 2. Update session total
-	if meetsThreshold {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET score = ?, max_combo = ?, played_levels_count = played_levels_count + 1, exp = exp + ?, updated_at = now() WHERE id = ?",
-			score, maxCombo, expAmount, sessionID,
-		); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("failed to update session total: %w", err)
-		}
-	} else {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET score = ?, max_combo = ?, played_levels_count = played_levels_count + 1, updated_at = now() WHERE id = ?",
-			score, maxCombo, sessionID,
-		); err != nil {
-			_ = tx.Rollback()
-			return nil, fmt.Errorf("failed to update session total: %w", err)
-		}
-	}
-
-	// 3. Complete level stats
-	if err := completeLevelStatsInTx(tx, userID, gameLevelID, score, sessionLevel.PlayTime); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to complete level stats: %w", err)
-	}
-
-	// 4. Update game stats on level complete
-	if err := updateGameStatsOnLevelCompleteInTx(tx, userID, session.GameID, score, sessionLevel.PlayTime, expAmount); err != nil {
-		_ = tx.Rollback()
-		return nil, fmt.Errorf("failed to update game stats: %w", err)
-	}
-
-	// 5. Increment user EXP if threshold met
+	// 2. Increment user EXP if threshold met
 	if meetsThreshold {
 		if _, err := tx.Exec(
 			"UPDATE users SET exp = exp + ?, updated_at = now() WHERE id = ?",
@@ -386,7 +226,7 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	// Broadcast individual player completion to group
+	// Broadcast player completion to group (first-to-complete wins)
 	if session.GameGroupID != nil {
 		var user models.User
 		if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user); err == nil && user.ID != "" {
@@ -398,24 +238,31 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 				UserID:      userID,
 				UserName:    userName,
 				GameLevelID: gameLevelID,
+				Score:       score,
 			})
 		}
-	}
 
-	// 6. Check for group winner determination and broadcast SSE
-	if session.GameGroupID != nil {
-		result, winErr := CheckAndDetermineWinner(*session.GameGroupID, gameLevelID)
-		if winErr != nil {
-			fmt.Printf("[GROUP] Winner check error for group=%s level=%s: %v\n", *session.GameGroupID, gameLevelID, winErr)
+		// Force-end all other players' sessions for this level
+		if session.GameSubgroupID != nil && *session.GameSubgroupID != "" {
+			// Team mode: end sessions of all players not in the winning team
+			_ = ForceEndGroupLosersExceptTeam(*session.GameGroupID, gameLevelID, *session.GameSubgroupID)
+		} else {
+			// Solo mode: end sessions of all other players
+			_ = ForceEndGroupLosers(*session.GameGroupID, gameLevelID, userID)
 		}
-		if winErr == nil && result != nil {
-			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_level_complete", result)
 
-			// If this was the last level, set is_playing = false on the group.
-			// Only auto-end if count query succeeds — avoid false positive on error.
-			totalLevels, countErr := facades.Orm().Query().Model(&models.GameLevel{}).
-				Where("game_id", session.GameID).Where("is_active", true).Count()
-			if countErr == nil && totalLevels > 0 && int64(session.PlayedLevelsCount+1) >= totalLevels {
+		// Update last_won_at for winner
+		facades.Orm().Query().Exec(
+			"UPDATE game_group_members SET last_won_at = ? WHERE game_group_id = ? AND user_id = ?",
+			time.Now(), *session.GameGroupID, userID)
+
+		// If this was the last level, set is_playing = false
+		totalLevels, countErr := facades.Orm().Query().Model(&models.GameLevel{}).
+			Where("game_id", session.GameID).Where("is_active", true).Count()
+		_, _, nextErr := findNextLevel(session.GameID, gameLevelID)
+		if countErr == nil && totalLevels > 0 && nextErr == nil {
+			nextID, _, _ := findNextLevel(session.GameID, gameLevelID)
+			if nextID == nil {
 				facades.Orm().Query().Model(&models.GameGroup{}).
 					Where("id", *session.GameGroupID).Update("is_playing", false)
 				helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
@@ -423,19 +270,24 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		}
 	}
 
+	// Find next level
+	nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, gameLevelID)
+
 	return &GroupPlayCompleteLevelResult{
 		ExpEarned:      expAmount,
 		Accuracy:       accuracy,
 		MeetsThreshold: meetsThreshold,
+		NextLevelID:    nextLevelID,
+		NextLevelName:  nextLevelName,
 	}, nil
 }
 
-// GroupPlayRecordAnswer records a single answer and updates session + level stats atomically.
+// GroupPlayRecordAnswer records a single answer and updates session stats atomically.
 func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	if err := verifyOwnership(userID, input.GameSessionTotalID); err != nil {
+	if err := verifyOwnership(userID, input.GameSessionID); err != nil {
 		return err
 	}
 
@@ -470,23 +322,22 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 
 	// 1. Upsert game record
 	var existingRecord models.GameRecord
-	_ = tx.Where("game_session_level_id", input.GameSessionLevelID).
+	_ = tx.Where("game_session_id", input.GameSessionID).
 		Where("content_item_id", input.ContentItemID).First(&existingRecord)
 
 	if existingRecord.ID == "" {
 		record := models.GameRecord{
-			ID:                 newID(),
-			UserID:             userID,
-			GameSessionTotalID: input.GameSessionTotalID,
-			GameSessionLevelID: input.GameSessionLevelID,
-			GameLevelID:        input.GameLevelID,
-			ContentItemID:      input.ContentItemID,
-			IsCorrect:          input.IsCorrect,
-			UserAnswer:         input.UserAnswer,
-			SourceAnswer:       input.SourceAnswer,
-			BaseScore:          input.BaseScore,
-			ComboScore:         input.ComboScore,
-			Duration:           safeDuration,
+			ID:            newID(),
+			UserID:        userID,
+			GameSessionID: input.GameSessionID,
+			GameLevelID:   input.GameLevelID,
+			ContentItemID: input.ContentItemID,
+			IsCorrect:     input.IsCorrect,
+			UserAnswer:    input.UserAnswer,
+			SourceAnswer:  input.SourceAnswer,
+			BaseScore:     input.BaseScore,
+			ComboScore:    input.ComboScore,
+			Duration:      safeDuration,
 		}
 		if err := tx.Create(&record); err != nil {
 			_ = tx.Rollback()
@@ -494,65 +345,32 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 		}
 	}
 
-	// 2. Update session level stats
-	var sessionLevel models.GameSessionLevel
-	if err := tx.Where("game_session_total_id", input.GameSessionTotalID).
-		Where("game_level_id", input.GameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err != nil || sessionLevel.ID == "" {
-		_ = tx.Rollback()
-		return ErrSessionLevelNotFound
-	}
-
-	var levelCountCol string
+	// 2. Update session stats
+	var countCol string
 	if input.IsCorrect {
-		levelCountCol = "correct_count = correct_count + 1"
+		countCol = "correct_count = correct_count + 1"
 	} else {
-		levelCountCol = "wrong_count = wrong_count + 1"
+		countCol = "wrong_count = wrong_count + 1"
 	}
 	if input.NextContentItemID != nil {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_session_levels SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", levelCountCol),
-			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentItemID, sessionLevel.ID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session level stats: %w", err)
-		}
-	} else {
-		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_session_levels SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", levelCountCol),
-			input.Score, input.MaxCombo, input.PlayTime, sessionLevel.ID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session level stats: %w", err)
-		}
-	}
-
-	// 3. Update session total stats
-	var sessionCountCol string
-	if input.IsCorrect {
-		sessionCountCol = "correct_count = correct_count + 1"
-	} else {
-		sessionCountCol = "wrong_count = wrong_count + 1"
-	}
-	if input.NextContentItemID != nil {
-		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_session_totals SET score = ?, max_combo = ?, play_time = ?, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", sessionCountCol),
-			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentItemID, input.GameSessionTotalID,
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
+			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentItemID, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("failed to update session stats: %w", err)
 		}
 	} else {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_session_totals SET score = ?, max_combo = ?, play_time = ?, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", sessionCountCol),
-			input.Score, input.MaxCombo, input.PlayTime, input.GameSessionTotalID,
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
+			input.Score, input.MaxCombo, input.PlayTime, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("failed to update session stats: %w", err)
 		}
 	}
 
-	// 4. Touch user lastPlayedAt (once per day)
+	// 3. Touch user lastPlayedAt (once per day)
 	if _, err := tx.Exec(
 		"UPDATE users SET last_played_at = now(), updated_at = now() WHERE id = ? AND (last_played_at IS NULL OR last_played_at::date < CURRENT_DATE)",
 		userID,
@@ -565,110 +383,79 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 		return fmt.Errorf("failed to commit answer transaction: %w", err)
 	}
 
-	// Broadcast player action to group (fire-and-forget).
-	// ComboScore doubles as combo_streak: bonus values (3,5,10) equal streak thresholds.
+	// Broadcast player action to group (fire-and-forget)
 	if input.IsCorrect {
-		go broadcastPlayerAction(userID, input.GameSessionTotalID, "score", 0)
+		go broadcastGroupPlayerAction(userID, input.GameSessionID, "score", 0)
 		if input.ComboScore > 0 {
-			go broadcastPlayerAction(userID, input.GameSessionTotalID, "combo", input.ComboScore)
+			go broadcastGroupPlayerAction(userID, input.GameSessionID, "combo", input.ComboScore)
 		}
 	}
 
 	return nil
 }
 
-// GroupPlayRecordSkip records a skip and increments skip counts atomically.
-func GroupPlayRecordSkip(userID string, input RecordSkipInput) error {
+// GroupPlaySyncPlayTime syncs playtime to the session.
+func GroupPlaySyncPlayTime(userID, sessionID string, playTime int) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	if err := verifyOwnership(userID, input.GameSessionTotalID); err != nil {
+	if playTime < 0 || playTime > 86400 {
+		return ErrInvalidPlayTime
+	}
+	if err := verifyOwnership(userID, sessionID); err != nil {
 		return err
 	}
 
-	allowed, err := helpers.CheckRateLimit(
-		fmt.Sprintf(rateLimitSkipKey, userID), rateLimitSkip, rateLimitWindowSecs,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to check rate limit: %w", err)
-	}
-	if !allowed {
-		return ErrRateLimited
-	}
-
-	tx, err := facades.Orm().Query().Begin()
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	// 1. Increment session level skip count
-	var sessionLevel models.GameSessionLevel
-	if err := tx.Where("game_session_total_id", input.GameSessionTotalID).
-		Where("game_level_id", input.GameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err != nil || sessionLevel.ID == "" {
-		_ = tx.Rollback()
-		return ErrSessionLevelNotFound
-	}
-
-	if input.NextContentItemID != nil {
-		if _, err := tx.Exec(
-			"UPDATE game_session_levels SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = ?, updated_at = now() WHERE id = ?",
-			input.PlayTime, *input.NextContentItemID, sessionLevel.ID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session level skip count: %w", err)
-		}
-	} else {
-		if _, err := tx.Exec(
-			"UPDATE game_session_levels SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = NULL, updated_at = now() WHERE id = ?",
-			input.PlayTime, sessionLevel.ID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session level skip count: %w", err)
-		}
-	}
-
-	// 2. Increment session total skip count
-	if input.NextContentItemID != nil {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = ?, updated_at = now() WHERE id = ?",
-			input.PlayTime, *input.NextContentItemID, input.GameSessionTotalID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session skip count: %w", err)
-		}
-	} else {
-		if _, err := tx.Exec(
-			"UPDATE game_session_totals SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = NULL, updated_at = now() WHERE id = ?",
-			input.PlayTime, input.GameSessionTotalID,
-		); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to update session skip count: %w", err)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("failed to commit skip transaction: %w", err)
-	}
-
-	// Broadcast player skip to group (fire-and-forget)
-	go broadcastPlayerAction(userID, input.GameSessionTotalID, "skip", 0)
-
-	return nil
+	_, err := facades.Orm().Query().Model(&models.GameSession{}).Where("id", sessionID).
+		Update("play_time", playTime)
+	return err
 }
 
-// broadcastPlayerAction broadcasts a group_player_action SSE event.
-// Runs as fire-and-forget — errors are silently ignored.
-func broadcastPlayerAction(userID, sessionTotalID, action string, comboStreak int) {
-	var session models.GameSessionTotal
+// GroupPlayRestoreSessionData fetches accumulated stats for restoring client state on resume.
+func GroupPlayRestoreSessionData(userID, sessionID string) (*SessionRestoreData, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	if err := verifyOwnership(userID, sessionID); err != nil {
+		return nil, err
+	}
+
+	var session models.GameSession
+	if err := facades.Orm().Query().Where("id", sessionID).First(&session); err != nil || session.ID == "" {
+		return nil, ErrSessionNotFound
+	}
+
+	return &SessionRestoreData{
+		Score:        session.Score,
+		MaxCombo:     session.MaxCombo,
+		CorrectCount: session.CorrectCount,
+		WrongCount:   session.WrongCount,
+		SkipCount:    session.SkipCount,
+		PlayTime:     session.PlayTime,
+	}, nil
+}
+
+// GroupPlayUpdateContentItem updates the session's resume point.
+func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+	if err := verifyOwnership(userID, sessionID); err != nil {
+		return err
+	}
+	_, err := facades.Orm().Query().Model(&models.GameSession{}).Where("id", sessionID).
+		Update("current_content_item_id", contentItemID)
+	return err
+}
+
+// --- Helper ---
+
+// broadcastGroupPlayerAction broadcasts a group_player_action SSE event.
+// Runs as fire-and-forget -- errors are silently ignored.
+func broadcastGroupPlayerAction(userID, sessionID, action string, comboStreak int) {
+	var session models.GameSession
 	if err := facades.Orm().Query().Select("id", "game_group_id").
-		Where("id", sessionTotalID).First(&session); err != nil || session.GameGroupID == nil {
+		Where("id", sessionID).First(&session); err != nil || session.GameGroupID == nil {
 		return
 	}
 
@@ -691,147 +478,10 @@ func broadcastPlayerAction(userID, sessionTotalID, action string, comboStreak in
 	})
 }
 
-// GroupPlaySyncPlayTime syncs playtime to both session and active level.
-func GroupPlaySyncPlayTime(userID, sessionID, gameLevelID string, playTime int) error {
-	if err := requireVip(userID); err != nil {
-		return err
-	}
-	if playTime < 0 || playTime > 86400 {
-		return ErrInvalidPlayTime
-	}
-
-	if err := verifyOwnership(userID, sessionID); err != nil {
-		return err
-	}
-
-	tx, err := facades.Orm().Query().Begin()
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			_ = tx.Rollback()
-		}
-	}()
-
-	// Update session total playtime
-	if _, err := tx.Model(&models.GameSessionTotal{}).Where("id", sessionID).
-		Update("play_time", playTime); err != nil {
-		_ = tx.Rollback()
-		return fmt.Errorf("failed to sync session play time: %w", err)
-	}
-
-	// Update active session level playtime
-	var sessionLevel models.GameSessionLevel
-	if err := tx.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err == nil && sessionLevel.ID != "" {
-		if _, err := tx.Model(&models.GameSessionLevel{}).Where("id", sessionLevel.ID).
-			Update("play_time", playTime); err != nil {
-			_ = tx.Rollback()
-			return fmt.Errorf("failed to sync level play time: %w", err)
-		}
-	}
-
-	return tx.Commit()
-}
-
-// GroupPlayRestoreSessionData fetches accumulated stats for restoring client state on resume.
-func GroupPlayRestoreSessionData(userID, sessionID, gameLevelID string) (*GroupPlayRestoreSessionResult, error) {
-	if err := requireVip(userID); err != nil {
-		return nil, err
-	}
-	if err := verifyOwnership(userID, sessionID); err != nil {
-		return nil, err
-	}
-
-	query := facades.Orm().Query()
-
-	var session models.GameSessionTotal
-	if err := query.Where("id", sessionID).First(&session); err != nil || session.ID == "" {
-		return nil, ErrSessionNotFound
-	}
-
-	result := &GroupPlayRestoreSessionResult{
-		Session: &SessionStats{
-			Score:        session.Score,
-			MaxCombo:     session.MaxCombo,
-			CorrectCount: session.CorrectCount,
-			WrongCount:   session.WrongCount,
-			SkipCount:    session.SkipCount,
-			PlayTime:     session.PlayTime,
-		},
-	}
-
-	var sessionLevel models.GameSessionLevel
-	if err := query.Where("game_session_total_id", sessionID).
-		Where("game_level_id", gameLevelID).Where("ended_at IS NULL").
-		First(&sessionLevel); err == nil && sessionLevel.ID != "" {
-		result.SessionLevel = &SessionStats{
-			Score:        sessionLevel.Score,
-			MaxCombo:     sessionLevel.MaxCombo,
-			CorrectCount: sessionLevel.CorrectCount,
-			WrongCount:   sessionLevel.WrongCount,
-			SkipCount:    sessionLevel.SkipCount,
-			PlayTime:     sessionLevel.PlayTime,
-		}
-	}
-
-	return result, nil
-}
-
-// GroupPlayUpdateContentItem updates the session's resume point within a level.
-func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string) error {
-	if err := requireVip(userID); err != nil {
-		return err
-	}
-	if err := verifyOwnership(userID, sessionID); err != nil {
-		return err
-	}
-	_, err := facades.Orm().Query().Model(&models.GameSessionTotal{}).Where("id", sessionID).
-		Update("current_content_item_id", contentItemID)
-	return err
-}
-
-// RecheckGroupWinners re-checks winner determination for all in-progress levels
-// of a group. Called on SSE disconnect so that waiting players aren't stuck when
-// another player leaves. Non-destructive — no sessions are ended.
-func RecheckGroupWinners(groupID string) {
-	var group models.GameGroup
-	if err := facades.Orm().Query().Where("id", groupID).First(&group); err != nil || group.ID == "" {
-		return
-	}
-	if !group.IsPlaying {
-		return
-	}
-
-	// Find levels that have at least one completed session in the current round
-	type levelIDRow struct {
-		GameLevelID string `gorm:"column:game_level_id"`
-	}
-	var levels []levelIDRow
-	facades.Orm().Query().Raw(
-		`SELECT DISTINCT gsl.game_level_id
-		 FROM game_session_levels gsl
-		 JOIN game_session_totals gst ON gst.id = gsl.game_session_total_id
-		 WHERE gsl.game_group_id = ? AND gsl.ended_at IS NOT NULL AND gst.ended_at IS NULL`,
-		groupID).Scan(&levels)
-
-	for _, lid := range levels {
-		result, err := CheckAndDetermineWinner(groupID, lid.GameLevelID)
-		if err == nil && result != nil {
-			helpers.GroupSSEHub.Broadcast(groupID, "group_level_complete", result)
-		}
-	}
-}
-
-// --- Helper ---
-
-// findGroupPlayActiveSession queries for an active session that always filters by game_group_id.
-func findGroupPlayActiveSession(query orm.Query, userID, gameID, degree string, pattern *string, gameGroupID string) (*models.GameSessionTotal, error) {
-	var session models.GameSessionTotal
-	q := query.Where("user_id", userID).Where("game_id", gameID).
+// findGroupPlayActiveSession queries for an active group session for a specific level.
+func findGroupPlayActiveSession(query orm.Query, userID, gameLevelID, degree string, pattern *string, gameGroupID string) (*models.GameSession, error) {
+	var session models.GameSession
+	q := query.Where("user_id", userID).Where("game_level_id", gameLevelID).
 		Where("degree", degree).Where("ended_at IS NULL").
 		Where("game_group_id", gameGroupID).
 		Order("started_at desc")
