@@ -307,7 +307,9 @@ func (c *GamePlayPkController) Events(ctx contractshttp.Context) contractshttp.R
 	conn := helpers.PkHub.Register(pkID, userID, w)
 	defer func() {
 		helpers.PkHub.Unregister(pkID, userID, conn)
-		services.OnPkDisconnect(pkID)
+		// Do NOT call OnPkDisconnect here — SSE reconnects frequently
+		// (e.g. nginx proxy timeout). Sessions are only ended by explicit
+		// user actions (EndPk, exit button) or robot timeout.
 	}()
 
 	ticker := time.NewTicker(30 * time.Second)
