@@ -162,6 +162,27 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 		IsPlaying:       true,
 	}
 	if err := query.Create(&pk); err != nil {
+		// Unique constraint violation — concurrent call already created a PK
+		var fallback models.GamePk
+		query.Where("user_id", userID).Where("game_id", gameID).Where("is_playing", true).First(&fallback)
+		if fallback.ID != "" {
+			var fbSession models.GameSessionTotal
+			query.Where("game_pk_id", fallback.ID).Where("user_id", userID).First(&fbSession)
+			if fbSession.ID != "" {
+				var fbOpponent models.User
+				query.Where("id", fallback.OpponentID).First(&fbOpponent)
+				fbName := fbOpponent.Username
+				if fbOpponent.Nickname != nil && *fbOpponent.Nickname != "" {
+					fbName = *fbOpponent.Nickname
+				}
+				return &PkStartResult{
+					PkID:         fallback.ID,
+					SessionID:    fbSession.ID,
+					OpponentID:   fallback.OpponentID,
+					OpponentName: fbName,
+				}, nil
+			}
+		}
 		return nil, fmt.Errorf("failed to create pk record: %w", err)
 	}
 
