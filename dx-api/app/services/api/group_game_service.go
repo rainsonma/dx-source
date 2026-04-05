@@ -411,10 +411,6 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	if err := facades.Orm().Query().Where("id", groupID).Where("dismissed_at IS NULL").First(&group); err != nil || group.ID == "" {
 		return ErrGroupNotFound
 	}
-	if !group.IsPlaying {
-		return ErrGroupNotPlaying
-	}
-
 	// Verify user is a group member
 	var memberCount int64
 	memberCount, _ = facades.Orm().Query().Model(&models.GameGroupMember{}).Where("game_group_id", groupID).Where("user_id", userID).Count()
