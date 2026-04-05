@@ -8,7 +8,7 @@ import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { GamePlayProvider, type GamePlayActions } from "@/features/web/play-core/context/game-play-context";
 import { GroupPlayLoadingScreen } from "./group-play-loading-screen";
 import { GroupPlayTopBar } from "./group-play-top-bar";
-import { GroupPlayWaitingScreen } from "./group-play-waiting-screen";
+// GroupPlayWaitingScreen removed — first-to-complete means immediate result
 import { GroupPlayResultPanel } from "./group-play-result-panel";
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
@@ -80,11 +80,14 @@ export function GroupPlayShell({
   // Group-specific state from useGroupPlayStore
   const groupPhase = useGroupPlayStore((s) => s.groupPhase);
   const groupResult = useGroupPlayStore((s) => s.groupResult);
-  const setGroupWaiting = useGroupPlayStore((s) => s.setGroupWaiting);
   const setGroupResult = useGroupPlayStore((s) => s.setGroupResult);
+  const setGroupResultFromWinner = useGroupPlayStore((s) => s.setGroupResultFromWinner);
   const sessionId = useGroupPlayStore((s) => s.sessionId);
   const addCompletedPlayer = useGroupPlayStore((s) => s.addCompletedPlayer);
   const setLastPlayerAction = useGroupPlayStore((s) => s.setLastPlayerAction);
+  const setNextLevel = useGroupPlayStore((s) => s.setNextLevel);
+  const nextLevelId = useGroupPlayStore((s) => s.nextLevelId);
+  const nextLevelName = useGroupPlayStore((s) => s.nextLevelName);
 
   // Score/combo are updated by shared game components via useGameStore
   const score = useGameStore((s) => s.score);
@@ -107,10 +110,6 @@ export function GroupPlayShell({
   const targetLevelId = targetLevel?.id ?? levelId;
   const levelName = targetLevel?.name ?? game.name;
 
-  const currentLevelIndex = game.levels.findIndex((l) => l.id === targetLevelId);
-  const nextLevel = currentLevelIndex >= 0 ? game.levels[currentLevelIndex + 1] : undefined;
-  const nextLevelId = nextLevel?.id ?? null;
-
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   async function completeAndWait() {
@@ -121,25 +120,32 @@ export function GroupPlayShell({
     // sending a completeLevelAction with a stale sessionId (→ 404).
     if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
-    setGroupWaiting();
     const result = await completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
     });
     // Retry once on failure — the backend must know we completed so the
-    // winner check can proceed. Without this, a transient error leaves the
-    // player stuck on the waiting screen indefinitely.
+    // winner check can proceed.
     if (result.error) {
-      await completeLevelAction(sessionId, targetLevelId, {
+      const retry = await completeLevelAction(sessionId, targetLevelId, {
         score,
         maxCombo: combo.maxCombo,
         totalItems: contentItems?.length ?? 0,
       });
+      if (retry.data) {
+        if (retry.data.nextLevelId && retry.data.nextLevelName) {
+          setNextLevel(retry.data.nextLevelId, retry.data.nextLevelName);
+        }
+      }
+    } else if (result.data) {
+      if (result.data.nextLevelId && result.data.nextLevelName) {
+        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
+      }
     }
   }
 
-  // SSE: listen for group level complete, force-end, and next-level
+  // SSE: listen for group level complete, force-end, and player events
   useGroupPlayEvents(groupId, {
     onLevelComplete: (event) => {
       setGroupResult(event);
@@ -152,15 +158,16 @@ export function GroupPlayShell({
       }
       setPhase("result");
     },
-    onNextLevel: (event) => {
-      router.push(
-        `/hall/play-group/${event.game_id}?groupId=${event.game_group_id}&degree=${event.degree}${event.pattern ? `&pattern=${event.pattern}` : ""}&levelTimeLimit=${event.level_time_limit}&gameMode=${gameMode}${event.level_id ? `&level=${event.level_id}` : ""}`
-      );
-    },
     onPlayerComplete: (event) => {
       const currentLevelId = useGroupPlayStore.getState().levelId;
       if (event.game_level_id === currentLevelId) {
         addCompletedPlayer(event.user_id);
+        // First-to-complete: winner event triggers immediate result
+        const gp = useGroupPlayStore.getState().groupPhase;
+        if (gp !== "result") {
+          setGroupResultFromWinner(event);
+          setPhase("result");
+        }
       }
     },
     onPlayerAction: (event) => {
@@ -210,11 +217,11 @@ export function GroupPlayShell({
 
   // Trigger completeAndWait when entering result phase
   useEffect(() => {
-    if (phase === "result" && groupPhase !== "result") {
+    if (phase === "result") {
       completeAndWait();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- completeAndWait uses refs and store state, not a stable dep
-  }, [phase, groupPhase]);
+  }, [phase]);
 
   if (phase === "loading") {
     return (
@@ -234,25 +241,14 @@ export function GroupPlayShell({
     );
   }
 
-  if (phase === "result") {
-    if (groupPhase !== "result") {
-      return (
-        <GroupPlayWaitingScreen
-          groupId={groupId}
-          player={player}
-          gameName={game.name}
-          gameMode={gameMode}
-          levelName={levelName}
-        />
-      );
-    }
+  if (phase === "result" && groupPhase === "result") {
     return (
       <GroupPlayResultPanel
         result={groupResult!}
         groupId={groupId}
         levelName={levelName}
         nextLevelId={nextLevelId}
-        currentLevelId={targetLevelId}
+        nextLevelName={nextLevelName}
       />
     );
   }

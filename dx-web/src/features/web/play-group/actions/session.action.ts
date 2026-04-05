@@ -2,17 +2,17 @@ import { apiClient } from "@/lib/api-client";
 
 export async function startSessionAction(
   gameId: string,
+  gameLevelId: string,
   degree: string,
   pattern: string | null,
-  levelId: string,
   gameGroupId: string
 ) {
   try {
-    const res = await apiClient.post<{ id: string; levelId?: string }>("/api/play-group/start", {
+    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>("/api/play-group/start", {
       game_id: gameId,
+      game_level_id: gameLevelId,
       degree,
       pattern,
-      level_id: levelId,
       game_group_id: gameGroupId,
     });
     if (res.code !== 0) return { data: null, error: res.message || "无法开始游戏" };
@@ -22,31 +22,13 @@ export async function startSessionAction(
   }
 }
 
-export async function startLevelAction(
-  sessionId: string,
-  gameLevelId: string,
-  degree: string,
-  pattern: string | null
-) {
-  try {
-    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>(
-      `/api/play-group/${sessionId}/levels/start`,
-      { game_level_id: gameLevelId, degree, pattern }
-    );
-    if (res.code !== 0) return { data: null, error: res.message || "开始关卡失败" };
-    return { data: res.data, error: null };
-  } catch {
-    return { data: null, error: "开始关卡失败" };
-  }
-}
-
 export async function completeLevelAction(
   sessionId: string,
   gameLevelId: string,
   data: { score: number; maxCombo: number; totalItems: number }
 ) {
   try {
-    const res = await apiClient.post<unknown>(
+    const res = await apiClient.post<{ nextLevelId?: string; nextLevelName?: string }>(
       `/api/play-group/${sessionId}/levels/${gameLevelId}/complete`,
       { score: data.score, max_combo: data.maxCombo, total_items: data.totalItems }
     );
@@ -58,8 +40,7 @@ export async function completeLevelAction(
 }
 
 export async function recordAnswerAction(data: {
-  gameSessionTotalId: string;
-  gameSessionLevelId: string;
+  gameSessionId: string;
   gameLevelId: string;
   contentItemId: string;
   isCorrect: boolean;
@@ -75,9 +56,8 @@ export async function recordAnswerAction(data: {
 }) {
   try {
     const res = await apiClient.post<unknown>(
-      `/api/play-group/${data.gameSessionTotalId}/answers`,
+      `/api/play-group/${data.gameSessionId}/answers`,
       {
-        game_session_level_id: data.gameSessionLevelId,
         game_level_id: data.gameLevelId,
         content_item_id: data.contentItemId,
         is_correct: data.isCorrect,
@@ -100,25 +80,13 @@ export async function recordAnswerAction(data: {
 }
 
 export async function recordSkipAction(data: {
-  gameSessionTotalId: string;
+  gameSessionId: string;
   gameLevelId: string;
   playTime: number;
   nextContentItemId: string | null;
 }) {
-  try {
-    const res = await apiClient.post<unknown>(
-      `/api/play-group/${data.gameSessionTotalId}/skips`,
-      {
-        game_level_id: data.gameLevelId,
-        play_time: data.playTime,
-        next_content_item_id: data.nextContentItemId,
-      }
-    );
-    if (res.code !== 0) return { data: null, error: res.message || "跳过失败" };
-    return { data: res.data, error: null };
-  } catch {
-    return { data: null, error: "跳过失败" };
-  }
+  // Skip is disabled for group play — no-op stub to satisfy GamePlayActions interface
+  return { data: null, error: null };
 }
 
 export async function syncPlayTimeAction(
@@ -138,14 +106,11 @@ export async function syncPlayTimeAction(
 }
 
 type RestoreData = {
-  sessionLevel?: {
-    score: number;
-    maxCombo: number;
-    correctCount: number;
-    wrongCount: number;
-    skipCount: number;
-    playTime: number;
-  };
+  score: number;
+  maxCombo: number;
+  correctCount: number;
+  wrongCount: number;
+  playTime: number;
 };
 
 export async function restoreSessionDataAction(sessionId: string) {
@@ -179,34 +144,40 @@ export async function updateContentItemAction(
 export async function endSessionAction(
   sessionId: string,
   data: {
-    gameId: string;
     score: number;
     exp: number;
     maxCombo: number;
     correctCount: number;
     wrongCount: number;
     skipCount: number;
-    allLevelsCompleted: boolean;
   }
 ) {
   try {
     const res = await apiClient.post<unknown>(
       `/api/play-group/${sessionId}/end`,
       {
-        game_id: data.gameId,
         score: data.score,
         exp: data.exp,
         max_combo: data.maxCombo,
         correct_count: data.correctCount,
         wrong_count: data.wrongCount,
         skip_count: data.skipCount,
-        all_levels_completed: data.allLevelsCompleted,
       }
     );
     if (res.code !== 0) return { data: null, error: res.message || "结束会话失败" };
     return { data: res.data, error: null };
   } catch {
     return { data: null, error: "结束会话失败" };
+  }
+}
+
+export async function nextGroupLevelAction(groupId: string) {
+  try {
+    const res = await apiClient.post<null>(`/api/groups/${groupId}/next-level`);
+    if (res.code !== 0) return { data: null, error: res.message || "进入下一关失败" };
+    return { data: res.data, error: null };
+  } catch {
+    return { data: null, error: "进入下一关失败" };
   }
 }
 

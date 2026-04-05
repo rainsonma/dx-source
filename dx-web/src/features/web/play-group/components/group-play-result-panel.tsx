@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getAvatarColor } from "@/lib/avatar";
 import Link from "next/link";
 import { toast } from "sonner";
-import { groupApi } from "@/features/web/groups/actions/group.action";
+import { nextGroupLevelAction } from "../actions/session.action";
 import type {
   GroupLevelCompleteEvent,
   SoloWinner,
@@ -19,7 +19,7 @@ interface GroupPlayResultPanelProps {
   groupId: string;
   levelName: string;
   nextLevelId: string | null;
-  currentLevelId: string;
+  nextLevelName: string | null;
 }
 
 /** Teal palette for podium columns */
@@ -95,23 +95,18 @@ export function GroupPlayResultPanel({
   groupId,
   levelName,
   nextLevelId,
-  currentLevelId,
+  nextLevelName,
 }: GroupPlayResultPanelProps) {
   const [loadingNext, setLoadingNext] = useState(false);
 
   async function handleNextLevel() {
     setLoadingNext(true);
-    try {
-      const res = await groupApi.nextLevel(groupId, currentLevelId);
-      if (res.code !== 0) {
-        toast.error(res.message || "进入下一关失败");
-        setLoadingNext(false);
-      }
-      // Don't reset loading — SSE will navigate everyone away
-    } catch {
-      toast.error("进入下一关失败");
+    const res = await nextGroupLevelAction(groupId);
+    if (res.error) {
+      toast.error(res.error);
       setLoadingNext(false);
     }
+    // Don't reset loading — SSE will navigate everyone away
   }
 
   const isSolo = result.mode === "group_solo";

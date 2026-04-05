@@ -11,7 +11,6 @@ import {
   Clock,
   Trophy,
   Flame,
-  SkipForward,
   Check,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
@@ -69,7 +68,6 @@ export function GroupPlayTopBar({
 
   const lastPlayerAction = useGroupPlayStore((s) => s.lastPlayerAction);
 
-  const [skipFlash, setSkipFlash] = useState({ key: 0, name: null as string | null });
   const [scoreFlash, setScoreFlash] = useState({ key: 0, name: null as string | null });
   const [comboFlash, setComboFlash] = useState({ key: 0, name: null as string | null, text: null as string | null });
 
@@ -78,9 +76,6 @@ export function GroupPlayTopBar({
   useEffect(() => {
     if (!lastPlayerAction) return;
     switch (lastPlayerAction.action) {
-      case "skip":
-        setSkipFlash((prev) => ({ key: prev.key + 1, name: lastPlayerAction.user_name }));
-        break;
       case "score":
         setScoreFlash((prev) => ({ key: prev.key + 1, name: lastPlayerAction.user_name }));
         break;
@@ -286,14 +281,6 @@ export function GroupPlayTopBar({
 
         {/* Stats */}
         <div className="border-t border-border px-3 py-2 space-y-1.5">
-          <GroupStatRow
-            icon={SkipForward}
-            iconClass="text-muted-foreground"
-            label="跳过"
-            displayText={skipFlash.name}
-            flashKey={skipFlash.key}
-            flashColorClass="bg-pink-400"
-          />
           <GroupStatRow
             icon={Trophy}
             iconClass="text-teal-600"

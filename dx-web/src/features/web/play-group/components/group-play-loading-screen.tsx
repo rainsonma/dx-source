@@ -14,7 +14,6 @@ import { GAME_MODES, type GameMode } from "@/consts/game-mode";
 import { GAME_DEGREE_LABELS, type GameDegree } from "@/consts/game-degree";
 import {
   startSessionAction,
-  startLevelAction,
   restoreSessionDataAction,
   fetchLevelContentAction,
 } from "../actions/session.action";
@@ -135,12 +134,12 @@ export function GroupPlayLoadingScreen({
           // Proceed without participants if sessionStorage read fails
         }
 
-        // Step 1: Start group-play session
+        // Step 1: Start group-play session (includes level)
         const sessionResult = await startSessionAction(
           gameId,
+          levelId,
           degree,
           pattern,
-          levelId,
           gameGroupId
         );
         if (cancelled) return;
@@ -148,59 +147,39 @@ export function GroupPlayLoadingScreen({
           setError(sessionResult.error ?? "无法开始游戏");
           return;
         }
-        setProgress(25);
+        setProgress(33);
 
-        const resolvedLevelId = sessionResult.data.levelId ?? levelId;
-
-        // Step 2: Start level session
-        const levelResult = await startLevelAction(
-          sessionResult.data.id,
-          resolvedLevelId,
-          degree,
-          pattern
-        );
-        if (cancelled) return;
-        if (levelResult.error || !levelResult.data) {
-          setError(levelResult.error ?? "开始关卡失败");
-          return;
-        }
-        setProgress(50);
-
-        // Step 3: Restore data if resuming
-        const levelSessionResumeItemId =
-          levelResult.data.currentContentItemId ?? null;
+        // Step 2: Restore data if resuming
+        const resumeItemId = sessionResult.data.currentContentItemId ?? null;
 
         let restored: {
           score: number;
           maxCombo: number;
           correctCount: number;
           wrongCount: number;
-          skipCount: number;
           playTime: number;
         } | null = null;
 
-        if (levelSessionResumeItemId) {
+        if (resumeItemId) {
           const restoreResult = await restoreSessionDataAction(
             sessionResult.data.id
           );
-          if (!cancelled && restoreResult.data?.sessionLevel) {
-            const sl = restoreResult.data.sessionLevel;
+          if (!cancelled && restoreResult.data) {
             restored = {
-              score: sl.score,
-              maxCombo: sl.maxCombo,
-              correctCount: sl.correctCount,
-              wrongCount: sl.wrongCount,
-              skipCount: sl.skipCount,
-              playTime: sl.playTime,
+              score: restoreResult.data.score,
+              maxCombo: restoreResult.data.maxCombo,
+              correctCount: restoreResult.data.correctCount,
+              wrongCount: restoreResult.data.wrongCount,
+              playTime: restoreResult.data.playTime,
             };
           }
         }
-        setProgress(75);
+        setProgress(66);
 
-        // Step 4: Fetch content
+        // Step 3: Fetch content
         const contentResult = await fetchLevelContentAction(
           gameId,
-          resolvedLevelId,
+          levelId,
           degree
         );
         if (cancelled) return;
@@ -211,9 +190,9 @@ export function GroupPlayLoadingScreen({
         setProgress(100);
 
         let startFromIndex = 0;
-        if (levelSessionResumeItemId) {
+        if (resumeItemId) {
           const idx = contentResult.data.findIndex(
-            (item) => item.id === levelSessionResumeItemId
+            (item) => item.id === resumeItemId
           );
           if (idx > 0) startFromIndex = idx;
         }
@@ -223,12 +202,11 @@ export function GroupPlayLoadingScreen({
 
         const sessionInit = {
           sessionId: sessionResult.data.id,
-          levelSessionId: levelResult.data.id,
           gameId,
           gameMode,
           degree,
           pattern,
-          levelId: resolvedLevelId,
+          levelId,
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
           gameGroupId,
@@ -240,7 +218,11 @@ export function GroupPlayLoadingScreen({
         // Init group store (shell state management)
         initGroupSession(sessionInit);
         // Init game store (required by shared game components like GameWordSentence)
-        initGameSession(sessionInit);
+        // Game store still requires skipCount in restored; group play has no skip so always 0
+        initGameSession({
+          ...sessionInit,
+          restored: restored ? { ...restored, skipCount: 0 } : undefined,
+        });
       } catch {
         if (!cancelled) setError("加载失败，请重试");
       }

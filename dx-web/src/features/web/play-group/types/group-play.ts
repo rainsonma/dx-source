@@ -23,16 +23,6 @@ export type GroupForceEndEvent = {
   results: GroupLevelCompleteEvent[];
 };
 
-export type GroupNextLevelEvent = {
-  game_group_id: string;
-  game_id: string;
-  level_id: string;
-  level_name: string;
-  degree: string;
-  pattern: string | null;
-  level_time_limit: number;
-};
-
 export type ParticipantMember = {
   user_id: string;
   user_name: string;
@@ -58,11 +48,12 @@ export type GroupPlayerCompleteEvent = {
   user_id: string;
   user_name: string;
   game_level_id: string;
+  score: number;
 };
 
 export type GroupPlayerActionEvent = {
   user_id: string;
   user_name: string;
-  action: "score" | "skip" | "combo";
+  action: "score" | "combo";
   combo_streak?: number;
 };
