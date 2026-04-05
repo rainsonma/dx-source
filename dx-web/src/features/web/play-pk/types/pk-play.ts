@@ -30,10 +30,3 @@ export type PkPlayerActionEvent = {
   combo_streak?: number;
 };
 
-export type PkTimeoutWarningEvent = {
-  countdown: number;
-};
-
-export type PkTimeoutEvent = {
-  game_level_id: string;
-};

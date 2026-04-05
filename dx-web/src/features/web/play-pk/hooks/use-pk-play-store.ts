@@ -44,7 +44,6 @@ interface PkPlayState {
   opponentCombo: number;
   opponentItemsPlayed: number;
   lastOpponentAction: PkPlayerActionEvent | null;
-  timeoutCountdown: number | null;
 }
 
 interface PkPlayActions {
@@ -75,7 +74,6 @@ interface PkPlayActions {
   setOpponentCompleted: (score?: number) => void;
   setLastOpponentAction: (action: PkPlayerActionEvent) => void;
   trackOpponentAction: (action: PkPlayerActionEvent) => void;
-  setTimeoutCountdown: (seconds: number | null) => void;
   exitGame: () => void;
 }
 
@@ -107,7 +105,6 @@ const initialState: PkPlayState = {
   opponentCombo: 0,
   opponentItemsPlayed: 0,
   lastOpponentAction: null,
-  timeoutCountdown: null,
 };
 
 export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
@@ -150,8 +147,7 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
         opponentCombo: 0,
         opponentItemsPlayed: 0,
         lastOpponentAction: null,
-        timeoutCountdown: null,
-      }),
+            }),
 
     nextItem: () => set((s) => ({ currentIndex: s.currentIndex + 1 })),
 
@@ -199,7 +195,6 @@ export const usePkPlayStore = create<PkPlayState & PkPlayActions>()(
         };
       }),
 
-    setTimeoutCountdown: (seconds) => set({ timeoutCountdown: seconds }),
 
     exitGame: () => set({ ...initialState }),
   })

@@ -24,8 +24,3 @@ var PkDifficulties = map[string]PkDifficultyParams{
 
 // PkDifficultySlugs lists valid difficulty slugs for validation.
 var PkDifficultySlugs = []string{PkDifficultyEasy, PkDifficultyNormal, PkDifficultyHard}
-
-const (
-	PkTimeoutDuration = 5 * 60 // 5 minutes in seconds
-	PkTimeoutWarning  = 30     // warning countdown in seconds
-)

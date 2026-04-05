@@ -6,16 +6,12 @@ import type {
   PkForceEndEvent,
   PkPlayerCompleteEvent,
   PkPlayerActionEvent,
-  PkTimeoutWarningEvent,
-  PkTimeoutEvent,
 } from "../types/pk-play";
 
 type PkPlayEventHandlers = {
   onForceEnd?: (event: PkForceEndEvent) => void;
   onPlayerComplete?: (event: PkPlayerCompleteEvent) => void;
   onPlayerAction?: (event: PkPlayerActionEvent) => void;
-  onTimeoutWarning?: (event: PkTimeoutWarningEvent) => void;
-  onTimeout?: (event: PkTimeoutEvent) => void;
 };
 
 export function usePkPlayEvents(
@@ -32,10 +28,6 @@ export function usePkPlayEvents(
       handlersRef.current.onPlayerComplete?.(data as PkPlayerCompleteEvent),
     pk_player_action: (data: unknown) =>
       handlersRef.current.onPlayerAction?.(data as PkPlayerActionEvent),
-    pk_timeout_warning: (data: unknown) =>
-      handlersRef.current.onTimeoutWarning?.(data as PkTimeoutWarningEvent),
-    pk_timeout: (data: unknown) =>
-      handlersRef.current.onTimeout?.(data as PkTimeoutEvent),
   }), []);
 
   usePkSSE(pkId, listeners);

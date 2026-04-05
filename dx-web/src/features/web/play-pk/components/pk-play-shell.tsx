@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useState, useCallback } from "react";
+import { useEffect, useRef, useMemo, useCallback } from "react";
 import { GAME_MODES } from "@/consts/game-mode";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
@@ -75,18 +75,15 @@ export function PkPlayShell({
   const sessionId = usePkPlayStore((s) => s.sessionId);
   const opponentName = usePkPlayStore((s) => s.opponentName);
   const lastOpponentAction = usePkPlayStore((s) => s.lastOpponentAction);
-  const timeoutCountdown = usePkPlayStore((s) => s.timeoutCountdown);
   const pkNextLevelId = usePkPlayStore((s) => s.nextLevelId);
   const setPkResult = usePkPlayStore((s) => s.setPkResult);
   const trackOpponentAction = usePkPlayStore((s) => s.trackOpponentAction);
-  const setTimeoutCountdown = usePkPlayStore((s) => s.setTimeoutCountdown);
 
   const score = useGameStore((s) => s.score);
   const combo = useGameStore((s) => s.combo);
   const contentItems = useGameStore((s) => s.contentItems);
 
   const completedRef = useRef(false);
-  const [countdownValue, setCountdownValue] = useState<number | null>(null);
 
   // No-op stubs for actions not applicable to PK mode
   const noopSkip = useCallback(async () => ({ data: null, error: null }), []);
@@ -174,33 +171,7 @@ export function PkPlayShell({
     onPlayerAction: (event) => {
       trackOpponentAction(event);
     },
-    onTimeoutWarning: (event) => {
-      setTimeoutCountdown(event.countdown);
-    },
-    onTimeout: () => {
-      setPhase("result");
-      completeAndSetResult();
-    },
   });
-
-  // Timeout countdown interval
-  useEffect(() => {
-    if (timeoutCountdown === null || timeoutCountdown <= 0) {
-      setCountdownValue(null);
-      return;
-    }
-    setCountdownValue(timeoutCountdown);
-    const interval = setInterval(() => {
-      setCountdownValue((prev) => {
-        if (prev === null || prev <= 1) {
-          clearInterval(interval);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [timeoutCountdown]);
 
   // Reset on game/level change
   useEffect(() => {
@@ -308,20 +279,6 @@ export function PkPlayShell({
         <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto px-4 py-10">
           <GameComponent />
         </div>
-
-        {/* Timeout countdown overlay */}
-        {countdownValue !== null && countdownValue > 0 && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60">
-            <div className="flex flex-col items-center gap-3 rounded-2xl bg-card px-8 py-6">
-              <span className="text-4xl font-extrabold tabular-nums text-red-500">
-                {countdownValue}
-              </span>
-              <p className="text-sm font-medium text-muted-foreground">
-                你将在 {countdownValue} 秒后输掉本场 PK
-              </p>
-            </div>
-          </div>
-        )}
 
         {overlay === "paused" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">

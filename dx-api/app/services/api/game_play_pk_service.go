@@ -43,11 +43,6 @@ type PkPlayerActionEvent struct {
 	ComboStreak int    `json:"combo_streak,omitempty"`
 }
 
-// PkTimeoutEvent is the SSE payload for pk_timeout / pk_timeout_warning.
-type PkTimeoutEvent struct {
-	GameLevelID string `json:"game_level_id"`
-	SecondsLeft int    `json:"seconds_left"`
-}
 
 // --- Robot state management ---
 
@@ -672,32 +667,6 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			"last_winner_id": robotUserID,
 		})
 
-	// Start timeout countdown — if human is still playing, warn and then force-end
-	waitDuration := time.Duration(consts.PkTimeoutDuration-consts.PkTimeoutWarning) * time.Second
-	select {
-	case <-ctx.Done():
-		return
-	case <-time.After(waitDuration):
-	}
-
-	// Broadcast timeout warning
-	helpers.PkHub.Broadcast(pkID, "pk_timeout_warning", PkTimeoutEvent{
-		GameLevelID: gameLevelID,
-		SecondsLeft: consts.PkTimeoutWarning,
-	})
-
-	// Wait remaining seconds
-	select {
-	case <-ctx.Done():
-		return
-	case <-time.After(time.Duration(consts.PkTimeoutWarning) * time.Second):
-	}
-
-	// Timeout — broadcast timeout event
-	helpers.PkHub.Broadcast(pkID, "pk_timeout", PkTimeoutEvent{
-		GameLevelID: gameLevelID,
-		SecondsLeft: 0,
-	})
 }
 
 // --- Internal helpers ---
