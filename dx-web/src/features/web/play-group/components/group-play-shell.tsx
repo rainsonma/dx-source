@@ -110,7 +110,8 @@ export function GroupPlayShell({
   const combo = useGameStore((s) => s.combo);
   const contentItems = useGameStore((s) => s.contentItems);
 
-  // Complete level when phase transitions to "result" (all items answered)
+  // Submit completion to backend when all items answered (phase → "result").
+  // The backend broadcasts SSE to all participants and determines the winner.
   useEffect(() => {
     if (phase !== "result" || completedRef.current) return;
     const sessionId = useGroupPlayStore.getState().sessionId;
@@ -118,28 +119,24 @@ export function GroupPlayShell({
     if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
 
-    async function complete() {
-      const result = await completeLevelAction(sessionId!, targetLevelId, {
-        score,
-        maxCombo: combo.maxCombo,
-        totalItems: contentItems?.length ?? 0,
-      });
-      if (result.data) {
-        if (result.data.nextLevelId && result.data.nextLevelName) {
-          setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
-        }
-        // Immediately show group result for the winner
-        const store = useGroupPlayStore.getState();
-        if (store.groupPhase !== "result") {
-          setGroupResultFromWinner(
-            { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
-            [{ user_id: player.id, user_name: player.nickname, score }],
-          );
-        }
+    completeLevelAction(sessionId, targetLevelId, {
+      score,
+      maxCombo: combo.maxCombo,
+      totalItems: contentItems?.length ?? 0,
+    }).then((result) => {
+      if (!result.data) return;
+      if (result.data.nextLevelId && result.data.nextLevelName) {
+        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
       }
-    }
-
-    complete();
+      // Show result immediately for the winner (SSE updates all others)
+      const store = useGroupPlayStore.getState();
+      if (store.groupPhase !== "result") {
+        setGroupResultFromWinner(
+          { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
+          [{ user_id: player.id, user_name: player.nickname, score }],
+        );
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
