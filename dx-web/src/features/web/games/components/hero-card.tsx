@@ -101,7 +101,7 @@ export function HeroCard({
               onClick={onStart}
               className="flex items-center gap-2 rounded-[10px] bg-teal-600 px-7 py-3 text-[15px] font-bold text-white hover:bg-teal-700"
             >
-              {resumeLabel ? `继续学习「${resumeLabel}」` : "开始游戏"}
+              {resumeLabel ? `继续学习「${resumeLabel.length > 6 ? resumeLabel.slice(0, 6) + "…" : resumeLabel}」` : "开始游戏"}
               <Play className="h-4 w-4" />
             </button>
             <button
