@@ -24,7 +24,7 @@ import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-m
 import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
-import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
+import { GameExitModal } from "./game-exit-modal";
 import { useGameTimer, getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
 import type { ComponentType } from "react";

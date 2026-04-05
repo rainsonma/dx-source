@@ -10,7 +10,7 @@ import { PkPlayTopBar } from "./pk-play-top-bar";
 import { PkPlayResultPanel } from "./pk-play-result-panel";
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
-import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
+import { PkExitModal } from "./pk-exit-modal";
 import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
 import { GameListening } from "@/features/web/play-core/components/game-listening";
@@ -296,7 +296,7 @@ export function PkPlayShell({
         )}
         {overlay === "settings" && <GameSettingsModal />}
         {overlay === "report" && <GameReportModal />}
-        {overlay === "exit" && <GameExitModal gameId={game.id} />}
+        {overlay === "exit" && <PkExitModal gameId={game.id} />}
       </div>
     </GamePlayProvider>
   );

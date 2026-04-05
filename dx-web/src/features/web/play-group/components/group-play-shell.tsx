@@ -13,7 +13,7 @@ import { GroupPlayResultPanel } from "./group-play-result-panel";
 import { GameSettingsModal } from "@/features/web/play-core/components/game-settings-modal";
 import { GameResetModal } from "@/features/web/play-core/components/game-reset-modal";
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
-import { GameExitModal } from "@/features/web/play-core/components/game-exit-modal";
+import { GroupExitModal } from "./group-exit-modal";
 import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
 import { GameListening } from "@/features/web/play-core/components/game-listening";
@@ -251,7 +251,7 @@ export function GroupPlayShell({
       {overlay === "settings" && <GameSettingsModal />}
       {overlay === "reset" && <GameResetModal />}
       {overlay === "report" && <GameReportModal />}
-      {overlay === "exit" && <GameExitModal gameId={game.id} />}
+      {overlay === "exit" && <GroupExitModal groupId={groupId} />}
     </div>
     </GamePlayProvider>
   );
