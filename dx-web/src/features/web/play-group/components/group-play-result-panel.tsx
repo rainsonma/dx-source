@@ -119,7 +119,7 @@ export function GroupPlayResultPanel({
   return (
     <div className="flex h-screen flex-col items-center justify-center px-4 py-12">
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-lg font-bold text-foreground">关卡结果</h2>
+        <h2 className="text-lg font-bold text-foreground">对抗结果</h2>
         <p className="text-sm text-muted-foreground">{levelName}</p>
 
         {/* Podium */}

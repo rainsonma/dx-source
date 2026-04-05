@@ -161,9 +161,17 @@ export function GroupPlayShell({
       if (event.game_level_id === currentLevelId) {
         addCompletedPlayer(event.user_id);
         // First-to-complete: winner event triggers immediate result
-        const gp = useGroupPlayStore.getState().groupPhase;
-        if (gp !== "result") {
-          setGroupResultFromWinner(event);
+        const store = useGroupPlayStore.getState();
+        if (store.groupPhase !== "result") {
+          const winnerIsMe = event.user_id === player.id;
+          const myScore = useGameStore.getState().score;
+          const participants = winnerIsMe
+            ? [{ user_id: event.user_id, user_name: event.user_name, score: event.score }]
+            : [
+                { user_id: event.user_id, user_name: event.user_name, score: event.score },
+                { user_id: player.id, user_name: player.nickname, score: myScore },
+              ];
+          setGroupResultFromWinner(event, participants);
           setPhase("result");
         }
       }

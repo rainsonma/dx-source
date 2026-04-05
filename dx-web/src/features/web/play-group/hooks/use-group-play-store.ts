@@ -67,7 +67,7 @@ interface GroupPlayActions {
   resetGame: () => void;
   exitGame: () => void;
   setGroupResult: (result: GroupLevelCompleteEvent) => void;
-  setGroupResultFromWinner: (event: GroupPlayerCompleteEvent) => void;
+  setGroupResultFromWinner: (event: GroupPlayerCompleteEvent, participants: { user_id: string; user_name: string; score: number }[]) => void;
   clearGroupPhase: () => void;
   setParticipants: (data: Participants) => void;
   addCompletedPlayer: (userId: string) => void;
@@ -177,14 +177,14 @@ export const useGroupPlayStore = create<GroupPlayState & GroupPlayActions>()(
     exitGame: () => set({ ...initialState }),
 
     setGroupResult: (result) => set({ groupPhase: "result", groupResult: result, completedPlayerIds: [] }),
-    setGroupResultFromWinner: (event) =>
+    setGroupResultFromWinner: (event, participants) =>
       set({
         groupPhase: "result",
         groupResult: {
           game_level_id: event.game_level_id,
           mode: "group_solo",
           winner: { user_id: event.user_id, user_name: event.user_name, score: event.score },
-          participants: [{ user_id: event.user_id, user_name: event.user_name, score: event.score }],
+          participants,
         },
         completedPlayerIds: [],
       }),
