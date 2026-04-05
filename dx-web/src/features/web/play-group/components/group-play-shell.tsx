@@ -97,11 +97,27 @@ export function GroupPlayShell({
     recordAnswer: recordAnswerAction,
     recordSkip: recordSkipAction,
     markAsReview: markAsReviewAction,
-    completeLevel: completeLevelAction,
+    completeLevel: async (...args: Parameters<typeof completeLevelAction>) => {
+      const result = await completeLevelAction(...args);
+      if (result.data) {
+        if (result.data.nextLevelId && result.data.nextLevelName) {
+          setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
+        }
+        // Immediately show group result for the winner before phase changes
+        const store = useGroupPlayStore.getState();
+        if (store.groupPhase !== "result") {
+          setGroupResultFromWinner(
+            { user_id: player.id, user_name: player.nickname, game_level_id: args[1], score: useGameStore.getState().score, participants: [], next_level_id: result.data.nextLevelId ?? null, next_level_name: result.data.nextLevelName ?? null },
+            [{ user_id: player.id, user_name: player.nickname, score: useGameStore.getState().score }],
+          );
+        }
+      }
+      return result;
+    },
     endSession: endSessionAction,
     restartLevel: restartLevelAction,
     competitive: true,
-  }), []);
+  }), [player.id, player.nickname, setNextLevel, setGroupResultFromWinner]);
 
   const targetLevel =
     game.levels.find((l) => l.id === levelId) ?? game.levels[0];
@@ -112,36 +128,19 @@ export function GroupPlayShell({
 
   async function completeAndWait() {
     if (completedRef.current || !sessionId || !targetLevelId) return;
-    // Guard against stale store state: on remount after navigation, the
-    // completeAndWait effect can fire before exitGame() resets the stores.
-    // Verify the group store's levelId matches the current target to avoid
-    // sending a completeLevelAction with a stale sessionId (→ 404).
     if (useGroupPlayStore.getState().levelId !== targetLevelId) return;
     completedRef.current = true;
+    // Fallback: if the completeLevel wrapper in playActions didn't fire
+    // (e.g. phase changed without going through the game component),
+    // call the backend directly so the SSE event is broadcast.
     const result = await completeLevelAction(sessionId, targetLevelId, {
       score,
       maxCombo: combo.maxCombo,
       totalItems: contentItems?.length ?? 0,
     });
-
-    const data = result.error
-      ? (await completeLevelAction(sessionId, targetLevelId, {
-          score, maxCombo: combo.maxCombo, totalItems: contentItems?.length ?? 0,
-        })).data
-      : result.data;
-
-    if (data) {
-      if (data.nextLevelId && data.nextLevelName) {
-        setNextLevel(data.nextLevelId, data.nextLevelName);
-      }
-      // Immediately show group result for the winner — don't wait for SSE
-      // to prevent the single-play result card from flashing.
-      const store = useGroupPlayStore.getState();
-      if (store.groupPhase !== "result") {
-        setGroupResultFromWinner(
-          { user_id: player.id, user_name: player.nickname, game_level_id: targetLevelId, score, participants: [], next_level_id: data.nextLevelId ?? null, next_level_name: data.nextLevelName ?? null },
-          [{ user_id: player.id, user_name: player.nickname, score }],
-        );
+    if (result.data) {
+      if (result.data.nextLevelId && result.data.nextLevelName) {
+        setNextLevel(result.data.nextLevelId, result.data.nextLevelName);
       }
     }
   }
