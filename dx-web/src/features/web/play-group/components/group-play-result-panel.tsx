@@ -109,8 +109,12 @@ export function GroupPlayResultPanel({
   }
 
   const isSolo = result.mode === "group_solo";
+  // Deduplicate participants by user_id (keep highest score)
+  const dedupedParticipants = result.participants.filter(
+    (p, i, arr) => arr.findIndex((x) => x.user_id === p.user_id) === i
+  );
   const entries = isSolo
-    ? buildSoloPodium(result.participants)
+    ? buildSoloPodium(dedupedParticipants)
     : buildTeamPodium(result.teams ?? []);
 
   const podiumEntries = entries.slice(0, 3);
@@ -223,7 +227,7 @@ export function GroupPlayResultPanel({
             全部参赛成员
           </span>
           <div className="flex flex-wrap justify-center gap-1">
-            {result.participants.map((p) => {
+            {dedupedParticipants.map((p) => {
               const bg = getAvatarColor(p.user_id);
               return (
                 <Avatar
