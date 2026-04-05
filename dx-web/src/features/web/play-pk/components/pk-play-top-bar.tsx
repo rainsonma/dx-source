@@ -167,7 +167,7 @@ export function PkPlayTopBar({
                     </button>
                   </HoverCardTrigger>
                   <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="bottom">
-                    PK 模式禁用
+                    竞技模式禁用
                   </HoverCardContent>
                 </HoverCard>
               );
