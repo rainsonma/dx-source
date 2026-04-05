@@ -28,7 +28,6 @@ func (r *M20260322000028CreateGameGroupsTable) Up() error {
 			table.TimestampTz("dismissed_at").Nullable()
 			table.Integer("member_count").Default(0)
 			table.Text("game_mode").Nullable()
-			table.Integer("level_time_limit").Default(10)
 			table.Boolean("is_playing").Default(false)
 			table.TimestampsTz()
 			table.Unique("invite_code")
