@@ -11,7 +11,6 @@ export function useWordSentence() {
   const currentIndex = useGameStore((s) => s.currentIndex);
   const contentItems = useGameStore((s) => s.contentItems);
   const sessionId = useGameStore((s) => s.sessionId);
-  const levelSessionId = useGameStore((s) => s.levelSessionId);
   const levelId = useGameStore((s) => s.levelId);
   const gameId = useGameStore((s) => s.gameId);
   const recordResult = useGameStore((s) => s.recordResult);
@@ -163,14 +162,13 @@ export function useWordSentence() {
         const comboScore = pointsEarned - baseScore;
 
         // Record to server (fire-and-forget)
-        if (sessionId && levelSessionId && levelId && currentItem) {
+        if (sessionId && levelId && currentItem) {
           const nextItemId = contentItems?.[currentIndex + 1]?.id ?? null;
           const duration = Math.round(
             (Date.now() - itemStartTimeRef.current) / 1000
           );
           recordAnswerAction({
-            gameSessionTotalId: sessionId,
-            gameSessionLevelId: levelSessionId!,
+            gameSessionId: sessionId,
             gameLevelId: levelId,
             contentItemId: currentItem.id,
             isCorrect: isItemCorrect,
@@ -210,7 +208,6 @@ export function useWordSentence() {
       items,
       recordResult,
       sessionId,
-      levelSessionId,
       levelId,
       gameId,
       currentItem,
@@ -255,7 +252,7 @@ export function useWordSentence() {
     if (sessionId && levelId) {
       const nextItemId = contentItems?.[currentIndex + 1]?.id ?? null;
       recordSkipAction({
-        gameSessionTotalId: sessionId,
+        gameSessionId: sessionId,
         gameLevelId: levelId,
         playTime: getElapsedSeconds(),
         nextContentItemId: nextItemId,

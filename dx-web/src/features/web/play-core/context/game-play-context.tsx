@@ -4,8 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 // Action function types that each shell (play-single, play-group) provides
 export type RecordAnswerFn = (data: {
-  gameSessionTotalId: string;
-  gameSessionLevelId: string;
+  gameSessionId: string;
   gameLevelId: string;
   contentItemId: string;
   isCorrect: boolean;
@@ -21,7 +20,7 @@ export type RecordAnswerFn = (data: {
 }) => Promise<{ data: unknown; error: string | null }>;
 
 export type RecordSkipFn = (data: {
-  gameSessionTotalId: string;
+  gameSessionId: string;
   gameLevelId: string;
   playTime: number;
   nextContentItemId: string | null;
@@ -42,14 +41,12 @@ export type CompleteLevelFn = (
 export type EndSessionFn = (
   sessionId: string,
   data: {
-    gameId: string;
     score: number;
     exp: number;
     maxCombo: number;
     correctCount: number;
     wrongCount: number;
     skipCount: number;
-    allLevelsCompleted: boolean;
   }
 ) => Promise<{ data: unknown; error: string | null }>;
 

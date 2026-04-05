@@ -14,7 +14,6 @@ import { ProgressRing } from "@/features/web/play-core/components/progress-ring"
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { useGameResult } from "@/features/web/play-core/hooks/use-game-result";
 import { getScoreRating } from "@/consts/score-rating";
-import { advanceSessionLevelAction } from "@/features/web/play-single/actions/session.action";
 import { SCORING } from "@/consts/scoring";
 
 interface StatItem {
@@ -46,7 +45,6 @@ export function GameResultCard({ game, elapsedTime }: GameResultCardProps) {
   const score = useGameStore((s) => s.score);
   const combo = useGameStore((s) => s.combo);
   const contentItems = useGameStore((s) => s.contentItems);
-  const sessionId = useGameStore((s) => s.sessionId);
   const levelId = useGameStore((s) => s.levelId);
   const degree = useGameStore((s) => s.degree);
   const pattern = useGameStore((s) => s.pattern);
@@ -115,11 +113,9 @@ export function GameResultCard({ game, elapsedTime }: GameResultCardProps) {
     router.push(`/hall/play-single/${game.id}?${params.toString()}`);
   }
 
-  /** Advance to the next level via URL navigation (do NOT exitGame here — the store is reset by GamePlayShell's useEffect when new props arrive via soft navigation; calling exitGame before router.push would trigger a spurious loading screen with the OLD level ID) */
-  async function handleNextLevel() {
-    if (!sessionId || !nextLevel) return;
-    const { error } = await advanceSessionLevelAction(sessionId, nextLevel.id);
-    if (error) return;
+  /** Navigate to the next level via URL (do NOT exitGame here — the store is reset by GamePlayShell's useEffect when new props arrive via soft navigation; calling exitGame before router.push would trigger a spurious loading screen with the OLD level ID) */
+  function handleNextLevel() {
+    if (!nextLevel) return;
 
     const params = new URLSearchParams();
     if (degree) params.set("degree", degree);

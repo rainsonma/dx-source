@@ -25,7 +25,6 @@ interface GameState {
   phase: GamePhase;
   overlay: GameOverlay;
   sessionId: string | null;
-  levelSessionId: string | null;
   gameId: string | null;
   gameMode: string | null;
   degree: string | null;
@@ -45,7 +44,6 @@ interface GameState {
 interface GameActions {
   initSession: (data: {
     sessionId: string;
-    levelSessionId: string;
     gameId: string;
     gameMode: string;
     degree: string;
@@ -76,7 +74,6 @@ const initialGameState: GameState = {
   phase: "loading",
   overlay: null,
   sessionId: null,
-  levelSessionId: null,
   gameId: null,
   gameMode: null,
   degree: null,
@@ -100,7 +97,6 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
     set({
       phase: "playing",
       sessionId: data.sessionId,
-      levelSessionId: data.levelSessionId,
       gameId: data.gameId,
       gameMode: data.gameMode,
       degree: data.degree,
@@ -154,7 +150,6 @@ export const useGameStore = create<GameState & GameActions>()((set) => ({
     set({
       phase: "loading",
       overlay: null,
-      levelSessionId: null,
       currentIndex: 0,
       score: 0,
       combo: createComboState(),

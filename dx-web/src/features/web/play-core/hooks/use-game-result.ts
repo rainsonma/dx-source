@@ -14,7 +14,6 @@ export function useGameResult({ levels }: UseGameResultParams) {
   const firedRef = useRef(false);
 
   const sessionId = useGameStore((s) => s.sessionId);
-  const gameId = useGameStore((s) => s.gameId);
   const levelId = useGameStore((s) => s.levelId);
   const score = useGameStore((s) => s.score);
   const combo = useGameStore((s) => s.combo);
@@ -31,7 +30,7 @@ export function useGameResult({ levels }: UseGameResultParams) {
   const isLastLevel = sortedLevels[sortedLevels.length - 1]?.id === levelId;
 
   useEffect(() => {
-    if (firedRef.current || !sessionId || !levelId || !gameId) return;
+    if (firedRef.current || !sessionId || !levelId) return;
     firedRef.current = true;
 
     async function complete() {
@@ -43,14 +42,12 @@ export function useGameResult({ levels }: UseGameResultParams) {
 
       if (isLastLevel) {
         await endSessionAction(sessionId!, {
-          gameId: gameId!,
           score,
           exp: 0,
           maxCombo: combo.maxCombo,
           correctCount,
           wrongCount,
           skipCount,
-          allLevelsCompleted: true,
         });
       }
 
@@ -62,7 +59,6 @@ export function useGameResult({ levels }: UseGameResultParams) {
   }, [
     sessionId,
     levelId,
-    gameId,
     score,
     combo.maxCombo,
     totalItems,

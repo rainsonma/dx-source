@@ -96,8 +96,7 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
   useEffect(() => {
     const handleBeforeUnload = () => {
       const sid = useGameStore.getState().sessionId;
-      const lid = useGameStore.getState().levelId;
-      if (!sid || !lid) return;
+      if (!sid) return;
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -106,7 +105,6 @@ export function GamePlayShell({ game, player, degree, pattern, levelId }: GamePl
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          game_level_id: lid,
           play_time: getElapsedSeconds(),
         }),
         keepalive: true,

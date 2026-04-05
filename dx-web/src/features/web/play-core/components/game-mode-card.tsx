@@ -26,7 +26,6 @@ import {
 } from "@/consts/game-pattern";
 import {
   checkActiveSessionAction,
-  checkActiveLevelSessionAction,
   restartLevelSessionAction,
 } from "@/features/web/play-single/actions/session.action";
 
@@ -120,36 +119,19 @@ export function GameModeCard({
     pattern: string | null;
     currentLevelId: string;
   } | null>(null);
-  const [hasActiveLevelSession, setHasActiveLevelSession] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Re-check for active session when degree/pattern selection changes (single mode only)
+  // Re-check for active session when degree/pattern/level selection changes (single mode only)
   useEffect(() => {
-    if (!open || isPk) return;
+    if (!open || isPk || !levelId) return;
     let cancelled = false;
     const patternValue = isWordSentence ? selectedPattern : null;
-    checkActiveSessionAction(gameId, selectedDegree, patternValue).then((result) => {
+    checkActiveSessionAction(levelId, selectedDegree, patternValue).then((result) => {
       if (cancelled) return;
       setActiveSession(result.data ?? null);
     });
     return () => { cancelled = true; };
-  }, [open, isPk, gameId, selectedDegree, selectedPattern, isWordSentence]);
-
-  // When a specific level is selected, check for active level session (single mode only)
-  useEffect(() => {
-    if (!open || isPk || !activeSession || !levelId) {
-      setHasActiveLevelSession(false);
-      return;
-    }
-    let cancelled = false;
-    const patternValue = isWordSentence ? selectedPattern : null;
-    checkActiveLevelSessionAction(gameId, selectedDegree, patternValue, levelId).then((result) => {
-      if (cancelled) return;
-      setHasActiveLevelSession(result.data !== null);
-    });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSession.id is sufficient, full object would cause infinite loop
-  }, [open, isPk, activeSession?.id, levelId, gameId, selectedDegree, selectedPattern, isWordSentence]);
+  }, [open, isPk, levelId, selectedDegree, selectedPattern, isWordSentence]);
 
   if (!open) return null;
 
@@ -196,9 +178,7 @@ export function GameModeCard({
     });
   }
 
-  const showResumeButtons = levelId
-    ? hasActiveLevelSession
-    : activeSession !== null;
+  const showResumeButtons = activeSession !== null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/[0.38] px-4">

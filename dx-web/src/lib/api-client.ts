@@ -216,7 +216,7 @@ export const gameApi = {
 // Session response types
 interface SessionStartResponse {
   id: string;
-  levelId: string;
+  currentContentItemId: string | null;
 }
 
 interface ActiveSessionResponse {
@@ -226,20 +226,18 @@ interface ActiveSessionResponse {
   currentLevelId: string;
 }
 
-interface SessionLevelResponse {
-  id: string;
-  currentContentItemId: string | null;
+interface SessionRestoreResponse {
+  score: number;
+  maxCombo: number;
+  correctCount: number;
+  wrongCount: number;
+  skipCount: number;
+  playTime: number;
 }
 
-interface SessionRestoreResponse {
-  sessionLevel: {
-    score: number;
-    maxCombo: number;
-    correctCount: number;
-    wrongCount: number;
-    skipCount: number;
-    playTime: number;
-  };
+interface CompleteLevelResponse {
+  nextLevelId: string | null;
+  nextLevelName: string | null;
 }
 
 // Session/gameplay API functions targeting the Go API
@@ -247,15 +245,15 @@ export const sessionApi = {
   /** Start or resume a game session */
   async startSession(data: {
     game_id: string;
+    game_level_id: string;
     degree?: string;
-    level_id?: string;
     pattern?: string;
   }) {
     return apiClient.post<SessionStartResponse>("/api/play-single/start", data);
   },
-  /** Check for an active session by degree+pattern */
-  async checkActive(gameId: string, degree: string, pattern?: string | null) {
-    const params = new URLSearchParams({ game_id: gameId, degree });
+  /** Check for an active session by game_level_id */
+  async checkActive(gameLevelId: string, degree: string, pattern?: string | null) {
+    const params = new URLSearchParams({ game_level_id: gameLevelId, degree });
     if (pattern) params.set("pattern", pattern);
     return apiClient.get<ActiveSessionResponse | null>(`/api/play-single/active?${params}`);
   },
@@ -263,29 +261,16 @@ export const sessionApi = {
   async checkAnyActive(gameId: string) {
     return apiClient.get<ActiveSessionResponse | null>(`/api/play-single/any-active?game_id=${gameId}`);
   },
-  /** Check for an active level session */
-  async checkActiveLevel(
-    gameId: string,
-    degree: string,
-    pattern: string | null,
-    gameLevelId: string
-  ) {
-    const params = new URLSearchParams({ game_id: gameId, degree, game_level_id: gameLevelId });
-    if (pattern) params.set("pattern", pattern);
-    return apiClient.get<unknown>(`/api/play-single/active-level?${params}`);
-  },
   /** End a session */
   async endSession(
     sessionId: string,
     data: {
-      game_id: string;
       score: number;
       exp: number;
       max_combo: number;
       correct_count: number;
       wrong_count: number;
       skip_count: number;
-      all_levels_completed: boolean;
     }
   ) {
     return apiClient.post<unknown>(`/api/play-single/${sessionId}/end`, data);
@@ -294,29 +279,15 @@ export const sessionApi = {
   async forceComplete(sessionId: string) {
     return apiClient.post<unknown>(`/api/play-single/${sessionId}/force-complete`);
   },
-  /** Start a level within a session */
-  async startLevel(
-    sessionId: string,
-    data: { game_level_id: string; degree: string; pattern?: string }
-  ) {
-    return apiClient.post<SessionLevelResponse>(`/api/play-single/${sessionId}/levels/start`, data);
-  },
   /** Complete a level */
   async completeLevel(
     sessionId: string,
     levelId: string,
     data: { score: number; max_combo: number; total_items: number }
   ) {
-    return apiClient.post<unknown>(
+    return apiClient.post<CompleteLevelResponse>(
       `/api/play-single/${sessionId}/levels/${levelId}/complete`,
       data
-    );
-  },
-  /** Advance to next level */
-  async advanceLevel(sessionId: string, levelId: string, nextLevelId: string) {
-    return apiClient.post<unknown>(
-      `/api/play-single/${sessionId}/levels/${levelId}/advance`,
-      { next_level_id: nextLevelId }
     );
   },
   /** Restart a level */
@@ -329,7 +300,6 @@ export const sessionApi = {
   async recordAnswer(
     sessionId: string,
     data: {
-      game_session_level_id: string;
       game_level_id: string;
       content_item_id: string;
       is_correct: boolean;
@@ -360,14 +330,14 @@ export const sessionApi = {
   /** Sync playtime */
   async syncPlayTime(
     sessionId: string,
-    data: { game_level_id: string; play_time: number }
+    data: { play_time: number }
   ) {
     return apiClient.post<unknown>(`/api/play-single/${sessionId}/sync-playtime`, data);
   },
   /** Restore session data */
-  async restore(sessionId: string, gameLevelId: string) {
+  async restore(sessionId: string) {
     return apiClient.get<SessionRestoreResponse>(
-      `/api/play-single/${sessionId}/restore?game_level_id=${gameLevelId}`
+      `/api/play-single/${sessionId}/restore`
     );
   },
   /** Update current content item */

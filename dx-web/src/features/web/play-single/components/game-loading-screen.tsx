@@ -14,7 +14,6 @@ import { GAME_MODES, type GameMode } from "@/consts/game-mode";
 import { GAME_DEGREE_LABELS, type GameDegree } from "@/consts/game-degree";
 import {
   startSessionAction,
-  startSessionLevelAction,
   fetchSessionRestoreDataAction,
 } from "@/features/web/play-single/actions/session.action";
 import { fetchLevelContentAction } from "@/features/web/play-core/actions/content.action";
@@ -118,33 +117,19 @@ export function GameLoadingScreen({
       try {
         setProgress(0);
 
-        // Step 1: Start/resume session
-        const sessionResult = await startSessionAction(gameId, degree, levelId, pattern);
+        const resolvedLevelId = levelId ?? gameId;
+
+        // Step 1: Start/resume session (now includes level)
+        const sessionResult = await startSessionAction(gameId, resolvedLevelId, degree, pattern);
         if (cancelled) return;
         if (sessionResult.error || !sessionResult.data) {
           setError(sessionResult.error ?? "无法开始游戏");
           return;
         }
-        setProgress(25);
+        setProgress(33);
 
-        const resolvedLevelId = sessionResult.data.levelId;
-
-        // Step 2: Create/resume GameSessionLevel
-        const levelResult = await startSessionLevelAction(
-          sessionResult.data.id,
-          resolvedLevelId,
-          degree ?? "intermediate",
-          pattern
-        );
-        if (cancelled) return;
-        if (levelResult.error || !levelResult.data) {
-          setError(levelResult.error ?? "开始关卡失败");
-          return;
-        }
-        setProgress(50);
-
-        // Step 3: Use LEVEL SESSION's resume point (not total session's)
-        const levelSessionResumeItemId = levelResult.data.currentContentItemId ?? null;
+        // Step 2: Restore session data if resuming
+        const resumeItemId = sessionResult.data.currentContentItemId ?? null;
 
         let restored: {
           score: number;
@@ -155,26 +140,24 @@ export function GameLoadingScreen({
           playTime: number;
         } | null = null;
 
-        if (levelSessionResumeItemId) {
+        if (resumeItemId) {
           const restoreResult = await fetchSessionRestoreDataAction(
-            sessionResult.data.id,
-            resolvedLevelId
+            sessionResult.data.id
           );
-          if (!cancelled && restoreResult.data?.sessionLevel) {
-            const sl = restoreResult.data.sessionLevel;
+          if (!cancelled && restoreResult.data) {
             restored = {
-              score: sl.score,
-              maxCombo: sl.maxCombo,
-              correctCount: sl.correctCount,
-              wrongCount: sl.wrongCount,
-              skipCount: sl.skipCount,
-              playTime: sl.playTime,
+              score: restoreResult.data.score,
+              maxCombo: restoreResult.data.maxCombo,
+              correctCount: restoreResult.data.correctCount,
+              wrongCount: restoreResult.data.wrongCount,
+              skipCount: restoreResult.data.skipCount,
+              playTime: restoreResult.data.playTime,
             };
           }
         }
-        setProgress(75);
+        setProgress(66);
 
-        // Step 4: Fetch content for the resolved level
+        // Step 3: Fetch content for the resolved level
         const contentResult = await fetchLevelContentAction(gameId, resolvedLevelId, degree);
         if (cancelled) return;
         if (contentResult.error || !contentResult.data) {
@@ -184,9 +167,9 @@ export function GameLoadingScreen({
         setProgress(100);
 
         let startFromIndex = 0;
-        if (levelSessionResumeItemId) {
+        if (resumeItemId) {
           const idx = contentResult.data.findIndex(
-            (item) => item.id === levelSessionResumeItemId
+            (item) => item.id === resumeItemId
           );
           if (idx > 0) startFromIndex = idx;
         }
@@ -196,7 +179,6 @@ export function GameLoadingScreen({
 
         initSession({
           sessionId: sessionResult.data.id,
-          levelSessionId: levelResult.data.id,
           gameId,
           gameMode,
           degree: degree ?? "intermediate",
