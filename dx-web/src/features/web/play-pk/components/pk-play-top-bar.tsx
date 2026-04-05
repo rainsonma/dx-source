@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { getAvatarColor } from "@/lib/avatar";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
 import type { PkPlayerActionEvent } from "../types/pk-play";
@@ -60,10 +61,10 @@ export function PkPlayTopBar({
     fullscreen: onFullscreen,
   };
 
-  const score = usePkPlayStore((s) => s.score);
-  const comboStreak = usePkPlayStore((s) => s.combo.streak);
-  const currentIndex = usePkPlayStore((s) => s.currentIndex);
-  const totalItems = usePkPlayStore((s) => s.contentItems?.length ?? 0);
+  const score = useGameStore((s) => s.score);
+  const comboStreak = useGameStore((s) => s.combo.streak);
+  const currentIndex = useGameStore((s) => s.currentIndex);
+  const totalItems = useGameStore((s) => s.contentItems?.length ?? 0);
   const opponentId = usePkPlayStore((s) => s.opponentId);
   const opponentCompleted = usePkPlayStore((s) => s.opponentCompleted);
   const opponentScore = usePkPlayStore((s) => s.opponentScore);
