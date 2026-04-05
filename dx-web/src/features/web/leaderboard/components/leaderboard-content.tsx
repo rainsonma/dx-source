@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { TabPill } from "@/components/in/tab-pill";
+import { fetchUserProfile } from "@/features/web/auth/services/user.service";
 import { useLeaderboard } from "../hooks/use-leaderboard";
 import { LeaderboardMyRank } from "./leaderboard-my-rank";
 import { LeaderboardPodium } from "./leaderboard-podium";
@@ -32,6 +34,16 @@ interface LeaderboardContentProps {
 export function LeaderboardContent({ initialData }: LeaderboardContentProps) {
   const { type, period, data, isLoading, handleTypeChange, handlePeriodChange } =
     useLeaderboard({ initialData });
+
+  const [user, setUser] = useState<{
+    id: string; username: string; nickname: string | null; avatarUrl: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    fetchUserProfile().then((profile) => {
+      if (profile) setUser(profile);
+    });
+  }, []);
 
   const podiumEntries = data.entries.slice(0, 3);
   const listEntries = data.entries.slice(3);
@@ -64,7 +76,7 @@ export function LeaderboardContent({ initialData }: LeaderboardContentProps) {
       </div>
 
       {/* My rank */}
-      <LeaderboardMyRank entry={data.myRank} type={type} />
+      {user && <LeaderboardMyRank entry={data.myRank} type={type} user={user} />}
 
       {/* Leaderboard content */}
       {isLoading ? (

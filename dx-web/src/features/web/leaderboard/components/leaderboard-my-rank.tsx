@@ -7,16 +7,17 @@ import type { LeaderboardEntry, LeaderboardType } from "../types/leaderboard.typ
 interface LeaderboardMyRankProps {
   entry: LeaderboardEntry | null;
   type: LeaderboardType;
+  user: { id: string; username: string; nickname: string | null; avatarUrl: string | null };
 }
 
 /** Current user's rank bar — always visible at the top */
-export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
-  const displayName = entry ? (entry.nickname ?? entry.username) : "我";
+export function LeaderboardMyRank({ entry, type, user }: LeaderboardMyRankProps) {
+  const displayName = user.nickname ?? user.username;
   const rank = entry?.rank ?? null;
   const value = entry ? formatLeaderboardValue(entry.value, type) : "0";
   const Icon = type === "exp" ? Zap : Clock;
   const fallbackChar = displayName.charAt(0).toUpperCase();
-  const avatarBg = entry ? getAvatarColor(entry.id) : "#94a3b8";
+  const avatarBg = getAvatarColor(user.id);
 
   return (
     <div className="flex w-full items-center gap-4 rounded-full border-[1.5px] border-teal-600 bg-teal-50 px-4 py-3.5 md:px-6">
@@ -24,8 +25,8 @@ export function LeaderboardMyRank({ entry, type }: LeaderboardMyRankProps) {
         <span className="text-base font-bold text-teal-600">{rank}</span>
       )}
       <Avatar>
-        {entry?.avatarUrl && (
-          <AvatarImage src={entry.avatarUrl} alt={displayName} />
+        {user.avatarUrl && (
+          <AvatarImage src={user.avatarUrl} alt={displayName} />
         )}
         <AvatarFallback style={{ backgroundColor: avatarBg, color: "#fff" }}>
           {fallbackChar}
