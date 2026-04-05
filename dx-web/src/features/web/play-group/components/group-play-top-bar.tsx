@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/components/ui/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { getAvatarColor } from "@/lib/avatar";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import { useGroupPlayStore } from "../hooks/use-group-play-store";
 import { GroupStatRow } from "@/features/web/play-core/components/group-stat-row";
 
@@ -59,8 +60,8 @@ export function GroupPlayTopBar({
 
   const score = useGroupPlayStore((s) => s.score);
   const comboStreak = useGroupPlayStore((s) => s.combo.streak);
-  const currentIndex = useGroupPlayStore((s) => s.currentIndex);
-  const totalItems = useGroupPlayStore((s) => s.contentItems?.length ?? 0);
+  const currentIndex = useGameStore((s) => s.currentIndex);
+  const totalItems = useGameStore((s) => s.contentItems?.length ?? 0);
   const participants = useGroupPlayStore((s) => s.participants);
   const completedPlayerIds = useGroupPlayStore((s) => s.completedPlayerIds);
 
