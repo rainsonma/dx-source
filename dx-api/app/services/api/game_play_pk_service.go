@@ -93,6 +93,28 @@ func StartPk(userID, gameID, degree string, pattern *string, levelID *string, di
 
 	query := facades.Orm().Query()
 
+	// Check for existing active PK for this user/game (idempotent for concurrent calls)
+	var existingPk models.GamePk
+	query.Where("user_id", userID).Where("game_id", gameID).Where("is_playing", true).First(&existingPk)
+	if existingPk.ID != "" {
+		var existingSession models.GameSessionTotal
+		query.Where("game_pk_id", existingPk.ID).Where("user_id", userID).First(&existingSession)
+		if existingSession.ID != "" {
+			var opponent models.User
+			query.Where("id", existingPk.OpponentID).First(&opponent)
+			opName := opponent.Username
+			if opponent.Nickname != nil && *opponent.Nickname != "" {
+				opName = *opponent.Nickname
+			}
+			return &PkStartResult{
+				PkID:         existingPk.ID,
+				SessionID:    existingSession.ID,
+				OpponentID:   existingPk.OpponentID,
+				OpponentName: opName,
+			}, nil
+		}
+	}
+
 	// Verify game exists and is published
 	var game models.Game
 	if err := query.Where("id", gameID).First(&game); err != nil || game.ID == "" {
