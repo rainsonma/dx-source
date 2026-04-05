@@ -19,6 +19,8 @@ export type PkPlayerCompleteEvent = {
   user_name: string;
   game_level_id: string;
   score: number;
+  next_level_id: string | null;
+  next_level_name: string | null;
 };
 
 export type PkPlayerActionEvent = {

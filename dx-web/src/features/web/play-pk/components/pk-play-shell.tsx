@@ -167,7 +167,7 @@ export function PkPlayShell({
             loser,
           ],
         };
-        setPkResult(result, store.nextLevelId, store.nextLevelName);
+        setPkResult(result, event.next_level_id ?? store.nextLevelId, event.next_level_name ?? store.nextLevelName);
         setPhase("result");
       }
     },

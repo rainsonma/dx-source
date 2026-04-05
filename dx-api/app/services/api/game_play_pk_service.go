@@ -27,10 +27,12 @@ type PkStartResult struct {
 
 // PkPlayerCompleteEvent is the SSE payload for pk_player_complete.
 type PkPlayerCompleteEvent struct {
-	UserID      string `json:"user_id"`
-	UserName    string `json:"user_name"`
-	GameLevelID string `json:"game_level_id"`
-	Score       int    `json:"score"`
+	UserID        string  `json:"user_id"`
+	UserName      string  `json:"user_name"`
+	GameLevelID   string  `json:"game_level_id"`
+	Score         int     `json:"score"`
+	NextLevelID   *string `json:"next_level_id"`
+	NextLevelName *string `json:"next_level_name"`
 }
 
 // PkPlayerActionEvent is the SSE payload for pk_player_action.
@@ -281,6 +283,9 @@ func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*Com
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	// Find next level for result panel
+	nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, session.GameLevelID)
+
 	// Broadcast player complete via SSE
 	var user models.User
 	if err := facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user); err == nil && user.ID != "" {
@@ -289,10 +294,12 @@ func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*Com
 			userName = *user.Nickname
 		}
 		helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
-			UserID:      userID,
-			UserName:    userName,
-			GameLevelID: session.GameLevelID,
-			Score:       score,
+			UserID:        userID,
+			UserName:      userName,
+			GameLevelID:   session.GameLevelID,
+			Score:         score,
+			NextLevelID:   nextLevelID,
+			NextLevelName: nextLevelName,
 		})
 	}
 
@@ -311,8 +318,7 @@ func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*Com
 	// Cancel robot goroutine since human won
 	cancelRobot(pkID)
 
-	// Find next level for client navigation
-	nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, session.GameLevelID)
+	// nextLevelID and nextLevelName already computed above for SSE broadcast
 
 	return &CompleteLevelResult{
 		ExpEarned:      expAmount,
@@ -644,11 +650,14 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		})
 
 	// Broadcast robot completion
+	robotNextLevelID, robotNextLevelName, _ := findNextLevel(gameID, gameLevelID)
 	helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
-		UserID:      robotUserID,
-		UserName:    robotName,
-		GameLevelID: gameLevelID,
-		Score:       combo.TotalScore,
+		UserID:        robotUserID,
+		UserName:      robotName,
+		GameLevelID:   gameLevelID,
+		Score:         combo.TotalScore,
+		NextLevelID:   robotNextLevelID,
+		NextLevelName: robotNextLevelName,
 	})
 
 	// Robot won — force-end human's session
