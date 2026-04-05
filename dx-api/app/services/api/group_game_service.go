@@ -403,7 +403,7 @@ type GroupNextLevelEvent struct {
 
 // NextGroupLevel finds the next level and broadcasts it to all group members.
 // Any group member can trigger this (no ownership check).
-func NextGroupLevel(userID, groupID, currentLevelID string) error {
+func NextGroupLevel(userID, groupID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -418,12 +418,14 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 		return ErrNotGroupMemberForAction
 	}
 
-	// Validate current level belongs to this game
 	if group.CurrentGameID == nil {
 		return ErrNoGameSet
 	}
+	if group.StartGameLevelID == nil || *group.StartGameLevelID == "" {
+		return ErrLevelNotFound
+	}
 	var currentLevel models.GameLevel
-	if err := facades.Orm().Query().Where("id", currentLevelID).Where("game_id", *group.CurrentGameID).First(&currentLevel); err != nil || currentLevel.ID == "" {
+	if err := facades.Orm().Query().Where("id", *group.StartGameLevelID).Where("game_id", *group.CurrentGameID).First(&currentLevel); err != nil || currentLevel.ID == "" {
 		return ErrLevelNotFound
 	}
 
@@ -439,7 +441,7 @@ func NextGroupLevel(userID, groupID, currentLevelID string) error {
 	}
 
 	// Concurrency guard: prevent duplicate SSE broadcasts
-	cacheKey := fmt.Sprintf("group_next_level:%s:%s", groupID, currentLevelID)
+	cacheKey := fmt.Sprintf("group_next_level:%s:%s", groupID, *group.StartGameLevelID)
 	if facades.Cache().Store("redis").Has(cacheKey) {
 		return nil // Already broadcast, return success silently
 	}

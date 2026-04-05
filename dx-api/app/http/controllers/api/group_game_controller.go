@@ -148,12 +148,7 @@ func (c *GroupGameController) NextLevel(ctx contractshttp.Context) contractshttp
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "group id is required")
 	}
 
-	var req requests.NextLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	if err := services.NextGroupLevel(userID, groupID, req.CurrentLevelID); err != nil {
+	if err := services.NextGroupLevel(userID, groupID); err != nil {
 		return mapGroupGameError(ctx, err)
 	}
 
