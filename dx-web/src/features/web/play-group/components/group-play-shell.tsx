@@ -133,9 +133,16 @@ export function GroupPlayShell({
     onLevelComplete: (event) => {
       setGroupResult(event);
     },
-    onForceEnd: () => {
-      toast("游戏已被强制结束");
-      router.push(`/hall/groups/${groupId}`);
+    onForceEnd: (event) => {
+      const currentLevelId = useGroupPlayStore.getState().levelId ?? "";
+      const participants = event.participants ?? [];
+      // Highest scorer wins on force-end
+      const winner = participants[0] ?? { user_id: player.id, user_name: player.nickname, score: 0 };
+      setGroupResultFromWinner(
+        { user_id: winner.user_id, user_name: winner.user_name, game_level_id: currentLevelId, score: winner.score, participants, next_level_id: null, next_level_name: null },
+        participants.length > 0 ? participants : [{ user_id: player.id, user_name: player.nickname, score: useGameStore.getState().score }],
+      );
+      setPhase("result");
     },
     onPlayerComplete: (event) => {
       const currentLevelId = useGroupPlayStore.getState().levelId;

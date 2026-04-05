@@ -20,7 +20,7 @@ export type GroupLevelCompleteEvent = {
 };
 
 export type GroupForceEndEvent = {
-  results: GroupLevelCompleteEvent[];
+  participants: { user_id: string; user_name: string; score: number }[];
 };
 
 export type ParticipantMember = {

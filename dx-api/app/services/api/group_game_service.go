@@ -382,9 +382,37 @@ func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 	// Set is_playing = false
 	facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("is_playing", false)
 
-	// Broadcast force end event
+	// Collect all participants' scores for this group's current level
+	var participants []GroupParticipantInfo
+	if group.StartGameLevelID != nil {
+		var rows []struct {
+			UserID   string  `gorm:"column:user_id"`
+			Username string  `gorm:"column:username"`
+			Nickname *string `gorm:"column:nickname"`
+			Score    int     `gorm:"column:score"`
+		}
+		facades.Orm().Query().Raw(
+			`SELECT gs.user_id, u.username, u.nickname, gs.score
+			 FROM game_sessions gs
+			 JOIN users u ON u.id = gs.user_id
+			 WHERE gs.game_group_id = ? AND gs.game_level_id = ?
+			 ORDER BY gs.score DESC`,
+			groupID, *group.StartGameLevelID,
+		).Scan(&rows)
+		for _, p := range rows {
+			name := p.Username
+			if p.Nickname != nil && *p.Nickname != "" {
+				name = *p.Nickname
+			}
+			participants = append(participants, GroupParticipantInfo{
+				UserID: p.UserID, UserName: name, Score: p.Score,
+			})
+		}
+	}
+
+	// Broadcast force end event with participants
 	helpers.GroupSSEHub.Broadcast(groupID, "group_game_force_end", map[string]any{
-		"results": []map[string]any{},
+		"participants": participants,
 	})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
 
