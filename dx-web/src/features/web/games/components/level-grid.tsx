@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Lock, Star } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { UpgradeDialog } from "@/features/web/games/components/upgrade-dialog";
 
 function LevelCell({
@@ -114,7 +115,7 @@ export function LevelGrid({
                 ? "current"
                 : "locked";
 
-          return (
+          const cell = (
             <LevelCell
               key={lv.id}
               level={levelNum}
@@ -128,6 +129,17 @@ export function LevelGrid({
                     : undefined
               }
             />
+          );
+
+          if (lv.name.length <= 4) return <div key={lv.id}>{cell}</div>;
+
+          return (
+            <HoverCard key={lv.id} openDelay={200}>
+              <HoverCardTrigger asChild>{cell}</HoverCardTrigger>
+              <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
+                {lv.name}
+              </HoverCardContent>
+            </HoverCard>
           );
         })}
       </div>
