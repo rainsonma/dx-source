@@ -122,14 +122,11 @@ func Api() {
 			protected.Prefix("/play-single").Group(func(sessions route.Router) {
 				sessions.Post("/start", playSingleController.Start)
 				sessions.Get("/active", playSingleController.CheckActive)
-				sessions.Get("/active-level", playSingleController.CheckActiveLevel)
 				sessions.Get("/any-active", playSingleController.CheckAnyActive)
 
 				sessions.Post("/{id}/end", playSingleController.End)
 				sessions.Post("/{id}/force-complete", playSingleController.ForceComplete)
-				sessions.Post("/{id}/levels/start", playSingleController.StartLevel)
 				sessions.Post("/{id}/levels/{levelId}/complete", playSingleController.CompleteLevel)
-				sessions.Post("/{id}/levels/{levelId}/advance", playSingleController.AdvanceLevel)
 				sessions.Post("/{id}/levels/{levelId}/restart", playSingleController.RestartLevel)
 				sessions.Post("/{id}/answers", playSingleController.RecordAnswer)
 				sessions.Post("/{id}/skips", playSingleController.RecordSkip)

@@ -32,7 +32,7 @@ func (c *GamePlaySingleController) Start(ctx contractshttp.Context) contractshtt
 		return resp
 	}
 
-	result, err := services.StartSession(userID, req.GameID, req.Degree, req.Pattern, req.LevelID)
+	result, err := services.StartSession(userID, req.GameID, req.GameLevelID, req.Degree, req.Pattern)
 	if err != nil {
 		if errors.Is(err, services.ErrNoGameLevels) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "游戏没有关卡")
@@ -61,14 +61,12 @@ func (c *GamePlaySingleController) End(ctx contractshttp.Context) contractshttp.
 	}
 
 	err = services.EndSession(userID, sessionID, services.EndSessionInput{
-		GameID:             req.GameID,
-		Score:              req.Score,
-		Exp:                req.Exp,
-		MaxCombo:           req.MaxCombo,
-		CorrectCount:       req.CorrectCount,
-		WrongCount:         req.WrongCount,
-		SkipCount:          req.SkipCount,
-		AllLevelsCompleted: req.AllLevelsCompleted,
+		Score:        req.Score,
+		Exp:          req.Exp,
+		MaxCombo:     req.MaxCombo,
+		CorrectCount: req.CorrectCount,
+		WrongCount:   req.WrongCount,
+		SkipCount:    req.SkipCount,
 	})
 	if err != nil {
 		return mapSessionError(ctx, err)
@@ -93,28 +91,6 @@ func (c *GamePlaySingleController) ForceComplete(ctx contractshttp.Context) cont
 	return helpers.Success(ctx, map[string]bool{"completed": true})
 }
 
-// StartLevel starts a level within a session.
-func (c *GamePlaySingleController) StartLevel(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-
-	var req requests.StartLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.StartLevel(userID, sessionID, req.GameLevelID, req.Degree, req.Pattern)
-	if err != nil {
-		return mapSessionError(ctx, err)
-	}
-
-	return helpers.Success(ctx, result)
-}
-
 // CompleteLevel completes a level within a session.
 func (c *GamePlaySingleController) CompleteLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
@@ -123,14 +99,13 @@ func (c *GamePlaySingleController) CompleteLevel(ctx contractshttp.Context) cont
 	}
 
 	sessionID := ctx.Request().Route("id")
-	gameLevelID := ctx.Request().Route("levelId")
 
 	var req requests.CompleteLevelRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
-	result, err := services.CompleteLevel(userID, sessionID, gameLevelID, req.Score, req.MaxCombo, req.TotalItems)
+	result, err := services.CompleteLevel(userID, sessionID, req.Score, req.MaxCombo, req.TotalItems)
 	if err != nil {
 		if errors.Is(err, services.ErrSessionLevelNotFound) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeLevelNotFound, "关卡会话不存在")
@@ -144,37 +119,6 @@ func (c *GamePlaySingleController) CompleteLevel(ctx contractshttp.Context) cont
 	return helpers.Success(ctx, result)
 }
 
-// AdvanceLevel advances to the next level.
-func (c *GamePlaySingleController) AdvanceLevel(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	sessionID := ctx.Request().Route("id")
-	gameLevelID := ctx.Request().Route("levelId")
-
-	var req requests.AdvanceLevelRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	// Fallback to route param if body field is empty
-	nextLevelID := req.NextLevelID
-	if nextLevelID == "" {
-		nextLevelID = gameLevelID
-	}
-	if nextLevelID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "next_level_id is required")
-	}
-
-	if err := services.AdvanceLevel(userID, sessionID, nextLevelID); err != nil {
-		return mapSessionError(ctx, err)
-	}
-
-	return helpers.Success(ctx, nil)
-}
-
 // RestartLevel restarts a level within a session.
 func (c *GamePlaySingleController) RestartLevel(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
@@ -183,9 +127,8 @@ func (c *GamePlaySingleController) RestartLevel(ctx contractshttp.Context) contr
 	}
 
 	sessionID := ctx.Request().Route("id")
-	gameLevelID := ctx.Request().Route("levelId")
 
-	if err := services.RestartLevel(userID, sessionID, gameLevelID); err != nil {
+	if err := services.RestartLevel(userID, sessionID); err != nil {
 		return mapSessionError(ctx, err)
 	}
 
@@ -199,28 +142,25 @@ func (c *GamePlaySingleController) RecordAnswer(ctx contractshttp.Context) contr
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	sessionID := ctx.Request().Route("id")
-
 	var req requests.RecordAnswerRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
 	err = services.RecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionTotalID: sessionID,
-		GameSessionLevelID: req.GameSessionLevelID,
-		GameLevelID:        req.GameLevelID,
-		ContentItemID:      req.ContentItemID,
-		IsCorrect:          req.IsCorrect,
-		UserAnswer:         req.UserAnswer,
-		SourceAnswer:       req.SourceAnswer,
-		BaseScore:          req.BaseScore,
-		ComboScore:         req.ComboScore,
-		Score:              req.Score,
-		MaxCombo:           req.MaxCombo,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
-		Duration:           req.Duration,
+		GameSessionID:     req.GameSessionId,
+		GameLevelID:       req.GameLevelID,
+		ContentItemID:     req.ContentItemID,
+		IsCorrect:         req.IsCorrect,
+		UserAnswer:        req.UserAnswer,
+		SourceAnswer:      req.SourceAnswer,
+		BaseScore:         req.BaseScore,
+		ComboScore:        req.ComboScore,
+		Score:             req.Score,
+		MaxCombo:          req.MaxCombo,
+		PlayTime:          req.PlayTime,
+		NextContentItemID: req.NextContentItemID,
+		Duration:          req.Duration,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -242,18 +182,16 @@ func (c *GamePlaySingleController) RecordSkip(ctx contractshttp.Context) contrac
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
 
-	sessionID := ctx.Request().Route("id")
-
 	var req requests.RecordSkipRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 
 	err = services.RecordSkip(userID, services.RecordSkipInput{
-		GameSessionTotalID: sessionID,
-		GameLevelID:        req.GameLevelID,
-		PlayTime:           req.PlayTime,
-		NextContentItemID:  req.NextContentItemID,
+		GameSessionID:     req.GameSessionId,
+		GameLevelID:       req.GameLevelID,
+		PlayTime:          req.PlayTime,
+		NextContentItemID: req.NextContentItemID,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -282,7 +220,7 @@ func (c *GamePlaySingleController) SyncPlayTime(ctx contractshttp.Context) contr
 		return resp
 	}
 
-	if err := services.SyncPlayTime(userID, sessionID, req.GameLevelID, req.PlayTime); err != nil {
+	if err := services.SyncPlayTime(userID, sessionID, req.PlayTime); err != nil {
 		if errors.Is(err, services.ErrInvalidPlayTime) {
 			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "游玩时长必须在0到86400秒之间")
 		}
@@ -304,29 +242,9 @@ func (c *GamePlaySingleController) CheckActive(ctx contractshttp.Context) contra
 		return resp
 	}
 
-	result, err := services.CheckActiveSession(userID, req.GameID, req.Degree, req.Pattern)
+	result, err := services.CheckActiveSession(userID, req.GameLevelID, req.Degree, req.Pattern)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active session")
-	}
-
-	return helpers.Success(ctx, result)
-}
-
-// CheckActiveLevel checks for an active level session.
-func (c *GamePlaySingleController) CheckActiveLevel(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
-	}
-
-	var req requests.CheckActiveLevelSessionRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.CheckActiveLevelSession(userID, req.GameID, req.Degree, req.Pattern, req.GameLevelID)
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to check active level session")
 	}
 
 	return helpers.Success(ctx, result)
@@ -361,12 +279,7 @@ func (c *GamePlaySingleController) Restore(ctx contractshttp.Context) contractsh
 
 	sessionID := ctx.Request().Route("id")
 
-	var req requests.RestoreSessionRequest
-	if resp := helpers.Validate(ctx, &req); resp != nil {
-		return resp
-	}
-
-	result, err := services.RestoreSessionData(userID, sessionID, req.GameLevelID)
+	result, err := services.RestoreSessionData(userID, sessionID)
 	if err != nil {
 		return mapSessionError(ctx, err)
 	}
