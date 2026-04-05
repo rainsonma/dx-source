@@ -49,6 +49,7 @@ export type GroupPlayerCompleteEvent = {
   user_name: string;
   game_level_id: string;
   score: number;
+  participants: { user_id: string; user_name: string; score: number }[];
 };
 
 export type GroupPlayerActionEvent = {

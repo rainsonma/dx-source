@@ -39,10 +39,18 @@ type GroupPlayCompleteLevelResult struct {
 
 // GroupPlayerCompleteEvent is the SSE payload for group_player_complete.
 type GroupPlayerCompleteEvent struct {
-	UserID      string `json:"user_id"`
-	UserName    string `json:"user_name"`
-	GameLevelID string `json:"game_level_id"`
-	Score       int    `json:"score"`
+	UserID       string                `json:"user_id"`
+	UserName     string                `json:"user_name"`
+	GameLevelID  string                `json:"game_level_id"`
+	Score        int                   `json:"score"`
+	Participants []GroupParticipantInfo `json:"participants"`
+}
+
+// GroupParticipantInfo holds a participant's score snapshot.
+type GroupParticipantInfo struct {
+	UserID   string `json:"user_id"`
+	UserName string `json:"user_name"`
+	Score    int    `json:"score"`
 }
 
 // GroupPlayerActionEvent is the SSE payload for group_player_action.
@@ -234,11 +242,42 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 			if user.Nickname != nil && *user.Nickname != "" {
 				userName = *user.Nickname
 			}
+
+			// Collect all participants' current scores for this group+level
+			var participantRows []struct {
+				UserID   string `gorm:"column:user_id"`
+				Username string `gorm:"column:username"`
+				Nickname *string `gorm:"column:nickname"`
+				Score    int    `gorm:"column:score"`
+			}
+			facades.Orm().Query().Raw(
+				`SELECT gs.user_id, u.username, u.nickname, gs.score
+				 FROM game_sessions gs
+				 JOIN users u ON u.id = gs.user_id
+				 WHERE gs.game_group_id = ? AND gs.game_level_id = ?
+				 ORDER BY gs.score DESC`,
+				*session.GameGroupID, gameLevelID,
+			).Scan(&participantRows)
+
+			participants := make([]GroupParticipantInfo, 0, len(participantRows))
+			for _, p := range participantRows {
+				name := p.Username
+				if p.Nickname != nil && *p.Nickname != "" {
+					name = *p.Nickname
+				}
+				participants = append(participants, GroupParticipantInfo{
+					UserID:   p.UserID,
+					UserName: name,
+					Score:    p.Score,
+				})
+			}
+
 			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_complete", GroupPlayerCompleteEvent{
-				UserID:      userID,
-				UserName:    userName,
-				GameLevelID: gameLevelID,
-				Score:       score,
+				UserID:       userID,
+				UserName:     userName,
+				GameLevelID:  gameLevelID,
+				Score:        score,
+				Participants: participants,
 			})
 		}
 

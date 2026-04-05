@@ -163,15 +163,7 @@ export function GroupPlayShell({
         // First-to-complete: winner event triggers immediate result
         const store = useGroupPlayStore.getState();
         if (store.groupPhase !== "result") {
-          const winnerIsMe = event.user_id === player.id;
-          const myScore = useGameStore.getState().score;
-          const participants = winnerIsMe
-            ? [{ user_id: event.user_id, user_name: event.user_name, score: event.score }]
-            : [
-                { user_id: event.user_id, user_name: event.user_name, score: event.score },
-                { user_id: player.id, user_name: player.nickname, score: myScore },
-              ];
-          setGroupResultFromWinner(event, participants);
+          setGroupResultFromWinner(event, event.participants);
           setPhase("result");
         }
       }
