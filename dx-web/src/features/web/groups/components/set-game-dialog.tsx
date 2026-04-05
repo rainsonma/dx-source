@@ -236,7 +236,7 @@ export function SetGameDialog({
               }`}
             >
               <User className="h-3.5 w-3.5" />
-              单人
+              单人对抗
             </button>
             <button
               type="button"
@@ -248,7 +248,7 @@ export function SetGameDialog({
               }`}
             >
               <Users className="h-3.5 w-3.5" />
-              小组
+              小组对抗
             </button>
           </div>
 
