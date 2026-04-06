@@ -19,6 +19,8 @@ export default function PkPlayPage({
   const pattern = searchParams.get("pattern");
   const level = searchParams.get("level");
   const difficulty = searchParams.get("difficulty") ?? "normal";
+  const pkId = searchParams.get("pkId");
+  const sessionId = searchParams.get("sessionId");
 
   type GameData = {
     id: string;
@@ -104,6 +106,8 @@ export default function PkPlayPage({
       pattern={pattern}
       levelId={targetLevelId}
       difficulty={difficulty}
+      existingPkId={pkId}
+      existingSessionId={sessionId}
     />
   );
 }

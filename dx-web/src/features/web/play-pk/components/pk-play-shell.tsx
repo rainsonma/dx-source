@@ -48,6 +48,8 @@ interface PkPlayShellProps {
   pattern: string | null;
   levelId: string;
   difficulty: string;
+  existingPkId?: string | null;
+  existingSessionId?: string | null;
 }
 
 export function PkPlayShell({
@@ -57,6 +59,8 @@ export function PkPlayShell({
   pattern,
   levelId,
   difficulty,
+  existingPkId,
+  existingSessionId,
 }: PkPlayShellProps) {
   // Phase and overlay managed via useGameStore so shared modals work
   const phase = useGameStore((s) => s.phase);
@@ -241,6 +245,8 @@ export function PkPlayShell({
           levelId={targetLevelId}
           levelName={levelName}
           difficulty={difficulty}
+          existingPkId={existingPkId}
+          existingSessionId={existingSessionId}
         />
       </GamePlayProvider>
     );

@@ -17,6 +17,7 @@ import {
   restoreSessionDataAction,
   fetchLevelContentAction,
 } from "../actions/session.action";
+import { fetchPkDetailsAction } from "../actions/invite.action";
 import { usePkPlayStore } from "../hooks/use-pk-play-store";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 import type { ContentItem } from "@/features/web/play-core/hooks/use-game-store";
@@ -84,6 +85,8 @@ interface PkPlayLoadingScreenProps {
   levelId: string;
   levelName?: string;
   difficulty: string;
+  existingPkId?: string | null;
+  existingSessionId?: string | null;
 }
 
 export function PkPlayLoadingScreen({
@@ -95,6 +98,8 @@ export function PkPlayLoadingScreen({
   levelId,
   levelName,
   difficulty,
+  existingPkId,
+  existingSessionId,
 }: PkPlayLoadingScreenProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -120,18 +125,40 @@ export function PkPlayLoadingScreen({
       try {
         setProgress(0);
 
-        // Step 1: Start PK (now includes level)
-        const pkResult = await startPkAction(
-          gameId,
-          levelId,
-          degree,
-          pattern,
-          difficulty
-        );
-        if (cancelled) return;
-        if (pkResult.error || !pkResult.data) {
-          setError(pkResult.error ?? "无法开始PK");
-          return;
+        // Step 1: Start PK or use existing session
+        let pkData: {
+          pk_id: string;
+          session_id: string;
+          game_level_id: string;
+          opponent_id: string;
+          opponent_name: string;
+          robot_completed: boolean;
+        };
+
+        if (existingPkId && existingSessionId) {
+          // Specified PK — session already created during invite/accept
+          pkData = {
+            pk_id: existingPkId,
+            session_id: existingSessionId,
+            game_level_id: levelId,
+            opponent_id: "",
+            opponent_name: "",
+            robot_completed: false,
+          };
+          const detailsRes = await fetchPkDetailsAction(existingPkId);
+          if (cancelled) return;
+          if (detailsRes.data) {
+            pkData.opponent_id = detailsRes.data.opponent_id;
+            pkData.opponent_name = detailsRes.data.opponent_name;
+          }
+        } else {
+          const pkResult = await startPkAction(gameId, levelId, degree, pattern, difficulty);
+          if (cancelled) return;
+          if (pkResult.error || !pkResult.data) {
+            setError(pkResult.error ?? "无法开始PK");
+            return;
+          }
+          pkData = pkResult.data;
         }
         setProgress(33);
 
@@ -146,7 +173,7 @@ export function PkPlayLoadingScreen({
 
         // Try restore — if session already had progress, the API returns data
         const restoreResult = await restoreSessionDataAction(
-          pkResult.data.session_id
+          pkData.session_id
         );
         if (!cancelled && restoreResult.data) {
           const rd = restoreResult.data;
@@ -165,7 +192,7 @@ export function PkPlayLoadingScreen({
         // Step 3: Fetch content
         const contentResult = await fetchLevelContentAction(
           gameId,
-          pkResult.data.game_level_id,
+          pkData.game_level_id,
           degree
         );
         if (cancelled) return;
@@ -181,16 +208,16 @@ export function PkPlayLoadingScreen({
         if (cancelled) return;
 
         const pkSessionInit = {
-          pkId: pkResult.data.pk_id,
-          sessionId: pkResult.data.session_id,
+          pkId: pkData.pk_id,
+          sessionId: pkData.session_id,
           gameId,
           gameMode,
           degree,
           pattern,
-          levelId: pkResult.data.game_level_id,
+          levelId: pkData.game_level_id,
           difficulty,
-          opponentId: pkResult.data.opponent_id,
-          opponentName: pkResult.data.opponent_name,
+          opponentId: pkData.opponent_id,
+          opponentName: pkData.opponent_name,
           contentItems: contentResult.data as ContentItem[],
           startFromIndex,
           ...(restored && { restored }),
@@ -212,7 +239,7 @@ export function PkPlayLoadingScreen({
         });
 
         // If robot already completed (e.g. page refresh), update store
-        if (pkResult.data.robot_completed) {
+        if (pkData.robot_completed) {
           usePkPlayStore.getState().setOpponentCompleted();
         }
       } catch {
@@ -230,6 +257,8 @@ export function PkPlayLoadingScreen({
     pattern,
     levelId,
     difficulty,
+    existingPkId,
+    existingSessionId,
     initPkSession,
     initGameSession,
     retryCount,
