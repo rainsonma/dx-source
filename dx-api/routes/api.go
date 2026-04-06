@@ -265,6 +265,10 @@ func Api() {
 				gp.Put("/{id}/content-item", playGroupController.UpdateContentItem)
 			})
 
+			// User SSE events
+			userSSEController := apicontrollers.NewUserSSEController()
+			protected.Get("/user/events", userSSEController.Events)
+
 			// PK game play routes
 			playPkController := apicontrollers.NewGamePlayPkController()
 			protected.Get("/play-pk/{id}/events", playPkController.Events)
