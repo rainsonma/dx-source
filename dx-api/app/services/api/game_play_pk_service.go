@@ -336,7 +336,68 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 		return nil, fmt.Errorf("no next level available")
 	}
 
+	// For specified PK, create a new PK directly without robot
+	if pk.PkType == "specified" {
+		return nextSpecifiedPkLevel(userID, pk, *nextLevelID)
+	}
+
 	return StartPk(userID, pk.GameID, *nextLevelID, pk.Degree, pk.Pattern, pk.RobotDifficulty)
+}
+
+// nextSpecifiedPkLevel creates a new specified PK for the next level (no robot, no re-invitation).
+func nextSpecifiedPkLevel(userID string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
+	pkID := newID()
+	statusAccepted := "accepted"
+
+	pk := models.GamePk{
+		ID:               pkID,
+		UserID:           oldPk.UserID,
+		OpponentID:       oldPk.OpponentID,
+		GameID:           oldPk.GameID,
+		GameLevelID:      nextLevelID,
+		Degree:           oldPk.Degree,
+		Pattern:          oldPk.Pattern,
+		RobotDifficulty:  "",
+		IsPlaying:        true,
+		PkType:           "specified",
+		InvitationStatus: &statusAccepted,
+	}
+	if err := facades.Orm().Query().Create(&pk); err != nil {
+		return nil, fmt.Errorf("failed to create next PK: %w", err)
+	}
+
+	// Create sessions for both players
+	now := time.Now()
+	totalItems, _ := countLevelItems(facades.Orm().Query(), nextLevelID, oldPk.Degree)
+
+	for _, uid := range []string{oldPk.UserID, oldPk.OpponentID} {
+		sid := newID()
+		session := models.GameSession{
+			ID:              sid,
+			UserID:          uid,
+			GameID:          oldPk.GameID,
+			GameLevelID:     nextLevelID,
+			Degree:          oldPk.Degree,
+			Pattern:         oldPk.Pattern,
+			GamePkID:        &pkID,
+			StartedAt:       now,
+			TotalItemsCount: int(totalItems),
+		}
+		if err := facades.Orm().Query().Create(&session); err != nil {
+			return nil, fmt.Errorf("failed to create session for %s: %w", uid, err)
+		}
+	}
+
+	var opponent models.User
+	facades.Orm().Query().Select("id", "username", "nickname").Where("id", oldPk.OpponentID).First(&opponent)
+
+	return &PkStartResult{
+		PkID:         pkID,
+		SessionID:    "",
+		GameLevelID:  nextLevelID,
+		OpponentID:   oldPk.OpponentID,
+		OpponentName: nickname(opponent),
+	}, nil
 }
 
 // EndPk forcefully ends a PK match.
