@@ -31,7 +31,7 @@ export function PkInvitationPopup({
   }, [timeLeft, onDecline]);
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+    <div className="fixed bottom-6 right-6 z-[9999]">
       <div className="flex w-80 flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
