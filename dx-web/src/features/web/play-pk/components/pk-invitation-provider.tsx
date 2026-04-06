@@ -25,6 +25,16 @@ export function PkInvitationProvider({ children }: { children: React.ReactNode }
       const inv = data as PkInvitation;
       setInvitation(inv);
     },
+    pk_next_level: (data) => {
+      const event = data as { pk_id: string; game_id: string; level_id: string; degree: string; pattern: string | null };
+      const params = new URLSearchParams({
+        degree: event.degree,
+        level: event.level_id,
+        pkId: event.pk_id,
+      });
+      if (event.pattern) params.set("pattern", event.pattern);
+      router.push(`/hall/play-pk/${event.game_id}?${params}`);
+    },
   });
 
   const handleAccept = useCallback(async () => {

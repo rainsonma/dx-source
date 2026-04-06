@@ -327,10 +327,10 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Broadcast pk_next_level on the OLD PK so both players (still listening) navigate together
+		// Send pk_next_level to the OTHER player via UserHub (proven reliable).
 		var nextLevel models.GameLevel
 		facades.Orm().Query().Select("id", "name").Where("id", *nextLevelID).First(&nextLevel)
-		helpers.PkHub.Broadcast(pkID, "pk_next_level", map[string]any{
+		helpers.UserHub.SendToUser(otherPlayerID, "pk_next_level", map[string]any{
 			"pk_id":      result.PkID,
 			"game_id":    pk.GameID,
 			"level_id":   *nextLevelID,
