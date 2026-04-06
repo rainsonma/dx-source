@@ -4,6 +4,14 @@ const (
 	PkDifficultyEasy   = "easy"
 	PkDifficultyNormal = "normal"
 	PkDifficultyHard   = "hard"
+
+	PkTypeRandom    = "random"
+	PkTypeSpecified = "specified"
+
+	PkInvitationPending  = "pending"
+	PkInvitationAccepted = "accepted"
+	PkInvitationDeclined = "declined"
+	PkInvitationExpired  = "expired"
 )
 
 // PkDifficultyParams defines the robot behavior for a difficulty level.

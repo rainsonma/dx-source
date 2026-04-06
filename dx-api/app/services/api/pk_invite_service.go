@@ -6,6 +6,7 @@ import (
 
 	"github.com/goravel/framework/facades"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 )
@@ -97,7 +98,7 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 	}
 
 	pkID := newID()
-	statusPending := "pending"
+	statusPending := consts.PkInvitationPending
 
 	pk := models.GamePk{
 		ID:               pkID,
@@ -109,7 +110,7 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 		Pattern:          pattern,
 		RobotDifficulty:  "",
 		IsPlaying:        true,
-		PkType:           "specified",
+		PkType:           consts.PkTypeSpecified,
 		InvitationStatus: &statusPending,
 	}
 	if err := facades.Orm().Query().Create(&pk); err != nil {
@@ -168,12 +169,12 @@ func AcceptPkInvite(userID, pkID string) (*PkAcceptResult, error) {
 	if pk.OpponentID != userID {
 		return nil, ErrForbidden
 	}
-	if pk.InvitationStatus == nil || *pk.InvitationStatus != "pending" {
+	if pk.InvitationStatus == nil || *pk.InvitationStatus != consts.PkInvitationPending {
 		return nil, ErrInvitationNotPending
 	}
 
 	// Update invitation status
-	statusAccepted := "accepted"
+	statusAccepted := consts.PkInvitationAccepted
 	if _, err := facades.Orm().Query().Model(&models.GamePk{}).
 		Where("id", pkID).
 		Update("invitation_status", statusAccepted); err != nil {
@@ -230,11 +231,11 @@ func DeclinePkInvite(userID, pkID string) error {
 	if pk.OpponentID != userID {
 		return ErrForbidden
 	}
-	if pk.InvitationStatus == nil || *pk.InvitationStatus != "pending" {
+	if pk.InvitationStatus == nil || *pk.InvitationStatus != consts.PkInvitationPending {
 		return ErrInvitationNotPending
 	}
 
-	statusDeclined := "declined"
+	statusDeclined := consts.PkInvitationDeclined
 	now := time.Now()
 
 	// Update PK status

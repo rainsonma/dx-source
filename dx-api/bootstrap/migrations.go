@@ -57,6 +57,5 @@ func Migrations() []schema.Migration {
 		&migrations.M20260405000004CreateGameRecordsTable{},
 		&migrations.M20260405000005CreateGamePksTable{},
 		&migrations.M20260405000006AddGamePkIndexes{},
-		&migrations.M20260406000001AddPkTypeColumns{},
 	}
 }

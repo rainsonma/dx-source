@@ -337,7 +337,7 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 	}
 
 	// For specified PK, create a new PK directly without robot
-	if pk.PkType == "specified" {
+	if pk.PkType == consts.PkTypeSpecified {
 		return nextSpecifiedPkLevel(userID, pk, *nextLevelID)
 	}
 
@@ -347,7 +347,7 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 // nextSpecifiedPkLevel creates a new specified PK for the next level (no robot, no re-invitation).
 func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
 	pkID := newID()
-	statusAccepted := "accepted"
+	statusAccepted := consts.PkInvitationAccepted
 
 	pk := models.GamePk{
 		ID:               pkID,
@@ -359,7 +359,7 @@ func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*P
 		Pattern:          oldPk.Pattern,
 		RobotDifficulty:  "",
 		IsPlaying:        true,
-		PkType:           "specified",
+		PkType:           consts.PkTypeSpecified,
 		InvitationStatus: &statusAccepted,
 	}
 	if err := facades.Orm().Query().Create(&pk); err != nil {

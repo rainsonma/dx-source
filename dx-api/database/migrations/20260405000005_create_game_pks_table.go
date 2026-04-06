@@ -25,6 +25,8 @@ func (r *M20260405000005CreateGamePksTable) Up() error {
 		table.Text("robot_difficulty").Default("normal")
 		table.Boolean("is_playing").Default(false)
 		table.Uuid("last_winner_id").Nullable()
+		table.Text("pk_type").Default("random")
+		table.Text("invitation_status").Nullable()
 		table.TimestampsTz()
 		table.Index("user_id")
 		table.Index("opponent_id")
