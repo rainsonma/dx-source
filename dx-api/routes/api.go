@@ -269,6 +269,10 @@ func Api() {
 			userSSEController := apicontrollers.NewUserSSEController()
 			protected.Get("/user/events", userSSEController.Events)
 
+			// User verify
+			userVerifyController := apicontrollers.NewUserVerifyController()
+			protected.Post("/users/verify-online", userVerifyController.VerifyOnline)
+
 			// PK game play routes
 			playPkController := apicontrollers.NewGamePlayPkController()
 			protected.Get("/play-pk/{id}/events", playPkController.Events)
