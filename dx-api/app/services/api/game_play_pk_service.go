@@ -317,8 +317,12 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 		return nil, fmt.Errorf("no next level available")
 	}
 
-	// For specified PK, check if opponent is still connected
-	if pk.PkType == consts.PkTypeSpecified && helpers.PkHub.IsConnected(pkID, pk.OpponentID) {
+	// For specified PK, check if the OTHER player is still connected
+	otherPlayerID := pk.OpponentID
+	if userID == pk.OpponentID {
+		otherPlayerID = pk.UserID
+	}
+	if pk.PkType == consts.PkTypeSpecified && helpers.PkHub.IsConnected(pkID, otherPlayerID) {
 		result, err := nextSpecifiedPkLevel(userID, pk, *nextLevelID)
 		if err != nil {
 			return nil, err
