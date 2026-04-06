@@ -122,24 +122,33 @@ export function PkPlayShell({
     });
     if (result.error) {
       // Retry once
-      await completeLevelAction(sessionId, targetLevelId, {
+      const retry = await completeLevelAction(sessionId, targetLevelId, {
         score,
         maxCombo: combo.maxCombo,
         totalItems: contentItems?.length ?? 0,
       });
-    }
-    // Store next level info from complete response for result panel
-    if (result.data) {
-      const store = usePkPlayStore.getState();
-      if (!store.pkResult) {
-        // Result not yet set via SSE — will be set when pk_player_complete arrives
-        // But store nextLevel info for when it does
-        usePkPlayStore.setState({
-          nextLevelId: result.data.next_level_id ?? null,
-          nextLevelName: result.data.next_level_name ?? null,
-        });
+      if (retry.data) {
+        buildLocalResult(retry.data.next_level_id, retry.data.next_level_name);
       }
+      return;
     }
+    if (result.data) {
+      buildLocalResult(result.data.next_level_id, result.data.next_level_name);
+    }
+  }
+
+  function buildLocalResult(nextLevelId: string | null, nextLevelName: string | null) {
+    const store = usePkPlayStore.getState();
+    if (store.pkResult) return; // Already set via SSE
+    const pkResult: PkLevelCompleteEvent = {
+      game_level_id: targetLevelId,
+      winner: { user_id: player.id, user_name: player.nickname, score },
+      participants: [
+        { user_id: player.id, user_name: player.nickname, score },
+        { user_id: store.opponentId ?? "", user_name: store.opponentName ?? "", score: store.opponentScore },
+      ],
+    };
+    setPkResult(pkResult, nextLevelId ?? store.nextLevelId, nextLevelName ?? store.nextLevelName);
   }
 
   // SSE: listen for PK events
