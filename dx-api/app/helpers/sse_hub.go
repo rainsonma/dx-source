@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 )
 
 // SSEConnection wraps a single client SSE connection.
 type SSEConnection struct {
 	w       http.ResponseWriter
 	flusher http.Flusher
+	rc      *http.ResponseController
 	done    chan struct{}
 }
 
@@ -103,8 +105,12 @@ func (h *SSEHub) ConnectedUserIDs(groupID string) []string {
 	return ids
 }
 
-// SendHeartbeat sends a comment line as keepalive.
+// SendHeartbeat sends a comment line as keepalive and extends the write deadline.
 func (conn *SSEConnection) SendHeartbeat() error {
+	// Extend write deadline before writing — prevents the global request_timeout from killing SSE connections.
+	if conn.rc != nil {
+		_ = conn.rc.SetWriteDeadline(time.Now().Add(60 * time.Second))
+	}
 	_, err := fmt.Fprintf(conn.w, ": heartbeat\n\n")
 	if err != nil {
 		return err
@@ -123,5 +129,8 @@ func (conn *SSEConnection) Done() <-chan struct{} {
 // NewSSEConnection creates an SSEConnection from an http.ResponseWriter.
 func NewSSEConnection(w http.ResponseWriter) *SSEConnection {
 	flusher, _ := w.(http.Flusher)
-	return &SSEConnection{w: w, flusher: flusher, done: make(chan struct{})}
+	rc := http.NewResponseController(w)
+	// Extend initial write deadline so the connection isn't killed before the first heartbeat.
+	_ = rc.SetWriteDeadline(time.Now().Add(60 * time.Second))
+	return &SSEConnection{w: w, flusher: flusher, rc: rc, done: make(chan struct{})}
 }

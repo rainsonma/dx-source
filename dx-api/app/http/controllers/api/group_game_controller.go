@@ -184,7 +184,7 @@ func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Re
 		helpers.GroupSSEHub.Unregister(groupID, userID, conn)
 	}()
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	clientGone := ctx.Request().Origin().Context().Done()

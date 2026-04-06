@@ -45,7 +45,7 @@ func (c *UserSSEController) Events(ctx contractshttp.Context) contractshttp.Resp
 	conn := helpers.UserHub.Register(userID, w)
 	defer helpers.UserHub.Unregister(userID, conn)
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	clientGone := ctx.Request().Origin().Context().Done()

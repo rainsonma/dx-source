@@ -45,7 +45,7 @@ func (c *GroupNotifyController) Notify(ctx contractshttp.Context) contractshttp.
 	helpers.GroupNotifyHub.Register(groupID, userID, conn)
 	defer helpers.GroupNotifyHub.Unregister(groupID, userID, conn)
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	clientGone := ctx.Request().Origin().Context().Done()

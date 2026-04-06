@@ -250,7 +250,7 @@ func (c *GamePlayPkController) Events(ctx contractshttp.Context) contractshttp.R
 		// user actions (EndPk, exit button) or robot timeout.
 	}()
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
 	clientGone := ctx.Request().Origin().Context().Done()

@@ -38,7 +38,7 @@ export default function PkRoomPage({
   const [status, setStatus] = useState<
     "waiting" | "accepted" | "declined" | "timeout"
   >("waiting");
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [countdown, setCountdown] = useState<number | null>(null);
 
   // Fetch PK details
