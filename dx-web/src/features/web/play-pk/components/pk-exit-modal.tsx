@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { X, Play, ListOrdered, Layers, Home } from "lucide-react";
+import { X, Play, Layers } from "lucide-react";
 import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
 
 interface PkExitModalProps {
@@ -32,32 +32,12 @@ export function PkExitModal({ gameId }: PkExitModalProps) {
         <div className="flex w-full flex-col gap-3">
           <button
             type="button"
-            onClick={() => handleExit("/hall")}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted"
-          >
-            <Home className="h-[18px] w-[18px] text-muted-foreground" />
-            <span className="text-[15px] font-medium text-muted-foreground">
-              返回学习主页
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleExit("/hall/games")}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted"
-          >
-            <ListOrdered className="h-[18px] w-[18px] text-muted-foreground" />
-            <span className="text-[15px] font-medium text-muted-foreground">
-              返回课程游戏列表
-            </span>
-          </button>
-          <button
-            type="button"
             onClick={() => handleExit(`/hall/games/${gameId}`)}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted"
           >
             <Layers className="h-[18px] w-[18px] text-muted-foreground" />
             <span className="text-[15px] font-medium text-muted-foreground">
-              返回当前关卡列表
+              返回关卡列表
             </span>
           </button>
           <button
