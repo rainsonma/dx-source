@@ -18,7 +18,6 @@ import {
   Gamepad2,
   Search,
   CheckCircle2,
-  XCircle,
   Loader2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -431,19 +430,13 @@ export function GameModeCard({
                       )}
                       验证
                     </button>
+                    {verifyResult && (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                    )}
+                    {verifyError && (
+                      <span className="shrink-0 text-xs text-red-500">{verifyError}</span>
+                    )}
                   </div>
-                  {verifyResult && (
-                    <div className="flex items-center gap-2 text-sm text-emerald-600">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{verifyResult.nickname} · 在线</span>
-                    </div>
-                  )}
-                  {verifyError && (
-                    <div className="flex items-center gap-2 text-sm text-red-500">
-                      <XCircle className="h-4 w-4" />
-                      <span>{verifyError}</span>
-                    </div>
-                  )}
                   {levels && levels.length > 0 && (
                     <div className="flex items-center gap-3">
                       <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
