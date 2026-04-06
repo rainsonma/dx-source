@@ -42,7 +42,7 @@ export function PkInvitationPopup({
   return createPortal(
     <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 99999 }}>
       <div
-        className="flex w-80 flex-col gap-3 rounded-2xl border-2 border-teal-600/60 p-4 shadow-2xl"
+        className="flex w-80 flex-col gap-3 rounded-2xl border-[3px] border-teal-600/60 p-4 shadow-2xl"
         style={{ background: "radial-gradient(ellipse at center, #1E1B4B, #0F0A2E)" }}
       >
         <div className="flex items-center justify-between">
@@ -60,7 +60,7 @@ export function PkInvitationPopup({
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-sm text-white">
-            <span className="font-semibold text-teal-300">{initiatorName}</span> 邀请你进��� PK 对战
+            <span className="font-semibold text-teal-300">{initiatorName}</span> 邀请你进行 PK 对战
           </p>
           <p className="text-xs text-slate-400">
             {gameName} · {levelName}
