@@ -15,6 +15,7 @@ import {
   Mic,
   Eye,
   PenLine,
+  Gamepad2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { GAME_DEGREES, type GameDegree } from "@/consts/game-degree";
@@ -24,6 +25,13 @@ import {
   DEFAULT_GAME_PATTERN,
   type GamePattern,
 } from "@/consts/game-pattern";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   checkActiveSessionAction,
   restartLevelSessionAction,
@@ -85,6 +93,7 @@ interface GameModeCardProps {
   mode?: "single" | "pk";
   levelId?: string;
   levelLabel?: string;
+  levels?: { id: string; name: string }[];
   initialDegree?: string;
   initialPattern?: string | null;
   open: boolean;
@@ -98,6 +107,7 @@ export function GameModeCard({
   mode = "single",
   levelId,
   levelLabel,
+  levels,
   initialDegree,
   initialPattern,
   open,
@@ -113,6 +123,7 @@ export function GameModeCard({
   );
   const isPk = mode === "pk";
   const [selectedDifficulty, setSelectedDifficulty] = useState("normal");
+  const [selectedPkLevel, setSelectedPkLevel] = useState(levels?.[0]?.id ?? "");
   const [activeSession, setActiveSession] = useState<{
     id: string;
     degree: string;
@@ -143,7 +154,8 @@ export function GameModeCard({
     startTransition(() => {
       const params = new URLSearchParams({ degree: selectedDegree, difficulty: selectedDifficulty });
       if (isWordSentence) params.set("pattern", selectedPattern);
-      if (levelId) params.set("level", levelId);
+      const pkLevel = selectedPkLevel || levels?.[0]?.id;
+      if (pkLevel) params.set("level", pkLevel);
       router.push(`/hall/play-pk/${gameId}?${params}`);
     });
   }
@@ -306,6 +318,27 @@ export function GameModeCard({
                   );
                 })}
               </div>
+
+              {/* Starting level selector */}
+              {levels && levels.length > 0 && (
+                <div className="mt-4 flex items-center gap-3">
+                  <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="shrink-0 text-[13px] font-medium text-foreground">起始关卡</span>
+                  <Select value={selectedPkLevel} onValueChange={setSelectedPkLevel}>
+                    <SelectTrigger className="h-9 flex-1 text-sm">
+                      <SelectValue placeholder="选择关卡" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {levels.map((level) => (
+                        <SelectItem key={level.id} value={level.id}>
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="h-px bg-border my-5" />
             </>
           )}

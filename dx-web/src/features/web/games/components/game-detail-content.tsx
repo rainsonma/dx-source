@@ -110,6 +110,7 @@ export function GameDetailContent({
         mode={modalMode}
         levelId={selectedLevel?.id}
         levelLabel={selectedLevel?.label}
+        levels={game.levels}
         initialDegree={heroSession?.degree}
         initialPattern={heroSession?.pattern}
         open={modalOpen}
