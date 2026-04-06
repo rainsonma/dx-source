@@ -33,9 +33,9 @@ func init() {
 		"host": config.Env("APP_HOST", "127.0.0.1"),
 		// HTTP Port
 		"port": config.Env("APP_PORT", "3001"),
-		// HTTP Timeout — must be long enough for SSE connections (PK, group, user events).
-		// Matches nginx proxy_read_timeout (300s).
-		"request_timeout": 300,
+		// HTTP Timeout (seconds). SSE connections cycle at this interval;
+		// one-shot events use UserHub for reliable delivery.
+		"request_timeout": 30,
 		// HTTPS Configuration
 		"tls": map[string]any{
 			// HTTPS Host
