@@ -59,9 +59,10 @@ func (h *UserSSEHub) SendToUser(userID, event string, data any) {
 	if !ok {
 		return
 	}
-
-	jsonBytes, _ := json.Marshal(data)
-	fmt.Fprintf(conn.w, "event: %s\ndata: %s\n\n", event, jsonBytes)
+	// Send as generic message with type field (avoids Safari named-event bug)
+	payload := map[string]any{"type": event, "payload": data}
+	jsonBytes, _ := json.Marshal(payload)
+	fmt.Fprintf(conn.w, "data: %s\n\n", jsonBytes)
 	if conn.flusher != nil {
 		conn.flusher.Flush()
 	}
