@@ -143,6 +143,7 @@ func StartPk(userID, gameID, gameLevelID, degree string, pattern *string, diffic
 		Pattern:         pattern,
 		RobotDifficulty: difficulty,
 		IsPlaying:       true,
+		PkType:          consts.PkTypeRandom,
 	}
 	if err := query.Create(&pk); err != nil {
 		// Unique constraint violation — concurrent call already created a PK
@@ -415,8 +416,14 @@ func EndPk(userID, pkID string) error {
 	cancelRobot(pkID)
 	endPkSessions(pkID)
 
+	updates := map[string]any{"is_playing": false}
+	if pk.PkType == consts.PkTypeSpecified && pk.InvitationStatus != nil && *pk.InvitationStatus == consts.PkInvitationPending {
+		expired := consts.PkInvitationExpired
+		updates["invitation_status"] = expired
+	}
+
 	if _, err := query.Model(&models.GamePk{}).Where("id", pkID).
-		Update("is_playing", false); err != nil {
+		Update(updates); err != nil {
 		return fmt.Errorf("failed to end pk: %w", err)
 	}
 
