@@ -64,6 +64,9 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 		return nil, ErrOpponentNotVip
 	}
 
+	// End any stale active PK for this user on this game before creating a new one
+	cleanupStalePk(facades.Orm().Query(), userID, gameID)
+
 	// Verify game exists and is published
 	var game models.Game
 	if err := facades.Orm().Query().Where("id", gameID).First(&game); err != nil {

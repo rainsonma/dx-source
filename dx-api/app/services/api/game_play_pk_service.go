@@ -11,6 +11,7 @@ import (
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 
+	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
 )
 
@@ -86,29 +87,8 @@ func StartPk(userID, gameID, gameLevelID, degree string, pattern *string, diffic
 
 	query := facades.Orm().Query()
 
-	// Check for existing active PK for this user/game/level (idempotent for concurrent calls)
-	var existingPk models.GamePk
-	query.Where("user_id", userID).Where("game_id", gameID).
-		Where("game_level_id", gameLevelID).Where("is_playing", true).First(&existingPk)
-	if existingPk.ID != "" {
-		var existingSession models.GameSession
-		query.Where("game_pk_id", existingPk.ID).Where("user_id", userID).First(&existingSession)
-		if existingSession.ID != "" {
-			var opponent models.User
-			query.Where("id", existingPk.OpponentID).First(&opponent)
-			opName := opponent.Username
-			if opponent.Nickname != nil && *opponent.Nickname != "" {
-				opName = *opponent.Nickname
-			}
-			return &PkStartResult{
-				PkID:         existingPk.ID,
-				SessionID:    existingSession.ID,
-				GameLevelID:  existingPk.GameLevelID,
-				OpponentID:   existingPk.OpponentID,
-				OpponentName: opName,
-			}, nil
-		}
-	}
+	// End any stale active PK for this user on this game before creating a new one
+	cleanupStalePk(query, userID, gameID)
 
 	// Verify game exists and is published
 	var game models.Game
@@ -776,4 +756,18 @@ func endPkSessions(pkID string) {
 		"UPDATE game_sessions SET ended_at = ?, updated_at = now() WHERE game_pk_id = ? AND ended_at IS NULL",
 		now, pkID,
 	)
+}
+
+// cleanupStalePk ends any active PK for the user on the given game.
+// Called before creating a new PK to avoid stale is_playing=true records
+// from abandoned sessions blocking new ones.
+func cleanupStalePk(query orm.Query, userID, gameID string) {
+	var stalePk models.GamePk
+	query.Where("user_id", userID).Where("game_id", gameID).Where("is_playing", true).First(&stalePk)
+	if stalePk.ID == "" {
+		return
+	}
+	cancelRobot(stalePk.ID)
+	endPkSessions(stalePk.ID)
+	query.Model(&models.GamePk{}).Where("id", stalePk.ID).Update("is_playing", false)
 }
