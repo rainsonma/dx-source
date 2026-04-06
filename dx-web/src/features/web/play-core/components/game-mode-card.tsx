@@ -16,6 +16,10 @@ import {
   Eye,
   PenLine,
   Gamepad2,
+  Search,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { GAME_DEGREES, type GameDegree } from "@/consts/game-degree";
@@ -32,10 +36,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import {
   checkActiveSessionAction,
   restartLevelSessionAction,
 } from "@/features/web/play-single/actions/session.action";
+import { verifyOpponentAction, invitePkAction } from "@/features/web/play-pk/actions/invite.action";
 
 interface ModeOption {
   value: GameDegree;
@@ -124,6 +131,16 @@ export function GameModeCard({
   const isPk = mode === "pk";
   const [selectedDifficulty, setSelectedDifficulty] = useState("normal");
   const [selectedPkLevel, setSelectedPkLevel] = useState(levels?.[0]?.id ?? "");
+  const [pkTab, setPkTab] = useState<"random" | "specified">("random");
+  const [specifiedUsername, setSpecifiedUsername] = useState("");
+  const [verifyResult, setVerifyResult] = useState<{
+    userId: string;
+    nickname: string;
+    isOnline: boolean;
+    isVip: boolean;
+  } | null>(null);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [activeSession, setActiveSession] = useState<{
     id: string;
     degree: string;
@@ -150,13 +167,68 @@ export function GameModeCard({
     ? `${levelLabel ?? gameName} · PK 对战`
     : (levelLabel ?? gameName);
 
+  function handleTabChange(value: string) {
+    setPkTab(value as "random" | "specified");
+    if (value === "random") {
+      setSpecifiedUsername("");
+      setVerifyResult(null);
+      setVerifyError(null);
+    } else {
+      setSelectedDifficulty("normal");
+    }
+  }
+
+  async function handleVerify() {
+    if (!specifiedUsername.trim()) return;
+    setIsVerifying(true);
+    setVerifyResult(null);
+    setVerifyError(null);
+    const res = await verifyOpponentAction(specifiedUsername.trim());
+    setIsVerifying(false);
+    if (res.error) {
+      setVerifyError(res.error);
+      return;
+    }
+    if (res.data) {
+      if (!res.data.is_online) {
+        setVerifyError("对方不在线");
+      } else if (!res.data.is_vip) {
+        setVerifyError("对方会员已过期");
+      } else {
+        setVerifyResult({
+          userId: res.data.user_id,
+          nickname: res.data.nickname,
+          isOnline: res.data.is_online,
+          isVip: res.data.is_vip,
+        });
+      }
+    }
+  }
+
   function handlePkStart() {
-    startTransition(() => {
-      const params = new URLSearchParams({ degree: selectedDegree, difficulty: selectedDifficulty });
-      if (isWordSentence) params.set("pattern", selectedPattern);
-      const pkLevel = selectedPkLevel || levels?.[0]?.id;
-      if (pkLevel) params.set("level", pkLevel);
-      router.push(`/hall/play-pk/${gameId}?${params}`);
+    startTransition(async () => {
+      if (pkTab === "specified") {
+        if (!verifyResult) return;
+        const pkLevel = selectedPkLevel || levels?.[0]?.id;
+        const res = await invitePkAction({
+          gameId,
+          gameLevelId: pkLevel || "",
+          degree: selectedDegree,
+          pattern: isWordSentence ? selectedPattern : null,
+          opponentId: verifyResult.userId,
+        });
+        if (res.error || !res.data) return;
+        const params = new URLSearchParams({
+          sessionId: res.data.session_id,
+        });
+        router.push(`/hall/pk-room/${res.data.pk_id}?${params}`);
+      } else {
+        const params = new URLSearchParams({ degree: selectedDegree, difficulty: selectedDifficulty });
+        if (isWordSentence) params.set("pattern", selectedPattern);
+        const pkLevel = selectedPkLevel || levels?.[0]?.id;
+        if (pkLevel) params.set("level", pkLevel);
+        router.push(`/hall/play-pk/${gameId}?${params}`);
+      }
     });
   }
 
@@ -292,52 +364,104 @@ export function GameModeCard({
             </>
           )}
 
-          {/* Difficulty options (PK mode only) */}
+          {/* Tabs (PK mode only) */}
           {isPk && (
             <>
-              <p className="mt-4 mb-1 text-xs font-medium text-muted-foreground">
-                对手强度
-              </p>
-              <div className="flex w-full overflow-hidden border border-border">
-                {difficultyOptions.map(({ value, label, icon: Icon }) => {
-                  const isDiffSelected = selectedDifficulty === value;
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setSelectedDifficulty(value)}
-                      className={`flex flex-1 items-center justify-center gap-1.5 border-r border-border py-2.5 text-sm font-medium transition-colors last:border-r-0 ${
-                        isDiffSelected
-                          ? "bg-teal-600 text-white"
-                          : "bg-card text-muted-foreground hover:bg-accent"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              <Tabs value={pkTab} onValueChange={handleTabChange} className="mt-4">
+                <TabsList className="w-full">
+                  <TabsTrigger value="random" className="flex-1">随机对手</TabsTrigger>
+                  <TabsTrigger value="specified" className="flex-1">指定对手</TabsTrigger>
+                </TabsList>
 
-              {/* Starting level selector */}
-              {levels && levels.length > 0 && (
-                <div className="mt-4 flex items-center gap-3">
-                  <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="shrink-0 text-[13px] font-medium text-foreground">起始关卡</span>
-                  <Select value={selectedPkLevel} onValueChange={setSelectedPkLevel}>
-                    <SelectTrigger className="h-9 flex-1 text-sm">
-                      <SelectValue placeholder="选择关卡" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {levels.map((level) => (
-                        <SelectItem key={level.id} value={level.id}>
-                          {level.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+                <TabsContent value="random" className="flex flex-col gap-3 pt-3">
+                  <div className="flex items-center gap-3">
+                    <Flame className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="shrink-0 text-[13px] font-medium text-foreground">对手强度</span>
+                    <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+                      <SelectTrigger className="h-9 flex-1 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {difficultyOptions.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {levels && levels.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="shrink-0 text-[13px] font-medium text-foreground">起始关卡</span>
+                      <Select value={selectedPkLevel} onValueChange={setSelectedPkLevel}>
+                        <SelectTrigger className="h-9 flex-1 text-sm">
+                          <SelectValue placeholder="选择关卡" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {levels.map((level) => (
+                            <SelectItem key={level.id} value={level.id}>{level.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="specified" className="flex flex-col gap-3 pt-3">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={specifiedUsername}
+                      onChange={(e) => {
+                        setSpecifiedUsername(e.target.value);
+                        setVerifyResult(null);
+                        setVerifyError(null);
+                      }}
+                      placeholder="输入对手用户名"
+                      className="h-9 flex-1 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerify}
+                      disabled={isVerifying || !specifiedUsername.trim()}
+                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-teal-600 px-3 text-sm font-medium text-white disabled:opacity-50"
+                    >
+                      {isVerifying ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Search className="h-3.5 w-3.5" />
+                      )}
+                      验证
+                    </button>
+                  </div>
+                  {verifyResult && (
+                    <div className="flex items-center gap-2 text-sm text-emerald-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{verifyResult.nickname} · 在线</span>
+                    </div>
+                  )}
+                  {verifyError && (
+                    <div className="flex items-center gap-2 text-sm text-red-500">
+                      <XCircle className="h-4 w-4" />
+                      <span>{verifyError}</span>
+                    </div>
+                  )}
+                  {levels && levels.length > 0 && (
+                    <div className="flex items-center gap-3">
+                      <Gamepad2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="shrink-0 text-[13px] font-medium text-foreground">起始关卡</span>
+                      <Select value={selectedPkLevel} onValueChange={setSelectedPkLevel}>
+                        <SelectTrigger className="h-9 flex-1 text-sm">
+                          <SelectValue placeholder="选择关卡" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {levels.map((level) => (
+                            <SelectItem key={level.id} value={level.id}>{level.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
 
               <div className="h-px bg-border my-5" />
             </>
@@ -360,7 +484,7 @@ export function GameModeCard({
                 <button
                   type="button"
                   onClick={handlePkStart}
-                  disabled={isPending}
+                  disabled={isPending || (pkTab === "specified" && !verifyResult)}
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 py-3 disabled:opacity-50"
                 >
                   <Play className="h-[18px] w-[18px] text-white" />
