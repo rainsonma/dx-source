@@ -407,16 +407,29 @@ export function GameModeCard({
 
                 <TabsContent value="specified" className="flex flex-col gap-3 pt-3">
                   <div className="flex items-center gap-2">
-                    <Input
-                      value={specifiedUsername}
-                      onChange={(e) => {
-                        setSpecifiedUsername(e.target.value);
-                        setVerifyResult(null);
-                        setVerifyError(null);
-                      }}
-                      placeholder="输入对手用户名"
-                      className="h-9 flex-1 text-sm"
-                    />
+                    <div className="relative flex-1">
+                      <Input
+                        value={specifiedUsername}
+                        onChange={(e) => {
+                          setSpecifiedUsername(e.target.value);
+                          setVerifyResult(null);
+                          setVerifyError(null);
+                        }}
+                        placeholder="输入对手用户名"
+                        className="h-9 pr-[calc(var(--tag-width,0px)+0.5rem)] text-sm"
+                      />
+                      {verifyResult && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-medium text-emerald-600">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {verifyResult.nickname}
+                        </span>
+                      )}
+                      {verifyError && (
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-500">
+                          {verifyError}
+                        </span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={handleVerify}
@@ -430,12 +443,6 @@ export function GameModeCard({
                       )}
                       验证
                     </button>
-                    {verifyResult && (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                    )}
-                    {verifyError && (
-                      <span className="shrink-0 text-xs text-red-500">{verifyError}</span>
-                    )}
                   </div>
                   {levels && levels.length > 0 && (
                     <div className="flex items-center gap-3">
