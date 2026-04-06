@@ -16,6 +16,16 @@ func NewUserSSEController() *UserSSEController {
 	return &UserSSEController{}
 }
 
+// Ping marks the user as online immediately (bridges gap before SSE connects).
+func (c *UserSSEController) Ping(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, 0, "unauthorized")
+	}
+	_ = helpers.RedisSetAdd("online_users", userID)
+	return helpers.Success(ctx, nil)
+}
+
 // Events establishes a persistent SSE connection for user-level events.
 func (c *UserSSEController) Events(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()

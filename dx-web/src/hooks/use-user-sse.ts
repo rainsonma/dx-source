@@ -11,6 +11,9 @@ export function useUserSSE(
   useEffect(() => { listenersRef.current = listeners; });
 
   useEffect(() => {
+    // Mark online immediately (bridges gap before SSE connects)
+    fetch(`${API_URL}/api/user/ping`, { method: "POST", credentials: "include" }).catch(() => {});
+
     const url = `${API_URL}/api/user/events`;
     const eventSource = new EventSource(url, { withCredentials: true });
 

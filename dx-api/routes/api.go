@@ -267,6 +267,7 @@ func Api() {
 
 			// User SSE events
 			userSSEController := apicontrollers.NewUserSSEController()
+			protected.Post("/user/ping", userSSEController.Ping)
 			protected.Get("/user/events", userSSEController.Events)
 
 			// User verify
