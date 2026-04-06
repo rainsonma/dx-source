@@ -17,16 +17,16 @@ export function usePkSSE(
     const url = `${API_URL}/api/play-pk/${pkId}/events`;
     const eventSource = new EventSource(url, { withCredentials: true });
 
-    // Use onmessage instead of addEventListener to avoid Safari named-event bug.
-    // The server sends: data: {"type":"pk_player_action","payload":{...}}
-    eventSource.onmessage = (e: MessageEvent) => {
-      try {
-        const msg = JSON.parse(e.data) as { type: string; payload: unknown };
-        listenersRef.current[msg.type]?.(msg.payload);
-      } catch {
-        // Discard malformed SSE messages
-      }
-    };
+    for (const eventName of Object.keys(listenersRef.current)) {
+      eventSource.addEventListener(eventName, (e: MessageEvent) => {
+        try {
+          const data: unknown = JSON.parse(e.data);
+          listenersRef.current[eventName]?.(data);
+        } catch {
+          // Discard malformed SSE messages
+        }
+      });
+    }
 
     return () => {
       eventSource.close();

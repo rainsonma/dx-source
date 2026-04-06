@@ -52,17 +52,15 @@ func (h *PkSSEHub) Unregister(pkID, userID string, conn *SSEConnection) {
 }
 
 // Broadcast sends an event to all connected participants of a PK match.
-// Uses generic message format with type field (avoids Safari named-event bug).
 func (h *PkSSEHub) Broadcast(pkID, event string, data any) {
-	payload := map[string]any{"type": event, "payload": data}
-	jsonBytes, _ := json.Marshal(payload)
+	jsonBytes, _ := json.Marshal(data)
 
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
 	if pk, ok := h.conns[pkID]; ok {
 		for _, conn := range pk {
-			fmt.Fprintf(conn.w, "data: %s\n\n", jsonBytes)
+			fmt.Fprintf(conn.w, "event: %s\ndata: %s\n\n", event, jsonBytes)
 			if conn.flusher != nil {
 				conn.flusher.Flush()
 			}
