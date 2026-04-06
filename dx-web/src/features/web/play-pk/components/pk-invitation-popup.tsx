@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Swords, X } from "lucide-react";
 
 interface PkInvitationPopupProps {
@@ -20,6 +21,12 @@ export function PkInvitationPopup({
   onDecline,
 }: PkInvitationPopupProps) {
   const [timeLeft, setTimeLeft] = useState(30);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) {
@@ -30,8 +37,10 @@ export function PkInvitationPopup({
     return () => clearTimeout(timer);
   }, [timeLeft, onDecline]);
 
-  return (
-    <div className="fixed bottom-6 right-6 z-[9999]">
+  if (!mounted) return null;
+
+  return createPortal(
+    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 99999 }}>
       <div className="flex w-80 flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -74,6 +83,7 @@ export function PkInvitationPopup({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
