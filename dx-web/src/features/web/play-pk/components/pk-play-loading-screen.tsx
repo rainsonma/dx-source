@@ -85,6 +85,7 @@ interface PkPlayLoadingScreenProps {
   levelId: string;
   levelName?: string;
   difficulty: string;
+  playerId?: string;
   existingPkId?: string | null;
   existingSessionId?: string | null;
 }
@@ -98,6 +99,7 @@ export function PkPlayLoadingScreen({
   levelId,
   levelName,
   difficulty,
+  playerId,
   existingPkId,
   existingSessionId,
 }: PkPlayLoadingScreenProps) {
@@ -148,8 +150,16 @@ export function PkPlayLoadingScreen({
           const detailsRes = await fetchPkDetailsAction(existingPkId);
           if (cancelled) return;
           if (detailsRes.data) {
-            pkData.opponent_id = detailsRes.data.opponent_id;
-            pkData.opponent_name = detailsRes.data.opponent_name;
+            // Determine who the opponent is from the current player's perspective
+            const isInitiator = detailsRes.data.initiator_id !== detailsRes.data.opponent_id &&
+              detailsRes.data.opponent_id !== playerId;
+            if (isInitiator) {
+              pkData.opponent_id = detailsRes.data.opponent_id;
+              pkData.opponent_name = detailsRes.data.opponent_name;
+            } else {
+              pkData.opponent_id = detailsRes.data.initiator_id;
+              pkData.opponent_name = detailsRes.data.initiator_name;
+            }
           }
         } else {
           const pkResult = await startPkAction(gameId, levelId, degree, pattern, difficulty);
@@ -257,6 +267,7 @@ export function PkPlayLoadingScreen({
     pattern,
     levelId,
     difficulty,
+    playerId,
     existingPkId,
     existingSessionId,
     initPkSession,

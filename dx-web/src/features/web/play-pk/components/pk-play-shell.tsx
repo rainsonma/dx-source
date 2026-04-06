@@ -173,7 +173,9 @@ export function PkPlayShell({
       }
     },
     onPlayerAction: (event) => {
-      trackOpponentAction(event);
+      if (event.user_id !== player.id) {
+        trackOpponentAction(event);
+      }
     },
   });
 
@@ -245,6 +247,7 @@ export function PkPlayShell({
           levelId={targetLevelId}
           levelName={levelName}
           difficulty={difficulty}
+          playerId={player.id}
           existingPkId={existingPkId}
           existingSessionId={existingSessionId}
         />

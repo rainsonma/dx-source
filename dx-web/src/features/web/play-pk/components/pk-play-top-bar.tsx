@@ -221,7 +221,7 @@ export function PkPlayTopBar({
 
         {/* Progress bar */}
         <div className="px-3 pb-2 pt-1.5">
-          <div className="h-1.5 w-full rounded-sm bg-border">
+          <div className="h-1.5 w-full overflow-hidden rounded-sm bg-border">
             <div
               className="h-1.5 rounded-sm bg-teal-600 transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -251,7 +251,7 @@ export function PkPlayTopBar({
             )}
           </div>
           <div className="pb-2 pt-1.5">
-            <div className="h-1.5 w-full rounded-sm bg-border">
+            <div className="h-1.5 w-full overflow-hidden rounded-sm bg-border">
               <div
                 className="h-1.5 rounded-sm bg-orange-500 transition-all duration-300"
                 style={{ width: `${opponentProgressPercent}%` }}
