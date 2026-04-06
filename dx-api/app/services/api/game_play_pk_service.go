@@ -345,7 +345,7 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 }
 
 // nextSpecifiedPkLevel creates a new specified PK for the next level (no robot, no re-invitation).
-func nextSpecifiedPkLevel(userID string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
+func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
 	pkID := newID()
 	statusAccepted := "accepted"
 
