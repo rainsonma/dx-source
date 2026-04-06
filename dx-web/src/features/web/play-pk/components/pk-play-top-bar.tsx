@@ -32,6 +32,7 @@ const actionButtons = [
 interface PkPlayTopBarProps {
   player: { nickname: string; avatarUrl: string | null };
   playerId: string;
+  levelName: string;
   opponentName: string;
   lastOpponentAction: PkPlayerActionEvent | null;
   onExit: () => void;
@@ -45,6 +46,7 @@ interface PkPlayTopBarProps {
 export function PkPlayTopBar({
   player,
   playerId,
+  levelName,
   opponentName,
   lastOpponentAction,
   onExit,
@@ -106,15 +108,18 @@ export function PkPlayTopBar({
     <div className="relative flex w-full flex-col bg-card border-b border-border">
       {/* Nav row */}
       <div className="flex items-center justify-between px-4 py-2.5 md:px-6">
-        {/* Left: back button */}
-        <button
-          type="button"
-          aria-label="返回"
-          onClick={onExit}
-          className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-muted"
-        >
-          <ArrowLeft className="h-[18px] w-[18px] text-muted-foreground" />
-        </button>
+        {/* Left: back button + level name */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="返回"
+            onClick={onExit}
+            className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-muted"
+          >
+            <ArrowLeft className="h-[18px] w-[18px] text-muted-foreground" />
+          </button>
+          <span className="text-xs font-medium text-muted-foreground">{levelName}</span>
+        </div>
 
         {/* Center: player VS opponent */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3">

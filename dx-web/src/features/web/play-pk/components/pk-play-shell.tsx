@@ -273,6 +273,7 @@ export function PkPlayShell({
         <PkPlayTopBar
           player={player}
           playerId={player.id}
+          levelName={levelName}
           opponentName={opponentName ?? "对手"}
           lastOpponentAction={lastOpponentAction}
           onExit={() => showOverlay("exit")}

@@ -441,7 +441,7 @@ export function GameModeCard({
                       ) : (
                         <Search className="h-3.5 w-3.5" />
                       )}
-                      验证
+                      搜索
                     </button>
                   </div>
                   {levels && levels.length > 0 && (

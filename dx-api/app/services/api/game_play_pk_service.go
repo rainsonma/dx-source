@@ -491,12 +491,34 @@ func OnPkDisconnect(pkID string) {
 
 // --- Thin wrappers ---
 
-// PkRecordAnswer records an answer in a PK match.
+// PkRecordAnswer records an answer in a PK match and broadcasts the action to the opponent.
 func PkRecordAnswer(userID string, input RecordAnswerInput) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	return RecordAnswer(userID, input)
+	if err := RecordAnswer(userID, input); err != nil {
+		return err
+	}
+
+	// Broadcast pk_player_action so the opponent sees progress updates.
+	// Look up the PK ID from the session (needed for the broadcast channel).
+	var session models.GameSession
+	facades.Orm().Query().Select("game_pk_id").Where("id", input.GameSessionID).First(&session)
+	if session.GamePkID != nil {
+		var user models.User
+		facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&user)
+		action := "score"
+		if !input.IsCorrect {
+			action = "wrong"
+		}
+		go helpers.PkHub.Broadcast(*session.GamePkID, "pk_player_action", PkPlayerActionEvent{
+			UserID:      userID,
+			UserName:    nickname(user),
+			Action:      action,
+			ComboStreak: input.MaxCombo,
+		})
+	}
+	return nil
 }
 
 // PkSyncPlayTime syncs playtime in a PK match.
