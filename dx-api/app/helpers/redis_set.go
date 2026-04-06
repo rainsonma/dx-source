@@ -5,7 +5,7 @@ import "context"
 // RedisSetAdd adds members to a Redis SET.
 func RedisSetAdd(key string, members ...string) error {
 	ctx := context.Background()
-	args := make([]interface{}, len(members))
+	args := make([]any, len(members))
 	for i, m := range members {
 		args[i] = m
 	}
@@ -15,7 +15,7 @@ func RedisSetAdd(key string, members ...string) error {
 // RedisSetRemove removes members from a Redis SET.
 func RedisSetRemove(key string, members ...string) error {
 	ctx := context.Background()
-	args := make([]interface{}, len(members))
+	args := make([]any, len(members))
 	for i, m := range members {
 		args[i] = m
 	}
