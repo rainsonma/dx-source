@@ -137,11 +137,11 @@ export function PkPlayLoadingScreen({
           robot_completed: boolean;
         };
 
-        if (existingPkId && existingSessionId) {
-          // Specified PK — session already created during invite/accept
+        if (existingPkId) {
+          // Specified PK — session already created during invite/accept or next-level
           pkData = {
             pk_id: existingPkId,
-            session_id: existingSessionId,
+            session_id: existingSessionId ?? "",
             game_level_id: levelId,
             opponent_id: "",
             opponent_name: "",
@@ -150,9 +150,12 @@ export function PkPlayLoadingScreen({
           const detailsRes = await fetchPkDetailsAction(existingPkId);
           if (cancelled) return;
           if (detailsRes.data) {
+            // Use session_id from details if not provided via URL (next-level case)
+            if (!pkData.session_id && detailsRes.data.session_id) {
+              pkData.session_id = detailsRes.data.session_id;
+            }
             // Determine who the opponent is from the current player's perspective
-            const isInitiator = detailsRes.data.initiator_id !== detailsRes.data.opponent_id &&
-              detailsRes.data.opponent_id !== playerId;
+            const isInitiator = detailsRes.data.opponent_id !== playerId;
             if (isInitiator) {
               pkData.opponent_id = detailsRes.data.opponent_id;
               pkData.opponent_name = detailsRes.data.opponent_name;

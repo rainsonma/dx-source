@@ -186,6 +186,16 @@ export function PkPlayShell({
         trackOpponentAction(event);
       }
     },
+    onNextLevel: (event) => {
+      // Both players navigate to the new specified PK level together
+      const params = new URLSearchParams({
+        degree: event.degree,
+        level: event.level_id,
+        pkId: event.pk_id,
+      });
+      if (event.pattern) params.set("pattern", event.pattern);
+      router.push(`/hall/play-pk/${event.game_id}?${params}`);
+    },
   });
 
   // Reset on game/level change

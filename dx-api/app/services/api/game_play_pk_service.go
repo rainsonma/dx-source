@@ -317,16 +317,32 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 		return nil, fmt.Errorf("no next level available")
 	}
 
-	// For specified PK, create a new PK directly without robot
-	if pk.PkType == consts.PkTypeSpecified {
-		return nextSpecifiedPkLevel(userID, pk, *nextLevelID)
+	// For specified PK, check if opponent is still connected
+	if pk.PkType == consts.PkTypeSpecified && helpers.PkHub.IsConnected(pkID, pk.OpponentID) {
+		result, err := nextSpecifiedPkLevel(userID, pk, *nextLevelID)
+		if err != nil {
+			return nil, err
+		}
+		// Broadcast pk_next_level on the OLD PK so both players (still listening) navigate together
+		var nextLevel models.GameLevel
+		facades.Orm().Query().Select("id", "name").Where("id", *nextLevelID).First(&nextLevel)
+		helpers.PkHub.Broadcast(pkID, "pk_next_level", map[string]any{
+			"pk_id":      result.PkID,
+			"game_id":    pk.GameID,
+			"level_id":   *nextLevelID,
+			"level_name": nextLevel.Name,
+			"degree":     pk.Degree,
+			"pattern":    pk.Pattern,
+		})
+		return result, nil
 	}
 
+	// Opponent left or random PK — fall back to robot
 	return StartPk(userID, pk.GameID, *nextLevelID, pk.Degree, pk.Pattern, pk.RobotDifficulty)
 }
 
 // nextSpecifiedPkLevel creates a new specified PK for the next level (no robot, no re-invitation).
-func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
+func nextSpecifiedPkLevel(callerID string, oldPk models.GamePk, nextLevelID string) (*PkStartResult, error) {
 	pkID := newID()
 	statusAccepted := consts.PkInvitationAccepted
 
@@ -347,12 +363,16 @@ func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*P
 		return nil, fmt.Errorf("failed to create next PK: %w", err)
 	}
 
-	// Create sessions for both players
+	// Create sessions for both players, track caller's session ID
 	now := time.Now()
 	totalItems, _ := countLevelItems(facades.Orm().Query(), nextLevelID, oldPk.Degree)
+	callerSessionID := ""
 
 	for _, uid := range []string{oldPk.UserID, oldPk.OpponentID} {
 		sid := newID()
+		if uid == callerID {
+			callerSessionID = sid
+		}
 		session := models.GameSession{
 			ID:              sid,
 			UserID:          uid,
@@ -374,7 +394,7 @@ func nextSpecifiedPkLevel(_ string, oldPk models.GamePk, nextLevelID string) (*P
 
 	return &PkStartResult{
 		PkID:         pkID,
-		SessionID:    "",
+		SessionID:    callerSessionID,
 		GameLevelID:  nextLevelID,
 		OpponentID:   oldPk.OpponentID,
 		OpponentName: nickname(opponent),

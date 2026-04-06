@@ -6,12 +6,14 @@ import type {
   PkForceEndEvent,
   PkPlayerCompleteEvent,
   PkPlayerActionEvent,
+  PkNextLevelEvent,
 } from "../types/pk-play";
 
 type PkPlayEventHandlers = {
   onForceEnd?: (event: PkForceEndEvent) => void;
   onPlayerComplete?: (event: PkPlayerCompleteEvent) => void;
   onPlayerAction?: (event: PkPlayerActionEvent) => void;
+  onNextLevel?: (event: PkNextLevelEvent) => void;
 };
 
 export function usePkPlayEvents(
@@ -28,6 +30,8 @@ export function usePkPlayEvents(
       handlersRef.current.onPlayerComplete?.(data as PkPlayerCompleteEvent),
     pk_player_action: (data: unknown) =>
       handlersRef.current.onPlayerAction?.(data as PkPlayerActionEvent),
+    pk_next_level: (data: unknown) =>
+      handlersRef.current.onNextLevel?.(data as PkNextLevelEvent),
   }), []);
 
   usePkSSE(pkId, listeners);

@@ -30,3 +30,12 @@ export type PkPlayerActionEvent = {
   combo_streak?: number;
 };
 
+export type PkNextLevelEvent = {
+  pk_id: string;
+  game_id: string;
+  level_id: string;
+  level_name: string;
+  degree: string;
+  pattern: string | null;
+};
+

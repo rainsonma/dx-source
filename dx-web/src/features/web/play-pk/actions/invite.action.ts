@@ -71,6 +71,7 @@ export async function fetchPkDetailsAction(pkId: string) {
   try {
     const res = await apiClient.get<{
       pk_id: string;
+      session_id: string;
       game_id: string;
       game_name: string;
       game_mode: string;

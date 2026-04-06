@@ -32,6 +32,7 @@ type PkAcceptResult struct {
 
 type PkDetailsResult struct {
 	PkID             string  `json:"pk_id"`
+	SessionID        string  `json:"session_id"`
 	GameID           string  `json:"game_id"`
 	GameName         string  `json:"game_name"`
 	GameMode         string  `json:"game_mode"`
@@ -285,6 +286,10 @@ func GetPkDetails(userID, pkID string) (*PkDetailsResult, error) {
 	facades.Orm().Query().Select("id", "username", "nickname").Where("id", pk.UserID).First(&initiator)
 	facades.Orm().Query().Select("id", "username", "nickname").Where("id", pk.OpponentID).First(&opponent)
 
+	// Find the calling user's session for this PK
+	var session models.GameSession
+	facades.Orm().Query().Select("id").Where("game_pk_id", pk.ID).Where("user_id", userID).First(&session)
+
 	status := ""
 	if pk.InvitationStatus != nil {
 		status = *pk.InvitationStatus
@@ -292,6 +297,7 @@ func GetPkDetails(userID, pkID string) (*PkDetailsResult, error) {
 
 	return &PkDetailsResult{
 		PkID:             pk.ID,
+		SessionID:        session.ID,
 		GameID:           pk.GameID,
 		GameName:         game.Name,
 		GameMode:         game.Mode,

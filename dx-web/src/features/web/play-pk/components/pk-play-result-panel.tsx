@@ -63,14 +63,23 @@ export function PkPlayResultPanel({
         return;
       }
       if (res.data) {
-        // Navigate to new PK with the returned level
+        // For robot PK, navigate directly. For specified PK, the backend
+        // broadcasts pk_next_level which the shell's onNextLevel handler
+        // picks up — but we also navigate here so the clicking player
+        // doesn't wait for SSE. Duplicate navigation is harmless.
         const store = await import("../hooks/use-pk-play-store").then(m => m.usePkPlayStore.getState());
         const degree = store.degree ?? "";
         const pattern = store.pattern;
         const difficulty = store.difficulty ?? "";
-        router.push(
-          `/hall/play-pk/${gameId}?degree=${degree}${pattern ? `&pattern=${pattern}` : ""}&difficulty=${difficulty}&level=${res.data.game_level_id}`
-        );
+        const params = new URLSearchParams({ degree, level: res.data.game_level_id });
+        if (pattern) params.set("pattern", pattern);
+        if (difficulty) params.set("difficulty", difficulty);
+        // For specified PK (session_id set), include pkId+sessionId so play page uses specified flow
+        if (res.data.session_id && res.data.pk_id) {
+          params.set("pkId", res.data.pk_id);
+          params.set("sessionId", res.data.session_id);
+        }
+        router.push(`/hall/play-pk/${gameId}?${params}`);
       }
     } catch {
       toast.error("进入下一关失败");
