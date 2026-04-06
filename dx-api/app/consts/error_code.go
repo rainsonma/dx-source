@@ -23,7 +23,11 @@ const (
 	CodeInvalidProduct     = 40014
 	CodePkIsPlaying        = 40015
 	CodePkNotPlaying       = 40016
-	CodeNoMockUser         = 40017
+	CodeNoMockUser          = 40017
+	CodeOpponentOffline     = 40018
+	CodeOpponentNotVip      = 40019
+	CodeCannotChallengeSelf = 40020
+	CodeInvitationNotPending = 40021
 
 	// 401xx: Auth
 	CodeUnauthorized    = 40100

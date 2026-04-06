@@ -62,4 +62,8 @@ var (
 	ErrPkIsPlaying             = errors.New("PK对战进行中")
 	ErrPkNotPlaying            = errors.New("没有进行中的PK对战")
 	ErrNoMockUserAvail         = errors.New("没有可用的对手，请稍后再试")
+	ErrOpponentOffline      = errors.New("对方不在线")
+	ErrOpponentNotVip       = errors.New("对方会员已过期")
+	ErrCannotChallengeSelf  = errors.New("不能挑战自己")
+	ErrInvitationNotPending = errors.New("邀请状态已变更")
 )
