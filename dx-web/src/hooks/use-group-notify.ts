@@ -9,7 +9,9 @@ export function useGroupNotify(
   onUpdate: (scope: string) => void
 ): void {
   const callbackRef = useRef(onUpdate);
-  callbackRef.current = onUpdate;
+  useEffect(() => {
+    callbackRef.current = onUpdate;
+  });
 
   useEffect(() => {
     if (!groupId) return;

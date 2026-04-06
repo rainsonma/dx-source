@@ -9,7 +9,9 @@ export function useGroupSSE(
   listeners: Record<string, (data: unknown) => void>
 ): void {
   const listenersRef = useRef(listeners);
-  listenersRef.current = listeners;
+  useEffect(() => {
+    listenersRef.current = listeners;
+  });
 
   useEffect(() => {
     if (!groupId) return;
