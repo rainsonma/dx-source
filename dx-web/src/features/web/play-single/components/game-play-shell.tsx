@@ -21,7 +21,6 @@ import { GameResetModal } from "@/features/web/play-core/components/game-reset-m
 import { GameReportModal } from "@/features/web/play-core/components/game-report-modal";
 import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
-import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
 import { GameExitModal } from "./game-exit-modal";
@@ -32,7 +31,6 @@ import type { ComponentType } from "react";
 const modeComponents: Record<string, ComponentType> = {
   [GAME_MODES.WORD_SENTENCE]: GameWordSentence,
   [GAME_MODES.VOCAB_MATCH]: GameVocabMatch,
-  [GAME_MODES.LISTENING_CHALLENGE]: GameListening,
   [GAME_MODES.VOCAB_ELIMINATION]: GameVocabElimination,
   [GAME_MODES.VOCAB_BATTLE]: GameVocabBattle,
 };

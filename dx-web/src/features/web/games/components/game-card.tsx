@@ -10,7 +10,6 @@ const modeColors: Record<string, string> = {
   "vocab-battle": "bg-violet-600",
   "vocab-match": "bg-blue-600",
   "vocab-elimination": "bg-amber-600",
-  "listening-challenge": "bg-sky-600",
 };
 
 const coverGradients = [

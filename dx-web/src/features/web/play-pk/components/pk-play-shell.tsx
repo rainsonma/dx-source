@@ -13,7 +13,6 @@ import { GameReportModal } from "@/features/web/play-core/components/game-report
 import { PkExitModal } from "./pk-exit-modal";
 import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
-import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
 import { usePkPlayEvents } from "../hooks/use-pk-play-events";
@@ -31,7 +30,6 @@ import type { PkLevelCompleteEvent } from "../types/pk-play";
 const modeComponents: Record<string, ComponentType> = {
   [GAME_MODES.WORD_SENTENCE]: GameWordSentence,
   [GAME_MODES.VOCAB_MATCH]: GameVocabMatch,
-  [GAME_MODES.LISTENING_CHALLENGE]: GameListening,
   [GAME_MODES.VOCAB_ELIMINATION]: GameVocabElimination,
   [GAME_MODES.VOCAB_BATTLE]: GameVocabBattle,
 };

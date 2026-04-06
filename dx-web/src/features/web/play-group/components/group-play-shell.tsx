@@ -16,7 +16,6 @@ import { GameReportModal } from "@/features/web/play-core/components/game-report
 import { GroupExitModal } from "./group-exit-modal";
 import { GameWordSentence } from "@/features/web/play-core/components/game-word-sentence";
 import { GameVocabMatch } from "@/features/web/play-core/components/game-vocab-match";
-import { GameListening } from "@/features/web/play-core/components/game-listening";
 import { GameVocabElimination } from "@/features/web/play-core/components/game-vocab-elimination";
 import { GameVocabBattle } from "@/features/web/play-core/components/game-vocab-battle";
 import { toast } from "sonner";
@@ -35,7 +34,6 @@ import type { ComponentType } from "react";
 const modeComponents: Record<string, ComponentType> = {
   [GAME_MODES.WORD_SENTENCE]: GameWordSentence,
   [GAME_MODES.VOCAB_MATCH]: GameVocabMatch,
-  [GAME_MODES.LISTENING_CHALLENGE]: GameListening,
   [GAME_MODES.VOCAB_ELIMINATION]: GameVocabElimination,
   [GAME_MODES.VOCAB_BATTLE]: GameVocabBattle,
 };

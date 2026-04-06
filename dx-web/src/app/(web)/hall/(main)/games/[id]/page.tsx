@@ -40,13 +40,6 @@ const GAME_RULES: Record<string, string[]> = {
     "连续正确获得额外奖励",
     "全部淘汰完成即通关",
   ],
-  "listening-challenge": [
-    "听音频选择或拼写出正确的单词",
-    "可重复播放音频但会扣减分数",
-    "难度逐级递增",
-    "连续正确答题获得额外奖励",
-    "完成所有题目结束",
-  ],
 };
 
 const DEFAULT_RULES = [

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
   Keyboard,
   Swords,
-  Headphones,
   Lightbulb,
   Crosshair,
   RotateCcw,
@@ -50,16 +49,8 @@ const loadingData: Record<GameMode, LoadingConfig> = {
     iconBg: "bg-blue-500/[0.13]",
     iconBorder: "border-blue-500/25",
   },
-  [GAME_MODES.LISTENING_CHALLENGE]: {
-    title: "听力闯关",
-    tip: "提示：可重复播放语音，但会扣减分数哦",
-    icon: Headphones,
-    iconColor: "text-yellow-300",
-    iconBg: "bg-amber-500/[0.13]",
-    iconBorder: "border-amber-500/25",
-  },
   [GAME_MODES.VOCAB_ELIMINATION]: {
-    title: "消消乐",
+    title: "词汇消消乐",
     tip: "提示：连续消除不同配对可获得连击奖励",
     icon: Keyboard,
     iconColor: "text-pink-300",

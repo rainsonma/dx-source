@@ -489,6 +489,7 @@ Split the sentence from left to right, producing units in reading order. Use the
 
 IMPORTANT RULES:
 - Articles (a, an, the) and prepositions (e.g. in, on, at, to, for, with, of, by, from, about, into, through, between, etc.) must NEVER be standalone "word" units. Always group them into the nearest phrase or block with the following content word(s).
+- Linking verbs (am, is, are, was, were, be, been, being) must NEVER be standalone "word" units. Always group them with adjacent content — e.g. "is tall" (phrase), "He is" (block), "is reading" (phrase).
 - Follow the natural reading order of the sentence. Do NOT group all words first, then all blocks, then all phrases. Instead, split sequentially left to right.
 - Each segment of the sentence should appear in exactly one unit at its most granular level (word or phrase), then optionally in cumulative blocks and finally the full sentence.
 
