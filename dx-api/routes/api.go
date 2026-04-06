@@ -289,6 +289,15 @@ func Api() {
 				pk.Post("/{id}/resume", playPkController.Resume)
 			})
 
+			// PK invitation routes
+			pkInviteController := apicontrollers.NewPkInviteController()
+			protected.Get("/play-pk/{id}/details", pkInviteController.Details)
+			protected.Prefix("/play-pk/invite").Group(func(inv route.Router) {
+				inv.Post("/", pkInviteController.Invite)
+				inv.Post("/{id}/accept", pkInviteController.Accept)
+				inv.Post("/{id}/decline", pkInviteController.Decline)
+			})
+
 			// Community
 			postController := apicontrollers.NewPostController()
 			postCommentController := apicontrollers.NewPostCommentController()
