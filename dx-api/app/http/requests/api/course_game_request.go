@@ -209,14 +209,13 @@ func (r *InsertContentItemRequest) Rules(ctx http.Context) map[string]string {
 		"contentMetaId":   "required|uuid",
 		"gameLevelId":     "required|uuid",
 		"contentType":     helpers.InEnum("content_type"),
-		"direction":       "in:before,after",
+		"direction":       "in:before,after,above,below",
 		"referenceItemId": "uuid",
 	}
 }
 func (r *InsertContentItemRequest) Filters(ctx http.Context) map[string]string {
 	return map[string]string{
-		"content":     "trim",
-		"translation": "trim",
+		"content": "trim",
 	}
 }
 func (r *InsertContentItemRequest) Messages(ctx http.Context) map[string]string {

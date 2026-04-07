@@ -314,6 +314,19 @@ func PublishGame(userID, gameID string) error {
 		if itemCount == 0 {
 			return fmt.Errorf("关卡「%s」没有练习内容", l.Name)
 		}
+
+		ungeneratedCount, err4 := facades.Orm().Query().Model(&models.ContentItem{}).
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Where("gi.game_level_id", l.ID).
+			Where("content_items.is_active", true).
+			Where("content_items.items IS NULL").
+			Count()
+		if err4 != nil {
+			return fmt.Errorf("failed to count ungenerated items: %w", err4)
+		}
+		if ungeneratedCount > 0 {
+			return fmt.Errorf("关卡「%s」有未生成的练习单元", l.Name)
+		}
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", consts.GameStatusPublished); err != nil {
@@ -335,6 +348,17 @@ func WithdrawGame(userID, gameID string) error {
 
 	if game.Status != consts.GameStatusPublished {
 		return ErrGameNotPublished
+	}
+
+	activeCount, err2 := facades.Orm().Query().Model(&models.GameSession{}).
+		Where("game_id", gameID).
+		Where("ended_at IS NULL").
+		Count()
+	if err2 != nil {
+		return fmt.Errorf("failed to check active sessions: %w", err2)
+	}
+	if activeCount > 0 {
+		return fmt.Errorf("还有 %d 个进行中的游戏会话，请等待结束后再撤回", activeCount)
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", consts.GameStatusWithdraw); err != nil {

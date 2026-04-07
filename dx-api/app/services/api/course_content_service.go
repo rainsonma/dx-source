@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"dx-api/app/consts"
@@ -21,13 +22,13 @@ type MetadataEntry struct {
 
 // CourseContentItemData represents a content item returned to the client.
 type CourseContentItemData struct {
-	ID            string  `json:"id"`
-	ContentMetaID *string `json:"contentMetaId"`
-	Content       string  `json:"content"`
-	ContentType   string  `json:"contentType"`
-	Translation   *string `json:"translation"`
-	Items         *string `json:"items"`
-	Order         float64 `json:"order"`
+	ID            string          `json:"id"`
+	ContentMetaID *string         `json:"contentMetaId"`
+	Content       string          `json:"content"`
+	ContentType   string          `json:"contentType"`
+	Translation   *string         `json:"translation"`
+	Items         json.RawMessage `json:"items"`
+	Order         float64         `json:"order"`
 }
 
 // LevelContentData groups content items by their metadata.
@@ -226,13 +227,17 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 		if item.ContentMetaID != nil {
 			metaID = *item.ContentMetaID
 		}
+		var itemsJSON json.RawMessage
+		if item.Items != nil {
+			itemsJSON = json.RawMessage(*item.Items)
+		}
 		itemsByMeta[metaID] = append(itemsByMeta[metaID], CourseContentItemData{
 			ID:            item.ID,
 			ContentMetaID: item.ContentMetaID,
 			Content:       item.Content,
 			ContentType:   item.ContentType,
 			Translation:   item.Translation,
-			Items:         item.Items,
+			Items:         itemsJSON,
 			Order:         item.Order,
 		})
 	}
