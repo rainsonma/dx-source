@@ -13,10 +13,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/features/com/images/components/image-uploader";
 import { GAME_MODE_OPTIONS } from "@/consts/game-mode";
 import { IMAGE_ROLES } from "@/consts/image-role";
-import { useCreateCourseGame } from "@/features/web/ai-custom/hooks/use-create-course-game";
+import { useCreateCourseGame } from "@/features/web/ai-custom-vocab/hooks/use-create-course-game";
 
-const SENTENCE_MODE_OPTIONS = GAME_MODE_OPTIONS.filter(
-  (opt) => opt.value === "word-sentence"
+const VOCAB_MODE_OPTIONS = GAME_MODE_OPTIONS.filter(
+  (opt) => opt.value !== "word-sentence"
 );
 
 type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean };
@@ -139,7 +139,7 @@ export function CreateCourseForm({
               <SelectValue placeholder="请选择" />
             </SelectTrigger>
             <SelectContent>
-              {SENTENCE_MODE_OPTIONS.map((m) => (
+              {VOCAB_MODE_OPTIONS.map((m) => (
                 <SelectItem key={m.value} value={m.value}>
                   {m.label}
                 </SelectItem>

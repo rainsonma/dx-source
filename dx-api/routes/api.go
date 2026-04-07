@@ -216,6 +216,15 @@ func Api() {
 				ai.Post("/generate-content-items", aiCustomController.GenerateContentItems)
 			})
 
+			// AI custom vocab content routes
+			aiCustomVocabController := apicontrollers.NewAiCustomVocabController()
+			protected.Prefix("/ai-custom-vocab").Group(func(aiv route.Router) {
+				aiv.Post("/generate-vocab", aiCustomVocabController.GenerateVocab)
+				aiv.Post("/format-vocab", aiCustomVocabController.FormatVocab)
+				aiv.Post("/break-metadata", aiCustomVocabController.BreakMetadata)
+				aiv.Post("/generate-content-items", aiCustomVocabController.GenerateContentItems)
+			})
+
 			// User-facing admin routes (user JWT + admin check)
 			protected.Middleware(middleware.AdminGuard()).Group(func(admin route.Router) {
 				admNoticeController := admcontrollers.NewNoticeController()

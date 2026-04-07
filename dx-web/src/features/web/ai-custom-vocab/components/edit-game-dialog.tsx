@@ -19,10 +19,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/features/com/images/components/image-uploader";
 import { GAME_MODE_OPTIONS } from "@/consts/game-mode";
 import { IMAGE_ROLES } from "@/consts/image-role";
-import { useUpdateCourseGame } from "@/features/web/ai-custom/hooks/use-update-course-game";
+import { useUpdateCourseGame } from "@/features/web/ai-custom-vocab/hooks/use-update-course-game";
 
-const SENTENCE_MODE_OPTIONS = GAME_MODE_OPTIONS.filter(
-  (opt) => opt.value === "word-sentence"
+const VOCAB_MODE_OPTIONS = GAME_MODE_OPTIONS.filter(
+  (opt) => opt.value !== "word-sentence"
 );
 
 type CategoryOption = {
@@ -186,7 +186,7 @@ export function EditGameDialog({
                   <SelectValue placeholder="请选择" />
                 </SelectTrigger>
                 <SelectContent>
-                  {SENTENCE_MODE_OPTIONS.map((m) => (
+                  {VOCAB_MODE_OPTIONS.map((m) => (
                     <SelectItem key={m.value} value={m.value}>
                       {m.label}
                     </SelectItem>

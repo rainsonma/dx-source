@@ -15,6 +15,14 @@ const (
 	BeanSlugAIBreakRefund           = "ai-break-refund"
 	BeanSlugAIGenItemsConsume       = "ai-gen-items-consume"
 	BeanSlugAIGenItemsRefund        = "ai-gen-items-refund"
+	BeanSlugAIVocabGenerateConsume  = "ai-vocab-generate-consume"
+	BeanSlugAIVocabGenerateRefund   = "ai-vocab-generate-refund"
+	BeanSlugAIVocabFormatConsume    = "ai-vocab-format-consume"
+	BeanSlugAIVocabFormatRefund     = "ai-vocab-format-refund"
+	BeanSlugAIVocabBreakConsume     = "ai-vocab-break-consume"
+	BeanSlugAIVocabBreakRefund      = "ai-vocab-break-refund"
+	BeanSlugAIVocabGenItemsConsume  = "ai-vocab-gen-items-consume"
+	BeanSlugAIVocabGenItemsRefund   = "ai-vocab-gen-items-refund"
 	BeanSlugSeederGrant             = "seeder-grant"
 	BeanSlugPurchaseGrant           = "purchase-grant"
 )
@@ -34,6 +42,14 @@ var BeanSlugLabels = map[string]string{
 	BeanSlugAIBreakRefund:           "分解失败退还",
 	BeanSlugAIGenItemsConsume:       "生成消耗",
 	BeanSlugAIGenItemsRefund:        "生成失败退还",
+	BeanSlugAIVocabGenerateConsume:  "词汇 AI 生成消耗",
+	BeanSlugAIVocabGenerateRefund:   "词汇 AI 生成失败退还",
+	BeanSlugAIVocabFormatConsume:    "词汇格式化消耗",
+	BeanSlugAIVocabFormatRefund:     "词汇格式化失败退还",
+	BeanSlugAIVocabBreakConsume:     "词汇分解消耗",
+	BeanSlugAIVocabBreakRefund:      "词汇分解失败退还",
+	BeanSlugAIVocabGenItemsConsume:  "词汇生成消耗",
+	BeanSlugAIVocabGenItemsRefund:   "词汇生成失败退还",
 	BeanSlugSeederGrant:             "种子数据赠送",
 	BeanSlugPurchaseGrant:           "能量豆充值",
 }

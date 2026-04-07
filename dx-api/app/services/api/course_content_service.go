@@ -80,34 +80,41 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		return 0, fmt.Errorf("failed to count metas: %w", err)
 	}
 
-	existingSentences := 0
-	existingVocabs := 0
-	for _, m := range existingMetas {
-		switch m.SourceType {
-		case SourceTypeSentence:
-			existingSentences++
-		case SourceTypeVocab:
-			existingVocabs++
+	if consts.IsVocabMode(game.Mode) {
+		// Vocab modes: flat limit of MaxMetasPerLevel
+		if len(existingMetas)+len(entries) > consts.MaxMetasPerLevel {
+			return 0, ErrCapacityExceeded
 		}
-	}
-
-	newSentences := 0
-	newVocabs := 0
-	for _, e := range entries {
-		switch e.SourceType {
-		case SourceTypeSentence:
-			newSentences++
-		case SourceTypeVocab:
-			newVocabs++
+	} else {
+		// Word-sentence mode: existing ratio formula
+		existingSentences := 0
+		existingVocabs := 0
+		for _, m := range existingMetas {
+			switch m.SourceType {
+			case SourceTypeSentence:
+				existingSentences++
+			case SourceTypeVocab:
+				existingVocabs++
+			}
 		}
-	}
 
-	totalSentences := existingSentences + newSentences
-	totalVocabs := existingVocabs + newVocabs
+		newSentences := 0
+		newVocabs := 0
+		for _, e := range entries {
+			switch e.SourceType {
+			case SourceTypeSentence:
+				newSentences++
+			case SourceTypeVocab:
+				newVocabs++
+			}
+		}
 
-	// Check capacity using the same formula as the frontend
-	if float64(totalSentences)/float64(MaxSentences)+float64(totalVocabs)/float64(MaxVocab) > 1 {
-		return 0, ErrCapacityExceeded
+		totalSentences := existingSentences + newSentences
+		totalVocabs := existingVocabs + newVocabs
+
+		if float64(totalSentences)/float64(MaxSentences)+float64(totalVocabs)/float64(MaxVocab) > 1 {
+			return 0, ErrCapacityExceeded
+		}
 	}
 
 	// Get max order for auto-increment
