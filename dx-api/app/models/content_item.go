@@ -7,6 +7,7 @@ import (
 
 type ContentItem struct {
 	orm.Timestamps
+	orm.SoftDeletes
 	ID            string         `gorm:"column:id;primaryKey" json:"id"`
 	ContentMetaID *string        `gorm:"column:content_meta_id" json:"content_meta_id"`
 	Content       string         `gorm:"column:content" json:"content"`

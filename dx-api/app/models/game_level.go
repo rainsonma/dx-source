@@ -7,6 +7,7 @@ import (
 
 type GameLevel struct {
 	orm.Timestamps
+	orm.SoftDeletes
 	ID           string         `gorm:"column:id;primaryKey" json:"id"`
 	GameID       string         `gorm:"column:game_id" json:"game_id"`
 	Name         string         `gorm:"column:name" json:"name"`

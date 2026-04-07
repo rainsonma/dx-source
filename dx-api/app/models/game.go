@@ -4,6 +4,7 @@ import "github.com/goravel/framework/database/orm"
 
 type Game struct {
 	orm.Timestamps
+	orm.SoftDeletes
 	ID             string  `gorm:"column:id;primaryKey" json:"id"`
 	Name           string  `gorm:"column:name" json:"name"`
 	Description    *string `gorm:"column:description" json:"description"`

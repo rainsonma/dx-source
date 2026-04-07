@@ -1,8 +1,13 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/goravel/framework/database/orm"
+)
 
 type GameMeta struct {
+	orm.SoftDeletes
 	ID            string    `gorm:"column:id;primaryKey" json:"id"`
 	GameID        string    `gorm:"column:game_id" json:"game_id"`
 	GameLevelID   string    `gorm:"column:game_level_id" json:"game_level_id"`

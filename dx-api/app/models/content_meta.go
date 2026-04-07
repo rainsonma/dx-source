@@ -4,6 +4,7 @@ import "github.com/goravel/framework/database/orm"
 
 type ContentMeta struct {
 	orm.Timestamps
+	orm.SoftDeletes
 	ID         string `gorm:"column:id;primaryKey" json:"id"`
 	SourceFrom string `gorm:"column:source_from" json:"source_from"`
 	SourceType  string  `gorm:"column:source_type" json:"source_type"`
