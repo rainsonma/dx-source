@@ -17,7 +17,6 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 		return facades.Schema().Create("content_items", func(table schema.Blueprint) {
 			table.Uuid("id")
 			table.Primary("id")
-			table.Uuid("game_level_id")
 			table.Uuid("content_meta_id").Nullable()
 			table.Text("content").Default("")
 			table.Text("content_type").Default("")
@@ -32,7 +31,6 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Column("tags", "text[]").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
-			table.Index("game_level_id")
 			table.Index("content_meta_id")
 			table.Index("uk_audio_id")
 			table.Index("us_audio_id")

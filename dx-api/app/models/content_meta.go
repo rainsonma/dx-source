@@ -4,9 +4,8 @@ import "github.com/goravel/framework/database/orm"
 
 type ContentMeta struct {
 	orm.Timestamps
-	ID          string  `gorm:"column:id;primaryKey" json:"id"`
-	GameLevelID *string `gorm:"column:game_level_id" json:"game_level_id"`
-	SourceFrom  string  `gorm:"column:source_from" json:"source_from"`
+	ID         string `gorm:"column:id;primaryKey" json:"id"`
+	SourceFrom string `gorm:"column:source_from" json:"source_from"`
 	SourceType  string  `gorm:"column:source_type" json:"source_type"`
 	SourceData  string  `gorm:"column:source_data" json:"source_data"`
 	Translation *string `gorm:"column:translation" json:"translation"`
