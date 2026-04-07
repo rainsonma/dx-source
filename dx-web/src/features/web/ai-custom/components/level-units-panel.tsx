@@ -78,6 +78,8 @@ type LevelUnitsPanelProps = {
   levelId: string;
   initialMetas: LevelMeta[];
   readOnly?: boolean;
+  sentenceItemCount: number;
+  vocabItemCount: number;
 };
 
 function calculateNewOrder(
@@ -100,6 +102,8 @@ export function LevelUnitsPanel({
   levelId,
   initialMetas,
   readOnly,
+  sentenceItemCount,
+  vocabItemCount,
 }: LevelUnitsPanelProps) {
   const metaDndId = useId();
   const itemDndId = useId();
@@ -522,10 +526,10 @@ export function LevelUnitsPanel({
   const isLevelComplete =
     metas.length > 0 && metas.every((m) => m.isBreakDone && m.isItemDone);
 
-  const sentenceCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.SENTENCE).length;
-  const vocabCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.VOCAB).length;
+  const metaSentenceCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.SENTENCE).length;
+  const metaVocabCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.VOCAB).length;
   const isAtCapacity =
-    sentenceCount / MAX_SENTENCES + vocabCount / MAX_VOCAB >= 1;
+    metaSentenceCount / MAX_SENTENCES + metaVocabCount / MAX_VOCAB >= 1;
   const totalItemCount = metas.reduce((sum, m) => sum + m.itemCount, 0);
 
   return (
@@ -572,7 +576,7 @@ export function LevelUnitsPanel({
                     type="button"
                     onClick={() => setMetadataDialogOpen(true)}
                     disabled={isAtCapacity || readOnly}
-                    title={readOnly ? "已发布的游戏不可编辑，请先撤回" : (isAtCapacity ? `已达容量上限（语句 ${sentenceCount}/${MAX_SENTENCES}，词汇 ${vocabCount}/${MAX_VOCAB}）` : undefined)}
+                    title={readOnly ? "已发布的游戏不可编辑，请先撤回" : (isAtCapacity ? `已达容量上限（语句 ${metaSentenceCount}/${MAX_SENTENCES}，词汇 ${metaVocabCount}/${MAX_VOCAB}）` : undefined)}
                     className="flex items-center gap-1 px-3 py-1.5 disabled:opacity-50"
                   >
                     <Plus className="h-3.5 w-3.5 text-white" />
@@ -614,8 +618,8 @@ export function LevelUnitsPanel({
             {/* Stats bar */}
             <div className="mb-3 flex items-center gap-4 rounded-lg bg-teal-100 px-3 py-2 text-xs text-teal-600 lg:flex-col lg:items-start lg:gap-2 xl:flex-row xl:items-center xl:gap-4">
               <span className="flex items-center gap-1"><Layers className="h-3 w-3" />共计：<span className="font-semibold text-teal-800">{metas.length}</span></span>
-              <span className="flex items-center gap-1"><MessageSquareText className="h-3 w-3" />语句：<span className="font-semibold text-teal-800">{sentenceCount}</span></span>
-              <span className="flex items-center gap-1"><SpellCheck className="h-3 w-3" />词汇：<span className="font-semibold text-teal-800">{vocabCount}</span></span>
+              <span className="flex items-center gap-1"><MessageSquareText className="h-3 w-3" />语句：<span className="font-semibold text-teal-800">{sentenceItemCount}</span></span>
+              <span className="flex items-center gap-1"><SpellCheck className="h-3 w-3" />词汇：<span className="font-semibold text-teal-800">{vocabItemCount}</span></span>
               <span className="ml-auto flex items-center gap-1 lg:ml-0 xl:ml-auto"><Puzzle className="h-3 w-3" />练习单元总数：<span className="font-semibold text-teal-800">{totalItemCount}</span></span>
             </div>
           </div>
@@ -747,8 +751,8 @@ export function LevelUnitsPanel({
         levelId={levelId}
         open={metadataDialogOpen}
         onOpenChange={setMetadataDialogOpen}
-        existingSentenceCount={sentenceCount}
-        existingVocabCount={vocabCount}
+        existingSentenceCount={metaSentenceCount}
+        existingVocabCount={metaVocabCount}
       />
 
       {progress && (

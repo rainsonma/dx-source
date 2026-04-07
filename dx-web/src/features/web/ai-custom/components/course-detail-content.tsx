@@ -22,7 +22,7 @@ type RawGameDetail = {
   gamePressId: string | null;
   coverId: string | null;
   coverUrl?: string;
-  levels?: { id: string; name: string; description: string | null; isActive: boolean; order: number }[];
+  levels?: { id: string; name: string; description: string | null; isActive: boolean; order: number; itemCount?: number }[];
   user?: { id: string; username: string } | null;
   [key: string]: unknown;
 };
@@ -60,7 +60,7 @@ function mapGameDetail(raw: RawGameDetail, categories: CategoryOption[], presses
     user: raw.user ?? null,
     levels: (raw.levels ?? []).map((l) => ({
       ...l,
-      _count: { items: 0 },
+      _count: { items: l.itemCount ?? 0 },
     })),
     _count: { levels: raw.levels?.length ?? 0, stats: 0 },
   };

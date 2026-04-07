@@ -58,6 +58,7 @@ type CourseGameLevelData struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Order       float64 `json:"order"`
+	ItemCount   int64   `json:"itemCount"`
 }
 
 // ListUserGames returns the user's own games with cursor pagination and optional status filter.
@@ -511,11 +512,17 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 
 	levelData := make([]CourseGameLevelData, 0, len(levels))
 	for _, l := range levels {
+		itemCount, _ := facades.Orm().Query().Model(&models.ContentItem{}).
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Where("gi.game_level_id", l.ID).
+			Where("content_items.is_active", true).
+			Count()
 		levelData = append(levelData, CourseGameLevelData{
 			ID:          l.ID,
 			Name:        l.Name,
 			Description: l.Description,
 			Order:       l.Order,
+			ItemCount:   itemCount,
 		})
 	}
 

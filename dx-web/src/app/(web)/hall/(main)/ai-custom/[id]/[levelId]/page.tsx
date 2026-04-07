@@ -15,7 +15,7 @@ export default function CourseGameLevelPage({
   const { id, levelId } = use(params)
 
   const { data: game, isLoading: gameLoading } = useSWR(`/api/course-games/${id}`)
-  type ContentGroupItem = { items: unknown[] | null };
+  type ContentGroupItem = { items: unknown[] | null; contentType: string };
   type ContentGroup = {
     meta: {
       id: string;
@@ -48,6 +48,10 @@ export default function CourseGameLevelPage({
     itemCount: group.items?.length ?? 0,
   }))
 
+  const allItems = (contentGroups ?? []).flatMap((g) => g.items ?? [])
+  const sentenceItemCount = allItems.filter((i) => i.contentType === "sentence").length
+  const vocabItemCount = allItems.filter((i) => i.contentType !== "sentence").length
+
   const level = game?.levels?.find((l: { id: string }) => l.id === levelId)
   const isPublished = game?.status === GAME_STATUSES.PUBLISHED
 
@@ -62,7 +66,7 @@ export default function CourseGameLevelPage({
         ]}
       />
 
-      <LevelUnitsPanel gameId={id} levelId={levelId} initialMetas={metas} readOnly={isPublished} />
+      <LevelUnitsPanel gameId={id} levelId={levelId} initialMetas={metas} readOnly={isPublished} sentenceItemCount={sentenceItemCount} vocabItemCount={vocabItemCount} />
     </div>
   )
 }
