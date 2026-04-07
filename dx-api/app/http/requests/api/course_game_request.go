@@ -141,10 +141,7 @@ func (r *SaveMetadataBatchRequest) Rules(ctx http.Context) map[string]string {
 	}
 }
 func (r *SaveMetadataBatchRequest) Filters(ctx http.Context) map[string]string {
-	return map[string]string{
-		"entries.*.sourceData":  "trim",
-		"entries.*.translation": "trim",
-	}
+	return map[string]string{}
 }
 func (r *SaveMetadataBatchRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
