@@ -74,7 +74,7 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 	// Check existing capacity
 	var existingMetas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
 		Where("gm.game_level_id", gameLevelID).
 		Get(&existingMetas); err != nil {
 		return 0, fmt.Errorf("failed to count metas: %w", err)
@@ -198,7 +198,7 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 	// Load metas ordered
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
 		Where("gm.game_level_id", gameLevelID).
 		Order("content_metas.\"order\" ASC").
 		Get(&metas); err != nil {
@@ -212,7 +212,7 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 	// Load all items for this level
 	var items []models.ContentItem
 	if err := facades.Orm().Query().
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Where("content_items.is_active", true).
 		Order("content_items.\"order\" ASC").
@@ -306,7 +306,7 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 
 	// Check item limit per meta
 	itemCount, err2 := facades.Orm().Query().Model(&models.ContentItem{}).
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Where("content_items.content_meta_id", contentMetaID).
 		Count()
@@ -528,7 +528,7 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 	if referenceItemID == "" {
 		var lastItem models.ContentItem
 		if err := facades.Orm().Query().
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 			Where("gi.game_level_id", gameLevelID).
 			Order("content_items.\"order\" DESC").
 			First(&lastItem); err != nil || lastItem.ID == "" {
@@ -548,7 +548,7 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 
 	var items []models.ContentItem
 	if err := facades.Orm().Query().
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Order("content_items.\"order\" ASC").
 		Get(&items); err != nil {

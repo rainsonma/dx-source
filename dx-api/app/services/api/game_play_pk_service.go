@@ -592,7 +592,7 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	// Fetch content items for the level
 	contentTypes := consts.DegreeContentTypes[degree]
 	contentQuery := query.Model(&models.ContentItem{}).
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Where("content_items.is_active", true)
 	if len(contentTypes) > 0 {

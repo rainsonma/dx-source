@@ -38,7 +38,7 @@ func GetLevelContent(userID, gameLevelID string, degree string) ([]ContentItemDa
 	allowedTypes, hasDegree := consts.DegreeContentTypes[degree]
 
 	query := facades.Orm().Query().
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Where("content_items.is_active", true)
 

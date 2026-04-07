@@ -603,7 +603,7 @@ func verifyOwnership(userID, sessionID string) error {
 // countLevelItems counts active content items for a level, filtered by degree.
 func countLevelItems(query orm.Query, gameLevelID, degree string) (int64, error) {
 	q := query.Model(&models.ContentItem{}).
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 		Where("gi.game_level_id", gameLevelID).
 		Where("content_items.is_active", true)
 	allowedTypes, ok := consts.DegreeContentTypes[degree]

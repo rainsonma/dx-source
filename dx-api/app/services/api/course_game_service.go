@@ -305,7 +305,7 @@ func PublishGame(userID, gameID string) error {
 
 	for _, l := range levels {
 		itemCount, err3 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 			Where("gi.game_level_id", l.ID).
 			Where("content_items.is_active", true).
 			Count()
@@ -317,7 +317,7 @@ func PublishGame(userID, gameID string) error {
 		}
 
 		ungeneratedCount, err4 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 			Where("gi.game_level_id", l.ID).
 			Where("content_items.is_active", true).
 			Where("content_items.items IS NULL").
@@ -513,7 +513,7 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 	levelData := make([]CourseGameLevelData, 0, len(levels))
 	for _, l := range levels {
 		itemCount, _ := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
 			Where("gi.game_level_id", l.ID).
 			Where("content_items.is_active", true).
 			Count()

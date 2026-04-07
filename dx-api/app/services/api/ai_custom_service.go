@@ -323,7 +323,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 	// Fetch unbroken metas
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
 		Where("gm.game_level_id", gameLevelID).
 		Where("content_metas.is_break_done", false).
 		Order("content_metas.\"order\" ASC").
@@ -569,7 +569,7 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter)
 	// Fetch broken metas (ready for item generation)
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
 		Where("gm.game_level_id", gameLevelID).
 		Where("content_metas.is_break_done", true).
 		Order("content_metas.\"order\" ASC").
