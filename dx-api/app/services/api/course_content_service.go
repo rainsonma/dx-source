@@ -72,7 +72,10 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 
 	// Check existing capacity
 	var existingMetas []models.ContentMeta
-	if err := facades.Orm().Query().Where("game_level_id", gameLevelID).Get(&existingMetas); err != nil {
+	if err := facades.Orm().Query().
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Where("gm.game_level_id", gameLevelID).
+		Get(&existingMetas); err != nil {
 		return 0, fmt.Errorf("failed to count metas: %w", err)
 	}
 
@@ -121,7 +124,6 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		id := uuid.Must(uuid.NewV7()).String()
 		meta := models.ContentMeta{
 			ID:          id,
-			GameLevelID: gameLevelID,
 			SourceFrom:  sourceFrom,
 			SourceType:  e.SourceType,
 			SourceData:  e.SourceData,
@@ -131,6 +133,16 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		}
 		if err := facades.Orm().Query().Create(&meta); err != nil {
 			return 0, fmt.Errorf("failed to create content meta: %w", err)
+		}
+
+		gm := models.GameMeta{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
+			ContentMetaID: id,
+		}
+		if err := facades.Orm().Query().Create(&gm); err != nil {
+			return 0, fmt.Errorf("failed to create game meta: %w", err)
 		}
 	}
 
@@ -185,8 +197,9 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 	// Load metas ordered
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Order("\"order\" ASC").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Where("gm.game_level_id", gameLevelID).
+		Order("content_metas.\"order\" ASC").
 		Get(&metas); err != nil {
 		return nil, fmt.Errorf("failed to load metas: %w", err)
 	}
@@ -198,9 +211,10 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 	// Load all items for this level
 	var items []models.ContentItem
 	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Where("is_active", true).
-		Order("\"order\" ASC").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Where("gi.game_level_id", gameLevelID).
+		Where("content_items.is_active", true).
+		Order("content_items.\"order\" ASC").
 		Get(&items); err != nil {
 		return nil, fmt.Errorf("failed to load items: %w", err)
 	}
@@ -286,7 +300,11 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 	}
 
 	// Check item limit per meta
-	itemCount, err2 := facades.Orm().Query().Model(&models.ContentItem{}).Where("content_meta_id", contentMetaID).Count()
+	itemCount, err2 := facades.Orm().Query().Model(&models.ContentItem{}).
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Where("gi.game_level_id", gameLevelID).
+		Where("content_items.content_meta_id", contentMetaID).
+		Count()
 	if err2 != nil {
 		return nil, fmt.Errorf("failed to count items: %w", err2)
 	}
@@ -303,7 +321,6 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 	id := uuid.Must(uuid.NewV7()).String()
 	item := models.ContentItem{
 		ID:            id,
-		GameLevelID:   gameLevelID,
 		ContentMetaID: &contentMetaID,
 		Content:       content,
 		ContentType:   contentType,
@@ -314,6 +331,16 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 
 	if err := facades.Orm().Query().Create(&item); err != nil {
 		return nil, fmt.Errorf("failed to create content item: %w", err)
+	}
+
+	gi := models.GameItem{
+		ID:            uuid.Must(uuid.NewV7()).String(),
+		GameID:        gameID,
+		GameLevelID:   gameLevelID,
+		ContentItemID: id,
+	}
+	if err := facades.Orm().Query().Create(&gi); err != nil {
+		return nil, fmt.Errorf("failed to create game item: %w", err)
 	}
 
 	return &CourseContentItemData{
@@ -398,8 +425,21 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
-	if _, err := facades.Orm().Query().Where("id", itemID).Delete(&models.ContentItem{}); err != nil {
-		return fmt.Errorf("failed to delete content item: %w", err)
+	// Delete junction row
+	if _, err := facades.Orm().Query().
+		Where("content_item_id", itemID).Where("game_id", gameID).
+		Delete(&models.GameItem{}); err != nil {
+		return fmt.Errorf("failed to delete game item: %w", err)
+	}
+
+	// Delete content item if no other games reference it
+	var remaining int64
+	remaining, _ = facades.Orm().Query().Model(&models.GameItem{}).
+		Where("content_item_id", itemID).Count()
+	if remaining == 0 {
+		if _, err := facades.Orm().Query().Where("id", itemID).Delete(&models.ContentItem{}); err != nil {
+			return fmt.Errorf("failed to delete content item: %w", err)
+		}
 	}
 
 	return nil
@@ -428,68 +468,64 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Delete items then metas in transaction
+	// Delete junction rows then orphaned content in transaction
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		if _, err := tx.Where("game_level_id", gameLevelID).Delete(&models.ContentItem{}); err != nil {
-			return fmt.Errorf("failed to delete content items: %w", err)
+		// Delete junction rows for this level
+		if _, err := tx.Where("game_level_id", gameLevelID).Where("game_id", gameID).Delete(&models.GameItem{}); err != nil {
+			return fmt.Errorf("failed to delete game items: %w", err)
 		}
-		if _, err := tx.Where("game_level_id", gameLevelID).Delete(&models.ContentMeta{}); err != nil {
-			return fmt.Errorf("failed to delete content metas: %w", err)
+		if _, err := tx.Where("game_level_id", gameLevelID).Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
+			return fmt.Errorf("failed to delete game metas: %w", err)
 		}
+
+		// Delete orphaned content (not referenced by any game)
+		if _, err := tx.Exec(
+			"DELETE FROM content_items WHERE id NOT IN (SELECT content_item_id FROM game_items)",
+		); err != nil {
+			return fmt.Errorf("failed to delete orphaned content items: %w", err)
+		}
+		if _, err := tx.Exec(
+			"DELETE FROM content_metas WHERE id NOT IN (SELECT content_meta_id FROM game_metas)",
+		); err != nil {
+			return fmt.Errorf("failed to delete orphaned content metas: %w", err)
+		}
+
 		return nil
 	})
 }
 
 // verifyMetaBelongsToGame checks that a content meta belongs to a game via its level.
 func verifyMetaBelongsToGame(metaID, gameID string) error {
-	var meta models.ContentMeta
-	if err := facades.Orm().Query().Where("id", metaID).First(&meta); err != nil {
-		return fmt.Errorf("failed to find meta: %w", err)
-	}
-	if meta.ID == "" {
+	var gm models.GameMeta
+	if err := facades.Orm().Query().
+		Where("content_meta_id", metaID).
+		Where("game_id", gameID).
+		First(&gm); err != nil || gm.ID == "" {
 		return ErrMetaNotFound
 	}
-
-	var level models.GameLevel
-	if err := facades.Orm().Query().Where("id", meta.GameLevelID).Where("game_id", gameID).First(&level); err != nil {
-		return fmt.Errorf("failed to verify meta ownership: %w", err)
-	}
-	if level.ID == "" {
-		return ErrMetaNotFound
-	}
-
 	return nil
 }
 
 // verifyItemBelongsToGame checks that a content item belongs to a game via its level.
 func verifyItemBelongsToGame(itemID, gameID string) error {
-	var item models.ContentItem
-	if err := facades.Orm().Query().Where("id", itemID).First(&item); err != nil {
-		return fmt.Errorf("failed to find item: %w", err)
-	}
-	if item.ID == "" {
+	var gi models.GameItem
+	if err := facades.Orm().Query().
+		Where("content_item_id", itemID).
+		Where("game_id", gameID).
+		First(&gi); err != nil || gi.ID == "" {
 		return ErrContentItemNotFound
 	}
-
-	var level models.GameLevel
-	if err := facades.Orm().Query().Where("id", item.GameLevelID).Where("game_id", gameID).First(&level); err != nil {
-		return fmt.Errorf("failed to verify item ownership: %w", err)
-	}
-	if level.ID == "" {
-		return ErrContentItemNotFound
-	}
-
 	return nil
 }
 
 // calculateInsertionOrder computes the order for a new item relative to a reference item.
 func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (float64, error) {
 	if referenceItemID == "" {
-		// No reference: append at end
 		var lastItem models.ContentItem
 		if err := facades.Orm().Query().
-			Where("game_level_id", gameLevelID).
-			Order("\"order\" DESC").
+			Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+			Where("gi.game_level_id", gameLevelID).
+			Order("content_items.\"order\" DESC").
 			First(&lastItem); err != nil || lastItem.ID == "" {
 			return 1000, nil
 		}
@@ -505,11 +541,11 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 		return 0, ErrContentItemNotFound
 	}
 
-	// Get all items in this level ordered
 	var items []models.ContentItem
 	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Order("\"order\" ASC").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id").
+		Where("gi.game_level_id", gameLevelID).
+		Order("content_items.\"order\" ASC").
 		Get(&items); err != nil {
 		return 0, fmt.Errorf("failed to load items: %w", err)
 	}
