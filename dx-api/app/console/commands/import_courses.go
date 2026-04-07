@@ -244,13 +244,18 @@ func forceCleanup(categoryID string, names []string) (int, error) {
 			return 0, fmt.Errorf("failed to query levels for game %s: %w", game.ID, err)
 		}
 
-		for _, level := range levels {
-			if _, err := query.Where("game_level_id", level.ID).Delete(&models.GameItem{}); err != nil {
-				return 0, fmt.Errorf("failed to delete game items for level %s: %w", level.ID, err)
-			}
-			if _, err := query.Where("game_level_id", level.ID).Delete(&models.ContentItem{}); err != nil {
-				return 0, fmt.Errorf("failed to delete content items for level %s: %w", level.ID, err)
-			}
+		// Delete junction rows and orphaned content for all levels
+		if _, err := query.Where("game_id", game.ID).Delete(&models.GameItem{}); err != nil {
+			return 0, fmt.Errorf("failed to delete game items for game %s: %w", game.ID, err)
+		}
+		if _, err := query.Where("game_id", game.ID).Delete(&models.GameMeta{}); err != nil {
+			return 0, fmt.Errorf("failed to delete game metas for game %s: %w", game.ID, err)
+		}
+		if _, err := query.Exec("DELETE FROM content_items WHERE id NOT IN (SELECT content_item_id FROM game_items)"); err != nil {
+			return 0, fmt.Errorf("failed to delete orphaned content items: %w", err)
+		}
+		if _, err := query.Exec("DELETE FROM content_metas WHERE id NOT IN (SELECT content_meta_id FROM game_metas)"); err != nil {
+			return 0, fmt.Errorf("failed to delete orphaned content metas: %w", err)
 		}
 
 		if _, err := query.Where("game_id", game.ID).Delete(&models.GameLevel{}); err != nil {
