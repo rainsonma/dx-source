@@ -252,10 +252,10 @@ func DeleteGame(userID, gameID string) error {
 			if _, err := tx.Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
 				return fmt.Errorf("failed to delete game metas: %w", err)
 			}
-			if _, err := tx.Exec("DELETE FROM content_items WHERE id NOT IN (SELECT content_item_id FROM game_items)"); err != nil {
+			if _, err := tx.Exec("UPDATE content_items SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_item_id FROM game_items WHERE deleted_at IS NULL)"); err != nil {
 				return fmt.Errorf("failed to delete orphaned content items: %w", err)
 			}
-			if _, err := tx.Exec("DELETE FROM content_metas WHERE id NOT IN (SELECT content_meta_id FROM game_metas)"); err != nil {
+			if _, err := tx.Exec("UPDATE content_metas SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_meta_id FROM game_metas WHERE deleted_at IS NULL)"); err != nil {
 				return fmt.Errorf("failed to delete orphaned content metas: %w", err)
 			}
 		}
@@ -439,10 +439,10 @@ func DeleteLevel(userID, gameID, levelID string) error {
 		if _, err := tx.Where("game_level_id", levelID).Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
 			return fmt.Errorf("failed to delete game metas: %w", err)
 		}
-		if _, err := tx.Exec("DELETE FROM content_items WHERE id NOT IN (SELECT content_item_id FROM game_items)"); err != nil {
+		if _, err := tx.Exec("UPDATE content_items SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_item_id FROM game_items WHERE deleted_at IS NULL)"); err != nil {
 			return fmt.Errorf("failed to delete orphaned content items: %w", err)
 		}
-		if _, err := tx.Exec("DELETE FROM content_metas WHERE id NOT IN (SELECT content_meta_id FROM game_metas)"); err != nil {
+		if _, err := tx.Exec("UPDATE content_metas SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_meta_id FROM game_metas WHERE deleted_at IS NULL)"); err != nil {
 			return fmt.Errorf("failed to delete orphaned content metas: %w", err)
 		}
 		if _, err := tx.Where("id", levelID).Delete(&models.GameLevel{}); err != nil {

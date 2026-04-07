@@ -430,24 +430,24 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
-	// Delete junction row
-	if _, err := facades.Orm().Query().
-		Where("content_item_id", itemID).Where("game_id", gameID).
-		Delete(&models.GameItem{}); err != nil {
-		return fmt.Errorf("failed to delete game item: %w", err)
-	}
-
-	// Delete content item if no other games reference it
-	var remaining int64
-	remaining, _ = facades.Orm().Query().Model(&models.GameItem{}).
-		Where("content_item_id", itemID).Count()
-	if remaining == 0 {
-		if _, err := facades.Orm().Query().Where("id", itemID).Delete(&models.ContentItem{}); err != nil {
-			return fmt.Errorf("failed to delete content item: %w", err)
+	return facades.Orm().Transaction(func(tx orm.Query) error {
+		// Soft-delete junction row
+		if _, err := tx.
+			Where("content_item_id", itemID).Where("game_id", gameID).
+			Delete(&models.GameItem{}); err != nil {
+			return fmt.Errorf("failed to delete game item: %w", err)
 		}
-	}
 
-	return nil
+		// Count active references (auto-excludes soft-deleted)
+		remaining, _ := tx.Model(&models.GameItem{}).
+			Where("content_item_id", itemID).Count()
+		if remaining == 0 {
+			if _, err := tx.Where("id", itemID).Delete(&models.ContentItem{}); err != nil {
+				return fmt.Errorf("failed to delete content item: %w", err)
+			}
+		}
+		return nil
+	})
 }
 
 // DeleteAllLevelContent removes all content items and metas from a level.
@@ -485,12 +485,12 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 
 		// Delete orphaned content (not referenced by any game)
 		if _, err := tx.Exec(
-			"DELETE FROM content_items WHERE id NOT IN (SELECT content_item_id FROM game_items)",
+			"UPDATE content_items SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_item_id FROM game_items WHERE deleted_at IS NULL)",
 		); err != nil {
 			return fmt.Errorf("failed to delete orphaned content items: %w", err)
 		}
 		if _, err := tx.Exec(
-			"DELETE FROM content_metas WHERE id NOT IN (SELECT content_meta_id FROM game_metas)",
+			"UPDATE content_metas SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_meta_id FROM game_metas WHERE deleted_at IS NULL)",
 		); err != nil {
 			return fmt.Errorf("failed to delete orphaned content metas: %w", err)
 		}
