@@ -318,13 +318,15 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 		return
 	}
 	_ = level // used for validation only
+	gameID := game.ID
 
 	// Fetch unbroken metas
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Where("is_break_done", false).
-		Order("\"order\" ASC").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Where("gm.game_level_id", gameLevelID).
+		Where("content_metas.is_break_done", false).
+		Order("content_metas.\"order\" ASC").
 		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
@@ -373,7 +375,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			success := processBreakMeta(m, gameLevelID)
+			success := processBreakMeta(m, gameID, gameLevelID)
 			d := atomic.AddInt64(&done, 1)
 
 			if success {
@@ -405,7 +407,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 	writer.Close()
 }
 
-func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
+func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) bool {
 	userMsg := "English: " + meta.SourceData
 	if meta.Translation != nil && *meta.Translation != "" {
 		userMsg += "\nChinese translation: " + *meta.Translation
@@ -449,7 +451,6 @@ func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 
 		item := models.ContentItem{
 			ID:            id,
-			GameLevelID:   gameLevelID,
 			ContentMetaID: &metaID,
 			Content:       unit.Content,
 			ContentType:   unit.ContentType,
@@ -458,6 +459,16 @@ func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 			IsActive:      true,
 		}
 		if err := facades.Orm().Query().Create(&item); err != nil {
+			return false
+		}
+
+		gi := models.GameItem{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
+			ContentItemID: id,
+		}
+		if err := facades.Orm().Query().Create(&gi); err != nil {
 			return false
 		}
 	}
@@ -558,9 +569,10 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter)
 	// Fetch broken metas (ready for item generation)
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Where("is_break_done", true).
-		Order("\"order\" ASC").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id").
+		Where("gm.game_level_id", gameLevelID).
+		Where("content_metas.is_break_done", true).
+		Order("content_metas.\"order\" ASC").
 		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
