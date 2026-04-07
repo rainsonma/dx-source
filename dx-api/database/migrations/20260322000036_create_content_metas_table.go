@@ -24,6 +24,7 @@ func (r *M20260322000036CreateContentMetasTable) Up() error {
 			table.Boolean("is_break_done").Default(false)
 			table.Double("order").Default(0)
 			table.TimestampsTz()
+			table.SoftDeletesTz()
 			table.Index("source_from")
 			table.Index("source_type")
 			table.Index("order")

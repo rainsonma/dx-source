@@ -31,6 +31,7 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Column("tags", "text[]").Nullable()
 			table.Boolean("is_active").Default(true)
 			table.TimestampsTz()
+			table.SoftDeletesTz()
 			table.Index("content_meta_id")
 			table.Index("uk_audio_id")
 			table.Index("us_audio_id")

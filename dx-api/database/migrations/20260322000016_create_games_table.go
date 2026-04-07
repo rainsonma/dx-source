@@ -29,6 +29,7 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Boolean("is_active").Default(true)
 			table.Text("status").Default("")
 			table.TimestampsTz()
+			table.SoftDeletesTz()
 			table.Unique("name")
 			table.Index("user_id")
 			table.Index("mode")
