@@ -8,7 +8,7 @@ import (
 type ContentItem struct {
 	orm.Timestamps
 	ID            string         `gorm:"column:id;primaryKey" json:"id"`
-	GameLevelID   string         `gorm:"column:game_level_id" json:"game_level_id"`
+	GameLevelID   *string        `gorm:"column:game_level_id" json:"game_level_id"`
 	ContentMetaID *string        `gorm:"column:content_meta_id" json:"content_meta_id"`
 	Content       string         `gorm:"column:content" json:"content"`
 	ContentType   string         `gorm:"column:content_type" json:"content_type"`
