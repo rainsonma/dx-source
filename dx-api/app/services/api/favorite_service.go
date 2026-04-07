@@ -73,7 +73,7 @@ func ListFavorites(userID string) ([]FavoriteGameData, error) {
 	}
 
 	var games []models.Game
-	facades.Orm().Query().Where("id IN ?", gameIDs).Get(&games)
+	facades.Orm().Query().WithTrashed().Where("id IN ?", gameIDs).Get(&games)
 
 	gameMap := make(map[string]models.Game, len(games))
 	for _, g := range games {

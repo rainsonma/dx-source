@@ -102,7 +102,7 @@ func batchLoadContentItems(ids []string) map[string]*TrackingContentData {
 		return result
 	}
 	var items []models.ContentItem
-	facades.Orm().Query().Where("id IN ?", ids).Get(&items)
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&items)
 	for _, ci := range items {
 		result[ci.ID] = &TrackingContentData{
 			Content:     ci.Content,
@@ -120,7 +120,7 @@ func batchLoadGameNames(ids []string) map[string]string {
 		return result
 	}
 	var games []models.Game
-	facades.Orm().Query().Where("id IN ?", ids).Get(&games)
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&games)
 	for _, g := range games {
 		result[g.ID] = g.Name
 	}
