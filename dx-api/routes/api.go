@@ -209,20 +209,18 @@ func Api() {
 
 			// AI custom content routes
 			aiCustomController := apicontrollers.NewAiCustomController()
+			aiCustomVocabController := apicontrollers.NewAiCustomVocabController()
 			protected.Prefix("/ai-custom").Group(func(ai route.Router) {
+				// Word-sentence endpoints
 				ai.Post("/generate-metadata", aiCustomController.GenerateMetadata)
 				ai.Post("/format-metadata", aiCustomController.FormatMetadata)
 				ai.Post("/break-metadata", aiCustomController.BreakMetadata)
 				ai.Post("/generate-content-items", aiCustomController.GenerateContentItems)
-			})
-
-			// AI custom vocab content routes
-			aiCustomVocabController := apicontrollers.NewAiCustomVocabController()
-			protected.Prefix("/ai-custom-vocab").Group(func(aiv route.Router) {
-				aiv.Post("/generate-vocab", aiCustomVocabController.GenerateVocab)
-				aiv.Post("/format-vocab", aiCustomVocabController.FormatVocab)
-				aiv.Post("/break-metadata", aiCustomVocabController.BreakMetadata)
-				aiv.Post("/generate-content-items", aiCustomVocabController.GenerateContentItems)
+				// Vocab endpoints
+				ai.Post("/generate-vocab", aiCustomVocabController.GenerateVocab)
+				ai.Post("/format-vocab", aiCustomVocabController.FormatVocab)
+				ai.Post("/break-vocab-metadata", aiCustomVocabController.BreakMetadata)
+				ai.Post("/generate-vocab-content-items", aiCustomVocabController.GenerateContentItems)
 			})
 
 			// User-facing admin routes (user JWT + admin check)

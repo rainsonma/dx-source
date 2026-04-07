@@ -6,7 +6,7 @@ type FormatResult =
 
 export async function formatVocab(content: string): Promise<FormatResult> {
   try {
-    const res = await fetch(`${API_URL}/api/ai-custom-vocab/format-vocab`, {
+    const res = await fetch(`${API_URL}/api/ai-custom/format-vocab`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

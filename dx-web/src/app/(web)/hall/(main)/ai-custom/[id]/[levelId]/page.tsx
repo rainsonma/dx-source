@@ -4,6 +4,7 @@ import { use } from "react"
 import useSWR from "swr"
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar"
 import { LevelUnitsPanel } from "@/features/web/ai-custom/components/level-units-panel"
+import type { GameMode } from "@/consts/game-mode"
 import { GAME_STATUSES } from "@/consts/game-status"
 import { PageSpinner } from "@/components/in/page-spinner"
 
@@ -66,7 +67,7 @@ export default function CourseGameLevelPage({
         ]}
       />
 
-      <LevelUnitsPanel gameId={id} levelId={levelId} initialMetas={metas} readOnly={isPublished} sentenceItemCount={sentenceItemCount} vocabItemCount={vocabItemCount} />
+      <LevelUnitsPanel gameId={id} levelId={levelId} gameMode={(game?.mode ?? "word-sentence") as GameMode} initialMetas={metas} readOnly={isPublished} sentenceItemCount={sentenceItemCount} vocabItemCount={vocabItemCount} />
     </div>
   )
 }

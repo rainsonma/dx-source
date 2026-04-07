@@ -12,7 +12,7 @@ export async function generateVocab(
   gameMode: GameMode
 ): Promise<GenerateResult> {
   try {
-    const res = await fetch(`${API_URL}/api/ai-custom-vocab/generate-vocab`, {
+    const res = await fetch(`${API_URL}/api/ai-custom/generate-vocab`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

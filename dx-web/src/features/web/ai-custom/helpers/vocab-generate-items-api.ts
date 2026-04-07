@@ -1,4 +1,4 @@
-import { fetchWithProgress, type ProgressEvent } from "@/features/web/ai-custom-vocab/helpers/stream-progress";
+import { fetchWithProgress, type ProgressEvent } from "@/features/web/ai-custom/helpers/stream-progress";
 
 type BatchResult =
   | { ok: true; processed: number; failed: number }
@@ -12,7 +12,7 @@ export async function breakVocabMetadata(
   onProgress?: OnProgress
 ): Promise<BatchResult> {
   return fetchWithProgress(
-    "/api/ai-custom-vocab/break-metadata",
+    "/api/ai-custom/break-vocab-metadata",
     { gameLevelId },
     signal,
     onProgress ?? (() => {})
@@ -25,7 +25,7 @@ export async function generateVocabContentItems(
   onProgress?: OnProgress
 ): Promise<BatchResult> {
   return fetchWithProgress(
-    "/api/ai-custom-vocab/generate-content-items",
+    "/api/ai-custom/generate-vocab-content-items",
     { gameLevelId },
     signal,
     onProgress ?? (() => {})

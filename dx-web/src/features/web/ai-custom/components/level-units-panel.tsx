@@ -46,7 +46,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { GameMode } from "@/consts/game-mode";
+import { GAME_MODES } from "@/consts/game-mode";
 import { AddMetadataDialog } from "@/features/web/ai-custom/components/add-metadata-dialog";
+import { AddVocabDialog } from "@/features/web/ai-custom/components/add-vocab-dialog";
 import { SortableMetaItem } from "@/features/web/ai-custom/components/sortable-meta-item";
 import { SortableContentItem } from "@/features/web/ai-custom/components/sortable-content-item";
 import {
@@ -62,6 +65,10 @@ import {
   breakMetadata,
   generateContentItems,
 } from "@/features/web/ai-custom/helpers/generate-items-api";
+import {
+  breakVocabMetadata,
+  generateVocabContentItems,
+} from "@/features/web/ai-custom/helpers/vocab-generate-items-api";
 import type { LevelMeta, LevelContentItem } from "@/features/web/ai-custom/actions/course-game.action";
 
 type ContentGroup = {
@@ -69,6 +76,7 @@ type ContentGroup = {
   items: LevelContentItem[];
 };
 import { MAX_SENTENCES, MAX_VOCAB } from "@/features/web/ai-custom/helpers/format-metadata";
+import { MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
 import { SOURCE_TYPES } from "@/consts/source-type";
 import { ProcessingOverlay } from "@/features/web/ai-custom/components/processing-overlay";
 import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
@@ -76,6 +84,7 @@ import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dial
 type LevelUnitsPanelProps = {
   gameId: string;
   levelId: string;
+  gameMode: GameMode;
   initialMetas: LevelMeta[];
   readOnly?: boolean;
   sentenceItemCount: number;
@@ -100,11 +109,13 @@ function calculateNewOrder(
 export function LevelUnitsPanel({
   gameId,
   levelId,
+  gameMode,
   initialMetas,
   readOnly,
   sentenceItemCount,
   vocabItemCount,
 }: LevelUnitsPanelProps) {
+  const isVocabMode = gameMode !== GAME_MODES.WORD_SENTENCE;
   const metaDndId = useId();
   const itemDndId = useId();
   const [metadataDialogOpen, setMetadataDialogOpen] = useState(false);
@@ -224,9 +235,9 @@ export function LevelUnitsPanel({
     setIsBreaking(true);
     setProgress({ done: 0, total: pending.length });
 
-    const result = await breakMetadata(levelId, controller.signal, (event) => {
-      setProgress({ done: event.done, total: event.total });
-    });
+    const result = isVocabMode
+      ? await breakVocabMetadata(levelId, controller.signal, (event) => { setProgress({ done: event.done, total: event.total }); })
+      : await breakMetadata(levelId, controller.signal, (event) => { setProgress({ done: event.done, total: event.total }); });
 
     breakAbortRef.current = null;
     setIsBreaking(false);
@@ -256,7 +267,7 @@ export function LevelUnitsPanel({
     }
 
     swrMutate("/api/course-games");
-  }, [metas, levelId]);
+  }, [metas, levelId, isVocabMode]);
 
   const handleGenerate = useCallback(async () => {
     const pending = metas.filter((m) => m.isBreakDone && !m.isItemDone);
@@ -267,9 +278,9 @@ export function LevelUnitsPanel({
     setIsGenerating(true);
     setProgress({ done: 0, total: pending.length });
 
-    const result = await generateContentItems(levelId, controller.signal, (event) => {
-      setProgress({ done: event.done, total: event.total });
-    });
+    const result = isVocabMode
+      ? await generateVocabContentItems(levelId, controller.signal, (event) => { setProgress({ done: event.done, total: event.total }); })
+      : await generateContentItems(levelId, controller.signal, (event) => { setProgress({ done: event.done, total: event.total }); });
 
     genAbortRef.current = null;
     setIsGenerating(false);
@@ -299,7 +310,7 @@ export function LevelUnitsPanel({
     }
 
     swrMutate("/api/course-games");
-  }, [metas, levelId]);
+  }, [metas, levelId, isVocabMode]);
 
   function handleItemDragStart(event: DragStartEvent) {
     setActiveItemId(event.active.id as string);
@@ -528,8 +539,9 @@ export function LevelUnitsPanel({
 
   const metaSentenceCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.SENTENCE).length;
   const metaVocabCount = metas.filter((m) => m.sourceType === SOURCE_TYPES.VOCAB).length;
-  const isAtCapacity =
-    metaSentenceCount / MAX_SENTENCES + metaVocabCount / MAX_VOCAB >= 1;
+  const isAtCapacity = isVocabMode
+    ? metas.length >= MAX_METAS_PER_LEVEL
+    : metaSentenceCount / MAX_SENTENCES + metaVocabCount / MAX_VOCAB >= 1;
   const totalItemCount = metas.reduce((sum, m) => sum + m.itemCount, 0);
 
   return (
@@ -576,7 +588,7 @@ export function LevelUnitsPanel({
                     type="button"
                     onClick={() => setMetadataDialogOpen(true)}
                     disabled={isAtCapacity || readOnly}
-                    title={readOnly ? "已发布的游戏不可编辑，请先撤回" : (isAtCapacity ? `已达容量上限（语句 ${metaSentenceCount}/${MAX_SENTENCES}，词汇 ${metaVocabCount}/${MAX_VOCAB}）` : undefined)}
+                    title={readOnly ? "已发布的游戏不可编辑，请先撤回" : (isAtCapacity ? (isVocabMode ? `已达上限（${metas.length}/${MAX_METAS_PER_LEVEL}）` : `已达容量上限（语句 ${metaSentenceCount}/${MAX_SENTENCES}，词汇 ${metaVocabCount}/${MAX_VOCAB}）`) : undefined)}
                     className="flex items-center gap-1 px-3 py-1.5 disabled:opacity-50"
                   >
                     <Plus className="h-3.5 w-3.5 text-white" />
@@ -618,8 +630,12 @@ export function LevelUnitsPanel({
             {/* Stats bar */}
             <div className="mb-3 flex items-center gap-4 rounded-lg bg-teal-100 px-3 py-2 text-xs text-teal-600 lg:flex-col lg:items-start lg:gap-2 xl:flex-row xl:items-center xl:gap-4">
               <span className="flex items-center gap-1"><Layers className="h-3 w-3" />共计：<span className="font-semibold text-teal-800">{metas.length}</span></span>
-              <span className="flex items-center gap-1"><MessageSquareText className="h-3 w-3" />语句：<span className="font-semibold text-teal-800">{sentenceItemCount}</span></span>
-              <span className="flex items-center gap-1"><SpellCheck className="h-3 w-3" />词汇：<span className="font-semibold text-teal-800">{vocabItemCount}</span></span>
+              {!isVocabMode && (
+                <>
+                  <span className="flex items-center gap-1"><MessageSquareText className="h-3 w-3" />语句：<span className="font-semibold text-teal-800">{sentenceItemCount}</span></span>
+                  <span className="flex items-center gap-1"><SpellCheck className="h-3 w-3" />词汇：<span className="font-semibold text-teal-800">{vocabItemCount}</span></span>
+                </>
+              )}
               <span className="ml-auto flex items-center gap-1 lg:ml-0 xl:ml-auto"><Puzzle className="h-3 w-3" />练习单元总数：<span className="font-semibold text-teal-800">{totalItemCount}</span></span>
             </div>
           </div>
@@ -746,14 +762,25 @@ export function LevelUnitsPanel({
       </div>
       </div>
 
-      <AddMetadataDialog
-        gameId={gameId}
-        levelId={levelId}
-        open={metadataDialogOpen}
-        onOpenChange={setMetadataDialogOpen}
-        existingSentenceCount={metaSentenceCount}
-        existingVocabCount={metaVocabCount}
-      />
+      {isVocabMode ? (
+        <AddVocabDialog
+          gameId={gameId}
+          levelId={levelId}
+          gameMode={gameMode}
+          open={metadataDialogOpen}
+          onOpenChange={setMetadataDialogOpen}
+          existingMetaCount={metas.length}
+        />
+      ) : (
+        <AddMetadataDialog
+          gameId={gameId}
+          levelId={levelId}
+          open={metadataDialogOpen}
+          onOpenChange={setMetadataDialogOpen}
+          existingSentenceCount={metaSentenceCount}
+          existingVocabCount={metaVocabCount}
+        />
+      )}
 
       {progress && (
         <ProcessingOverlay

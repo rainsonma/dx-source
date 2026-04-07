@@ -23,12 +23,12 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast } from "sonner";
 import type { GameMode } from "@/consts/game-mode";
 import { SOURCE_FROMS } from "@/consts/source-from";
-import { VocabManualTab } from "@/features/web/ai-custom-vocab/components/vocab-manual-tab";
-import { VocabAiTab, getKeywordsWarning } from "@/features/web/ai-custom-vocab/components/vocab-ai-tab";
-import { parseVocabText, maxPairsForMode, MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom-vocab/helpers/format-metadata";
-import { saveMetadataAction } from "@/features/web/ai-custom-vocab/actions/course-game.action";
-import { formatVocab } from "@/features/web/ai-custom-vocab/helpers/format-api";
-import { generateVocab } from "@/features/web/ai-custom-vocab/helpers/generate-api";
+import { VocabManualTab } from "@/features/web/ai-custom/components/vocab-manual-tab";
+import { VocabAiTab, getKeywordsWarning } from "@/features/web/ai-custom/components/vocab-ai-tab";
+import { parseVocabText, maxPairsForMode, MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
+import { saveMetadataAction } from "@/features/web/ai-custom/actions/course-game.action";
+import { formatVocab } from "@/features/web/ai-custom/helpers/vocab-format-api";
+import { generateVocab } from "@/features/web/ai-custom/helpers/vocab-generate-api";
 import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
 
 type Tab = "manual" | "ai";
