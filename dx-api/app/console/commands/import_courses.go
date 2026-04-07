@@ -245,6 +245,9 @@ func forceCleanup(categoryID string, names []string) (int, error) {
 		}
 
 		for _, level := range levels {
+			if _, err := query.Where("game_level_id", level.ID).Delete(&models.GameItem{}); err != nil {
+				return 0, fmt.Errorf("failed to delete game items for level %s: %w", level.ID, err)
+			}
 			if _, err := query.Where("game_level_id", level.ID).Delete(&models.ContentItem{}); err != nil {
 				return 0, fmt.Errorf("failed to delete content items for level %s: %w", level.ID, err)
 			}
@@ -353,7 +356,6 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 
 			ci := models.ContentItem{
 				ID:          uuid.Must(uuid.NewV7()).String(),
-				GameLevelID: levelID,
 				Content:     item.Content,
 				ContentType: item.Type,
 				Translation: &item.Chinese,
@@ -368,6 +370,9 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 				if err := tx.Create(&batch); err != nil {
 					return fmt.Errorf("failed to batch create content items: %w", err)
 				}
+				if err := createGameItemsBatch(tx, gameID, levelID, batch); err != nil {
+					return err
+				}
 				batch = batch[:0]
 			}
 		}
@@ -376,6 +381,9 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 		if len(batch) > 0 {
 			if err := tx.Create(&batch); err != nil {
 				return fmt.Errorf("failed to batch create remaining content items: %w", err)
+			}
+			if err := createGameItemsBatch(tx, gameID, levelID, batch); err != nil {
+				return err
 			}
 		}
 	}
@@ -411,6 +419,23 @@ func matchPress(folderName string, pressMap map[string]string) *string {
 			id := pressMap[name]
 			return &id
 		}
+	}
+	return nil
+}
+
+// createGameItemsBatch creates game_items junction rows for a batch of content items.
+func createGameItemsBatch(tx orm.Query, gameID, levelID string, items []models.ContentItem) error {
+	var batch []models.GameItem
+	for _, ci := range items {
+		batch = append(batch, models.GameItem{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   levelID,
+			ContentItemID: ci.ID,
+		})
+	}
+	if err := tx.Create(&batch); err != nil {
+		return fmt.Errorf("failed to batch create game items: %w", err)
 	}
 	return nil
 }
