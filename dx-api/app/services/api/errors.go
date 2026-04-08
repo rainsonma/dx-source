@@ -66,4 +66,5 @@ var (
 	ErrOpponentNotVip       = errors.New("对方会员已过期")
 	ErrCannotChallengeSelf  = errors.New("不能挑战自己")
 	ErrInvitationNotPending = errors.New("邀请状态已变更")
+	ErrGameNameTaken        = errors.New("游戏名称已存在")
 )

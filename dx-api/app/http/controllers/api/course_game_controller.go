@@ -76,7 +76,7 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 
 	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID)
 	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to create game")
+		return mapCourseGameError(ctx, err)
 	}
 
 	return helpers.Success(ctx, map[string]string{"id": gameID})
@@ -461,6 +461,8 @@ func mapCourseGameError(ctx contractshttp.Context, err error) contractshttp.Resp
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "每条元数据练习单元数量已达上限")
 	case errors.Is(err, services.ErrVipRequired):
 		return helpers.Error(ctx, http.StatusForbidden, consts.CodeVipRequired, "升级会员解锁此功能")
+	case errors.Is(err, services.ErrGameNameTaken):
+		return helpers.Error(ctx, http.StatusConflict, consts.CodeValidationError, "游戏名称已存在，请换一个名称")
 	default:
 		// Pass through Chinese validation messages (e.g. publish: level has no content);
 		// hide raw internal errors from clients.

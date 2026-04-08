@@ -24,7 +24,7 @@ func (r *CreateGameRequest) Rules(ctx http.Context) map[string]string {
 		"description":    "max_len:500",
 		"gameMode":       "required|" + helpers.InEnum("mode"),
 		"gameCategoryId": "required|uuid",
-		"gamePressId":    "required|uuid",
+		"gamePressId":    "uuid",
 		"coverId":        "uuid",
 	}
 }
@@ -44,8 +44,7 @@ func (r *CreateGameRequest) Messages(ctx http.Context) map[string]string {
 		"gameMode.in":             "无效的游戏模式",
 		"gameCategoryId.required": "请选择游戏分类",
 		"gameCategoryId.uuid":     "无效的游戏分类",
-		"gamePressId.required":    "请选择出版社",
-		"gamePressId.uuid":        "无效的出版社",
+		"gamePressId.uuid": "无效的出版社",
 		"coverId.uuid":            "无效的封面图片",
 	}
 }
@@ -68,7 +67,7 @@ func (r *UpdateGameRequest) Rules(ctx http.Context) map[string]string {
 		"description":    "max_len:500",
 		"gameMode":       "required|" + helpers.InEnum("mode"),
 		"gameCategoryId": "required|uuid",
-		"gamePressId":    "required|uuid",
+		"gamePressId":    "uuid",
 		"coverId":        "uuid",
 	}
 }
@@ -88,8 +87,7 @@ func (r *UpdateGameRequest) Messages(ctx http.Context) map[string]string {
 		"gameMode.in":             "无效的游戏模式",
 		"gameCategoryId.required": "请选择游戏分类",
 		"gameCategoryId.uuid":     "无效的游戏分类",
-		"gamePressId.required":    "请选择出版社",
-		"gamePressId.uuid":        "无效的出版社",
+		"gamePressId.uuid": "无效的出版社",
 		"coverId.uuid":            "无效的封面图片",
 	}
 }

@@ -1,7 +1,9 @@
 package api
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"dx-api/app/consts"
 	"dx-api/app/models"
@@ -184,6 +186,9 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 	}
 
 	if err := facades.Orm().Query().Create(&game); err != nil {
+		if isDuplicateKeyError(err) {
+			return "", ErrGameNameTaken
+		}
 		return "", fmt.Errorf("failed to create game: %w", err)
 	}
 
@@ -539,4 +544,14 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		Levels:         levelData,
 		CreatedAt:      game.CreatedAt,
 	}, nil
+}
+
+// isDuplicateKeyError checks if a database error is a unique constraint violation.
+func isDuplicateKeyError(err error) bool {
+	if pqErr, ok := errors.AsType[*pq.Error](err); ok {
+		return pqErr.Code == "23505"
+	}
+	// Fallback: Goravel may wrap the error losing the pq.Error type
+	msg := err.Error()
+	return strings.Contains(msg, "duplicate key") || strings.Contains(msg, "unique constraint")
 }

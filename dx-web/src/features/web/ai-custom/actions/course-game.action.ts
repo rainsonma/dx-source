@@ -36,7 +36,7 @@ export async function createCourseGameAction(
   try {
     const body = {
       gameCategoryId: formData.get("gameCategoryId") as string,
-      gamePressId: formData.get("gamePressId") as string,
+      gamePressId: (formData.get("gamePressId") as string) || undefined,
       gameMode: formData.get("gameMode") as string,
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,
@@ -46,12 +46,13 @@ export async function createCourseGameAction(
     const res = await apiClient.post<{ id: string }>("/api/course-games", body);
 
     if (res.code !== 0) {
-      return { error: res.message };
+      return { error: res.message || "创建失败，请稍后重试" };
     }
 
     return { success: true, gameId: res.data.id };
-  } catch {
-    return { error: "创建失败" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "";
+    return { error: message || "网络错误，请稍后重试" };
   }
 }
 
@@ -164,7 +165,7 @@ export async function updateCourseGameAction(
   try {
     const body = {
       gameCategoryId: formData.get("gameCategoryId") as string,
-      gamePressId: formData.get("gamePressId") as string,
+      gamePressId: (formData.get("gamePressId") as string) || undefined,
       gameMode: formData.get("gameMode") as string,
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,

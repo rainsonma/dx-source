@@ -134,7 +134,7 @@ export function AiCustomGrid() {
         <DialogContent
           aria-describedby={undefined}
           showCloseButton={false}
-          className="max-w-[560px] overflow-hidden rounded-[20px] border-0 p-0 shadow-[0_12px_40px_rgba(15,23,42,0.19)]"
+          className="sm:max-w-[672px] overflow-hidden rounded-[20px] border-0 p-0 shadow-[0_12px_40px_rgba(15,23,42,0.19)]"
         >
           <VisuallyHidden>
             <DialogTitle>创建我的课程游戏</DialogTitle>

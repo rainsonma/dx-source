@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Gamepad2, X, Plus, Loader2 } from "lucide-react";
 import {
   Select,
@@ -14,6 +15,7 @@ import { ImageUploader } from "@/features/com/images/components/image-uploader";
 import { GAME_MODE_OPTIONS } from "@/consts/game-mode";
 import { IMAGE_ROLES } from "@/consts/image-role";
 import { useCreateCourseGame } from "@/features/web/ai-custom/hooks/use-create-course-game";
+import { toast } from "sonner";
 
 type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean };
 type SelectOption = { id: string; name: string };
@@ -29,8 +31,17 @@ export function CreateCourseForm({
   presses,
   onClose,
 }: CreateCourseFormProps) {
+  const [pressId, setPressId] = useState("");
   const { state, formAction, isPending, coverId, setCoverId } =
     useCreateCourseGame(onClose);
+
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+    if (state.fieldErrors) {
+      const first = Object.values(state.fieldErrors).flat()[0];
+      if (first) toast.error(first);
+    }
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col">
@@ -58,11 +69,6 @@ export function CreateCourseForm({
 
       {/* Form fields */}
       <div className="flex flex-col gap-5 px-4 py-5 md:px-7">
-        {/* Error message */}
-        {state.error && (
-          <p className="text-sm text-red-500">{state.error}</p>
-        )}
-
         {/* Category select */}
         <div className="flex h-12 items-center gap-2 rounded-[10px] border border-border px-4">
           <span className="w-[65px] shrink-0 text-sm font-medium text-foreground">
@@ -95,20 +101,15 @@ export function CreateCourseForm({
             </SelectContent>
           </Select>
         </div>
-        {state.fieldErrors?.gameCategoryId && (
-          <p className="-mt-4 text-xs text-red-500">
-            {state.fieldErrors.gameCategoryId[0]}
-          </p>
-        )}
 
         {/* Publisher select */}
         <div className="flex h-12 items-center gap-2 rounded-[10px] border border-border px-4">
           <span className="w-[65px] shrink-0 text-sm font-medium text-foreground">
             出版社
           </span>
-          <Select name="gamePressId">
+          <Select value={pressId} onValueChange={setPressId}>
             <SelectTrigger className="h-full flex-1 border-0 bg-transparent p-0 shadow-none focus:ring-0">
-              <SelectValue placeholder="请选择" />
+              <SelectValue placeholder="请选择（可选）" />
             </SelectTrigger>
             <SelectContent>
               {presses.map((p) => (
@@ -118,12 +119,13 @@ export function CreateCourseForm({
               ))}
             </SelectContent>
           </Select>
+          {pressId && (
+            <button type="button" onClick={() => setPressId("")} className="shrink-0 text-muted-foreground hover:text-foreground">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+          <input type="hidden" name="gamePressId" value={pressId} />
         </div>
-        {state.fieldErrors?.gamePressId && (
-          <p className="-mt-4 text-xs text-red-500">
-            {state.fieldErrors.gamePressId[0]}
-          </p>
-        )}
 
         {/* Game mode select */}
         <div className="flex h-12 items-center gap-2 rounded-[10px] border border-border px-4">
@@ -143,11 +145,6 @@ export function CreateCourseForm({
             </SelectContent>
           </Select>
         </div>
-        {state.fieldErrors?.gameMode && (
-          <p className="-mt-4 text-xs text-red-500">
-            {state.fieldErrors.gameMode[0]}
-          </p>
-        )}
 
         {/* Title input */}
         <div className="flex h-12 items-center gap-2 rounded-[10px] border border-border px-4">
@@ -160,11 +157,6 @@ export function CreateCourseForm({
             className="h-full flex-1 border-0 bg-transparent p-0 text-[15px] shadow-none focus-visible:ring-0"
           />
         </div>
-        {state.fieldErrors?.name && (
-          <p className="-mt-4 text-xs text-red-500">
-            {state.fieldErrors.name[0]}
-          </p>
-        )}
 
         {/* Description textarea */}
         <div className="flex items-start gap-2 rounded-[10px] border border-border px-4 py-3">
