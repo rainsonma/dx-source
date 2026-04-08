@@ -17,6 +17,7 @@ func (r *M20260322000036CreateContentMetasTable) Up() error {
 		return facades.Schema().Create("content_metas", func(table schema.Blueprint) {
 			table.Uuid("id")
 			table.Primary("id")
+			table.Uuid("game_level_id")
 			table.Text("source_from").Default("")
 			table.Text("source_type").Default("")
 			table.Text("source_data").Default("")

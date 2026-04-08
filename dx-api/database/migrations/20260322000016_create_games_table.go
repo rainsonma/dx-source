@@ -30,6 +30,7 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Text("status").Default("")
 			table.TimestampsTz()
 			table.SoftDeletesTz()
+			table.Boolean("is_selective").Default(false)
 			table.Unique("name")
 			table.Index("user_id")
 			table.Index("mode")
