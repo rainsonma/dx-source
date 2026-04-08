@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -314,7 +315,7 @@ func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) 
 // --- GenerateVocabContentItems ---
 
 // GenerateVocabContentItems generates word-level phonetics/POS/translations for vocab content items via SSE.
-func GenerateVocabContentItems(userID, gameLevelID string, writer *helpers.SSEWriter) {
+func GenerateVocabContentItems(ctx context.Context, userID, gameLevelID string, writer *helpers.SSEWriter) {
 	if err := requireVip(userID); err != nil {
 		writeVocabSSEError(writer, err)
 		return
@@ -418,12 +419,23 @@ func GenerateVocabContentItems(userID, gameLevelID string, writer *helpers.SSEWr
 	total := len(activeMetas)
 
 	for _, meta := range activeMetas {
+		// Stop dispatching if client disconnected
+		if ctx.Err() != nil {
+			break
+		}
+
 		wg.Add(1)
 		sem <- struct{}{}
 
 		go func(m models.ContentMeta) {
 			defer wg.Done()
 			defer func() { <-sem }()
+
+			// Skip if client already gone
+			if ctx.Err() != nil {
+				atomic.AddInt64(&done, 1)
+				return
+			}
 
 			items := pendingByMeta[m.ID]
 			success := processVocabGenItems(m, items)

@@ -137,8 +137,9 @@ func (c *AiCustomVocabController) GenerateContentItems(ctx contractshttp.Context
 
 	w := ctx.Response().Writer()
 	writer := helpers.NewSSEWriter(w)
+	reqCtx := ctx.Request().Origin().Context()
 
-	services.GenerateVocabContentItems(userID, req.GameLevelID, writer)
+	services.GenerateVocabContentItems(reqCtx, userID, req.GameLevelID, writer)
 
 	return nil
 }
