@@ -39,7 +39,7 @@ export function GameProgressCard({ sessions }: GameProgressCardProps) {
   const isEmpty = sessions.length === 0;
 
   return (
-    <div className="flex w-full flex-col gap-5 rounded-[14px] border border-border bg-card p-6">
+    <div className="flex h-full w-full flex-col gap-5 rounded-[14px] border border-border bg-card p-6">
       {/* Header */}
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-3">

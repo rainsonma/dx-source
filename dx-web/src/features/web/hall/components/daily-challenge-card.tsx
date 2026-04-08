@@ -4,7 +4,7 @@ import { Flame, MessageCircle, Play } from "lucide-react";
 /** 今日打卡 — grouped card with two daily task items */
 export function DailyChallengeCard() {
   return (
-    <div className="flex w-full flex-col gap-4 rounded-[14px] border border-border bg-card p-5">
+    <div className="flex h-full w-full flex-col gap-4 rounded-[14px] border border-border bg-card p-5">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50">

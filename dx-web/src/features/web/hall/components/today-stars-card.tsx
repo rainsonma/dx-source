@@ -34,7 +34,7 @@ export function TodayStarsCard() {
   const listEntries = data.entries.slice(3);
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-[14px] border border-border bg-card p-5">
+    <div className="flex h-full w-full flex-col gap-4 rounded-[14px] border border-border bg-card p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
