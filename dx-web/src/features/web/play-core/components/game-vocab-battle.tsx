@@ -1,36 +1,47 @@
-import { Zap } from "lucide-react";
+"use client";
 
-const oppShields = [true, true, false, false, false];
-const myShields = [true, true, true, true, false];
-const oppLetters = [
-  { letter: "h", revealed: false },
-  { letter: "e", revealed: false },
-  { letter: "l", revealed: false },
-  { letter: "l", revealed: false },
-  { letter: "o", revealed: false },
-];
-const myLetters = [
-  { letter: "h", revealed: true },
-  { letter: "e", revealed: true },
-  { letter: "l", revealed: true },
-  { letter: "l", revealed: true },
-  { letter: "o", revealed: false },
-];
-const keyboardLetters = ["H", "O", "L", "E", "L"];
+import { Zap, SkipForward, Check } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { useVocabBattle } from "@/features/web/play-core/hooks/use-vocab-battle";
 
 export function GameVocabBattle() {
+  const {
+    targetWord,
+    translation,
+    letterSlots,
+    keyboardLetters,
+    usedKeyIndices,
+    hasError,
+    isRevealed,
+    playerShields,
+    opponentShields,
+    opponentSlots,
+    competitive,
+    progress,
+    combo,
+    pressLetter,
+    advanceAfterReveal,
+    skipItem,
+  } = useVocabBattle();
+
+  if (!targetWord) return null;
+
   return (
     <div className="flex w-full max-w-[760px] flex-col rounded-[20px] border border-border bg-card shadow-sm">
       {/* Opponent zone */}
-      <div className="flex flex-col items-center gap-4 px-6 py-7 md:px-8">
+      <div
+        className={`flex flex-col items-center gap-4 px-6 py-7 md:px-8 ${
+          !competitive ? "pointer-events-none opacity-40" : ""
+        }`}
+      >
         <div className="flex items-center gap-2.5">
           <span className="text-xs text-muted-foreground">🤖 对手</span>
         </div>
         <div className="flex items-center justify-center gap-2">
-          {oppShields.map((active, i) => (
+          {opponentShields.map((active, i) => (
             <div
               key={i}
-              className={`h-6 w-6 rounded-full border-2 ${
+              className={`h-6 w-6 rounded-full border-2 transition-colors ${
                 active
                   ? "border-red-400 bg-red-400"
                   : "border-border bg-muted"
@@ -39,13 +50,13 @@ export function GameVocabBattle() {
           ))}
         </div>
         <div className="flex items-center justify-center gap-2.5">
-          {oppLetters.map((l, i) => (
+          {opponentSlots.map((slot, i) => (
             <div
               key={i}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted"
             >
               <span className="text-sm font-medium text-slate-300">
-                {l.revealed ? l.letter : "?"}
+                {slot.filled ? slot.letter : "?"}
               </span>
             </div>
           ))}
@@ -55,38 +66,42 @@ export function GameVocabBattle() {
       {/* Translation zone */}
       <div className="flex flex-col items-center gap-2.5 bg-gradient-to-b from-red-50/0 via-red-50 to-red-50/0 px-6 py-4 md:px-8">
         <p className="text-center text-2xl font-extrabold tracking-wider text-foreground md:text-[32px]">
-          你好
+          {translation}
         </p>
         <div className="h-0.5 w-full rounded-full bg-gradient-to-r from-red-500/0 via-red-500/30 via-30% via-teal-500/30 via-70% to-teal-500/0" />
       </div>
 
-      {/* My zone */}
+      {/* Player zone */}
       <div className="flex flex-col items-center gap-4 px-6 py-5 md:px-8">
-        <div className="flex items-center justify-center gap-2.5">
-          {myLetters.map((l, i) => (
+        <div
+          className={`flex items-center justify-center gap-2.5 ${
+            hasError ? "animate-[shake_0.3s_ease-in-out]" : ""
+          }`}
+        >
+          {letterSlots.map((slot, i) => (
             <div
               key={i}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg border ${
-                l.revealed
+              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
+                slot.filled
                   ? "border-teal-300 bg-teal-50"
                   : "border-border bg-muted"
               }`}
             >
               <span
                 className={`text-sm font-semibold ${
-                  l.revealed ? "text-teal-600" : "text-slate-300"
+                  slot.filled ? "text-teal-600" : "text-slate-300"
                 }`}
               >
-                {l.revealed ? l.letter : "_"}
+                {slot.filled ? slot.filledLetter : "_"}
               </span>
             </div>
           ))}
         </div>
         <div className="flex items-center justify-center gap-2">
-          {myShields.map((active, i) => (
+          {playerShields.map((active, i) => (
             <div
               key={i}
-              className={`h-6 w-6 rounded-full border-2 ${
+              className={`h-6 w-6 rounded-full border-2 transition-colors ${
                 active
                   ? "border-teal-400 bg-teal-400"
                   : "border-border bg-muted"
@@ -102,33 +117,96 @@ export function GameVocabBattle() {
       <div className="h-px w-full bg-muted" />
 
       {/* Combo row */}
-      <div className="flex items-center justify-center gap-3 px-6 py-2 md:px-8">
-        <span className="text-[13px] font-medium text-muted-foreground">连击</span>
-        <div className="flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1">
-          <Zap className="h-3 w-3 text-white" />
-          <span className="text-xs font-bold text-white">×3 🔥</span>
+      {combo.streak >= 3 && (
+        <div className="flex items-center justify-center gap-3 px-6 py-2 md:px-8">
+          <span className="text-[13px] font-medium text-muted-foreground">连击</span>
+          <div className="flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1">
+            <Zap className="h-3 w-3 text-white" />
+            <span className="text-xs font-bold text-white">
+              &times;{combo.streak}
+            </span>
+          </div>
         </div>
-        <span className="text-[13px] font-semibold text-red-500">
-          多重打击！
-        </span>
-      </div>
+      )}
 
-      {/* Hint + Letters */}
+      {/* Hint + action row */}
       <div className="flex flex-col items-center gap-3 px-6 pb-6 pt-3 md:px-8">
         <span className="text-xs font-medium text-muted-foreground">
-          点击字母发射炮弹击碎对手护盾
+          {competitive ? "点击字母发射炮弹击碎对手护盾" : "拼写单词"}
         </span>
-        <div className="flex items-center justify-center gap-2.5">
-          {keyboardLetters.map((letter, i) => (
+
+        {/* Letter keyboard */}
+        {!isRevealed && (
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {keyboardLetters.map((letter, i) => {
+              const isUsed = usedKeyIndices.has(i);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={isUsed}
+                  onClick={() => pressLetter(i)}
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl shadow-md transition-opacity md:h-14 md:w-14 ${
+                    isUsed
+                      ? "bg-slate-400 opacity-40"
+                      : "bg-slate-800 hover:bg-slate-700"
+                  }`}
+                >
+                  <span className="text-lg font-bold text-white">{letter}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Revealed: show full word + advance */}
+        {isRevealed && (
+          <div className="flex flex-col items-center gap-3">
+            <span className="text-lg font-bold text-teal-600">{targetWord}</span>
             <button
-              key={i}
               type="button"
-              className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 shadow-md md:h-14 md:w-14"
+              onClick={advanceAfterReveal}
+              className="flex items-center gap-2 rounded-xl bg-teal-600 px-9 py-3"
             >
-              <span className="text-lg font-bold text-white">{letter}</span>
+              <Check className="h-4 w-4 text-white" />
+              <span className="text-xs font-semibold text-white">
+                {progress.current >= progress.total ? "查看结果" : "下一题"}
+              </span>
             </button>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Skip button (non-competitive only) */}
+        {!isRevealed && (
+          <div className="flex items-center gap-3">
+            {competitive ? (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    disabled
+                    className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 opacity-40 cursor-not-allowed"
+                  >
+                    <SkipForward className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">跳过</span>
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
+                  竞技模式禁用
+                </HoverCardContent>
+              </HoverCard>
+            ) : (
+              <button
+                type="button"
+                onClick={skipItem}
+                className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+              >
+                <SkipForward className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">跳过</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
