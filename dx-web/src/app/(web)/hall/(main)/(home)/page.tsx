@@ -7,6 +7,7 @@ import { AdCardsRow } from "@/features/web/hall/components/ad-cards-row";
 import { StatsRow } from "@/features/web/hall/components/stats-row";
 import { GameProgressCard } from "@/features/web/hall/components/game-progress-card";
 import { DailyChallengeCard } from "@/features/web/hall/components/daily-challenge-card";
+import { TodayStarsCard } from "@/features/web/hall/components/today-stars-card";
 import { LearningHeatmap } from "@/features/web/hall/components/learning-heatmap";
 
 type DashboardData = {
@@ -73,14 +74,19 @@ export default function HallDashboardPage() {
       />
 
       {/* Main content row */}
-      <div className="flex flex-1 flex-col gap-5 lg:flex-row">
+      <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3">
+        {/* Right column - today's stars (shows first on mobile) */}
+        <div className="order-first lg:order-last">
+          <TodayStarsCard />
+        </div>
+
         {/* Left column - game progress */}
-        <div className="flex flex-1 flex-col gap-5">
+        <div className="order-2 lg:order-first">
           <GameProgressCard sessions={data?.sessions ?? []} />
         </div>
 
-        {/* Right column - daily challenge */}
-        <div className="flex w-full flex-col gap-5 lg:w-80 lg:shrink-0">
+        {/* Center column - daily check-in */}
+        <div className="order-3 lg:order-2">
           <DailyChallengeCard />
         </div>
       </div>
