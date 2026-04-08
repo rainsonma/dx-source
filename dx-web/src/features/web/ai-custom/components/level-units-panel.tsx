@@ -519,10 +519,12 @@ export function LevelUnitsPanel({
         if (m.id !== selectedId) return m;
         const newCount = m.itemCount - 1;
         const allGenerated = remaining.length > 0 && remaining.every((i) => i.items !== null);
+        const breakDone = newCount > 0 ? m.isBreakDone : false;
         return {
           ...m,
           itemCount: newCount,
-          isItemDone: m.isBreakDone && newCount > 0 && allGenerated,
+          isBreakDone: breakDone,
+          isItemDone: breakDone && newCount > 0 && allGenerated,
         };
       })
     );

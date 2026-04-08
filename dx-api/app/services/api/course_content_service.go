@@ -450,6 +450,23 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		); err != nil {
 			return fmt.Errorf("failed to delete content item: %w", err)
 		}
+
+		// Reset is_break_done when meta has no remaining items in this game
+		if _, err := tx.Exec(
+			`UPDATE content_metas SET is_break_done = false
+			 WHERE id = (SELECT content_meta_id FROM content_items WHERE id = ?)
+			   AND deleted_at IS NULL
+			   AND NOT EXISTS (
+			     SELECT 1 FROM content_items ci
+			     JOIN game_items gi ON gi.content_item_id = ci.id AND gi.deleted_at IS NULL
+			     WHERE ci.content_meta_id = content_metas.id
+			       AND ci.deleted_at IS NULL
+			       AND gi.game_id = ?
+			   )`,
+			itemID, gameID,
+		); err != nil {
+			return fmt.Errorf("failed to reset meta break status: %w", err)
+		}
 		return nil
 	})
 }
