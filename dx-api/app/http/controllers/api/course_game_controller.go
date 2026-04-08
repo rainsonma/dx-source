@@ -298,6 +298,26 @@ func (c *CourseGameController) ReorderMetadata(ctx contractshttp.Context) contra
 	return helpers.Success(ctx, nil)
 }
 
+// DeleteMetadata removes a single metadata entry and its content items.
+func (c *CourseGameController) DeleteMetadata(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	gameID := ctx.Request().Route("id")
+	metaID := ctx.Request().Route("metaId")
+	if gameID == "" || metaID == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and meta id are required")
+	}
+
+	if err := services.DeleteMetadata(userID, gameID, metaID); err != nil {
+		return mapCourseGameError(ctx, err)
+	}
+
+	return helpers.Success(ctx, nil)
+}
+
 // GetContentItems returns content items grouped by metadata for a level.
 func (c *CourseGameController) GetContentItems(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()

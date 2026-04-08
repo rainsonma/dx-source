@@ -208,13 +208,14 @@ export async function saveMetadataAction(
 /** Reorder content metadata via Go API. */
 export async function reorderMetaAction(
   gameId: string,
+  gameLevelId: string,
   metaId: string,
   newOrder: number
 ): Promise<SimpleActionResult> {
   try {
     const res = await apiClient.put<null>(
       `/api/course-games/${gameId}/metadata/reorder`,
-      { metaId, newOrder }
+      { gameLevelId, metaId, newOrder }
     );
     if (res.code !== 0) return { error: res.message };
     return { success: true };
@@ -310,6 +311,22 @@ export async function insertContentItemAction(
     return { item: res.data };
   } catch {
     return { error: "插入失败" };
+  }
+}
+
+/** Delete a single metadata entry via Go API. */
+export async function deleteMetaAction(
+  gameId: string,
+  metaId: string
+): Promise<SimpleActionResult> {
+  try {
+    const res = await apiClient.delete<null>(
+      `/api/course-games/${gameId}/metadata/${metaId}`
+    );
+    if (res.code !== 0) return { error: res.message };
+    return { success: true };
+  } catch {
+    return { error: "删除元数据失败" };
   }
 }
 

@@ -54,6 +54,7 @@ import { SortableMetaItem } from "@/features/web/ai-custom/components/sortable-m
 import { SortableContentItem } from "@/features/web/ai-custom/components/sortable-content-item";
 import {
   reorderMetaAction,
+  deleteMetaAction,
   fetchContentItemsAction,
   reorderItemAction,
   updateContentItemTextAction,
@@ -138,6 +139,8 @@ export function LevelUnitsPanel({
 
   const [breakConfirmOpen, setBreakConfirmOpen] = useState(false);
   const [genConfirmOpen, setGenConfirmOpen] = useState(false);
+  const [deleteMetaConfirmOpen, setDeleteMetaConfirmOpen] = useState(false);
+  const [pendingDeleteMetaId, setPendingDeleteMetaId] = useState<string | null>(null);
   const [deleteItemConfirmOpen, setDeleteItemConfirmOpen] = useState(false);
   const [pendingDeleteItemId, setPendingDeleteItemId] = useState<string | null>(null);
   const [deleteAllConfirmOpen, setDeleteAllConfirmOpen] = useState(false);
@@ -199,6 +202,7 @@ export function LevelUnitsPanel({
       try {
         const result = await reorderMetaAction(
           gameId,
+          levelId,
           active.id as string,
           newOrder
         );
@@ -211,7 +215,7 @@ export function LevelUnitsPanel({
         setIsReordering(false);
       }
     },
-    [metas, gameId, isReordering]
+    [metas, gameId, levelId, isReordering]
   );
 
   const handleSelectMeta = useCallback(async (metaId: string) => {
@@ -471,6 +475,31 @@ export function LevelUnitsPanel({
     [contentItems, selectedId, gameId, levelId, checkRateLimit]
   );
 
+  const handleRequestDeleteMeta = useCallback((metaId: string) => {
+    setPendingDeleteMetaId(metaId);
+    setDeleteMetaConfirmOpen(true);
+  }, []);
+
+  const handleConfirmDeleteMeta = useCallback(async () => {
+    if (!pendingDeleteMetaId) return;
+    setDeleteMetaConfirmOpen(false);
+
+    const prevMetas = metas;
+    setMetas((prev) => prev.filter((m) => m.id !== pendingDeleteMetaId));
+    if (selectedId === pendingDeleteMetaId) {
+      setSelectedId(null);
+      setContentItems([]);
+    }
+
+    const result = await deleteMetaAction(gameId, pendingDeleteMetaId);
+    if (result.error) {
+      setMetas(prevMetas);
+      toast.error(result.error);
+    }
+
+    setPendingDeleteMetaId(null);
+  }, [pendingDeleteMetaId, metas, selectedId, gameId]);
+
   const handleRequestDeleteItem = useCallback((itemId: string) => {
     setPendingDeleteItemId(itemId);
     setDeleteItemConfirmOpen(true);
@@ -525,7 +554,6 @@ export function LevelUnitsPanel({
     setContentItems([]);
     setSelectedId(null);
     toast.success("已删除当前关卡全部元数据和练习单元");
-    swrMutate("/api/course-games");
   }, [gameId, levelId]);
 
   const activeMeta = activeId ? metas.find((m) => m.id === activeId) : null;
@@ -665,6 +693,7 @@ export function LevelUnitsPanel({
                       meta={meta}
                       isSelected={selectedId === meta.id}
                       onClick={() => handleSelectMeta(meta.id)}
+                      onDelete={readOnly ? undefined : handleRequestDeleteMeta}
                     />
                   ))}
                 </div>
@@ -818,6 +847,23 @@ export function LevelUnitsPanel({
             <AlertDialogCancel>取消</AlertDialogCancel>
             <AlertDialogAction className="bg-teal-600 hover:bg-teal-700" onClick={() => { setGenConfirmOpen(false); handleGenerate(); }}>
               确认生成
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteMetaConfirmOpen} onOpenChange={setDeleteMetaConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除元数据</AlertDialogTitle>
+            <AlertDialogDescription>
+              将删除该元数据及其关联的练习单元。此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDeleteMetaId(null)}>取消</AlertDialogCancel>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={handleConfirmDeleteMeta}>
+              确认删除
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

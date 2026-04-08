@@ -96,7 +96,7 @@ export function SortableMetaItem({
         <button
           type="button"
           aria-label="删除"
-          onClick={() => onDelete(meta.id)}
+          onClick={(e) => { e.stopPropagation(); onDelete(meta.id); }}
           className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-red-100"
         >
           <Trash2 className="h-3 w-3 text-red-500" />

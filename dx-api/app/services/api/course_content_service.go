@@ -439,19 +439,16 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {
 		// Soft-delete junction row
-		if _, err := tx.
-			Where("content_item_id", itemID).Where("game_id", gameID).
-			Delete(&models.GameItem{}); err != nil {
+		if _, err := tx.Where("content_item_id", itemID).Where("game_id", gameID).Delete(&models.GameItem{}); err != nil {
 			return fmt.Errorf("failed to delete game item: %w", err)
 		}
 
-		// Count active references (auto-excludes soft-deleted)
-		remaining, _ := tx.Model(&models.GameItem{}).
-			Where("content_item_id", itemID).Count()
-		if remaining == 0 {
-			if _, err := tx.Where("id", itemID).Delete(&models.ContentItem{}); err != nil {
-				return fmt.Errorf("failed to delete content item: %w", err)
-			}
+		// Soft-delete content item if no other game references it
+		if _, err := tx.Exec(
+			"UPDATE content_items SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM game_items WHERE content_item_id = ? AND deleted_at IS NULL)",
+			itemID, itemID,
+		); err != nil {
+			return fmt.Errorf("failed to delete content item: %w", err)
 		}
 		return nil
 	})
@@ -482,7 +479,7 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 
 	// Delete junction rows then orphaned content in transaction
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Delete junction rows for this level
+		// Soft-delete junction rows for this level
 		if _, err := tx.Where("game_level_id", gameLevelID).Where("game_id", gameID).Delete(&models.GameItem{}); err != nil {
 			return fmt.Errorf("failed to delete game items: %w", err)
 		}
@@ -490,16 +487,76 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 			return fmt.Errorf("failed to delete game metas: %w", err)
 		}
 
-		// Delete orphaned content (not referenced by any game)
+		// Soft-delete orphaned content scoped to this level only
 		if _, err := tx.Exec(
-			"UPDATE content_items SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_item_id FROM game_items WHERE deleted_at IS NULL)",
+			`UPDATE content_items SET deleted_at = NOW()
+			 WHERE deleted_at IS NULL
+			   AND id IN (SELECT gi.content_item_id FROM game_items gi WHERE gi.game_level_id = ? AND gi.game_id = ? AND gi.deleted_at IS NOT NULL)
+			   AND NOT EXISTS (SELECT 1 FROM game_items WHERE content_item_id = content_items.id AND deleted_at IS NULL)`,
+			gameLevelID, gameID,
 		); err != nil {
 			return fmt.Errorf("failed to delete orphaned content items: %w", err)
 		}
 		if _, err := tx.Exec(
-			"UPDATE content_metas SET deleted_at = NOW() WHERE deleted_at IS NULL AND id NOT IN (SELECT content_meta_id FROM game_metas WHERE deleted_at IS NULL)",
+			`UPDATE content_metas SET deleted_at = NOW()
+			 WHERE deleted_at IS NULL
+			   AND id IN (SELECT gm.content_meta_id FROM game_metas gm WHERE gm.game_level_id = ? AND gm.game_id = ? AND gm.deleted_at IS NOT NULL)
+			   AND NOT EXISTS (SELECT 1 FROM game_metas WHERE content_meta_id = content_metas.id AND deleted_at IS NULL)`,
+			gameLevelID, gameID,
 		); err != nil {
 			return fmt.Errorf("failed to delete orphaned content metas: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// DeleteMetadata removes a single metadata entry and its associated content items.
+func DeleteMetadata(userID, gameID, metaID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+	game, err := getCourseGameOwned(userID, gameID)
+	if err != nil {
+		return err
+	}
+
+	if game.Status == consts.GameStatusPublished {
+		return ErrGamePublished
+	}
+
+	if err := verifyMetaBelongsToGame(metaID, gameID); err != nil {
+		return err
+	}
+
+	return facades.Orm().Transaction(func(tx orm.Query) error {
+		// Soft-delete game_items whose content_items belong to this meta
+		if _, err := tx.Exec(
+			"UPDATE game_items SET deleted_at = NOW() WHERE game_id = ? AND deleted_at IS NULL AND content_item_id IN (SELECT id FROM content_items WHERE content_meta_id = ? AND deleted_at IS NULL)",
+			gameID, metaID,
+		); err != nil {
+			return fmt.Errorf("failed to delete game items for meta: %w", err)
+		}
+
+		// Soft-delete game_metas junction row
+		if _, err := tx.Where("content_meta_id", metaID).Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
+			return fmt.Errorf("failed to delete game meta: %w", err)
+		}
+
+		// Soft-delete orphaned content items (NOT EXISTS uses index, avoids full scan)
+		if _, err := tx.Exec(
+			"UPDATE content_items SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM game_items WHERE content_item_id = content_items.id AND deleted_at IS NULL)",
+			metaID,
+		); err != nil {
+			return fmt.Errorf("failed to delete orphaned content items: %w", err)
+		}
+
+		// Soft-delete orphaned content meta
+		if _, err := tx.Exec(
+			"UPDATE content_metas SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM game_metas WHERE content_meta_id = content_metas.id AND deleted_at IS NULL)",
+			metaID,
+		); err != nil {
+			return fmt.Errorf("failed to delete orphaned content meta: %w", err)
 		}
 
 		return nil
