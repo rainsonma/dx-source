@@ -23,17 +23,18 @@ export async function invitePkAction(data: {
   opponentId: string;
 }) {
   try {
+    const body: Record<string, string> = {
+      game_id: data.gameId,
+      game_level_id: data.gameLevelId,
+      degree: data.degree,
+      opponent_id: data.opponentId,
+    };
+    if (data.pattern) body.pattern = data.pattern;
     const res = await apiClient.post<{
       pk_id: string;
       session_id: string;
       game_level_id: string;
-    }>("/api/play-pk/invite", {
-      game_id: data.gameId,
-      game_level_id: data.gameLevelId,
-      degree: data.degree,
-      pattern: data.pattern,
-      opponent_id: data.opponentId,
-    });
+    }>("/api/play-pk/invite", body);
     if (res.code !== 0) return { data: null, error: res.message || "邀请失败" };
     return { data: res.data, error: null };
   } catch {

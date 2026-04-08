@@ -8,13 +8,14 @@ export async function startSessionAction(
   gameGroupId: string
 ) {
   try {
-    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>("/api/play-group/start", {
+    const body: Record<string, string> = {
       game_id: gameId,
       game_level_id: gameLevelId,
       degree,
-      pattern,
       game_group_id: gameGroupId,
-    });
+    };
+    if (pattern) body.pattern = pattern;
+    const res = await apiClient.post<{ id: string; currentContentItemId?: string | null }>("/api/play-group/start", body);
     if (res.code !== 0) return { data: null, error: res.message || "无法开始游戏" };
     return { data: res.data, error: null };
   } catch {

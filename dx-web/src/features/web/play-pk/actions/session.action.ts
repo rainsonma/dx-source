@@ -8,6 +8,13 @@ export async function startPkAction(
   difficulty: string
 ) {
   try {
+    const body: Record<string, string> = {
+      game_id: gameId,
+      game_level_id: gameLevelId,
+      degree,
+      difficulty,
+    };
+    if (pattern) body.pattern = pattern;
     const res = await apiClient.post<{
       pk_id: string;
       session_id: string;
@@ -15,13 +22,7 @@ export async function startPkAction(
       opponent_id: string;
       opponent_name: string;
       robot_completed: boolean;
-    }>("/api/play-pk/start", {
-      game_id: gameId,
-      game_level_id: gameLevelId,
-      degree,
-      pattern,
-      difficulty,
-    });
+    }>("/api/play-pk/start", body);
     if (res.code !== 0) return { data: null, error: res.message || "无法开始PK" };
     return { data: res.data, error: null };
   } catch {

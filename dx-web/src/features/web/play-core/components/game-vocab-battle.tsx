@@ -1,8 +1,15 @@
 "use client";
 
-import { Zap, SkipForward, Check } from "lucide-react";
+import { useRef } from "react";
+import { Zap, SkipForward, Check, Volume2, Star, Shield } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { useVocabBattle } from "@/features/web/play-core/hooks/use-vocab-battle";
+import { useGameStore } from "@/features/web/play-core/hooks/use-game-store";
+import {
+  markAsMasteredAction,
+  markAsUnknownAction,
+} from "@/features/web/play-core/actions/tracking.action";
+import { toast } from "sonner";
 
 export function GameVocabBattle() {
   const {
@@ -11,10 +18,7 @@ export function GameVocabBattle() {
     letterSlots,
     keyboardLetters,
     usedKeyIndices,
-    hasError,
     isRevealed,
-    playerShields,
-    opponentShields,
     opponentSlots,
     competitive,
     progress,
@@ -24,42 +28,69 @@ export function GameVocabBattle() {
     skipItem,
   } = useVocabBattle();
 
+  const gameId = useGameStore((s) => s.gameId);
+  const levelId = useGameStore((s) => s.levelId);
+  const currentIndex = useGameStore((s) => s.currentIndex);
+  const contentItems = useGameStore((s) => s.contentItems);
+  const currentItem = contentItems?.[currentIndex] ?? null;
+
+  const masteredIdsRef = useRef(new Set<string>());
+  const unknownIdsRef = useRef(new Set<string>());
+
   if (!targetWord) return null;
+
+  function handleMastered() {
+    if (!gameId || !levelId || !currentItem) return;
+    if (masteredIdsRef.current.has(currentItem.id)) return;
+    masteredIdsRef.current.add(currentItem.id);
+    markAsMasteredAction({ contentItemId: currentItem.id, gameId, gameLevelId: levelId });
+    toast.success("已掌握", { duration: 1500 });
+  }
+
+  function handleUnknown() {
+    if (!gameId || !levelId || !currentItem) return;
+    if (unknownIdsRef.current.has(currentItem.id)) return;
+    unknownIdsRef.current.add(currentItem.id);
+    markAsUnknownAction({ contentItemId: currentItem.id, gameId, gameLevelId: levelId });
+    toast.success("已加入生词", { duration: 1500 });
+  }
 
   return (
     <div className="flex w-full max-w-[760px] flex-col rounded-[20px] border border-border bg-card shadow-sm">
-      {/* Opponent zone */}
+      {/* Opponent zone — each letter is covered by a shield until revealed */}
       <div
-        className={`flex flex-col items-center gap-4 px-6 py-7 md:px-8 ${
+        className={`flex flex-col items-center gap-3 px-6 py-7 md:px-8 ${
           !competitive ? "pointer-events-none opacity-40" : ""
         }`}
       >
         <div className="flex items-center gap-2.5">
           <span className="text-xs text-muted-foreground">🤖 对手</span>
         </div>
-        <div className="flex items-center justify-center gap-2">
-          {opponentShields.map((active, i) => (
-            <div
-              key={i}
-              className={`h-6 w-6 rounded-full border-2 transition-colors ${
-                active
-                  ? "border-red-400 bg-red-400"
-                  : "border-border bg-muted"
-              }`}
-            />
-          ))}
-        </div>
         <div className="flex items-center justify-center gap-2.5">
-          {opponentSlots.map((slot, i) => (
-            <div
-              key={i}
-              className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-muted"
-            >
-              <span className="text-sm font-medium text-slate-300">
-                {slot.filled ? slot.letter : "?"}
-              </span>
-            </div>
-          ))}
+          {opponentSlots.map((slot, i) =>
+            slot.letter === " " ? (
+              <div key={i} className="flex h-10 w-5 items-center justify-center">
+                <span className="text-sm text-slate-300">/</span>
+              </div>
+            ) : (
+              <div
+                key={i}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-all ${
+                  slot.revealed
+                    ? "border-red-300 bg-red-50"
+                    : "border-red-200 bg-red-100"
+                }`}
+              >
+                {slot.revealed ? (
+                  <span className="text-sm font-semibold text-red-600">
+                    {slot.letter}
+                  </span>
+                ) : (
+                  <Shield className="h-4 w-4 text-red-400" />
+                )}
+              </div>
+            )
+          )}
         </div>
       </div>
 
@@ -71,46 +102,36 @@ export function GameVocabBattle() {
         <div className="h-0.5 w-full rounded-full bg-gradient-to-r from-red-500/0 via-red-500/30 via-30% via-teal-500/30 via-70% to-teal-500/0" />
       </div>
 
-      {/* Player zone */}
-      <div className="flex flex-col items-center gap-4 px-6 py-5 md:px-8">
-        <div
-          className={`flex items-center justify-center gap-2.5 ${
-            hasError ? "animate-[shake_0.3s_ease-in-out]" : ""
-          }`}
-        >
-          {letterSlots.map((slot, i) => (
-            <div
-              key={i}
-              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
-                slot.filled
-                  ? "border-teal-300 bg-teal-50"
-                  : "border-border bg-muted"
-              }`}
-            >
-              <span
-                className={`text-sm font-semibold ${
-                  slot.filled ? "text-teal-600" : "text-slate-300"
-                }`}
-              >
-                {slot.filled ? slot.filledLetter : "_"}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-center gap-2">
-          {playerShields.map((active, i) => (
-            <div
-              key={i}
-              className={`h-6 w-6 rounded-full border-2 transition-colors ${
-                active
-                  ? "border-teal-400 bg-teal-400"
-                  : "border-border bg-muted"
-              }`}
-            />
-          ))}
-        </div>
+      {/* Player zone — each letter is covered by a shield until correctly typed */}
+      <div className="flex flex-col items-center gap-3 px-6 py-5 md:px-8">
         <div className="flex items-center gap-2.5">
           <span className="text-xs text-muted-foreground">🎯 我</span>
+        </div>
+        <div className="flex items-center justify-center gap-2.5">
+          {letterSlots.map((slot, i) =>
+            slot.letter === " " ? (
+              <div key={i} className="flex h-10 w-5 items-center justify-center">
+                <span className="text-sm text-slate-300">/</span>
+              </div>
+            ) : (
+              <div
+                key={i}
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-all ${
+                  slot.filled
+                    ? "border-teal-300 bg-teal-50"
+                    : "border-teal-200 bg-teal-100"
+                }`}
+              >
+                {slot.filled ? (
+                  <span className="text-sm font-semibold text-teal-600">
+                    {slot.filledLetter}
+                  </span>
+                ) : (
+                  <Shield className="h-4 w-4 text-teal-400" />
+                )}
+              </div>
+            )
+          )}
         </div>
       </div>
 
@@ -129,13 +150,13 @@ export function GameVocabBattle() {
         </div>
       )}
 
-      {/* Hint + action row */}
-      <div className="flex flex-col items-center gap-3 px-6 pb-6 pt-3 md:px-8">
+      {/* Keyboard + actions */}
+      <div className="flex flex-col items-center gap-8 px-6 pb-6 pt-3 md:px-8">
         <span className="text-xs font-medium text-muted-foreground">
           {competitive ? "点击字母发射炮弹击碎对手护盾" : "拼写单词"}
         </span>
 
-        {/* Letter keyboard */}
+        {/* Letter keyboard + space bar */}
         {!isRevealed && (
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             {keyboardLetters.map((letter, i) => {
@@ -152,7 +173,9 @@ export function GameVocabBattle() {
                       : "bg-slate-800 hover:bg-slate-700"
                   }`}
                 >
-                  <span className="text-lg font-bold text-white">{letter}</span>
+                  <span className={`font-bold text-white ${letter === " " ? "text-xs" : "text-lg"}`}>
+                    {letter === " " ? "空格" : letter}
+                  </span>
                 </button>
               );
             })}
@@ -176,37 +199,58 @@ export function GameVocabBattle() {
           </div>
         )}
 
-        {/* Skip button (non-competitive only) */}
-        {!isRevealed && (
-          <div className="flex items-center gap-3">
-            {competitive ? (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <button
-                    type="button"
-                    disabled
-                    className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 opacity-40 cursor-not-allowed"
-                  >
-                    <SkipForward className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">跳过</span>
-                  </button>
-                </HoverCardTrigger>
-                <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
-                  竞技模式禁用
-                </HoverCardContent>
-              </HoverCard>
-            ) : (
-              <button
-                type="button"
-                onClick={skipItem}
-                className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
-              >
-                <SkipForward className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">跳过</span>
-              </button>
-            )}
-          </div>
-        )}
+        {/* Action buttons — same as word-sentence */}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+          >
+            <Volume2 className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">发音</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleUnknown}
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+          >
+            <Star className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">生词</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleMastered}
+            className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+          >
+            <Check className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground">掌握</span>
+          </button>
+          {competitive ? (
+            <HoverCard openDelay={200}>
+              <HoverCardTrigger asChild>
+                <button
+                  type="button"
+                  disabled
+                  className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3 opacity-40 cursor-not-allowed"
+                >
+                  <SkipForward className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">跳过</span>
+                </button>
+              </HoverCardTrigger>
+              <HoverCardContent className="w-auto px-3 py-1.5 text-sm" side="top">
+                竞技模式禁用
+              </HoverCardContent>
+            </HoverCard>
+          ) : (
+            <button
+              type="button"
+              onClick={skipItem}
+              className="flex items-center gap-2 rounded-xl border border-border bg-muted px-5 py-3"
+            >
+              <SkipForward className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">跳过</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -6,7 +6,6 @@ import { useGamePlayActions } from "@/features/web/play-core/context/game-play-c
 import { getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import { SCORING } from "@/consts/scoring";
 
-const SHIELD_COUNT = 5;
 const MIN_KEYBOARD_SIZE = 6;
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -55,14 +54,10 @@ export function useVocabBattle() {
 
   const [filledLetters, setFilledLetters] = useState<string[]>([]);
   const [usedKeyIndices, setUsedKeyIndices] = useState<Set<number>>(new Set());
-  const [hasError, setHasError] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [playerShields, setPlayerShields] = useState<boolean[]>([]);
-  const [opponentShields, setOpponentShields] = useState<boolean[]>([]);
   const [opponentFilledCount, setOpponentFilledCount] = useState(0);
 
   const hadWrongAttemptRef = useRef(false);
-  const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isProcessingRef = useRef(false);
   const itemStartTimeRef = useRef<number>(Date.now());
   const reviewedIdsRef = useRef(new Set<string>());
@@ -98,9 +93,9 @@ export function useVocabBattle() {
   const opponentSlots = useMemo(() => {
     return targetWord.split("").map((letter, i) => ({
       letter,
-      filled: i < opponentFilledCount,
+      revealed: i < filledLetters.length,
     }));
-  }, [targetWord, opponentFilledCount]);
+  }, [targetWord, filledLetters.length]);
 
   const progress = {
     current: currentIndex + 1,
@@ -110,21 +105,12 @@ export function useVocabBattle() {
   useEffect(() => {
     setFilledLetters([]);
     setUsedKeyIndices(new Set());
-    setHasError(false);
     setIsRevealed(false);
-    setPlayerShields(Array(SHIELD_COUNT).fill(true));
-    setOpponentShields(Array(SHIELD_COUNT).fill(true));
     setOpponentFilledCount(0);
     hadWrongAttemptRef.current = false;
     isProcessingRef.current = false;
     itemStartTimeRef.current = Date.now();
   }, [currentIndex]);
-
-  useEffect(() => {
-    return () => {
-      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-    };
-  }, []);
 
   const fireServerRecord = useCallback(
     (isCorrect: boolean) => {
@@ -188,16 +174,6 @@ export function useVocabBattle() {
         setFilledLetters(newFilled);
         setUsedKeyIndices(new Set([...usedKeyIndices, keyIndex]));
 
-        setOpponentShields((prev) => {
-          const idx = prev.lastIndexOf(true);
-          if (idx === -1) return prev;
-          const next = [...prev];
-          next[idx] = false;
-          return next;
-        });
-
-        if (hasError) setHasError(false);
-
         if (newFilled.length === targetWord.length) {
           const isItemCorrect = !hadWrongAttemptRef.current;
           setIsRevealed(true);
@@ -205,20 +181,9 @@ export function useVocabBattle() {
         }
       } else {
         hadWrongAttemptRef.current = true;
-        setHasError(true);
-        if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
-        errorTimerRef.current = setTimeout(() => setHasError(false), 400);
-
-        setPlayerShields((prev) => {
-          const idx = prev.lastIndexOf(true);
-          if (idx === -1) return prev;
-          const next = [...prev];
-          next[idx] = false;
-          return next;
-        });
       }
     },
-    [isRevealed, usedKeyIndices, keyboardLetters, filledLetters, targetWord, hasError, fireServerRecord]
+    [isRevealed, usedKeyIndices, keyboardLetters, filledLetters, targetWord, fireServerRecord]
   );
 
   const advanceAfterReveal = useCallback(() => {
@@ -281,10 +246,7 @@ export function useVocabBattle() {
     keyboardLetters,
     usedKeyIndices,
     filledLetters,
-    hasError,
     isRevealed,
-    playerShields,
-    opponentShields,
     opponentSlots,
     opponentFilledCount,
     competitive: competitive ?? false,
