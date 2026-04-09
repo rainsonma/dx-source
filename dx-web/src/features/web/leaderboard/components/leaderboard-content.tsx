@@ -11,12 +11,11 @@ import { LeaderboardList } from "./leaderboard-list";
 import type {
   LeaderboardType,
   LeaderboardPeriod,
-  LeaderboardResult,
 } from "../types/leaderboard.types";
 
 const TYPE_TABS: { label: string; value: LeaderboardType }[] = [
+  { label: "时长", value: "playtime" },
   { label: "经验", value: "exp" },
-  { label: "时长", value: "playTime" },
 ];
 
 const PERIOD_TABS: { label: string; value: LeaderboardPeriod }[] = [
@@ -26,14 +25,10 @@ const PERIOD_TABS: { label: string; value: LeaderboardPeriod }[] = [
   { label: "月榜", value: "month" },
 ];
 
-interface LeaderboardContentProps {
-  initialData: LeaderboardResult;
-}
-
 /** Leaderboard content with type/period tab switching */
-export function LeaderboardContent({ initialData }: LeaderboardContentProps) {
+export function LeaderboardContent() {
   const { type, period, data, isLoading, handleTypeChange, handlePeriodChange } =
-    useLeaderboard({ initialData });
+    useLeaderboard();
 
   const [user, setUser] = useState<{
     id: string; username: string; nickname: string | null; avatarUrl: string | null;

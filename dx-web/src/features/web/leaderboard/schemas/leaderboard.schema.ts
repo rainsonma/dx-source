@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const leaderboardParamsSchema = z.object({
-  type: z.enum(["exp", "playTime"]),
+  type: z.enum(["exp", "playtime"]),
   period: z.enum(["all", "day", "week", "month"]),
 });
 

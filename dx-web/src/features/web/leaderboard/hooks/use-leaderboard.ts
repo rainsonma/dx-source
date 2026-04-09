@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { fetchLeaderboardAction } from "../actions/leaderboard.action";
 import type {
@@ -9,16 +9,14 @@ import type {
   LeaderboardResult,
 } from "../types/leaderboard.types";
 
-interface UseLeaderboardParams {
-  initialData: LeaderboardResult;
-}
+const EMPTY_DATA: LeaderboardResult = { entries: [], myRank: null };
 
 /** Manage leaderboard tab state and data fetching */
-export function useLeaderboard({ initialData }: UseLeaderboardParams) {
-  const [type, setType] = useState<LeaderboardType>("exp");
+export function useLeaderboard() {
+  const [type, setType] = useState<LeaderboardType>("playtime");
   const [period, setPeriod] = useState<LeaderboardPeriod>("all");
-  const [data, setData] = useState<LeaderboardResult>(initialData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<LeaderboardResult>(EMPTY_DATA);
+  const [isLoading, setIsLoading] = useState(true);
 
   /** Fetch leaderboard data for a type+period combination */
   const fetchData = useCallback(
@@ -37,6 +35,12 @@ export function useLeaderboard({ initialData }: UseLeaderboardParams) {
     },
     []
   );
+
+  // Fetch initial data on mount for the default tab
+  useEffect(() => {
+    fetchData(type, period);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
 
   /** Switch the leaderboard type tab */
   const handleTypeChange = useCallback(

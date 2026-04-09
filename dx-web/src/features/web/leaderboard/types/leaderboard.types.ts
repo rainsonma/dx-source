@@ -1,4 +1,4 @@
-export type LeaderboardType = "exp" | "playTime";
+export type LeaderboardType = "exp" | "playtime";
 export type LeaderboardPeriod = "all" | "day" | "week" | "month";
 
 export type LeaderboardEntry = {
