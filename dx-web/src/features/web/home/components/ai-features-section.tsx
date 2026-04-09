@@ -14,7 +14,7 @@ const aiFeatures: {
     iconClassName: "text-teal-600",
     bgClassName: "bg-teal-100",
     tagClassName: "border-teal-200 bg-teal-50 text-teal-700",
-    title: "AI 随心配",
+    title: "AI 随心学",
     description:
       "自由定制游戏内容，AI 根据你的水平与兴趣智能生成词汇、话题和关卡。从日常会话到专业领域，打造专属于你的学习路径。",
     tags: ["内容定制", "智能生成", "专属关卡"],

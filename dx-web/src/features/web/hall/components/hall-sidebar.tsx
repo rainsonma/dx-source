@@ -9,7 +9,7 @@ import {
   Star,
   Bell,
   Sparkles,
-  MessageSquare,
+  // MessageSquare, // hidden: AI 随心练 temporarily disabled
   Users,
   BookOpen,
   Swords,
@@ -38,14 +38,13 @@ const navSections = [
       { icon: Gamepad2, label: "我的游戏", href: "/hall/games/mine" },
       { icon: Users, label: "游戏群组", href: "/hall/groups" },
       { icon: Star, label: "我的收藏", href: "/hall/favorites" },
-      { icon: Swords, label: "每日挑战", href: "/hall" },
       { icon: Bell, label: "消息通知", href: "/hall/notices" },
     ],
   },
   {
     items: [
-      { icon: Sparkles, label: "AI 随心配", href: "/hall/ai-custom" },
-      { icon: MessageSquare, label: "AI 随心练", href: "/hall/ai-practice" },
+      { icon: Sparkles, label: "AI 随心学", href: "/hall/ai-custom" },
+      // { icon: MessageSquare, label: "AI 随心练", href: "/hall/ai-practice" }, // hidden temporarily
     ],
   },
   {
@@ -55,11 +54,13 @@ const navSections = [
       { icon: CheckCircle2, label: "已掌握", href: "/hall/mastered" },
 
       { icon: Trophy, label: "排行榜", href: "/hall/leaderboard" },
-      { icon: Medal, label: "个人中心", href: "/hall/me" },
     ],
   },
   {
     items: [{ icon: MessageCircle, label: "斗学社", href: "/hall/community" }],
+  },
+  {
+    items: [{ icon: Medal, label: "个人中心", href: "/hall/me" }],
   },
 ];
 

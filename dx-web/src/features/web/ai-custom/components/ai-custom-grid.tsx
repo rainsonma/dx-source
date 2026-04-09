@@ -55,7 +55,7 @@ export function AiCustomGrid() {
             <Puzzle className="h-7 w-7 text-white" />
           </div>
           <span className="text-xl font-extrabold tracking-tight text-white lg:text-[28px]">
-            AI 随心配
+            AI 随心学
           </span>
         </div>
         <p className="text-sm leading-relaxed text-white/80">
@@ -151,7 +151,7 @@ export function AiCustomGrid() {
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
         title="会员专属功能"
-        message="升级会员即可使用 AI 随心配，创建专属学习课程"
+        message="升级会员即可使用 AI 随心学，创建专属学习课程"
       />
     </>
   )

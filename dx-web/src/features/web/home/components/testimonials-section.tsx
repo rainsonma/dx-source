@@ -58,7 +58,7 @@ const testimonials: {
   {
     socialIcon: Twitter,
     quote:
-      "\u201CAI 随心配让我根据自己的职业需求定制学习内容，商务英语提升飞快。面试外企再也不怕了！\u201D",
+      "\u201CAI 随心学让我根据自己的职业需求定制学习内容，商务英语提升飞快。面试外企再也不怕了！\u201D",
     author: "晓薇",
     level: "Lv.45",
   },
