@@ -24,6 +24,7 @@ import {
   resumePkAction,
 } from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
+import { useGameTimer, getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import type { ComponentType } from "react";
 import type { PkLevelCompleteEvent } from "../types/pk-play";
 
@@ -84,6 +85,11 @@ export function PkPlayShell({
   const score = useGameStore((s) => s.score);
   const combo = useGameStore((s) => s.combo);
   const contentItems = useGameStore((s) => s.contentItems);
+  const storePlayTime = useGameStore((s) => s.playTime);
+
+  // Drive the shared game timer so getElapsedSeconds() returns real values
+  // in PK mode (game hooks read it via getElapsedSeconds()).
+  useGameTimer(storePlayTime);
 
   const completedRef = useRef(false);
 
@@ -213,7 +219,7 @@ export function PkPlayShell({
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          play_time: usePkPlayStore.getState().playTime,
+          play_time: getElapsedSeconds(),
         }),
         keepalive: true,
       });

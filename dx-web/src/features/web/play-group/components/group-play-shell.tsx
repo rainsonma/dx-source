@@ -29,6 +29,7 @@ import {
   restartLevelAction,
 } from "../actions/session.action";
 import { useFullscreen } from "@/features/web/play-core/hooks/use-fullscreen";
+import { useGameTimer, getElapsedSeconds } from "@/features/web/play-core/hooks/use-game-timer";
 import type { ComponentType } from "react";
 
 const modeComponents: Record<string, ComponentType> = {
@@ -107,6 +108,11 @@ export function GroupPlayShell({
   const score = useGameStore((s) => s.score);
   const combo = useGameStore((s) => s.combo);
   const contentItems = useGameStore((s) => s.contentItems);
+  const storePlayTime = useGameStore((s) => s.playTime);
+
+  // Drive the shared game timer so getElapsedSeconds() returns real values
+  // in group mode (game hooks read it via getElapsedSeconds()).
+  useGameTimer(storePlayTime);
 
   // Submit completion to backend when all items answered (phase → "result").
   // Only fires for the player who actually finished — skip if result was
@@ -201,7 +207,7 @@ export function GroupPlayShell({
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          play_time: useGroupPlayStore.getState().playTime,
+          play_time: getElapsedSeconds(),
         }),
         keepalive: true,
       });

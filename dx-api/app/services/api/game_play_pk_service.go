@@ -44,7 +44,6 @@ type PkPlayerActionEvent struct {
 	ComboStreak int    `json:"combo_streak,omitempty"`
 }
 
-
 // --- Robot state management ---
 
 type robotState struct {
@@ -696,15 +695,19 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			nextItemID = &items[i+1].ID
 		}
 
+		// Track elapsed seconds so the robot contributes to the playtime
+		// leaderboard (helps seed rankings before many real users exist).
+		elapsedSec := int(time.Since(now).Seconds())
+
 		if nextItemID != nil {
 			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, *nextItemID, robotSession.ID,
+				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
+				combo.TotalScore, combo.MaxCombo, elapsedSec, *nextItemID, robotSession.ID,
 			)
 		} else {
 			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, robotSession.ID,
+				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
+				combo.TotalScore, combo.MaxCombo, elapsedSec, robotSession.ID,
 			)
 		}
 
@@ -732,12 +735,14 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	}
 
 	endNow := time.Now()
+	finalPlayTime := int(endNow.Sub(now).Seconds())
 	facades.Orm().Query().Model(&models.GameSession{}).Where("id", robotSession.ID).
 		Update(map[string]any{
 			"ended_at":  endNow,
 			"score":     combo.TotalScore,
 			"exp":       robotExp,
 			"max_combo": combo.MaxCombo,
+			"play_time": finalPlayTime,
 		})
 
 	// Broadcast robot completion
