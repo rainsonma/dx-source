@@ -3,23 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { fetchLeaderboardAction } from "@/features/web/leaderboard/actions/leaderboard.action";
-import type {
-  LeaderboardType,
-  LeaderboardResult,
-} from "@/features/web/leaderboard/types/leaderboard.types";
+import type { LeaderboardResult } from "@/features/web/leaderboard/types/leaderboard.types";
 
 const MAX_ENTRIES = 50;
 
-/** Fetch today's leaderboard (day period only), type-switchable, sliced to 50 */
+/** Fetch today's leaderboard — playTime, day period, sliced to 50 */
 export function useTodayStars() {
-  const [type, setType] = useState<LeaderboardType>("exp");
   const [data, setData] = useState<LeaderboardResult>({ entries: [], myRank: null });
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchData = useCallback(async (t: LeaderboardType) => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await fetchLeaderboardAction(t, "day");
+      const result = await fetchLeaderboardAction("playtime", "day");
       if ("error" in result) {
         toast.error(result.error);
         return;
@@ -34,17 +30,8 @@ export function useTodayStars() {
   }, []);
 
   useEffect(() => {
-    fetchData("exp");
+    fetchData();
   }, [fetchData]);
 
-  const handleTypeChange = useCallback(
-    (newType: LeaderboardType) => {
-      if (newType === type) return;
-      setType(newType);
-      fetchData(newType);
-    },
-    [type, fetchData]
-  );
-
-  return { type, data, isLoading, handleTypeChange };
+  return { data, isLoading };
 }

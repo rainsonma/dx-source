@@ -75,9 +75,9 @@ export default function HallDashboardPage() {
 
       {/* Main content row */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3">
-        {/* Right column - today's stars (shows first on mobile) */}
+        {/* Right column - daily check-in (shows first on mobile) */}
         <div className="order-first lg:order-last">
-          <TodayStarsCard />
+          <DailyChallengeCard />
         </div>
 
         {/* Left column - game progress */}
@@ -85,9 +85,9 @@ export default function HallDashboardPage() {
           <GameProgressCard sessions={data?.sessions ?? []} />
         </div>
 
-        {/* Center column - daily check-in */}
+        {/* Center column - today's stars */}
         <div className="order-3 lg:order-2">
-          <DailyChallengeCard />
+          <TodayStarsCard />
         </div>
       </div>
 
