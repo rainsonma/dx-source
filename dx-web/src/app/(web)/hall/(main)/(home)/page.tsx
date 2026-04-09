@@ -9,6 +9,7 @@ import { GameProgressCard } from "@/features/web/hall/components/game-progress-c
 import { DailyChallengeCard } from "@/features/web/hall/components/daily-challenge-card";
 import { TodayStarsCard } from "@/features/web/hall/components/today-stars-card";
 import { LearningHeatmap } from "@/features/web/hall/components/learning-heatmap";
+import { NotificationBanner } from "@/features/web/hall/components/notification-banner";
 
 type DashboardData = {
   profile: {
@@ -65,13 +66,7 @@ export default function HallDashboardPage() {
         subtitle="继续你的学习之旅，今天也要加油！"
       />
       <AdCardsRow />
-      <StatsRow
-        exp={data?.profile.exp ?? 0}
-        currentPlayStreak={data?.profile.currentPlayStreak ?? 0}
-        masteredTotal={data?.masterStats.total ?? 0}
-        masteredThisWeek={data?.masterStats.thisWeek ?? 0}
-        reviewPending={data?.reviewStats.pending ?? 0}
-      />
+      <NotificationBanner />
 
       {/* Main content row */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3">
@@ -90,6 +85,14 @@ export default function HallDashboardPage() {
           <TodayStarsCard />
         </div>
       </div>
+
+      <StatsRow
+        exp={data?.profile.exp ?? 0}
+        currentPlayStreak={data?.profile.currentPlayStreak ?? 0}
+        masteredTotal={data?.masterStats.total ?? 0}
+        masteredThisWeek={data?.masterStats.thisWeek ?? 0}
+        reviewPending={data?.reviewStats.pending ?? 0}
+      />
 
       {/* Learning heatmap */}
       {heatmap && (
