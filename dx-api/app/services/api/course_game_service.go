@@ -249,31 +249,19 @@ func DeleteGame(userID, gameID string) error {
 			levelIDs = append(levelIDs, l.ID)
 		}
 
-		// Cascade soft-delete junction rows, then orphaned content
+		// Cascade soft-delete content
 		if len(levelIDs) > 0 {
-			if _, err := tx.Where("game_id", gameID).Delete(&models.GameItem{}); err != nil {
-				return fmt.Errorf("failed to delete game items: %w", err)
-			}
-			if _, err := tx.Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
-				return fmt.Errorf("failed to delete game metas: %w", err)
+			if _, err := tx.Exec(
+				"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
+				levelIDs,
+			); err != nil {
+				return fmt.Errorf("failed to delete content items: %w", err)
 			}
 			if _, err := tx.Exec(
-				`UPDATE content_items SET deleted_at = NOW()
-				 WHERE deleted_at IS NULL
-				   AND id IN (SELECT gi.content_item_id FROM game_items gi WHERE gi.game_id = ? AND gi.deleted_at IS NOT NULL)
-				   AND NOT EXISTS (SELECT 1 FROM game_items WHERE content_item_id = content_items.id AND deleted_at IS NULL)`,
-				gameID,
+				"UPDATE content_metas SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
+				levelIDs,
 			); err != nil {
-				return fmt.Errorf("failed to delete orphaned content items: %w", err)
-			}
-			if _, err := tx.Exec(
-				`UPDATE content_metas SET deleted_at = NOW()
-				 WHERE deleted_at IS NULL
-				   AND id IN (SELECT gm.content_meta_id FROM game_metas gm WHERE gm.game_id = ? AND gm.deleted_at IS NOT NULL)
-				   AND NOT EXISTS (SELECT 1 FROM game_metas WHERE content_meta_id = content_metas.id AND deleted_at IS NULL)`,
-				gameID,
-			); err != nil {
-				return fmt.Errorf("failed to delete orphaned content metas: %w", err)
+				return fmt.Errorf("failed to delete content metas: %w", err)
 			}
 		}
 
@@ -322,9 +310,8 @@ func PublishGame(userID, gameID string) error {
 
 	for _, l := range levels {
 		itemCount, err3 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
-			Where("gi.game_level_id", l.ID).
-			Where("content_items.is_active", true).
+			Where("game_level_id", l.ID).
+			Where("is_active", true).
 			Count()
 		if err3 != nil {
 			return fmt.Errorf("failed to count items: %w", err3)
@@ -334,10 +321,9 @@ func PublishGame(userID, gameID string) error {
 		}
 
 		ungeneratedCount, err4 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
-			Where("gi.game_level_id", l.ID).
-			Where("content_items.is_active", true).
-			Where("content_items.items IS NULL").
+			Where("game_level_id", l.ID).
+			Where("is_active", true).
+			Where("items IS NULL").
 			Count()
 		if err4 != nil {
 			return fmt.Errorf("failed to count ungenerated items: %w", err4)
@@ -448,32 +434,18 @@ func DeleteLevel(userID, gameID, levelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Cascade soft-delete junction rows, orphaned content, then level
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		if _, err := tx.Where("game_level_id", levelID).Where("game_id", gameID).Delete(&models.GameItem{}); err != nil {
-			return fmt.Errorf("failed to delete game items: %w", err)
-		}
-		if _, err := tx.Where("game_level_id", levelID).Where("game_id", gameID).Delete(&models.GameMeta{}); err != nil {
-			return fmt.Errorf("failed to delete game metas: %w", err)
-		}
-		// Scoped orphan cleanup — only items/metas from this level
 		if _, err := tx.Exec(
-			`UPDATE content_items SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (SELECT gi.content_item_id FROM game_items gi WHERE gi.game_level_id = ? AND gi.game_id = ? AND gi.deleted_at IS NOT NULL)
-			   AND NOT EXISTS (SELECT 1 FROM game_items WHERE content_item_id = content_items.id AND deleted_at IS NULL)`,
-			levelID, gameID,
+			"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			levelID,
 		); err != nil {
-			return fmt.Errorf("failed to delete orphaned content items: %w", err)
+			return fmt.Errorf("failed to delete content items: %w", err)
 		}
 		if _, err := tx.Exec(
-			`UPDATE content_metas SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (SELECT gm.content_meta_id FROM game_metas gm WHERE gm.game_level_id = ? AND gm.game_id = ? AND gm.deleted_at IS NOT NULL)
-			   AND NOT EXISTS (SELECT 1 FROM game_metas WHERE content_meta_id = content_metas.id AND deleted_at IS NULL)`,
-			levelID, gameID,
+			"UPDATE content_metas SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			levelID,
 		); err != nil {
-			return fmt.Errorf("failed to delete orphaned content metas: %w", err)
+			return fmt.Errorf("failed to delete content metas: %w", err)
 		}
 		if _, err := tx.Where("id", levelID).Delete(&models.GameLevel{}); err != nil {
 			return fmt.Errorf("failed to delete level: %w", err)
@@ -543,9 +515,8 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 	levelData := make([]CourseGameLevelData, 0, len(levels))
 	for _, l := range levels {
 		itemCount, _ := facades.Orm().Query().Model(&models.ContentItem{}).
-			Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
-			Where("gi.game_level_id", l.ID).
-			Where("content_items.is_active", true).
+			Where("game_level_id", l.ID).
+			Where("is_active", true).
 			Count()
 		levelData = append(levelData, CourseGameLevelData{
 			ID:          l.ID,

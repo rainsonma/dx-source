@@ -17,6 +17,7 @@ type Game struct {
 	Order          float64 `gorm:"column:order" json:"order"`
 	IsActive       bool    `gorm:"column:is_active" json:"is_active"`
 	Status         string  `gorm:"column:status" json:"status"`
+	IsSelective    bool    `gorm:"column:is_selective" json:"is_selective"`
 }
 
 func (g *Game) TableName() string {

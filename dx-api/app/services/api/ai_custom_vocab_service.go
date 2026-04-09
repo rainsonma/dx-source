@@ -193,15 +193,13 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 		return
 	}
 	_ = level
-	gameID := game.ID
 
 	// Fetch unbroken metas
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
-		Where("gm.game_level_id", gameLevelID).
-		Where("content_metas.is_break_done", false).
-		Order("content_metas.\"order\" ASC").
+		Where("game_level_id", gameLevelID).
+		Where("is_break_done", false).
+		Order("\"order\" ASC").
 		Get(&metas); err != nil {
 		writeVocabSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
@@ -237,7 +235,7 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			success := processVocabBreakMeta(m, gameID, gameLevelID)
+			success := processVocabBreakMeta(m, gameLevelID)
 			d := atomic.AddInt64(&done, 1)
 
 			if success {
@@ -270,7 +268,7 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
 
 // processVocabBreakMeta creates exactly 1 content item per meta.
 // Single word -> contentType "word", multi-word -> "phrase". No AI call.
-func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) bool {
+func processVocabBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 	contentType := "word"
 	if strings.Contains(strings.TrimSpace(meta.SourceData), " ") {
 		contentType = "phrase"
@@ -281,6 +279,7 @@ func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) 
 
 	item := models.ContentItem{
 		ID:            id,
+		GameLevelID:   gameLevelID,
 		ContentMetaID: &metaID,
 		Content:       meta.SourceData,
 		ContentType:   contentType,
@@ -289,16 +288,6 @@ func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) 
 		IsActive:      true,
 	}
 	if err := facades.Orm().Query().Create(&item); err != nil {
-		return false
-	}
-
-	gi := models.GameItem{
-		ID:            uuid.Must(uuid.NewV7()).String(),
-		GameID:        gameID,
-		GameLevelID:   gameLevelID,
-		ContentItemID: id,
-	}
-	if err := facades.Orm().Query().Create(&gi); err != nil {
 		return false
 	}
 
@@ -334,10 +323,9 @@ func GenerateVocabContentItems(ctx context.Context, userID, gameLevelID string, 
 	// Fetch broken metas
 	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
-		Where("gm.game_level_id", gameLevelID).
-		Where("content_metas.is_break_done", true).
-		Order("content_metas.\"order\" ASC").
+		Where("game_level_id", gameLevelID).
+		Where("is_break_done", true).
+		Order("\"order\" ASC").
 		Get(&metas); err != nil {
 		writeVocabSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
