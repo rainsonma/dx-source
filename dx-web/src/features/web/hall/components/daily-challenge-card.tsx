@@ -32,7 +32,7 @@ export function DailyChallengeCard() {
       {/* Task 2 — Community post */}
       <div className="flex flex-col gap-3 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 p-5">
         <p className="text-sm font-bold leading-relaxed text-white">
-          前往「斗学社」发表一条英文动态贴，进步需要坚持不懈!
+          前往「斗学社」发表一条英文动态贴，坚持不懈，让进步自然发生!
         </p>
         <Link
           href="/hall/community"
