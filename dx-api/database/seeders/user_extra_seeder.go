@@ -82,10 +82,7 @@ func (s *UserExtraSeeder) Run() error {
 	// All-or-nothing: if any chunk fails, everything rolls back.
 	err = facades.Orm().Transaction(func(tx orm.Query) error {
 		for i := 0; i < len(built); i += chunkSize {
-			end := i + chunkSize
-			if end > len(built) {
-				end = len(built)
-			}
+			end := min(i+chunkSize, len(built))
 			chunk := built[i:end]
 			if err := tx.Create(&chunk); err != nil {
 				return fmt.Errorf(
