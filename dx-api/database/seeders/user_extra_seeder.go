@@ -115,7 +115,7 @@ func loadExistingUsernames() (map[string]bool, error) {
 		Model(&models.User{}).
 		Select("username").
 		Get(&rows); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to query existing usernames: %w", err)
 	}
 	seen := make(map[string]bool, len(rows)+2)
 	for _, r := range rows {
@@ -126,8 +126,8 @@ func loadExistingUsernames() (map[string]bool, error) {
 
 // buildExtraMockUsers generates targetCount unique mock users whose
 // usernames don't collide with anything in `seen`, then overwrites
-// chineseCount random indices with Chinese nicknames built from cnBases × cnPatterns, interleaving them
-// across the full slice.
+// chineseCount random indices with Chinese nicknames. The `seen`
+// map is mutated as usernames are claimed.
 func buildExtraMockUsers(seen map[string]bool) []extraMockUser {
 	const (
 		targetCount  = 10800
