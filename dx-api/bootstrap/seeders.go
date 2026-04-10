@@ -9,6 +9,5 @@ import (
 func Seeders() []seeder.Seeder {
 	return []seeder.Seeder{
 		&seeders.DatabaseSeeder{},
-		&seeders.UserExtraSeeder{},
 	}
 }
