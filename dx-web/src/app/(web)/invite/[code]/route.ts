@@ -13,11 +13,17 @@ type Params = {
  * Validate an invite code via the Go API, set the `ref` cookie on the redirect
  * response, and send the user to the sign-up page. A Route Handler is required
  * because Server Components cannot mutate cookies in Next.js.
+ *
+ * Builds the redirect URL from the incoming `Host` + `X-Forwarded-Proto`
+ * headers (set by nginx) so proxied requests redirect to the browser-visible
+ * origin instead of the Next.js container's internal listening port.
  */
 export async function GET(request: NextRequest, { params }: Params) {
   const { code } = await params;
 
-  const signupUrl = new URL("/auth/signup", request.nextUrl.origin);
+  const host = request.headers.get("host") ?? "localhost";
+  const proto = request.headers.get("x-forwarded-proto") ?? "http";
+  const signupUrl = new URL("/auth/signup", `${proto}://${host}`);
   const response = NextResponse.redirect(signupUrl);
 
   try {
