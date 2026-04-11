@@ -9,7 +9,7 @@ const (
 
 // ReferralStatusLabels maps each referral status to its Chinese label.
 var ReferralStatusLabels = map[string]string{
-	ReferralStatusPending:  "待验证",
+	ReferralStatusPending:  "待激活",
 	ReferralStatusPaid:     "已付费",
 	ReferralStatusRewarded: "已发放",
 }
