@@ -171,3 +171,22 @@ func derefStr(s *string) string {
 	}
 	return *s
 }
+
+// ValidateInviteCode reports whether a non-empty invite_code matches an active user.
+func ValidateInviteCode(code string) (bool, error) {
+	if code == "" {
+		return false, nil
+	}
+	var user models.User
+	err := facades.Orm().Query().
+		Select("id", "is_active").
+		Where("invite_code", code).
+		First(&user)
+	if err != nil {
+		return false, fmt.Errorf("failed to look up invite code: %w", err)
+	}
+	if user.ID == "" || !user.IsActive {
+		return false, nil
+	}
+	return true, nil
+}
