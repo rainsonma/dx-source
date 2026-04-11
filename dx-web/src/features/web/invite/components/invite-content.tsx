@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Copy,
+  Check,
   Users,
   DollarSign,
   UserCheck,
@@ -35,6 +36,7 @@ const rules = [
 
 export function InviteContent({ inviteUrl, referrals, totalPages, stats }: InviteContentProps) {
   const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const statCards = [
     { icon: DollarSign, iconBg: "bg-teal-100", iconColor: "text-teal-600", value: stats.totalReward, label: "累计获得推广佣金" },
@@ -43,10 +45,12 @@ export function InviteContent({ inviteUrl, referrals, totalPages, stats }: Invit
     { icon: TrendingUp, iconBg: "bg-purple-100", iconColor: "text-purple-600", value: stats.conversionRate, label: "邀请成功转化比例" },
   ];
 
-  /** Copy invite URL to clipboard */
+  /** Copy invite URL to clipboard and flash a check icon for 2 seconds */
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       // Silently fail if clipboard access is denied
     }
@@ -85,7 +89,11 @@ export function InviteContent({ inviteUrl, referrals, totalPages, stats }: Invit
               onClick={handleCopy}
               className="flex items-center justify-center gap-1.5 rounded-[10px] bg-white px-4 py-2 text-[13px] font-semibold text-teal-700"
             >
-              <Copy className="h-3.5 w-3.5" />
+              {copied ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
               复制链接
             </button>
           </div>
