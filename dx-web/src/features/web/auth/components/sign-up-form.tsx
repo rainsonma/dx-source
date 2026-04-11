@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, EyeOff, MessageCircle, Loader2, CircleCheck, CircleAlert } from "lucide-react";
+import { Eye, EyeOff, Gift, MessageCircle, Loader2, CircleCheck, CircleAlert } from "lucide-react";
 
 import { WechatQrCard } from "@/features/web/auth/components/wechat-qr-card";
 import { useSignup } from "@/features/web/auth/hooks/use-signup";
 
-export function SignUpForm() {
+type SignUpFormProps = {
+  hasInviteRef?: boolean;
+};
+
+export function SignUpForm({ hasInviteRef }: SignUpFormProps) {
   const {
     codeState,
     handleSendCode,
@@ -43,6 +47,12 @@ export function SignUpForm() {
         <p className="text-sm text-slate-400">
           进入斗学英语游戏世界，开启英语学习冒险之旅
         </p>
+        {hasInviteRef && (
+          <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700">
+            <Gift className="h-3 w-3" />
+            正在通过好友邀请注册
+          </div>
+        )}
       </div>
 
       {/* Card */}
