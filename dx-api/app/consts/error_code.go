@@ -28,6 +28,9 @@ const (
 	CodeOpponentNotVip      = 40019
 	CodeCannotChallengeSelf = 40020
 	CodeInvitationNotPending = 40021
+	CodeInvalidEnvelope      = 40022  // WS envelope missing or malformed
+	CodeUnknownOp            = 40023  // WS envelope op value not recognized
+	CodeInvalidTopic         = 40024  // WS topic string doesn't match known patterns
 
 	// 401xx: Auth
 	CodeUnauthorized    = 40100
@@ -68,4 +71,5 @@ const (
 	CodeInternalError  = 50000
 	CodeAIServiceError = 50001
 	CodeEmailSendError = 50002
+	CodeSlowConsumer   = 50003  // WS client kicked due to send queue overflow
 )
