@@ -17,6 +17,7 @@ func Api() {
 
 	authController := apicontrollers.NewAuthController()
 	emailController := apicontrollers.NewEmailController()
+	userReferralController := apicontrollers.NewUserReferralController()
 
 	uploadController := apicontrollers.NewUploadController()
 
@@ -69,6 +70,9 @@ func Api() {
 			email.Post("/send-signup-code", emailController.SendSignUpCode)
 			email.Post("/send-signin-code", emailController.SendSignInCode)
 		})
+
+		// Public invite code validation (no auth required)
+		router.Get("/invite/validate", userReferralController.ValidateCode)
 
 		// Public group invite info (no auth required)
 		publicGroupMemberController := apicontrollers.NewGroupMemberController()
@@ -176,7 +180,6 @@ func Api() {
 			protected.Get("/hall/heatmap", hallController.GetHeatmap)
 
 			// Invite & Referrals
-			userReferralController := apicontrollers.NewUserReferralController()
 			protected.Get("/invite", userReferralController.GetInviteData)
 			protected.Get("/referrals", userReferralController.GetReferrals)
 

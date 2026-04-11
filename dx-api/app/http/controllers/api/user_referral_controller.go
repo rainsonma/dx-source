@@ -57,3 +57,13 @@ func (c *UserReferralController) GetReferrals(ctx contractshttp.Context) contrac
 
 	return helpers.PaginatedOffset(ctx, referrals, total, page, pageSize)
 }
+
+// ValidateCode is a public endpoint that reports whether an invite_code is valid.
+func (c *UserReferralController) ValidateCode(ctx contractshttp.Context) contractshttp.Response {
+	code := ctx.Request().Query("code", "")
+	ok, err := services.ValidateInviteCode(code)
+	if err != nil {
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to validate invite")
+	}
+	return helpers.Success(ctx, map[string]any{"valid": ok})
+}
