@@ -6,31 +6,31 @@ const (
 	CodeSuccess = 0
 
 	// 400xx: Validation
-	CodeValidationError    = 40000
-	CodeInvalidEmail       = 40001
-	CodeInvalidPassword    = 40002
-	CodeDuplicateEmail     = 40003
-	CodeDuplicateUsername  = 40004
-	CodeInvalidCode        = 40005
-	CodeCodeExpired        = 40006
-	CodeInsufficientBeans  = 40007
-	CodeNicknameTaken      = 40008
-	CodeAlreadyMember      = 40009
-	CodeAlreadyApplied     = 40010
-	CodeGroupMembersFull   = 40011
-	CodeGroupSubgroupsFull = 40012
-	CodeOrderNotPending    = 40013
-	CodeInvalidProduct     = 40014
-	CodePkIsPlaying        = 40015
-	CodePkNotPlaying       = 40016
-	CodeNoMockUser          = 40017
-	CodeOpponentOffline     = 40018
-	CodeOpponentNotVip      = 40019
-	CodeCannotChallengeSelf = 40020
+	CodeValidationError      = 40000
+	CodeInvalidEmail         = 40001
+	CodeInvalidPassword      = 40002
+	CodeDuplicateEmail       = 40003
+	CodeDuplicateUsername    = 40004
+	CodeInvalidCode          = 40005
+	CodeCodeExpired          = 40006
+	CodeInsufficientBeans    = 40007
+	CodeNicknameTaken        = 40008
+	CodeAlreadyMember        = 40009
+	CodeAlreadyApplied       = 40010
+	CodeGroupMembersFull     = 40011
+	CodeGroupSubgroupsFull   = 40012
+	CodeOrderNotPending      = 40013
+	CodeInvalidProduct       = 40014
+	CodePkIsPlaying          = 40015
+	CodePkNotPlaying         = 40016
+	CodeNoMockUser           = 40017
+	CodeOpponentOffline      = 40018
+	CodeOpponentNotVip       = 40019
+	CodeCannotChallengeSelf  = 40020
 	CodeInvitationNotPending = 40021
-	CodeInvalidEnvelope      = 40022  // WS envelope missing or malformed
-	CodeUnknownOp            = 40023  // WS envelope op value not recognized
-	CodeInvalidTopic         = 40024  // WS topic string doesn't match known patterns
+	CodeInvalidEnvelope      = 40022 // WS envelope missing or malformed
+	CodeUnknownOp            = 40023 // WS envelope op value not recognized
+	CodeInvalidTopic         = 40024 // WS topic string doesn't match known patterns
 
 	// 401xx: Auth
 	CodeUnauthorized    = 40100
@@ -71,5 +71,5 @@ const (
 	CodeInternalError  = 50000
 	CodeAIServiceError = 50001
 	CodeEmailSendError = 50002
-	CodeSlowConsumer   = 50003  // WS client kicked due to send queue overflow
+	CodeSlowConsumer   = 50003 // WS client kicked due to send queue overflow
 )
