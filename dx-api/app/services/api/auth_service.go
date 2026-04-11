@@ -10,6 +10,7 @@ import (
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 )
@@ -72,6 +73,7 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 	emailStr := email
 	user := models.User{
 		ID:         uuid.Must(uuid.NewV7()).String(),
+		Grade:      consts.UserGradeFree,
 		Username:   username,
 		Email:      &emailStr,
 		Password:   hashedPassword,
@@ -122,6 +124,7 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (string, *mode
 		emailStr := email
 		user = models.User{
 			ID:         uuid.Must(uuid.NewV7()).String(),
+			Grade:      consts.UserGradeFree,
 			Username:   username,
 			Email:      &emailStr,
 			Password:   hashedPw,
