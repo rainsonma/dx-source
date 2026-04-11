@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/goravel/framework/facades"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 )
@@ -58,6 +59,7 @@ func createMockUser() (*models.User, error) {
 
 	user := models.User{
 		ID:         uuid.Must(uuid.NewV7()).String(),
+		Grade:      consts.UserGradeFree,
 		Username:   username,
 		Nickname:   &nickname,
 		Password:   hashedPassword,
