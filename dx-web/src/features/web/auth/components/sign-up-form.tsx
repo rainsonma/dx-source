@@ -48,7 +48,7 @@ export function SignUpForm({ hasInviteRef }: SignUpFormProps) {
           进入斗学英语游戏世界，开启英语学习冒险之旅
         </p>
         {hasInviteRef && (
-          <div className="flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700">
+          <div className="flex items-center gap-1.5 rounded-full bg-teal-600 px-3 py-1 text-xs font-medium text-white">
             <Gift className="h-3 w-3" />
             正在通过好友邀请注册
           </div>
