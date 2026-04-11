@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Info, Eye, EyeOff, MessageCircle, Loader2, CircleCheck, CircleAlert } from "lucide-react";
+import { Eye, EyeOff, MessageCircle, Loader2, CircleCheck, CircleAlert } from "lucide-react";
 
 import { WechatQrCard } from "@/features/web/auth/components/wechat-qr-card";
 import { useSignup } from "@/features/web/auth/hooks/use-signup";
@@ -130,16 +130,6 @@ export function SignUpForm() {
                 邮箱验证码已发送，可能会有延迟，请耐心等待
               </p>
             )}
-
-            <div className="h-px" />
-
-            {/* Section Header */}
-            <div className="flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5 text-teal-600" />
-              <span className="text-[13px] text-slate-700">
-                信息补充（可跳过）
-              </span>
-            </div>
 
             {/* Name */}
             <div className="flex h-12 items-center gap-2 rounded-[10px] border border-slate-200 px-4">
