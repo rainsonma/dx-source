@@ -41,6 +41,19 @@ export function InviteReferralTable({
   const [currentPage, setCurrentPage] = useState(1);
   const [isPending, startTransition] = useTransition();
 
+  // The parent /hall/invite page is a client component that fetches referrals
+  // in useEffect, so initialReferrals starts empty and changes after mount.
+  // Mirror the initial data into local state via a render-time adjustment
+  // (React's recommended pattern over useEffect) so the table reflects the
+  // fetched page before the user triggers pagination.
+  const [prevInitialReferrals, setPrevInitialReferrals] = useState(initialReferrals);
+  if (initialReferrals !== prevInitialReferrals) {
+    setPrevInitialReferrals(initialReferrals);
+    setReferrals(initialReferrals);
+    setTotalPages(initialTotalPages);
+    setCurrentPage(1);
+  }
+
   /** Load a specific page of referrals */
   const handlePageChange = (page: number) => {
     startTransition(async () => {
