@@ -15,3 +15,7 @@ func TestValidateInviteCodeEmptyReturnsFalse(t *testing.T) {
 func TestValidateInviteCodeFunctionExists(t *testing.T) {
 	assert.NotNil(t, ValidateInviteCode)
 }
+
+func TestRecordReferralIfPresentFunctionExists(t *testing.T) {
+	assert.NotNil(t, RecordReferralIfPresent)
+}

@@ -3,9 +3,12 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/models"
-
+	"github.com/google/uuid"
+	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
 )
 
 // InviteData contains invite URL, stats, and first page of referrals.
@@ -189,4 +192,42 @@ func ValidateInviteCode(code string) (bool, error) {
 		return false, nil
 	}
 	return true, nil
+}
+
+// RecordReferralIfPresent creates a user_referrals row when the request carries a
+// `ref` cookie matching an active user. It never blocks signup: any lookup or
+// create failure is wrapped and returned so the caller can log it, but callers
+// must not propagate the error to the API response.
+func RecordReferralIfPresent(ctx contractshttp.Context, inviteeID string) error {
+	refCode := ctx.Request().Cookie("ref")
+	if refCode == "" {
+		return nil
+	}
+
+	var referrer models.User
+	err := facades.Orm().Query().
+		Select("id", "is_active").
+		Where("invite_code", refCode).
+		First(&referrer)
+	if err != nil {
+		return fmt.Errorf("failed to look up referrer: %w", err)
+	}
+	if referrer.ID == "" || !referrer.IsActive {
+		return nil
+	}
+	if referrer.ID == inviteeID {
+		return nil
+	}
+
+	invitee := inviteeID
+	record := models.UserReferral{
+		ID:         uuid.Must(uuid.NewV7()).String(),
+		ReferrerID: referrer.ID,
+		InviteeID:  &invitee,
+		Status:     consts.ReferralStatusPending,
+	}
+	if err := facades.Orm().Query().Create(&record); err != nil {
+		return fmt.Errorf("failed to create user_referral: %w", err)
+	}
+	return nil
 }
