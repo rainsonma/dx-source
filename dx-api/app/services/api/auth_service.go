@@ -85,6 +85,10 @@ func SignUp(ctx contractshttp.Context, email, code, username, password string) (
 		return "", nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
+	if refErr := RecordReferralIfPresent(ctx, user.ID); refErr != nil {
+		facades.Log().Warningf("record referral failed: %v", refErr)
+	}
+
 	token, err := issueSession(ctx, user.ID)
 	if err != nil {
 		return "", nil, err
@@ -134,6 +138,10 @@ func SignInByEmail(ctx contractshttp.Context, email, code string) (string, *mode
 
 		if createErr := facades.Orm().Query().Create(&user); createErr != nil {
 			return "", nil, fmt.Errorf("failed to create user: %w", createErr)
+		}
+
+		if refErr := RecordReferralIfPresent(ctx, user.ID); refErr != nil {
+			facades.Log().Warningf("record referral failed: %v", refErr)
 		}
 	}
 
