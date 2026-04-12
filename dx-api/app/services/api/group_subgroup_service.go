@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -83,6 +85,7 @@ func CreateSubgroup(userID, groupID, name string) (string, error) {
 		return "", fmt.Errorf("failed to create subgroup: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return sub.ID, nil
 }
 
@@ -155,6 +158,7 @@ func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
 		return fmt.Errorf("failed to update subgroup: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }
 
@@ -184,7 +188,9 @@ func DeleteSubgroup(userID, groupID, subgroupID string) error {
 		return err
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
 
@@ -277,6 +283,7 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 		return err
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }
 
@@ -298,5 +305,6 @@ func RemoveSubgroupMember(userID, groupID, subgroupID, targetUserID string) erro
 		return fmt.Errorf("failed to remove subgroup member: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }

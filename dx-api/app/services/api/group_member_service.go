@@ -1,10 +1,12 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -138,7 +140,9 @@ func KickMember(userID, groupID, targetUserID string) error {
 		return err
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "members")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
 
@@ -155,7 +159,9 @@ func LeaveGroup(userID, groupID string) error {
 		return err
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "members")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
 	helpers.GroupNotifyHub.Notify(groupID, "detail")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
 

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -35,17 +37,17 @@ type GroupListItem struct {
 
 // GroupDetail represents full group detail.
 type GroupDetail struct {
-	ID              string  `json:"id"`
-	Name            string  `json:"name"`
-	Description     *string `json:"description"`
-	OwnerID         string  `json:"owner_id"`
-	OwnerName       string  `json:"owner_name"`
-	MemberCount     int     `json:"member_count"`
-	InviteCode      string  `json:"invite_code"`
-	IsOwner         bool    `json:"is_owner"`
-	CreatedAt       string  `json:"created_at"`
-	CurrentGameID   *string `json:"current_game_id"`
-	GameMode        *string `json:"game_mode"`
+	ID                 string  `json:"id"`
+	Name               string  `json:"name"`
+	Description        *string `json:"description"`
+	OwnerID            string  `json:"owner_id"`
+	OwnerName          string  `json:"owner_name"`
+	MemberCount        int     `json:"member_count"`
+	InviteCode         string  `json:"invite_code"`
+	IsOwner            bool    `json:"is_owner"`
+	CreatedAt          string  `json:"created_at"`
+	CurrentGameID      *string `json:"current_game_id"`
+	GameMode           *string `json:"game_mode"`
 	CurrentGameName    string  `json:"current_game_name"`
 	InviteQrcodeURL    string  `json:"invite_qrcode_url"`
 	IsPlaying          bool    `json:"is_playing"`
@@ -62,10 +64,10 @@ func CreateGroup(userID, name string, description *string) (*CreateGroupResult, 
 	inviteCode := helpers.GenerateInviteCode(8)
 
 	group := models.GameGroup{
-		ID:             groupID,
-		Name:           name,
-		Description:    description,
-		OwnerID:        userID,
+		ID:          groupID,
+		Name:        name,
+		Description: description,
+		OwnerID:     userID,
 		InviteCode:  inviteCode,
 		MemberCount: 1,
 	}
@@ -256,19 +258,19 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 	}
 
 	return &GroupDetail{
-		ID:          group.ID,
-		Name:        group.Name,
-		Description: group.Description,
-		OwnerID:     group.OwnerID,
-		OwnerName:   ownerName,
-		MemberCount: group.MemberCount,
-		InviteCode:  group.InviteCode,
-		IsOwner:         group.OwnerID == userID,
-		CreatedAt:       group.CreatedAt.ToDateTimeString(),
-		CurrentGameID:   group.CurrentGameID,
-		GameMode:        group.GameMode,
-		CurrentGameName:  currentGameName,
-		InviteQrcodeURL:  inviteQrcodeURL,
+		ID:                 group.ID,
+		Name:               group.Name,
+		Description:        group.Description,
+		OwnerID:            group.OwnerID,
+		OwnerName:          ownerName,
+		MemberCount:        group.MemberCount,
+		InviteCode:         group.InviteCode,
+		IsOwner:            group.OwnerID == userID,
+		CreatedAt:          group.CreatedAt.ToDateTimeString(),
+		CurrentGameID:      group.CurrentGameID,
+		GameMode:           group.GameMode,
+		CurrentGameName:    currentGameName,
+		InviteQrcodeURL:    inviteQrcodeURL,
 		IsPlaying:          group.IsPlaying,
 		StartGameLevelID:   group.StartGameLevelID,
 		StartGameLevelName: startGameLevelName,
@@ -360,6 +362,7 @@ func DismissGroup(userID, groupID string) error {
 	helpers.GroupSSEHub.Broadcast(groupID, "group_dismissed", map[string]string{
 		"group_id": groupID,
 	})
+	_ = realtime.Publish(context.Background(), realtime.GroupTopic(groupID), realtime.Event{Type: "group_dismissed", Data: map[string]string{"group_id": groupID}})
 
 	return nil
 }

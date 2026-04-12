@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -61,6 +63,7 @@ func ApplyToGroup(userID, groupID string) (string, error) {
 		return "", fmt.Errorf("failed to create application: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "applications")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return app.ID, nil
 }
 
@@ -83,6 +86,7 @@ func CancelApplication(userID, groupID string) error {
 		return fmt.Errorf("failed to cancel application: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "applications")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return nil
 }
 
@@ -203,8 +207,11 @@ func HandleApplication(userID, groupID, appID, action string) error {
 			return err
 		}
 		helpers.GroupNotifyHub.Notify(groupID, "applications")
+		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 		helpers.GroupNotifyHub.Notify(groupID, "members")
+		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
 		helpers.GroupNotifyHub.Notify(groupID, "detail")
+		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 		return nil
 	}
 
@@ -213,5 +220,6 @@ func HandleApplication(userID, groupID, appID, action string) error {
 		return fmt.Errorf("failed to reject application: %w", err)
 	}
 	helpers.GroupNotifyHub.Notify(groupID, "applications")
+	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return nil
 }
