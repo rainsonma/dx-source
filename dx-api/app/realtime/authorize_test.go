@@ -35,8 +35,8 @@ func TestAuthorize_UserTopicOther(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected forbidden")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeForbidden {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeForbidden {
 		t.Errorf("want CodeForbidden, got %+v", err)
 	}
 }
@@ -67,8 +67,8 @@ func TestAuthorize_PkNonParticipant(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected forbidden")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeForbidden {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeForbidden {
 		t.Errorf("want CodeForbidden, got %+v", err)
 	}
 }
@@ -92,8 +92,8 @@ func TestAuthorize_GroupNonMember(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected group forbidden")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeGroupForbidden {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeGroupForbidden {
 		t.Errorf("want CodeGroupForbidden, got %+v", err)
 	}
 }
@@ -117,8 +117,8 @@ func TestAuthorize_GroupNotifyNonMember(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected group forbidden")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeGroupForbidden {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeGroupForbidden {
 		t.Errorf("want CodeGroupForbidden, got %+v", err)
 	}
 }
@@ -129,8 +129,8 @@ func TestAuthorize_InvalidTopic(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected invalid topic")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeInvalidTopic {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeInvalidTopic {
 		t.Errorf("want CodeInvalidTopic, got %+v", err)
 	}
 }
@@ -148,8 +148,8 @@ func TestAuthorize_PkQueryError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected internal error")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeInternalError {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeInternalError {
 		t.Errorf("want CodeInternalError, got %+v", err)
 	}
 }
@@ -167,8 +167,8 @@ func TestAuthorize_GroupQueryError(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected internal error")
 	}
-	var rtErr realtimeError
-	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeInternalError {
+	rtErr, isRT := errors.AsType[realtimeError](err)
+	if !isRT || rtErr.Code != consts.CodeInternalError {
 		t.Errorf("want CodeInternalError, got %+v", err)
 	}
 }

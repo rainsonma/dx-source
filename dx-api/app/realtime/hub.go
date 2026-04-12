@@ -321,8 +321,7 @@ func (h *Hub) kickSlowConsumer(c *Client) {
 func ackError(id string, err error) Envelope {
 	ok := false
 	env := Envelope{Op: OpAck, ID: id, OK: &ok}
-	var rtErr realtimeError
-	if errors.As(err, &rtErr) {
+	if rtErr, isRT := errors.AsType[realtimeError](err); isRT {
 		env.Code = rtErr.Code
 		env.Message = rtErr.Message
 	} else {
