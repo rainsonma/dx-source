@@ -37,7 +37,8 @@ func GetGameStats(userID, gameID string) (*GameStatsData, error) {
 			COUNT(*)::int AS completion_count,
 			EXTRACT(EPOCH FROM MIN(ended_at))::bigint AS first_completed
 		FROM game_sessions
-		WHERE user_id = ? AND game_id = ? AND ended_at IS NOT NULL`,
+		WHERE user_id = ? AND game_id = ? AND ended_at IS NOT NULL
+			AND ended_at >= NOW() - INTERVAL '30 days'`,
 		userID, gameID,
 	).Scan(&result)
 	if err != nil {
