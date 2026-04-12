@@ -36,8 +36,8 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 		return helpers.Error(ctx, http.StatusServiceUnavailable, consts.CodeInternalError, "realtime hub not initialized")
 	}
 
-	origins := facades.Config().GetString("cors.allowed_origins", "")
-	originPatterns := strings.Split(origins, ",")
+	originsRaw := facades.Config().Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+	originPatterns := strings.Split(originsRaw.(string), ",")
 	for i := range originPatterns {
 		originPatterns[i] = strings.TrimSpace(originPatterns[i])
 	}
