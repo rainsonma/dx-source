@@ -10,6 +10,7 @@ import (
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -276,6 +277,14 @@ func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*Com
 			NextLevelID:   nextLevelID,
 			NextLevelName: nextLevelName,
 		})
+		_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_complete", Data: PkPlayerCompleteEvent{
+			UserID:        userID,
+			UserName:      userName,
+			GameLevelID:   session.GameLevelID,
+			Score:         score,
+			NextLevelID:   nextLevelID,
+			NextLevelName: nextLevelName,
+		}})
 	}
 
 	// First-to-complete wins: force-end opponent's session
@@ -321,7 +330,8 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 	if userID == pk.OpponentID {
 		otherPlayerID = pk.UserID
 	}
-	if pk.PkType == consts.PkTypeSpecified && helpers.PkHub.IsConnected(pkID, otherPlayerID) {
+	present, _ := realtime.DefaultHub().Presence().IsPresent(context.Background(), realtime.PkTopic(pkID), otherPlayerID)
+	if pk.PkType == consts.PkTypeSpecified && (helpers.PkHub.IsConnected(pkID, otherPlayerID) || present) {
 		result, err := nextSpecifiedPkLevel(userID, pk, *nextLevelID)
 		if err != nil {
 			return nil, err
@@ -337,6 +347,14 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 			"degree":     pk.Degree,
 			"pattern":    pk.Pattern,
 		})
+		_ = realtime.Publish(context.Background(), realtime.UserTopic(otherPlayerID), realtime.Event{Type: "pk_next_level", Data: map[string]any{
+			"pk_id":      result.PkID,
+			"game_id":    pk.GameID,
+			"level_id":   *nextLevelID,
+			"level_name": nextLevel.Name,
+			"degree":     pk.Degree,
+			"pattern":    pk.Pattern,
+		}})
 		return result, nil
 	}
 
@@ -431,6 +449,7 @@ func EndPk(userID, pkID string) error {
 	}
 
 	helpers.PkHub.Broadcast(pkID, "pk_force_end", map[string]string{"pk_id": pkID})
+	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_force_end", Data: map[string]string{"pk_id": pkID}})
 
 	return nil
 }
@@ -514,12 +533,21 @@ func PkRecordAnswer(userID string, input RecordAnswerInput) error {
 		if !input.IsCorrect {
 			action = "wrong"
 		}
-		go helpers.PkHub.Broadcast(*session.GamePkID, "pk_player_action", PkPlayerActionEvent{
-			UserID:      userID,
-			UserName:    nickname(user),
-			Action:      action,
-			ComboStreak: input.MaxCombo,
-		})
+		pkIDForAction := *session.GamePkID
+		go func() {
+			helpers.PkHub.Broadcast(pkIDForAction, "pk_player_action", PkPlayerActionEvent{
+				UserID:      userID,
+				UserName:    nickname(user),
+				Action:      action,
+				ComboStreak: input.MaxCombo,
+			})
+			_ = realtime.Publish(context.Background(), realtime.PkTopic(pkIDForAction), realtime.Event{Type: "pk_player_action", Data: PkPlayerActionEvent{
+				UserID:      userID,
+				UserName:    nickname(user),
+				Action:      action,
+				ComboStreak: input.MaxCombo,
+			}})
+		}()
 	}
 	return nil
 }
@@ -722,6 +750,12 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			Action:      action,
 			ComboStreak: combo.Streak,
 		})
+		_ = realtime.Publish(ctx, realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_action", Data: PkPlayerActionEvent{
+			UserID:      robotUserID,
+			UserName:    robotName,
+			Action:      action,
+			ComboStreak: combo.Streak,
+		}})
 	}
 
 	// Robot finished all items — first-to-complete wins
@@ -755,6 +789,14 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		NextLevelID:   robotNextLevelID,
 		NextLevelName: robotNextLevelName,
 	})
+	_ = realtime.Publish(ctx, realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_complete", Data: PkPlayerCompleteEvent{
+		UserID:        robotUserID,
+		UserName:      robotName,
+		GameLevelID:   gameLevelID,
+		Score:         combo.TotalScore,
+		NextLevelID:   robotNextLevelID,
+		NextLevelName: robotNextLevelName,
+	}})
 
 	// Robot won — force-end human's session
 	if err := ForceEndPkLoser(pkID, robotUserID); err != nil {

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
@@ -17,16 +19,16 @@ import (
 
 // GroupPlayStartSessionResult is returned after starting or resuming a group game session.
 type GroupPlayStartSessionResult struct {
-	ID        string    `json:"id"`
-	Degree    string    `json:"degree"`
-	Pattern   *string   `json:"pattern"`
-	Score     int       `json:"score"`
-	Exp       int       `json:"exp"`
-	MaxCombo  int       `json:"maxCombo"`
-	CorrectCount int   `json:"correctCount"`
-	WrongCount   int   `json:"wrongCount"`
-	StartedAt time.Time `json:"startedAt"`
-	GameLevelID string  `json:"gameLevelId"`
+	ID           string    `json:"id"`
+	Degree       string    `json:"degree"`
+	Pattern      *string   `json:"pattern"`
+	Score        int       `json:"score"`
+	Exp          int       `json:"exp"`
+	MaxCombo     int       `json:"maxCombo"`
+	CorrectCount int       `json:"correctCount"`
+	WrongCount   int       `json:"wrongCount"`
+	StartedAt    time.Time `json:"startedAt"`
+	GameLevelID  string    `json:"gameLevelId"`
 }
 
 // GroupPlayCompleteLevelResult is returned after completing a level in a group game.
@@ -40,13 +42,13 @@ type GroupPlayCompleteLevelResult struct {
 
 // GroupPlayerCompleteEvent is the SSE payload for group_player_complete.
 type GroupPlayerCompleteEvent struct {
-	UserID        string                `json:"user_id"`
-	UserName      string                `json:"user_name"`
-	GameLevelID   string                `json:"game_level_id"`
-	Score         int                   `json:"score"`
+	UserID        string                 `json:"user_id"`
+	UserName      string                 `json:"user_name"`
+	GameLevelID   string                 `json:"game_level_id"`
+	Score         int                    `json:"score"`
 	Participants  []GroupParticipantInfo `json:"participants"`
-	NextLevelID   *string               `json:"next_level_id"`
-	NextLevelName *string               `json:"next_level_name"`
+	NextLevelID   *string                `json:"next_level_id"`
+	NextLevelName *string                `json:"next_level_name"`
 }
 
 // GroupParticipantInfo holds a participant's score snapshot.
@@ -248,10 +250,10 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 
 			// Collect all participants' current scores for this group+level
 			var participantRows []struct {
-				UserID   string `gorm:"column:user_id"`
-				Username string `gorm:"column:username"`
+				UserID   string  `gorm:"column:user_id"`
+				Username string  `gorm:"column:username"`
 				Nickname *string `gorm:"column:nickname"`
-				Score    int    `gorm:"column:score"`
+				Score    int     `gorm:"column:score"`
 			}
 			facades.Orm().Query().Raw(
 				`SELECT DISTINCT ON (gs.user_id) gs.user_id, u.username, u.nickname, gs.score
@@ -289,6 +291,15 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 				NextLevelID:   nextLevelID,
 				NextLevelName: nextLevelName,
 			})
+			_ = realtime.Publish(context.Background(), realtime.GroupTopic(*session.GameGroupID), realtime.Event{Type: "group_player_complete", Data: GroupPlayerCompleteEvent{
+				UserID:        userID,
+				UserName:      userName,
+				GameLevelID:   gameLevelID,
+				Score:         score,
+				Participants:  participants,
+				NextLevelID:   nextLevelID,
+				NextLevelName: nextLevelName,
+			}})
 		}
 
 		// Force-end all other players' sessions for this level
@@ -309,6 +320,7 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		facades.Orm().Query().Model(&models.GameGroup{}).
 			Where("id", *session.GameGroupID).Update("is_playing", false)
 		helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
+		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(*session.GameGroupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	}
 
 	// Find next level
@@ -517,6 +529,12 @@ func broadcastGroupPlayerAction(userID, sessionID, action string, comboStreak in
 		Action:      action,
 		ComboStreak: comboStreak,
 	})
+	_ = realtime.Publish(context.Background(), realtime.GroupTopic(*session.GameGroupID), realtime.Event{Type: "group_player_action", Data: GroupPlayerActionEvent{
+		UserID:      userID,
+		UserName:    userName,
+		Action:      action,
+		ComboStreak: comboStreak,
+	}})
 }
 
 // findGroupPlayActiveSession queries for an active group session for a specific level.

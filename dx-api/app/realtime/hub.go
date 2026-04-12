@@ -64,6 +64,9 @@ func NewHub(ps PubSub, presence *Presence, authorizer *Authorizer) *Hub {
 // controller checks this to reject new upgrades during graceful shutdown.
 func (h *Hub) IsShuttingDown() bool { return h.shutdownFg.Load() }
 
+// Presence returns the Presence tracker wired to this Hub.
+func (h *Hub) Presence() *Presence { return h.presence }
+
 // Attach takes ownership of the WebSocket connection for the given user,
 // starts the client's read/write loops, and blocks until the connection
 // terminates. Returns any error from the read loop (including normal EOF).

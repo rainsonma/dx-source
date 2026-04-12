@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 )
 
 func levelItemsCount(gameLevelID, degree string) int {
@@ -149,6 +151,15 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 		"initiator_id":   userID,
 		"initiator_name": nickname(initiator),
 	})
+	_ = realtime.Publish(context.Background(), realtime.UserTopic(opponentID), realtime.Event{Type: "pk_invitation", Data: map[string]string{
+		"pk_id":          pkID,
+		"game_id":        gameID,
+		"game_name":      game.Name,
+		"game_mode":      game.Mode,
+		"level_name":     level.Name,
+		"initiator_id":   userID,
+		"initiator_name": nickname(initiator),
+	}})
 
 	return &PkInviteResult{
 		PkID:        pkID,
@@ -213,6 +224,16 @@ func AcceptPkInvite(userID, pkID string) (*PkAcceptResult, error) {
 		"opponent_id":   userID,
 		"opponent_name": nickname(opponent),
 	})
+	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_invitation_accepted", Data: map[string]string{
+		"pk_id":         pkID,
+		"opponent_id":   userID,
+		"opponent_name": nickname(opponent),
+	}})
+	_ = realtime.Publish(context.Background(), realtime.UserTopic(pk.UserID), realtime.Event{Type: "pk_invitation_accepted", Data: map[string]string{
+		"pk_id":         pkID,
+		"opponent_id":   userID,
+		"opponent_name": nickname(opponent),
+	}})
 
 	return &PkAcceptResult{
 		SessionID:   sessionID,
@@ -259,6 +280,12 @@ func DeclinePkInvite(userID, pkID string) error {
 	helpers.PkHub.Broadcast(pkID, "pk_invitation_declined", map[string]string{
 		"pk_id": pkID,
 	})
+	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_invitation_declined", Data: map[string]string{
+		"pk_id": pkID,
+	}})
+	_ = realtime.Publish(context.Background(), realtime.UserTopic(pk.UserID), realtime.Event{Type: "pk_invitation_declined", Data: map[string]string{
+		"pk_id": pkID,
+	}})
 
 	return nil
 }
