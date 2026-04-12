@@ -11,6 +11,7 @@ type EventHandler = (event: { type: string; data: unknown }) => void;
 type WSContextValue = {
   status: "connecting" | "open" | "closed";
   subscribe: (topic: string, handler: EventHandler) => () => void;
+  userId: string | null;
 };
 
 const WSContext = createContext<WSContextValue | null>(null);
@@ -32,6 +33,16 @@ function randomId(): string {
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<"connecting" | "open" | "closed">("connecting");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/user/profile`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.data?.id) setUserId(json.data.id);
+      })
+      .catch(() => {});
+  }, []);
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempt = useRef(0);
@@ -170,7 +181,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <WSContext.Provider value={{ status, subscribe }}>
+    <WSContext.Provider value={{ status, subscribe, userId }}>
       {children}
     </WSContext.Provider>
   );

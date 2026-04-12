@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useUserSSE } from "@/hooks/use-user-sse";
+import { useUserEvents } from "@/hooks/use-user-events";
 import { acceptPkInviteAction, declinePkInviteAction } from "../actions/invite.action";
 import { PkInvitationPopup } from "./pk-invitation-popup";
 
@@ -20,7 +20,7 @@ export function PkInvitationProvider({ children }: { children: React.ReactNode }
   const router = useRouter();
   const [invitation, setInvitation] = useState<PkInvitation | null>(null);
 
-  useUserSSE({
+  useUserEvents({
     pk_invitation: (data) => {
       const inv = data as PkInvitation;
       setInvitation(inv);
