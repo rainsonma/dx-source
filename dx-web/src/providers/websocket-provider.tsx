@@ -165,24 +165,30 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   // useTopic's useEffect (which has [topic, subscribe] deps) to fire on every
   // render — creating a subscribe/cleanup/resubscribe cycle that races with
   // the WS onopen handler and results in zero wire frames.
+  // Flush all pending subscribes whenever the WS transitions to "open".
+  // This handles the timing gap where subscribe() is called before the WS
+  // is connected — topics are queued in subsRef, and this effect sends them
+  // as soon as the connection is ready. Also handles reconnect replay.
+  useEffect(() => {
+    if (status !== "open" || !wsRef.current) return;
+    for (const topic of subsRef.current.keys()) {
+      if (!ackedRef.current.has(topic)) {
+        const env: Envelope = { op: "subscribe", topic, id: randomId() };
+        wsRef.current.send(JSON.stringify(env));
+      }
+    }
+  }, [status]);
+
   const subscribe = useCallback((topic: string, handler: EventHandler) => {
     let set = subsRef.current.get(topic);
     if (!set) {
       set = new Set();
       subsRef.current.set(topic, set);
+      // Send immediately if WS is open; otherwise the flush effect above
+      // will handle it when the connection opens.
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const env: Envelope = { op: "subscribe", topic, id: randomId() };
         wsRef.current.send(JSON.stringify(env));
-      } else {
-        // WS not open yet — topic is in subsRef for onopen replay.
-        // But if onopen already fired and WS is now open, retry shortly.
-        const retryRef = wsRef;
-        setTimeout(() => {
-          if (retryRef.current?.readyState === WebSocket.OPEN && subsRef.current.has(topic)) {
-            const env: Envelope = { op: "subscribe", topic, id: randomId() };
-            retryRef.current.send(JSON.stringify(env));
-          }
-        }, 200);
       }
     }
     set.add(handler);
