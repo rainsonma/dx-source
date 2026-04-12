@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/realtime"
 
@@ -84,7 +83,6 @@ func CreateSubgroup(userID, groupID, name string) (string, error) {
 	if err := facades.Orm().Query().Create(&sub); err != nil {
 		return "", fmt.Errorf("failed to create subgroup: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return sub.ID, nil
 }
@@ -157,7 +155,6 @@ func UpdateSubgroup(userID, groupID, subgroupID, name string) error {
 	if _, err := facades.Orm().Query().Model(&models.GameSubgroup{}).Where("id", subgroupID).Update("name", name); err != nil {
 		return fmt.Errorf("failed to update subgroup: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }
@@ -187,9 +184,7 @@ func DeleteSubgroup(userID, groupID, subgroupID string) error {
 	}); err != nil {
 		return err
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
@@ -282,7 +277,6 @@ func AssignSubgroupMembers(userID, groupID, subgroupID string, targetUserIDs []s
 	}); err != nil {
 		return err
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }
@@ -304,7 +298,6 @@ func RemoveSubgroupMember(userID, groupID, subgroupID, targetUserID string) erro
 	if _, err := facades.Orm().Query().Where("game_subgroup_id", subgroupID).Where("user_id", targetUserID).Delete(&models.GameSubgroupMember{}); err != nil {
 		return fmt.Errorf("failed to remove subgroup member: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "subgroups")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "subgroups"}})
 	return nil
 }

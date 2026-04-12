@@ -282,15 +282,6 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 
 			nextLevelID, nextLevelName, _ := findNextLevel(session.GameID, gameLevelID)
 
-			helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_complete", GroupPlayerCompleteEvent{
-				UserID:        userID,
-				UserName:      userName,
-				GameLevelID:   gameLevelID,
-				Score:         score,
-				Participants:  participants,
-				NextLevelID:   nextLevelID,
-				NextLevelName: nextLevelName,
-			})
 			_ = realtime.Publish(context.Background(), realtime.GroupTopic(*session.GameGroupID), realtime.Event{Type: "group_player_complete", Data: GroupPlayerCompleteEvent{
 				UserID:        userID,
 				UserName:      userName,
@@ -319,7 +310,6 @@ func GroupPlayCompleteLevel(userID, sessionID, gameLevelID string, score, maxCom
 		// Round is over — reset is_playing so room shows "开始游戏" again
 		facades.Orm().Query().Model(&models.GameGroup{}).
 			Where("id", *session.GameGroupID).Update("is_playing", false)
-		helpers.GroupNotifyHub.Notify(*session.GameGroupID, "detail")
 		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(*session.GameGroupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	}
 
@@ -523,12 +513,6 @@ func broadcastGroupPlayerAction(userID, sessionID, action string, comboStreak in
 		userName = *user.Nickname
 	}
 
-	helpers.GroupSSEHub.Broadcast(*session.GameGroupID, "group_player_action", GroupPlayerActionEvent{
-		UserID:      userID,
-		UserName:    userName,
-		Action:      action,
-		ComboStreak: comboStreak,
-	})
 	_ = realtime.Publish(context.Background(), realtime.GroupTopic(*session.GameGroupID), realtime.Event{Type: "group_player_action", Data: GroupPlayerActionEvent{
 		UserID:      userID,
 		UserName:    userName,

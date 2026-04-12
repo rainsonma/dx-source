@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/realtime"
 
@@ -139,9 +138,7 @@ func KickMember(userID, groupID, targetUserID string) error {
 	if err := removeMemberFromGroup(groupID, targetUserID); err != nil {
 		return err
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "members")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
@@ -158,9 +155,7 @@ func LeaveGroup(userID, groupID string) error {
 	if err := removeMemberFromGroup(groupID, userID); err != nil {
 		return err
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "members")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }

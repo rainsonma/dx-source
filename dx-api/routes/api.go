@@ -93,12 +93,6 @@ func Api() {
 			// Upload routes
 			protected.Post("/uploads/images", uploadController.UploadImage)
 
-			// Group SSE events (cookie auth via JwtAuth middleware)
-			sseGroupGameController := apicontrollers.NewGroupGameController()
-			protected.Get("/groups/{id}/events", sseGroupGameController.Events)
-			sseGroupNotifyController := apicontrollers.NewGroupNotifyController()
-			protected.Get("/groups/{id}/notify", sseGroupNotifyController.Notify)
-
 			// Protected game routes
 			contentController := &apicontrollers.ContentController{}
 			gameStatsController := apicontrollers.NewGameStatsController()
@@ -276,11 +270,6 @@ func Api() {
 				gp.Put("/{id}/content-item", playGroupController.UpdateContentItem)
 			})
 
-			// User SSE events
-			userSSEController := apicontrollers.NewUserSSEController()
-			protected.Post("/user/ping", userSSEController.Ping)
-			protected.Get("/user/events", userSSEController.Events)
-
 			// WebSocket
 			wsController := apicontrollers.NewWSController()
 			protected.Get("/ws", wsController.Handle)
@@ -291,7 +280,6 @@ func Api() {
 
 			// PK game play routes
 			playPkController := apicontrollers.NewGamePlayPkController()
-			protected.Get("/play-pk/{id}/events", playPkController.Events)
 			protected.Prefix("/play-pk").Group(func(pk route.Router) {
 				pk.Post("/start", playPkController.Start)
 				pk.Post("/{id}/levels/{levelId}/complete", playPkController.CompleteLevel)

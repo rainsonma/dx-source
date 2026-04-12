@@ -358,10 +358,6 @@ func DismissGroup(userID, groupID string) error {
 		return fmt.Errorf("failed to dismiss group: %w", err)
 	}
 
-	// Broadcast dismiss event to all connected members
-	helpers.GroupSSEHub.Broadcast(groupID, "group_dismissed", map[string]string{
-		"group_id": groupID,
-	})
 	_ = realtime.Publish(context.Background(), realtime.GroupTopic(groupID), realtime.Event{Type: "group_dismissed", Data: map[string]string{"group_id": groupID}})
 
 	return nil

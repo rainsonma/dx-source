@@ -303,7 +303,7 @@ func validateFormatCounts(sourceTypes []string) string {
 // --- BreakMetadata ---
 
 // BreakMetadata processes content metas for a game level: breaks them into learning units via SSE.
-func BreakMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
+func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeSSEError(writer, err)
 		return
@@ -539,7 +539,7 @@ Example output:
 // --- GenerateContentItems ---
 
 // GenerateContentItems generates word-level phonetics/POS/translations for content items via SSE.
-func GenerateContentItems(userID, gameLevelID string, writer *helpers.SSEWriter) {
+func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeSSEError(writer, err)
 		return
@@ -802,7 +802,7 @@ func verifyLevelOwnership(userID, gameLevelID string) (*models.Game, *models.Gam
 	return game, &level, nil
 }
 
-func writeSSEError(writer *helpers.SSEWriter, err error) {
+func writeSSEError(writer *helpers.NDJSONWriter, err error) {
 	msg := "服务异常"
 	switch {
 	case errors.Is(err, ErrVipRequired):

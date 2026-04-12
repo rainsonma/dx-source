@@ -112,11 +112,10 @@ func (c *AiCustomController) BreakMetadata(ctx contractshttp.Context) contractsh
 	}
 
 	w := ctx.Response().Writer()
-	writer := helpers.NewSSEWriter(w)
+	writer := helpers.NewNDJSONWriter(w)
 
 	services.BreakMetadata(userID, req.GameLevelID, writer)
 
-	// Return nil — response already written via SSE
 	return nil
 }
 
@@ -139,7 +138,7 @@ func (c *AiCustomController) GenerateContentItems(ctx contractshttp.Context) con
 	}
 
 	w := ctx.Response().Writer()
-	writer := helpers.NewSSEWriter(w)
+	writer := helpers.NewNDJSONWriter(w)
 
 	services.GenerateContentItems(userID, req.GameLevelID, writer)
 

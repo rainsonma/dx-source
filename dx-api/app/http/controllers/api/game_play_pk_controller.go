@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
@@ -222,51 +221,6 @@ func (c *GamePlayPkController) Resume(ctx contractshttp.Context) contractshttp.R
 	}
 
 	return helpers.Success(ctx, nil)
-}
-
-// Events establishes a persistent SSE connection for PK events.
-func (c *GamePlayPkController) Events(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, http.StatusUnauthorized, 0, "unauthorized")
-	}
-
-	pkID := ctx.Request().Route("id")
-
-	w := ctx.Response().Writer()
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache, no-transform")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-	if f, ok := w.(http.Flusher); ok {
-		f.Flush()
-	}
-
-	conn := helpers.PkHub.Register(pkID, userID, w)
-	defer func() {
-		helpers.PkHub.Unregister(pkID, userID, conn)
-		// Do NOT call OnPkDisconnect here — SSE reconnects frequently
-		// (e.g. nginx proxy timeout). Sessions are only ended by explicit
-		// user actions (EndPk, exit button) or robot timeout.
-	}()
-
-	ticker := time.NewTicker(15 * time.Second)
-	defer ticker.Stop()
-
-	clientGone := ctx.Request().Origin().Context().Done()
-
-	for {
-		select {
-		case <-clientGone:
-			return nil
-		case <-conn.Done():
-			return nil
-		case <-ticker.C:
-			if err := conn.SendHeartbeat(); err != nil {
-				return nil
-			}
-		}
-	}
 }
 
 // mapPkError maps PK service errors to HTTP responses.

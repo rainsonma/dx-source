@@ -1,12 +1,13 @@
 package api
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/goravel/framework/facades"
 
-	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 )
 
 type VerifyOnlineResult struct {
@@ -33,7 +34,8 @@ func VerifyUserOnline(callerID, username string) (*VerifyOnlineResult, error) {
 		return nil, ErrCannotChallengeSelf
 	}
 
-	if !helpers.UserHub.IsOnline(user.ID) {
+	isOnline, _ := realtime.DefaultHub().Presence().IsPresent(context.Background(), realtime.UserTopic(user.ID), user.ID)
+	if !isOnline {
 		return &VerifyOnlineResult{
 			UserID:   user.ID,
 			Nickname: nickname(user),

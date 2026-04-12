@@ -13,7 +13,7 @@ type StreamResult =
   | { ok: true; processed: number; failed: number }
   | { ok: false; message: string; code?: string; required?: number; available?: number };
 
-/** Fetch a Go API SSE endpoint with progress reporting */
+/** Fetch a Go API NDJSON streaming endpoint with progress reporting */
 export async function fetchWithProgress(
   path: string,
   body: object,
@@ -52,7 +52,7 @@ export async function fetchWithProgress(
       return { ok: true, processed: data.processed ?? 0, failed: data.failed ?? 0 };
     }
 
-    // Read SSE stream
+    // Read NDJSON stream — each line is a complete JSON object
     const reader = res.body!.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
@@ -68,22 +68,10 @@ export async function fetchWithProgress(
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        // Handle error events
-        if (line.startsWith("event: error")) {
-          // Next data line is the error message
-          continue;
-        }
-        if (line.startsWith("event: done")) {
-          continue;
-        }
-        if (!line.startsWith("data: ")) continue;
-        const json = line.slice(6);
-        if (!json) continue;
-
+        if (!line.trim()) continue;
         try {
-          const event = JSON.parse(json) as ProgressEvent;
+          const event = JSON.parse(line) as ProgressEvent;
           onProgress(event);
-
           if (event.complete) {
             finalResult = {
               ok: true,
@@ -92,8 +80,7 @@ export async function fetchWithProgress(
             };
           }
         } catch {
-          // Error event data is plain text, not JSON
-          finalResult = { ok: false, message: json };
+          finalResult = { ok: false, message: line };
         }
       }
     }

@@ -178,7 +178,7 @@ func cleanVocabFormatted(result string) string {
 
 // BreakVocabMetadata processes vocab metas for a game level via SSE.
 // Each vocab meta becomes exactly 1 content item. NO AI call needed.
-func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.SSEWriter) {
+func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeVocabSSEError(writer, err)
 		return
@@ -304,7 +304,7 @@ func processVocabBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 // --- GenerateVocabContentItems ---
 
 // GenerateVocabContentItems generates word-level phonetics/POS/translations for vocab content items via SSE.
-func GenerateVocabContentItems(ctx context.Context, userID, gameLevelID string, writer *helpers.SSEWriter) {
+func GenerateVocabContentItems(ctx context.Context, userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeVocabSSEError(writer, err)
 		return
@@ -545,6 +545,6 @@ func verifyVocabLevelOwnership(userID, gameLevelID string) (*models.Game, *model
 }
 
 // writeVocabSSEError writes an error event to the SSE stream and closes it.
-func writeVocabSSEError(writer *helpers.SSEWriter, err error) {
+func writeVocabSSEError(writer *helpers.NDJSONWriter, err error) {
 	writeSSEError(writer, err)
 }

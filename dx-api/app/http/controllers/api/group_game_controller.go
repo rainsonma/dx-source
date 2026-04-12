@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	nethttp "net/http"
-	"time"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
@@ -12,6 +11,7 @@ import (
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 	services "dx-api/app/services/api"
 )
 
@@ -155,55 +155,7 @@ func (c *GroupGameController) NextLevel(ctx contractshttp.Context) contractshttp
 	return helpers.Success(ctx, nil)
 }
 
-// Events establishes a persistent SSE connection for group events.
-func (c *GroupGameController) Events(ctx contractshttp.Context) contractshttp.Response {
-	userID, err := facades.Auth(ctx).Guard("user").ID()
-	if err != nil || userID == "" {
-		return helpers.Error(ctx, nethttp.StatusUnauthorized, 0, "unauthorized")
-	}
-
-	groupID := ctx.Request().Route("id")
-
-	var member models.GameGroupMember
-	if err := facades.Orm().Query().Where("game_group_id", groupID).
-		Where("user_id", userID).First(&member); err != nil || member.ID == "" {
-		return helpers.Error(ctx, nethttp.StatusForbidden, 0, "not a group member")
-	}
-
-	w := ctx.Response().Writer()
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache, no-transform")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-	if f, ok := w.(nethttp.Flusher); ok {
-		f.Flush()
-	}
-
-	conn := helpers.GroupSSEHub.Register(groupID, userID, w)
-	defer func() {
-		helpers.GroupSSEHub.Unregister(groupID, userID, conn)
-	}()
-
-	ticker := time.NewTicker(15 * time.Second)
-	defer ticker.Stop()
-
-	clientGone := ctx.Request().Origin().Context().Done()
-
-	for {
-		select {
-		case <-clientGone:
-			return nil
-		case <-conn.Done():
-			return nil
-		case <-ticker.C:
-			if err := conn.SendHeartbeat(); err != nil {
-				return nil
-			}
-		}
-	}
-}
-
-// RoomMembers returns the list of users currently connected to the group SSE (in the game room).
+// RoomMembers returns the list of users currently connected to the group room (via WS presence).
 func (c *GroupGameController) RoomMembers(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
@@ -215,7 +167,7 @@ func (c *GroupGameController) RoomMembers(ctx contractshttp.Context) contractsht
 		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "group id is required")
 	}
 
-	connectedIDs := helpers.GroupSSEHub.ConnectedUserIDs(groupID)
+	connectedIDs, _ := realtime.DefaultHub().Presence().Members(ctx.Request().Origin().Context(), realtime.GroupTopic(groupID))
 
 	type roomMember struct {
 		UserID   string `json:"user_id"`

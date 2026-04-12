@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"dx-api/app/consts"
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/realtime"
 
@@ -62,7 +61,6 @@ func ApplyToGroup(userID, groupID string) (string, error) {
 	if err := facades.Orm().Query().Create(&app); err != nil {
 		return "", fmt.Errorf("failed to create application: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return app.ID, nil
 }
@@ -85,7 +83,6 @@ func CancelApplication(userID, groupID string) error {
 	if _, err := facades.Orm().Query().Where("id", app.ID).Delete(&models.GameGroupApplication{}); err != nil {
 		return fmt.Errorf("failed to cancel application: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return nil
 }
@@ -206,11 +203,8 @@ func HandleApplication(userID, groupID, appID, action string) error {
 		}); err != nil {
 			return err
 		}
-		helpers.GroupNotifyHub.Notify(groupID, "applications")
 		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
-		helpers.GroupNotifyHub.Notify(groupID, "members")
 		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "members"}})
-		helpers.GroupNotifyHub.Notify(groupID, "detail")
 		_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 		return nil
 	}
@@ -219,7 +213,6 @@ func HandleApplication(userID, groupID, appID, action string) error {
 	if _, err := facades.Orm().Query().Model(&models.GameGroupApplication{}).Where("id", appID).Update("status", consts.ApplicationStatusRejected); err != nil {
 		return fmt.Errorf("failed to reject application: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "applications")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "applications"}})
 	return nil
 }

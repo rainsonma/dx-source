@@ -269,14 +269,6 @@ func CompletePk(userID, sessionID string, score, maxCombo, totalItems int) (*Com
 		if user.Nickname != nil && *user.Nickname != "" {
 			userName = *user.Nickname
 		}
-		helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
-			UserID:        userID,
-			UserName:      userName,
-			GameLevelID:   session.GameLevelID,
-			Score:         score,
-			NextLevelID:   nextLevelID,
-			NextLevelName: nextLevelName,
-		})
 		_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_complete", Data: PkPlayerCompleteEvent{
 			UserID:        userID,
 			UserName:      userName,
@@ -331,22 +323,13 @@ func NextPkLevel(userID, pkID string) (*PkStartResult, error) {
 		otherPlayerID = pk.UserID
 	}
 	present, _ := realtime.DefaultHub().Presence().IsPresent(context.Background(), realtime.PkTopic(pkID), otherPlayerID)
-	if pk.PkType == consts.PkTypeSpecified && (helpers.PkHub.IsConnected(pkID, otherPlayerID) || present) {
+	if pk.PkType == consts.PkTypeSpecified && present {
 		result, err := nextSpecifiedPkLevel(userID, pk, *nextLevelID)
 		if err != nil {
 			return nil, err
 		}
-		// Send pk_next_level to the OTHER player via UserHub (proven reliable).
 		var nextLevel models.GameLevel
 		facades.Orm().Query().Select("id", "name").Where("id", *nextLevelID).First(&nextLevel)
-		helpers.UserHub.SendToUser(otherPlayerID, "pk_next_level", map[string]any{
-			"pk_id":      result.PkID,
-			"game_id":    pk.GameID,
-			"level_id":   *nextLevelID,
-			"level_name": nextLevel.Name,
-			"degree":     pk.Degree,
-			"pattern":    pk.Pattern,
-		})
 		_ = realtime.Publish(context.Background(), realtime.UserTopic(otherPlayerID), realtime.Event{Type: "pk_next_level", Data: map[string]any{
 			"pk_id":      result.PkID,
 			"game_id":    pk.GameID,
@@ -448,7 +431,6 @@ func EndPk(userID, pkID string) error {
 		return fmt.Errorf("failed to end pk: %w", err)
 	}
 
-	helpers.PkHub.Broadcast(pkID, "pk_force_end", map[string]string{"pk_id": pkID})
 	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_force_end", Data: map[string]string{"pk_id": pkID}})
 
 	return nil
@@ -535,12 +517,6 @@ func PkRecordAnswer(userID string, input RecordAnswerInput) error {
 		}
 		pkIDForAction := *session.GamePkID
 		go func() {
-			helpers.PkHub.Broadcast(pkIDForAction, "pk_player_action", PkPlayerActionEvent{
-				UserID:      userID,
-				UserName:    nickname(user),
-				Action:      action,
-				ComboStreak: input.MaxCombo,
-			})
 			_ = realtime.Publish(context.Background(), realtime.PkTopic(pkIDForAction), realtime.Event{Type: "pk_player_action", Data: PkPlayerActionEvent{
 				UserID:      userID,
 				UserName:    nickname(user),
@@ -744,12 +720,6 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		if !isCorrect {
 			action = "wrong"
 		}
-		helpers.PkHub.Broadcast(pkID, "pk_player_action", PkPlayerActionEvent{
-			UserID:      robotUserID,
-			UserName:    robotName,
-			Action:      action,
-			ComboStreak: combo.Streak,
-		})
 		_ = realtime.Publish(ctx, realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_action", Data: PkPlayerActionEvent{
 			UserID:      robotUserID,
 			UserName:    robotName,
@@ -781,14 +751,6 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 
 	// Broadcast robot completion
 	robotNextLevelID, robotNextLevelName, _ := findNextLevel(gameID, gameLevelID)
-	helpers.PkHub.Broadcast(pkID, "pk_player_complete", PkPlayerCompleteEvent{
-		UserID:        robotUserID,
-		UserName:      robotName,
-		GameLevelID:   gameLevelID,
-		Score:         combo.TotalScore,
-		NextLevelID:   robotNextLevelID,
-		NextLevelName: robotNextLevelName,
-	})
 	_ = realtime.Publish(ctx, realtime.PkTopic(pkID), realtime.Event{Type: "pk_player_complete", Data: PkPlayerCompleteEvent{
 		UserID:        robotUserID,
 		UserName:      robotName,

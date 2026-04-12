@@ -110,7 +110,7 @@ func (c *AiCustomVocabController) BreakMetadata(ctx contractshttp.Context) contr
 	}
 
 	w := ctx.Response().Writer()
-	writer := helpers.NewSSEWriter(w)
+	writer := helpers.NewNDJSONWriter(w)
 
 	services.BreakVocabMetadata(userID, req.GameLevelID, writer)
 
@@ -136,7 +136,7 @@ func (c *AiCustomVocabController) GenerateContentItems(ctx contractshttp.Context
 	}
 
 	w := ctx.Response().Writer()
-	writer := helpers.NewSSEWriter(w)
+	writer := helpers.NewNDJSONWriter(w)
 	reqCtx := ctx.Request().Origin().Context()
 
 	services.GenerateVocabContentItems(reqCtx, userID, req.GameLevelID, writer)

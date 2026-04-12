@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"dx-api/app/consts"
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/realtime"
 
@@ -119,7 +118,6 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, startGameLevelID *st
 	}); err != nil {
 		return fmt.Errorf("failed to set group game: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
@@ -146,7 +144,6 @@ func ClearGroupGame(userID, groupID string) error {
 	); err != nil {
 		return fmt.Errorf("failed to clear group game: %w", err)
 	}
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 	return nil
 }
@@ -272,9 +269,8 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		return fmt.Errorf("failed to set is_playing: %w", err)
 	}
 
-	// Build participants roster from connected users
-	// TODO(PR4): replace with realtime presence Members() once frontend migrates to WS
-	connectedIDs := helpers.GroupSSEHub.ConnectedUserIDs(groupID)
+	// Build participants roster from connected users (WS presence)
+	connectedIDs, _ := realtime.DefaultHub().Presence().Members(context.Background(), realtime.GroupTopic(groupID))
 
 	userMap := make(map[string]string, len(connectedIDs))
 	if len(connectedIDs) > 0 {
@@ -344,18 +340,6 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		participants = SoloParticipants{Mode: consts.GameModeSolo, Members: members}
 	}
 
-	// Broadcast SSE event
-	helpers.GroupSSEHub.Broadcast(groupID, "group_game_start", GroupGameStartEvent{
-		GameGroupID:  groupID,
-		GameID:       *group.CurrentGameID,
-		GameName:     game.Name,
-		GameMode:     *group.GameMode,
-		Degree:       degree,
-		Pattern:      pattern,
-		LevelID:      levelID,
-		LevelName:    startLevel.Name,
-		Participants: participants,
-	})
 	_ = realtime.Publish(context.Background(), realtime.GroupTopic(groupID), realtime.Event{Type: "group_game_start", Data: GroupGameStartEvent{
 		GameGroupID:  groupID,
 		GameID:       *group.CurrentGameID,
@@ -367,7 +351,6 @@ func StartGroupGame(userID, groupID, degree string, pattern *string) error {
 		LevelName:    startLevel.Name,
 		Participants: participants,
 	}})
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 
 	return nil
@@ -431,14 +414,9 @@ func ForceEndGroupGame(userID, groupID string) ([]map[string]any, error) {
 		})
 	}
 
-	// Broadcast force end event with participants
-	helpers.GroupSSEHub.Broadcast(groupID, "group_game_force_end", map[string]any{
-		"participants": participants,
-	})
 	_ = realtime.Publish(context.Background(), realtime.GroupTopic(groupID), realtime.Event{Type: "group_game_force_end", Data: map[string]any{
 		"participants": participants,
 	}})
-	helpers.GroupNotifyHub.Notify(groupID, "detail")
 	_ = realtime.Publish(context.Background(), realtime.GroupNotifyTopic(groupID), realtime.Event{Type: "group_updated", Data: map[string]string{"scope": "detail"}})
 
 	return nil, nil
@@ -516,14 +494,6 @@ func NextGroupLevel(userID, groupID string) error {
 		 ORDER BY last_played_at DESC LIMIT 1`,
 		groupID, userID).Scan(&si)
 
-	helpers.GroupSSEHub.Broadcast(groupID, "group_next_level", GroupNextLevelEvent{
-		GameGroupID: groupID,
-		GameID:      *group.CurrentGameID,
-		LevelID:     nextLevel.ID,
-		LevelName:   nextLevel.Name,
-		Degree:      si.Degree,
-		Pattern:     si.Pattern,
-	})
 	_ = realtime.Publish(context.Background(), realtime.GroupTopic(groupID), realtime.Event{Type: "group_next_level", Data: GroupNextLevelEvent{
 		GameGroupID: groupID,
 		GameID:      *group.CurrentGameID,

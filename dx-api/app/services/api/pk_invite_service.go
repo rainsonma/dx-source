@@ -8,7 +8,6 @@ import (
 	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 	"dx-api/app/realtime"
 )
@@ -55,8 +54,9 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 		return nil, err
 	}
 
-	// Verify opponent is still online and VIP
-	if !helpers.UserHub.IsOnline(opponentID) {
+	// Verify opponent is still online (WS presence on their user topic)
+	isOnline, _ := realtime.DefaultHub().Presence().IsPresent(context.Background(), realtime.UserTopic(opponentID), opponentID)
+	if !isOnline {
 		return nil, ErrOpponentOffline
 	}
 	opponentVip, err := IsVipActive(opponentID)
@@ -141,16 +141,6 @@ func InvitePk(userID, gameID, gameLevelID, degree string, pattern *string, oppon
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// Push invitation SSE event to opponent
-	helpers.UserHub.SendToUser(opponentID, "pk_invitation", map[string]string{
-		"pk_id":          pkID,
-		"game_id":        gameID,
-		"game_name":      game.Name,
-		"game_mode":      game.Mode,
-		"level_name":     level.Name,
-		"initiator_id":   userID,
-		"initiator_name": nickname(initiator),
-	})
 	_ = realtime.Publish(context.Background(), realtime.UserTopic(opponentID), realtime.Event{Type: "pk_invitation", Data: map[string]string{
 		"pk_id":          pkID,
 		"game_id":        gameID,
@@ -218,12 +208,6 @@ func AcceptPkInvite(userID, pkID string) (*PkAcceptResult, error) {
 	var opponent models.User
 	facades.Orm().Query().Select("id", "username", "nickname").Where("id", userID).First(&opponent)
 
-	// Broadcast accepted event to PK room via PkHub
-	helpers.PkHub.Broadcast(pkID, "pk_invitation_accepted", map[string]string{
-		"pk_id":         pkID,
-		"opponent_id":   userID,
-		"opponent_name": nickname(opponent),
-	})
 	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_invitation_accepted", Data: map[string]string{
 		"pk_id":         pkID,
 		"opponent_id":   userID,
@@ -276,10 +260,6 @@ func DeclinePkInvite(userID, pkID string) error {
 		"UPDATE game_sessions SET ended_at = ? WHERE game_pk_id = ? AND user_id = ? AND ended_at IS NULL",
 		now, pkID, pk.UserID)
 
-	// Broadcast declined event
-	helpers.PkHub.Broadcast(pkID, "pk_invitation_declined", map[string]string{
-		"pk_id": pkID,
-	})
 	_ = realtime.Publish(context.Background(), realtime.PkTopic(pkID), realtime.Event{Type: "pk_invitation_declined", Data: map[string]string{
 		"pk_id": pkID,
 	}})
