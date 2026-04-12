@@ -1057,9 +1057,12 @@ func (p *RedisPubSub) Subscribe(topic string) (<-chan Event, func()) {
 			delete(p.locals, topic)
 			delete(p.refs, topic)
 		}
+		// Close under the lock so it cannot race with a concurrent send
+		// in loop(). The dispatch loop also holds p.mu, so close and send
+		// are mutually exclusive.
+		close(ch)
 		p.mu.Unlock()
 
-		close(ch)
 		if lastLocal {
 			_ = p.pubsub.Unsubscribe(p.ctx, topic)
 		}
@@ -1102,14 +1105,12 @@ func (p *RedisPubSub) loop() {
 		}
 		event := Event{Type: wire.Type, Data: wire.Data}
 
+		// Dispatch under the lock so unsubscribe() cannot close a channel
+		// while we're about to send to it. The send is non-blocking
+		// (select + default drop-on-full), so lock contention per message
+		// is bounded to microseconds.
 		p.mu.Lock()
-		subs := make([]chan Event, 0, len(p.locals[msg.Channel]))
 		for c := range p.locals[msg.Channel] {
-			subs = append(subs, c)
-		}
-		p.mu.Unlock()
-
-		for _, c := range subs {
 			select {
 			case c <- event:
 			default:
@@ -1118,6 +1119,7 @@ func (p *RedisPubSub) loop() {
 				// last-resort backstop.
 			}
 		}
+		p.mu.Unlock()
 	}
 }
 ```
@@ -1199,7 +1201,9 @@ func (a *Authorizer) AuthorizeSubscribe(ctx context.Context, userID, topic strin
 	case KindPk:
 		ok, err := a.isPkParticipant(ctx, userID, parsed.ID)
 		if err != nil {
-			return realtimeError{Code: consts.CodeForbidden, Message: "forbidden"}
+			// DB failure is a 5xx, not a 403 — don't confuse operators
+			// and legitimate users during a Postgres outage.
+			return realtimeError{Code: consts.CodeInternalError, Message: "pk membership check failed"}
 		}
 		if !ok {
 			return realtimeError{Code: consts.CodeForbidden, Message: "not a participant in this PK"}
@@ -1208,7 +1212,7 @@ func (a *Authorizer) AuthorizeSubscribe(ctx context.Context, userID, topic strin
 	case KindGroup, KindGroupNotify:
 		ok, err := a.isGroupMember(ctx, userID, parsed.ID)
 		if err != nil {
-			return realtimeError{Code: consts.CodeGroupForbidden, Message: "您不在该群组中"}
+			return realtimeError{Code: consts.CodeInternalError, Message: "group membership check failed"}
 		}
 		if !ok {
 			return realtimeError{Code: consts.CodeGroupForbidden, Message: "您不在该群组中"}
@@ -1219,29 +1223,30 @@ func (a *Authorizer) AuthorizeSubscribe(ctx context.Context, userID, topic strin
 	}
 }
 
-// pkParticipantQuery checks whether userID is the initiator or opponent of
-// the given pkID. Production implementation using facades.Orm().
+// pkParticipantQuery checks whether userID is the initiator (user_id) or
+// opponent (opponent_id) of the given pkID in the game_pks table.
+// Table/column names verified against app/models/game_pk.go.
 func pkParticipantQuery(ctx context.Context, userID, pkID string) (bool, error) {
-	var count int64
-	err := facades.Orm().WithContext(ctx).Query().
-		Table("pk_matches").
+	count, err := facades.Orm().WithContext(ctx).Query().
+		Table("game_pks").
 		Where("id = ?", pkID).
-		Where("(initiator_id = ? OR opponent_id = ?)", userID, userID).
-		Count(&count)
+		Where("(user_id = ? OR opponent_id = ?)", userID, userID).
+		Count()
 	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
 }
 
-// groupMemberQuery checks whether userID is a current member of groupID.
+// groupMemberQuery checks whether userID is a current member of groupID in
+// the game_group_members table. Table/column names verified against
+// app/models/game_group_member.go.
 func groupMemberQuery(ctx context.Context, userID, groupID string) (bool, error) {
-	var count int64
-	err := facades.Orm().WithContext(ctx).Query().
-		Table("group_members").
-		Where("group_id = ?", groupID).
+	count, err := facades.Orm().WithContext(ctx).Query().
+		Table("game_group_members").
+		Where("game_group_id = ?", groupID).
 		Where("user_id = ?", userID).
-		Count(&count)
+		Count()
 	if err != nil {
 		return false, err
 	}
@@ -1374,6 +1379,10 @@ func TestAuthorize_GroupNotifyNonMember(t *testing.T) {
 	err := a.AuthorizeSubscribe(context.Background(), "bob", "group:grp_xyz:notify")
 	if err == nil {
 		t.Fatal("expected group forbidden")
+	}
+	var rtErr realtimeError
+	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeGroupForbidden {
+		t.Errorf("want CodeGroupForbidden, got %+v", err)
 	}
 }
 
@@ -2621,7 +2630,7 @@ func NewWSController() *WSController {
 // Graceful shutdown is driven by Hub.Shutdown via Goravel's terminating hook.
 func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response {
 	// If the hub is shutting down, reject the upgrade with 503.
-	if realtime.Default_Hub != nil && realtime.Default_Hub.IsShuttingDown() {
+	if hub := realtime.DefaultHub(); hub != nil && hub.IsShuttingDown() {
 		return helpers.Error(ctx, http.StatusServiceUnavailable, consts.CodeInternalError, "server shutting down")
 	}
 
@@ -2654,7 +2663,11 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 	defer cancel()
 
 	// Blocks until the connection dies (disconnect, error, shutdown).
-	_ = realtime.Default_Hub.Attach(wsCtx, userID, conn)
+	hub := realtime.DefaultHub()
+	if hub == nil {
+		return helpers.Error(ctx, http.StatusServiceUnavailable, consts.CodeInternalError, "realtime hub not initialized")
+	}
+	_ = hub.Attach(wsCtx, userID, conn)
 	return nil
 }
 ```
@@ -2707,7 +2720,7 @@ import (
 
 // Add this function (typically near other init helpers):
 
-// setupRealtime wires the realtime package's Default PubSub and Default_Hub.
+// setupRealtime wires the realtime package's default PubSub and Default_Hub.
 // Must be called after Redis is available (after the goravel/redis service
 // provider has registered).
 func setupRealtime(app foundation.Application) {
@@ -2715,12 +2728,18 @@ func setupRealtime(app foundation.Application) {
 
 	ctx := context.Background()
 	pubsub := realtime.NewRedisPubSub(ctx, redisClient)
-	realtime.Default = pubsub
+	// NOTE: SetDefault wraps the interface value in an atomic.Pointer so
+	// concurrent readers never see a torn interface header. This was changed
+	// from `realtime.Default = pubsub` during Task 2.2 re-review to fix a
+	// latent data race. See commit aa46de7 for the rationale.
+	realtime.SetDefault(pubsub)
 
 	presence := realtime.NewPresence(redisClient)
 	authorizer := realtime.NewAuthorizer()
 
-	realtime.Default_Hub = realtime.NewHub(pubsub, presence, authorizer)
+	// NOTE: SetDefaultHub wraps the Hub in an atomic.Pointer for race-safe
+	// concurrent access, matching the Task 2.2 fix pattern.
+	realtime.SetDefaultHub(realtime.NewHub(pubsub, presence, authorizer))
 
 	// Register the terminating hook for graceful shutdown.
 	// The exact API may be app.Terminating(...) or app.Shutdown(...) — check
@@ -2728,7 +2747,10 @@ func setupRealtime(app foundation.Application) {
 	app.Terminating(func() error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		return realtime.Default_Hub.Shutdown(shutdownCtx)
+		if hub := realtime.DefaultHub(); hub != nil {
+			return hub.Shutdown(shutdownCtx)
+		}
+		return nil
 	})
 }
 ```
