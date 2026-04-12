@@ -3,8 +3,9 @@ module dx-api
 go 1.26
 
 require (
+	github.com/alicebob/miniredis/v2 v2.37.0
+	github.com/coder/websocket v1.8.14
 	github.com/gin-gonic/gin v1.11.0
-	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/goravel/framework v1.17.2
 	github.com/goravel/gin v1.17.0
@@ -12,6 +13,7 @@ require (
 	github.com/goravel/redis v1.17.1
 	github.com/lib/pq v1.12.0
 	github.com/redis/go-redis/v9 v9.18.0
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/crypto v0.47.0
 )
@@ -21,7 +23,6 @@ require (
 	atomicgo.dev/keyboard v0.2.9 // indirect
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
-	github.com/alicebob/miniredis/v2 v2.37.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
@@ -41,7 +42,6 @@ require (
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/coder/websocket v1.8.14 // indirect
 	github.com/containerd/console v1.0.5 // indirect
 	github.com/dave/dst v0.27.3 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -62,6 +62,7 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/goforj/godump v1.9.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/gookit/filter v1.2.3 // indirect
 	github.com/gookit/goutil v0.7.1 // indirect
@@ -105,7 +106,6 @@ require (
 	github.com/samber/lo v1.52.0 // indirect
 	github.com/samber/slog-common v0.19.0 // indirect
 	github.com/samber/slog-multi v1.7.0 // indirect
-	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
