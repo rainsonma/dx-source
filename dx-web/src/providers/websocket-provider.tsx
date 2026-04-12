@@ -147,7 +147,12 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       if (wsRef.current) {
-        wsRef.current.close(1000, "unmount");
+        // Only close if the connection is actually open. In React 19
+        // StrictMode dev mode, the cleanup fires while the WS is still
+        // CONNECTING (readyState 0), producing a spurious console warning.
+        if (wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.close(1000, "unmount");
+        }
         wsRef.current = null;
       }
     };
