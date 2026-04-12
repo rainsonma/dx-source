@@ -15,11 +15,8 @@ import (
 	"dx-api/app/realtime"
 )
 
-// upgrader is the gorilla/websocket upgrader. Using gorilla instead of
-// coder/websocket for the HTTP→WS upgrade because gorilla calls Hijack()
-// BEFORE writing the 101 response — bypassing Gin's ResponseWriter which
-// rejects Hijack after any WriteHeader call. Once upgraded, the raw
-// net.Conn is handed to coder/websocket for frame-level I/O.
+// upgrader handles HTTP→WebSocket upgrades via gorilla/websocket, which is
+// the officially supported WebSocket library for Goravel (see goravel/example).
 var upgrader = gorillaWs.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
@@ -63,10 +60,6 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 	w := ctx.Response().Writer()
 	r := ctx.Request().Origin()
 
-	// gorilla/websocket.Upgrader.Upgrade calls Hijack() FIRST, then writes
-	// the 101 Switching Protocols response directly to the raw net.Conn.
-	// This bypasses Gin's ResponseWriter entirely, avoiding the
-	// "response already written" error that coder/websocket's Accept hits.
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil
