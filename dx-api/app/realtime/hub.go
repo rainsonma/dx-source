@@ -163,6 +163,21 @@ func (h *Hub) Shutdown(ctx context.Context) error {
 	}
 done:
 
+	// Release all per-topic subscriptions. Each unsub closes the channel
+	// that the corresponding fanout goroutine is blocked on, letting the
+	// goroutines exit cleanly. Without this, fanout goroutines would leak.
+	h.mu.Lock()
+	unsubFns := make([]func(), 0, len(h.unsubs))
+	for _, unsub := range h.unsubs {
+		unsubFns = append(unsubFns, unsub)
+	}
+	h.unsubs = make(map[string]func())
+	h.topics = make(map[string]map[*Client]struct{})
+	h.mu.Unlock()
+	for _, unsub := range unsubFns {
+		unsub()
+	}
+
 	// Close the pubsub loop
 	_ = h.pubsub.Close()
 	return nil
@@ -170,6 +185,13 @@ done:
 
 // subscribe authorizes and adds a client to a topic. First local subscriber
 // triggers a PubSub subscribe. For group topics, publishes room_member_joined.
+//
+// INVARIANT: subscribe must only be called from the client's owning
+// goroutine (Client.Serve's initial kick-topic subscribe, or Client.readLoop's
+// subscribe-op handler). This ordering guarantee is required so that detach
+// cannot observe a partially-constructed subscription (client added to
+// h.topics but h.unsubs[topic] not yet stored, since pubsub.Subscribe runs
+// outside the lock to avoid holding mu across a network operation).
 func (h *Hub) subscribe(ctx context.Context, c *Client, topic string) error {
 	if err := h.authorizer.AuthorizeSubscribe(ctx, c.userID, topic); err != nil {
 		return err

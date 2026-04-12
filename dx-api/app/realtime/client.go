@@ -56,6 +56,11 @@ func (c *Client) Serve(ctx context.Context) error {
 	go func() {
 		defer close(writeDone)
 		c.writeLoop(writeCtx)
+		// If writeLoop exited before readLoop (e.g., ping failure), force the
+		// connection closed so readLoop's wsjson.Read unblocks. Otherwise the
+		// client goroutine leaks and the hub keeps a stale entry. This is a
+		// no-op if readLoop already initiated the close via cancelWrite.
+		_ = c.conn.Close(websocket.StatusNormalClosure, "write loop exited")
 	}()
 
 	err := c.readLoop(ctx)
