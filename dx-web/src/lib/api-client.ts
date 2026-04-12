@@ -445,6 +445,10 @@ export const hallApi = {
   async getHeatmap(year: number) {
     return apiClient.get<unknown>(`/api/hall/heatmap?year=${year}`);
   },
+  /** Get sidebar menu structure */
+  async getMenus() {
+    return apiClient.get<unknown>("/api/hall/menus");
+  },
 };
 
 // Invite & Referral API functions
