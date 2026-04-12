@@ -186,19 +186,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [status]);
 
   const subscribe = useCallback((topic: string, handler: EventHandler) => {
-    const isNew = !subsRef.current.has(topic);
     let set = subsRef.current.get(topic);
     if (!set) {
       set = new Set();
       subsRef.current.set(topic, set);
-    }
-    if (isNew) {
-      const ws = wsRef.current;
-      const ready = ws?.readyState;
-      console.log(`[WS] subscribe: topic=${topic} readyState=${ready} (0=CONNECTING 1=OPEN)`);
-      if (ready === WebSocket.OPEN) {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
         const env: Envelope = { op: "subscribe", topic, id: randomId() };
-        ws!.send(JSON.stringify(env));
+        wsRef.current.send(JSON.stringify(env));
       }
     }
     set.add(handler);
