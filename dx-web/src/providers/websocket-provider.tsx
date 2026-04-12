@@ -113,8 +113,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       };
 
       ws.onclose = (ev: CloseEvent) => {
-        wsRef.current = null;
-        setStatus("closed");
+        // Only null the ref if it still points to THIS connection.
+        // React StrictMode fires ws1.onclose async AFTER the remount
+        // already set wsRef.current = ws2 — without this guard, the
+        // stale handler overwrites the live connection ref with null.
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+          setStatus("closed");
+        }
         ackedRef.current.clear();
 
         if (cancelled) return;
@@ -180,15 +186,19 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [status]);
 
   const subscribe = useCallback((topic: string, handler: EventHandler) => {
+    const isNew = !subsRef.current.has(topic);
     let set = subsRef.current.get(topic);
     if (!set) {
       set = new Set();
       subsRef.current.set(topic, set);
-      // Send immediately if WS is open; otherwise the flush effect above
-      // will handle it when the connection opens.
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
+    }
+    if (isNew) {
+      const ws = wsRef.current;
+      const ready = ws?.readyState;
+      console.log(`[WS] subscribe: topic=${topic} readyState=${ready} (0=CONNECTING 1=OPEN)`);
+      if (ready === WebSocket.OPEN) {
         const env: Envelope = { op: "subscribe", topic, id: randomId() };
-        wsRef.current.send(JSON.stringify(env));
+        ws!.send(JSON.stringify(env));
       }
     }
     set.add(handler);
