@@ -33,14 +33,18 @@ func init() {
 		"host": config.Env("APP_HOST", "127.0.0.1"),
 		// HTTP Port
 		"port": config.Env("APP_PORT", "3001"),
-		// HTTP Timeout (seconds). Set to 24 hours because the global Timeout
-		// middleware wraps every request including WebSocket upgrades. The WS
-		// handler blocks for the lifetime of the connection (minutes to hours).
-		// If the timeout fires, the middleware writes HTTP 408 bytes to the
-		// hijacked WebSocket connection, corrupting the frame stream. A 24h
-		// timeout effectively disables the middleware while still providing a
-		// safety net for truly stuck requests.
-		"request_timeout": 86400,
+		// HTTP Timeout (seconds). Set to 0 to disable the Goravel Timeout
+		// middleware entirely. When timeout <= 0, the middleware calls Next()
+		// directly without wrapping the handler in a goroutine — no timeout
+		// context, no Abort(408), no panic recovery wrapper. This is required
+		// because the middleware's goroutine wrapper corrupts WebSocket
+		// connections: after websocket.Accept hijacks the connection, the
+		// middleware's response writer wrapper still writes bytes to the raw
+		// TCP socket, causing "Invalid frame header" errors on the client.
+		//
+		// Protection against slow/stuck HTTP requests is handled by nginx's
+		// proxy_read_timeout (3600s for /api/, 60s default for other routes).
+		"request_timeout": 0,
 		// HTTPS Configuration
 		"tls": map[string]any{
 			// HTTPS Host
