@@ -22,13 +22,13 @@ func (c *LeaderboardController) GetLeaderboard(ctx contractshttp.Context) contra
 	userID, _ := facades.Auth(ctx).Guard("user").ID()
 
 	lbType := ctx.Request().Query("type", "exp")
-	period := ctx.Request().Query("period", "all")
+	period := ctx.Request().Query("period", "month")
 
 	if lbType != "exp" && lbType != "playtime" {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "类型必须是经验值或游玩时长")
 	}
-	if period != "all" && period != "day" && period != "week" && period != "month" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "时间范围必须是全部、日、周或月")
+	if period != "day" && period != "week" && period != "month" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "时间范围必须是日、周或月")
 	}
 
 	result, err := services.GetLeaderboard(lbType, period, userID)

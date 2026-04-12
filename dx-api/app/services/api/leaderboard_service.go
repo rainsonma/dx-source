@@ -34,59 +34,14 @@ type leaderboardRow struct {
 	Rank     int     `gorm:"column:rank"`
 }
 
-// GetLeaderboard returns a ranked list by type (exp|playtime) and period (all|day|week|month).
+// GetLeaderboard returns a ranked list by type (exp|playtime) and period (day|week|month).
 func GetLeaderboard(lbType, period, userID string) (*LeaderboardResult, error) {
-	if period == "all" {
-		if lbType == "exp" {
-			return getAllTimeExp(userID)
-		}
-		return getAllTimePlayTime(userID)
-	}
 	if lbType == "exp" {
 		return getWindowedExp(period, userID)
 	}
 	return getWindowedPlayTime(period, userID)
 }
 
-// getAllTimeExp ranks active users by total exp from the users table.
-func getAllTimeExp(userID string) (*LeaderboardResult, error) {
-	var rows []leaderboardRow
-	if err := facades.Orm().Query().Raw(`
-		WITH ranked AS (
-			SELECT u.id, u.username, u.nickname, u.avatar_id, u.exp AS value,
-			       RANK() OVER (ORDER BY u.exp DESC)::int AS rank
-			FROM users u
-			WHERE u.is_active = true AND u.exp > 0
-		)
-		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
-	`).Scan(&rows); err != nil {
-		return nil, fmt.Errorf("failed to query all-time exp leaderboard: %w", err)
-	}
-
-	return buildLeaderboardResult(rows, userID), nil
-}
-
-// getAllTimePlayTime ranks active users by total play time from game_sessions.
-func getAllTimePlayTime(userID string) (*LeaderboardResult, error) {
-	var rows []leaderboardRow
-	if err := facades.Orm().Query().Raw(`
-		WITH ranked AS (
-			SELECT u.id, u.username, u.nickname, u.avatar_id,
-			       COALESCE(SUM(s.play_time), 0)::int AS value,
-			       RANK() OVER (ORDER BY COALESCE(SUM(s.play_time), 0) DESC)::int AS rank
-			FROM users u
-			INNER JOIN game_sessions s ON s.user_id = u.id
-			WHERE u.is_active = true
-			GROUP BY u.id, u.username, u.nickname, u.avatar_id
-			HAVING COALESCE(SUM(s.play_time), 0) > 0
-		)
-		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
-	`).Scan(&rows); err != nil {
-		return nil, fmt.Errorf("failed to query all-time playtime leaderboard: %w", err)
-	}
-
-	return buildLeaderboardResult(rows, userID), nil
-}
 
 // getWindowedExp ranks active users by exp earned within a time window from game_sessions.
 func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
