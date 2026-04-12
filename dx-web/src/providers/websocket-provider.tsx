@@ -173,6 +173,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const env: Envelope = { op: "subscribe", topic, id: randomId() };
         wsRef.current.send(JSON.stringify(env));
+      } else {
+        // WS not open yet — topic is in subsRef for onopen replay.
+        // But if onopen already fired and WS is now open, retry shortly.
+        const retryRef = wsRef;
+        setTimeout(() => {
+          if (retryRef.current?.readyState === WebSocket.OPEN && subsRef.current.has(topic)) {
+            const env: Envelope = { op: "subscribe", topic, id: randomId() };
+            retryRef.current.send(JSON.stringify(env));
+          }
+        }, 200);
       }
     }
     set.add(handler);
