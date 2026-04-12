@@ -52,26 +52,19 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 	if err != nil {
 		return nil
 	}
+	defer conn.Close(websocket.StatusInternalError, "server error")
 
-	// CRITICAL: spawn Hub.Attach in a goroutine so the HTTP handler returns
-	// immediately. This is necessary because Goravel's global Timeout
-	// middleware (goravel/gin middleware_timeout.go) wraps every handler in a
-	// goroutine and races it against http.request_timeout (30s). If our
-	// handler blocks in Attach, after 30s the middleware calls Abort(408)
-	// which writes HTTP bytes to the hijacked WebSocket connection —
-	// corrupting the frame stream and causing "Invalid frame header" errors.
-	//
-	// By returning nil immediately, the middleware sees the handler as
-	// "done" and never fires the timeout. The WebSocket is fully owned by
-	// the goroutine below via a detached context (immune to the middleware's
-	// context cancellation). Shutdown is driven by Hub.Shutdown / the
-	// RealtimeRunner.
+	// Block in Hub.Attach for the lifetime of the WebSocket connection.
+	// This handler runs inside the Timeout middleware's goroutine, which
+	// has a context.WithTimeout of http.request_timeout (set to 24h in
+	// config/http.go). We use a detached context so the WS read/write
+	// loops are immune to that timeout's context cancellation. The 24h
+	// value ensures the middleware never fires Abort(408) which would
+	// write HTTP bytes to the hijacked connection and corrupt the WS
+	// frame stream.
 	wsCtx, cancel := context.WithCancel(context.Background())
-	go func() {
-		defer cancel()
-		defer conn.Close(websocket.StatusInternalError, "server error")
-		_ = hub.Attach(wsCtx, userID, conn)
-	}()
+	defer cancel()
 
+	_ = hub.Attach(wsCtx, userID, conn)
 	return nil
 }

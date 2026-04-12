@@ -33,9 +33,14 @@ func init() {
 		"host": config.Env("APP_HOST", "127.0.0.1"),
 		// HTTP Port
 		"port": config.Env("APP_PORT", "3001"),
-		// HTTP Timeout (seconds). SSE connections cycle at this interval;
-		// one-shot events use UserHub for reliable delivery.
-		"request_timeout": 30,
+		// HTTP Timeout (seconds). Set to 24 hours because the global Timeout
+		// middleware wraps every request including WebSocket upgrades. The WS
+		// handler blocks for the lifetime of the connection (minutes to hours).
+		// If the timeout fires, the middleware writes HTTP 408 bytes to the
+		// hijacked WebSocket connection, corrupting the frame stream. A 24h
+		// timeout effectively disables the middleware while still providing a
+		// safety net for truly stuck requests.
+		"request_timeout": 86400,
 		// HTTPS Configuration
 		"tls": map[string]any{
 			// HTTPS Host
