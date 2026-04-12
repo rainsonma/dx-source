@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useMemo, useEffect } from "react";
-import { usePkSSE } from "@/hooks/use-pk-sse";
+import { usePkEvents } from "@/hooks/use-pk-events";
 import type {
   PkForceEndEvent,
   PkPlayerCompleteEvent,
@@ -34,5 +34,5 @@ export function usePkPlayEvents(
       handlersRef.current.onNextLevel?.(data as PkNextLevelEvent),
   }), []);
 
-  usePkSSE(pkId, listeners);
+  usePkEvents(pkId, listeners);
 }

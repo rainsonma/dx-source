@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, use } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Swords, Loader2, ArrowLeft, User } from "lucide-react";
-import { usePkSSE } from "@/hooks/use-pk-sse";
+import { usePkEvents } from "@/hooks/use-pk-events";
 import { fetchPkDetailsAction } from "@/features/web/play-pk/actions/invite.action";
 import { endPkAction } from "@/features/web/play-pk/actions/session.action";
 import { getAvatarColor } from "@/lib/avatar";
@@ -87,7 +87,7 @@ export default function PkRoomPage({
   }, [countdown, details, sessionId, router]);
 
   // SSE listeners
-  usePkSSE(status === "waiting" ? pkId : null, {
+  usePkEvents(status === "waiting" ? pkId : null, {
     pk_invitation_accepted: (data: unknown) => {
       const event = data as { opponent_name: string };
       setStatus("accepted");
