@@ -172,6 +172,7 @@ func Api() {
 			hallController := apicontrollers.NewHallController()
 			protected.Get("/hall/dashboard", hallController.GetDashboard)
 			protected.Get("/hall/heatmap", hallController.GetHeatmap)
+			protected.Get("/hall/menus", hallController.GetMenus)
 
 			// Invite & Referrals
 			protected.Get("/invite", userReferralController.GetInviteData)

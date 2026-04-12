@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Gamepad2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
+import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 import { PlayedGameCard } from "@/features/web/hall/components/played-game-card";
 
 type PlayedGame = {
@@ -31,6 +32,7 @@ type ApiPlayedItem = {
 };
 
 export default function MyGamesPage() {
+  const menu = useHallMenuItem("/hall/games/mine");
   const [games, setGames] = useState<PlayedGame[]>([]);
 
   useEffect(() => {
@@ -58,8 +60,8 @@ export default function MyGamesPage() {
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <PageTopBar
-        title="我的游戏"
-        subtitle="你玩过的所有课程游戏"
+        title={menu?.label ?? ""}
+        subtitle={menu?.subtitle ?? ""}
         searchPlaceholder="搜索游戏..."
       />
 

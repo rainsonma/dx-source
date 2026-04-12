@@ -4,23 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   GraduationCap,
-  LayoutDashboard,
-  Gamepad2,
-  Star,
-  Bell,
-  Sparkles,
-  // MessageSquare, // hidden: AI 随心练 temporarily disabled
-  Users,
-  BookOpen,
   Swords,
-  Trophy,
-  Medal,
-  MessageCircle,
   Gift,
   ChevronRight,
   Crown,
-  RotateCcw,
-  CheckCircle2,
   Ticket,
   Menu,
 } from "lucide-react";
@@ -29,40 +16,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
-const navSections = [
-  {
-    items: [
-      { icon: LayoutDashboard, label: "我的主页", href: "/hall" },
-      { icon: Gamepad2, label: "课程游戏", href: "/hall/games" },
-      { icon: Gamepad2, label: "我的游戏", href: "/hall/games/mine" },
-      { icon: Users, label: "游戏群组", href: "/hall/groups" },
-      { icon: Star, label: "我的收藏", href: "/hall/favorites" },
-      { icon: Bell, label: "消息通知", href: "/hall/notices" },
-    ],
-  },
-  {
-    items: [
-      { icon: Sparkles, label: "AI 随心学", href: "/hall/ai-custom" },
-      // { icon: MessageSquare, label: "AI 随心练", href: "/hall/ai-practice" }, // hidden temporarily
-    ],
-  },
-  {
-    items: [
-      { icon: BookOpen, label: "生词本", href: "/hall/unknown" },
-      { icon: RotateCcw, label: "复习本", href: "/hall/review" },
-      { icon: CheckCircle2, label: "已掌握", href: "/hall/mastered" },
-
-      { icon: Trophy, label: "排行榜", href: "/hall/leaderboard" },
-    ],
-  },
-  {
-    items: [{ icon: MessageCircle, label: "斗学社", href: "/hall/community" }],
-  },
-  {
-    items: [{ icon: Medal, label: "个人中心", href: "/hall/me" }],
-  },
-];
+import { useHallMenu } from "@/features/web/hall/hooks/use-hall-menu";
+import { iconRegistry } from "@/features/web/hall/helpers/icon-registry";
 
 function NavItem({
   icon: Icon,
@@ -177,6 +132,7 @@ function CtaCard({
 
 function SidebarContent({ onNavigate, hasUnreadNotices }: { onNavigate?: () => void; hasUnreadNotices?: boolean }) {
   const pathname = usePathname();
+  const { data: navSections } = useHallMenu();
 
   return (
     <div className="flex h-full flex-col">
@@ -193,22 +149,26 @@ function SidebarContent({ onNavigate, hasUnreadNotices }: { onNavigate?: () => v
 
       {/* Nav — scrollable middle */}
       <nav className="mt-8 flex-1 overflow-y-auto min-h-0 flex flex-col gap-1">
-        {navSections.map((section) => (
-          <div key={section.items[0].label} className="flex flex-col gap-1">
-            {section !== navSections[0] && (
+        {navSections?.map((section, si) => (
+          <div key={si} className="flex flex-col gap-1">
+            {si > 0 && (
               <div className="my-1 h-px w-full bg-border" />
             )}
-            {section.items.map((item) => (
-              <NavItem
-                key={item.label}
-                icon={item.icon}
-                label={item.label}
-                href={item.href}
-                active={pathname === item.href}
-                showDot={item.href === "/hall/notices" && hasUnreadNotices}
-                onClick={onNavigate}
-              />
-            ))}
+            {section.items.map((item) => {
+              const Icon = iconRegistry[item.icon];
+              if (!Icon) return null;
+              return (
+                <NavItem
+                  key={item.href}
+                  icon={Icon}
+                  label={item.label}
+                  href={item.href}
+                  active={pathname === item.href}
+                  showDot={item.href === "/hall/notices" && hasUnreadNotices}
+                  onClick={onNavigate}
+                />
+              );
+            })}
           </div>
         ))}
       </nav>
