@@ -134,3 +134,41 @@ func TestAuthorize_InvalidTopic(t *testing.T) {
 		t.Errorf("want CodeInvalidTopic, got %+v", err)
 	}
 }
+
+func TestAuthorize_PkQueryError(t *testing.T) {
+	a := &Authorizer{
+		isPkParticipant: func(ctx context.Context, userID, pkID string) (bool, error) {
+			return false, errors.New("db down")
+		},
+		isGroupMember: func(ctx context.Context, userID, groupID string) (bool, error) {
+			return false, nil
+		},
+	}
+	err := a.AuthorizeSubscribe(context.Background(), "alice", "pk:pk_abc")
+	if err == nil {
+		t.Fatal("expected internal error")
+	}
+	var rtErr realtimeError
+	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeInternalError {
+		t.Errorf("want CodeInternalError, got %+v", err)
+	}
+}
+
+func TestAuthorize_GroupQueryError(t *testing.T) {
+	a := &Authorizer{
+		isPkParticipant: func(ctx context.Context, userID, pkID string) (bool, error) {
+			return false, nil
+		},
+		isGroupMember: func(ctx context.Context, userID, groupID string) (bool, error) {
+			return false, errors.New("db down")
+		},
+	}
+	err := a.AuthorizeSubscribe(context.Background(), "alice", "group:grp_xyz")
+	if err == nil {
+		t.Fatal("expected internal error")
+	}
+	var rtErr realtimeError
+	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeInternalError {
+		t.Errorf("want CodeInternalError, got %+v", err)
+	}
+}

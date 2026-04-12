@@ -43,7 +43,7 @@ func (a *Authorizer) AuthorizeSubscribe(ctx context.Context, userID, topic strin
 	case KindPk:
 		ok, err := a.isPkParticipant(ctx, userID, parsed.ID)
 		if err != nil {
-			return realtimeError{Code: consts.CodeForbidden, Message: "forbidden"}
+			return realtimeError{Code: consts.CodeInternalError, Message: "pk membership check failed"}
 		}
 		if !ok {
 			return realtimeError{Code: consts.CodeForbidden, Message: "not a participant in this PK"}
@@ -52,7 +52,7 @@ func (a *Authorizer) AuthorizeSubscribe(ctx context.Context, userID, topic strin
 	case KindGroup, KindGroupNotify:
 		ok, err := a.isGroupMember(ctx, userID, parsed.ID)
 		if err != nil {
-			return realtimeError{Code: consts.CodeGroupForbidden, Message: "您不在该群组中"}
+			return realtimeError{Code: consts.CodeInternalError, Message: "group membership check failed"}
 		}
 		if !ok {
 			return realtimeError{Code: consts.CodeGroupForbidden, Message: "您不在该群组中"}
