@@ -42,7 +42,6 @@ func GetLeaderboard(lbType, period, userID string) (*LeaderboardResult, error) {
 	return getWindowedPlayTime(period, userID)
 }
 
-
 // getWindowedExp ranks active users by exp earned within a time window from game_sessions.
 func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
