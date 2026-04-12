@@ -142,3 +142,49 @@ func TestRedisPubSub_CloseTerminatesLoop(t *testing.T) {
 	}
 	_ = ps.Close()
 }
+
+func TestRedisPubSub_ConcurrentUnsubscribeAndDispatch(t *testing.T) {
+	// This test exercises the race between loop() dispatching and
+	// unsubscribe() closing the channel. Before the fix (close outside
+	// lock), it would reliably panic with "send on closed channel"
+	// under -race. After the fix, it must run cleanly.
+	client, _ := newRedisForPubSub(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ps := NewRedisPubSub(ctx, client)
+	t.Cleanup(func() { _ = ps.Close() })
+
+	const topic = "test:race"
+
+	// Initial subscribe to force the Redis SUBSCRIBE registration.
+	_, initialUnsub := ps.Subscribe(topic)
+	defer initialUnsub()
+	time.Sleep(50 * time.Millisecond)
+
+	var wg sync.WaitGroup
+
+	// Goroutine A: publisher
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			_ = ps.Publish(ctx, topic, Event{Type: "burst", Data: i})
+			time.Sleep(100 * time.Microsecond)
+		}
+	}()
+
+	// Goroutine B: subscribe/unsubscribe churn
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 200; i++ {
+			_, unsub := ps.Subscribe(topic)
+			// Immediately unsubscribe — creates close-vs-send windows
+			unsub()
+		}
+	}()
+
+	wg.Wait()
+	// If we reach here without a panic under -race, the fix works.
+}

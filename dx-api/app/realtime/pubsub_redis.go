@@ -87,9 +87,12 @@ func (p *RedisPubSub) Subscribe(topic string) (<-chan Event, func()) {
 			delete(p.locals, topic)
 			delete(p.refs, topic)
 		}
+		// Close under the lock so it cannot race with a concurrent send
+		// in loop(). The dispatch loop also holds p.mu, so we're mutually
+		// exclusive.
+		close(ch)
 		p.mu.Unlock()
 
-		close(ch)
 		if lastLocal {
 			_ = p.pubsub.Unsubscribe(p.ctx, topic)
 		}
@@ -131,18 +134,18 @@ func (p *RedisPubSub) loop() {
 		}
 		event := Event{Type: wire.Type, Data: wire.Data}
 
+		// Dispatch under the lock so unsubscribe() cannot close a channel
+		// while we're about to send to it. The send is non-blocking
+		// (select + default drop-on-full), so lock contention is bounded
+		// to microseconds per message.
 		p.mu.Lock()
-		subs := make([]chan Event, 0, len(p.locals[msg.Channel]))
 		for c := range p.locals[msg.Channel] {
-			subs = append(subs, c)
-		}
-		p.mu.Unlock()
-
-		for _, c := range subs {
 			select {
 			case c <- event:
 			default:
+				// Drop on full — Hub handles slow-consumer policy.
 			}
 		}
+		p.mu.Unlock()
 	}
 }
