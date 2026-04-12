@@ -33,6 +33,7 @@ func (r *M20260405000004CreateGameRecordsTable) Up() error {
 		table.Index("game_level_id")
 		table.Index("content_item_id")
 		table.Index("is_correct")
+		table.Index("user_id", "created_at")
 	})
 }
 
