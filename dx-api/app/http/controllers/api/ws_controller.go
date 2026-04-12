@@ -1,47 +1,42 @@
 package api
 
 import (
-	"bufio"
 	"context"
-	"fmt"
-	"net"
 	"net/http"
 	"strings"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
 	"github.com/goravel/framework/facades"
 
-	"github.com/coder/websocket"
+	gorillaWs "github.com/gorilla/websocket"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/realtime"
 )
 
-// ginHijackBypass wraps Gin's ResponseWriter to bypass its "response already
-// written" check on Hijack(). coder/websocket's Accept calls WriteHeader(101)
-// then Hijack(), but Gin's responseWriter rejects Hijack after any WriteHeader
-// call. This wrapper unwraps all ResponseWriter layers (Goravel → Gin →
-// net/http) and delegates Hijack to the innermost writer which doesn't have
-// that restriction.
-type ginHijackBypass struct {
-	http.ResponseWriter
-}
-
-func (w *ginHijackBypass) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	rw := w.ResponseWriter
-	for {
-		u, ok := rw.(interface{ Unwrap() http.ResponseWriter })
-		if !ok {
-			break
+// upgrader is the gorilla/websocket upgrader. Using gorilla instead of
+// coder/websocket for the HTTP→WS upgrade because gorilla calls Hijack()
+// BEFORE writing the 101 response — bypassing Gin's ResponseWriter which
+// rejects Hijack after any WriteHeader call. Once upgraded, the raw
+// net.Conn is handed to coder/websocket for frame-level I/O.
+var upgrader = gorillaWs.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
 		}
-		rw = u.Unwrap()
-	}
-	hj, ok := rw.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("innermost ResponseWriter (%T) does not implement http.Hijacker", rw)
-	}
-	return hj.Hijack()
+		originsRaw, ok := facades.Config().Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000").(string)
+		if !ok {
+			return false
+		}
+		for _, allowed := range strings.Split(originsRaw, ",") {
+			if strings.TrimSpace(allowed) == origin {
+				return true
+			}
+		}
+		return false
+	},
 }
 
 type WSController struct{}
@@ -65,23 +60,18 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 		return helpers.Error(ctx, http.StatusServiceUnavailable, consts.CodeInternalError, "realtime hub not initialized")
 	}
 
-	originsRaw := facades.Config().Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
-	originPatterns := strings.Split(originsRaw.(string), ",")
-	for i := range originPatterns {
-		originPatterns[i] = strings.TrimSpace(originPatterns[i])
-	}
-
+	w := ctx.Response().Writer()
 	r := ctx.Request().Origin()
-	w := &ginHijackBypass{ctx.Response().Writer()}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns:  originPatterns,
-		CompressionMode: websocket.CompressionDisabled,
-	})
+	// gorilla/websocket.Upgrader.Upgrade calls Hijack() FIRST, then writes
+	// the 101 Switching Protocols response directly to the raw net.Conn.
+	// This bypasses Gin's ResponseWriter entirely, avoiding the
+	// "response already written" error that coder/websocket's Accept hits.
+	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil
 	}
-	defer conn.Close(websocket.StatusInternalError, "server error")
+	defer conn.Close()
 
 	wsCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()

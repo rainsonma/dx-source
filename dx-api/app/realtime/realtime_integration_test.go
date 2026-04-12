@@ -1,7 +1,7 @@
 package realtime
 
 import (
-	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,20 +9,44 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
-	"github.com/coder/websocket"
-	"github.com/coder/websocket/wsjson"
+	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
 )
 
-// TestIntegration_FullRoundtrip wires a complete hub end-to-end (miniredis
-// + RedisPubSub + Hub + WebSocket handler) and verifies events flow from
-// Publish through to a connected client.
+func dialWS(t *testing.T, ts *httptest.Server) *websocket.Conn {
+	t.Helper()
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	return conn
+}
+
+func writeJSON(t *testing.T, conn *websocket.Conn, v any) {
+	t.Helper()
+	if err := conn.WriteJSON(v); err != nil {
+		t.Fatalf("writeJSON: %v", err)
+	}
+}
+
+func readJSON(t *testing.T, conn *websocket.Conn, v any) {
+	t.Helper()
+	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_, msg, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("readJSON: %v", err)
+	}
+	if err := json.Unmarshal(msg, v); err != nil {
+		t.Fatalf("unmarshal: %v (raw: %s)", err, msg)
+	}
+}
+
 func TestIntegration_FullRoundtrip(t *testing.T) {
 	mr := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := t.Context()
 
 	ps := NewRedisPubSub(ctx, client)
 	t.Cleanup(func() { _ = ps.Close() })
@@ -31,40 +55,25 @@ func TestIntegration_FullRoundtrip(t *testing.T) {
 	ts := httptest.NewServer(httpHandlerForTest(hub, "alice"))
 	defer ts.Close()
 
-	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/ws"
-	conn, _, err := websocket.Dial(ctx, wsURL, nil)
-	if err != nil {
-		t.Fatalf("dial: %v", err)
-	}
-	defer conn.Close(websocket.StatusNormalClosure, "done")
+	conn := dialWS(t, ts)
+	defer conn.Close()
 
-	// Subscribe to user:alice
-	if err := wsjson.Write(ctx, conn, Envelope{Op: OpSubscribe, Topic: "user:alice", ID: "req_1"}); err != nil {
-		t.Fatalf("write subscribe: %v", err)
-	}
+	writeJSON(t, conn, Envelope{Op: OpSubscribe, Topic: "user:alice", ID: "req_1"})
 
-	// Read ack
 	var ack Envelope
-	if err := wsjson.Read(ctx, conn, &ack); err != nil {
-		t.Fatalf("read ack: %v", err)
-	}
+	readJSON(t, conn, &ack)
 	if ack.Op != OpAck || ack.ID != "req_1" || ack.OK == nil || !*ack.OK {
 		t.Fatalf("bad ack: %+v", ack)
 	}
 
-	// Give the hub's pubsub.Subscribe a moment to register with miniredis
 	time.Sleep(100 * time.Millisecond)
 
-	// Publish from "server side"
 	if err := ps.Publish(ctx, UserTopic("alice"), Event{Type: "pk_invitation", Data: map[string]string{"from": "bob"}}); err != nil {
 		t.Fatalf("publish: %v", err)
 	}
 
-	// Read event
 	var ev Envelope
-	if err := wsjson.Read(ctx, conn, &ev); err != nil {
-		t.Fatalf("read event: %v", err)
-	}
+	readJSON(t, conn, &ev)
 	if ev.Op != OpEvent {
 		t.Errorf("expected event op, got %s", ev.Op)
 	}
@@ -76,25 +85,17 @@ func TestIntegration_FullRoundtrip(t *testing.T) {
 	}
 }
 
-// TestIntegration_CrossInstanceDelivery simulates two dx-api instances
-// connected to the same Redis. A Publish on instance A reaches a client
-// connected to instance B.
 func TestIntegration_CrossInstanceDelivery(t *testing.T) {
 	mr := miniredis.RunT(t)
 	newClient := func() *redis.Client {
 		return redis.NewClient(&redis.Options{Addr: mr.Addr()})
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx := t.Context()
 
-	// Instance A: publishes
 	psA := NewRedisPubSub(ctx, newClient())
 	t.Cleanup(func() { _ = psA.Close() })
-	hubA := NewHub(psA, NewPresence(newClient()), allowAllAuthorizer())
-	_ = hubA
 
-	// Instance B: has the client connected
 	psB := NewRedisPubSub(ctx, newClient())
 	t.Cleanup(func() { _ = psB.Close() })
 	hubB := NewHub(psB, NewPresence(newClient()), allowAllAuthorizer())
@@ -102,45 +103,35 @@ func TestIntegration_CrossInstanceDelivery(t *testing.T) {
 	tsB := httptest.NewServer(httpHandlerForTest(hubB, "bob"))
 	defer tsB.Close()
 
-	wsURL := "ws" + strings.TrimPrefix(tsB.URL, "http") + "/ws"
-	conn, _, err := websocket.Dial(ctx, wsURL, nil)
-	if err != nil {
-		t.Fatalf("dial: %v", err)
-	}
-	defer conn.Close(websocket.StatusNormalClosure, "done")
+	conn := dialWS(t, tsB)
+	defer conn.Close()
 
-	// Bob subscribes to user:bob via hub B
-	_ = wsjson.Write(ctx, conn, Envelope{Op: OpSubscribe, Topic: "user:bob", ID: "s1"})
+	writeJSON(t, conn, Envelope{Op: OpSubscribe, Topic: "user:bob", ID: "s1"})
 	var ack Envelope
-	_ = wsjson.Read(ctx, conn, &ack)
+	readJSON(t, conn, &ack)
 
 	time.Sleep(100 * time.Millisecond)
 
-	// Publish via instance A's pubsub — should reach Bob on instance B
 	_ = psA.Publish(ctx, UserTopic("bob"), Event{Type: "notif", Data: "hi"})
 
 	var ev Envelope
-	if err := wsjson.Read(ctx, conn, &ev); err != nil {
-		t.Fatalf("read cross-instance event: %v", err)
-	}
+	readJSON(t, conn, &ev)
 	if ev.Type != "notif" {
 		t.Errorf("wrong type: %s", ev.Type)
 	}
 }
 
-// httpHandlerForTest creates an http.Handler that upgrades and attaches the
-// connection to the given hub with the given userID. Used only in tests.
+// httpHandlerForTest creates an http.Handler that upgrades via gorilla and
+// attaches to the hub.
 func httpHandlerForTest(hub *Hub, userID string) http.HandlerFunc {
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-			OriginPatterns: []string{"*"},
-		})
+		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
-		defer conn.Close(websocket.StatusInternalError, "test close")
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		defer conn.Close()
+		ctx := r.Context()
 		_ = hub.Attach(ctx, userID, conn)
 	}
 }

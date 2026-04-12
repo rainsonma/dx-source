@@ -4,13 +4,13 @@ go 1.26
 
 require (
 	github.com/alicebob/miniredis/v2 v2.37.0
-	github.com/coder/websocket v1.8.14
 	github.com/gin-gonic/gin v1.11.0
 	github.com/google/uuid v1.6.0
 	github.com/goravel/framework v1.17.2
 	github.com/goravel/gin v1.17.0
 	github.com/goravel/postgres v1.17.1
 	github.com/goravel/redis v1.17.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/lib/pq v1.12.0
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e

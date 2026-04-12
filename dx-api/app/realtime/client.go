@@ -2,13 +2,13 @@ package realtime
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
 	"dx-api/app/consts"
 
-	"github.com/coder/websocket"
-	"github.com/coder/websocket/wsjson"
+	"github.com/gorilla/websocket"
 )
 
 const (
@@ -16,6 +16,7 @@ const (
 	pingInterval      = 25 * time.Second
 	pingTimeout       = 5 * time.Second
 	readLimitBytes    = 4096
+	writeWait         = 10 * time.Second
 )
 
 // Client owns one WebSocket connection and its read/write loops.
@@ -46,6 +47,11 @@ func newClient(h *Hub, userID string, conn *websocket.Conn) *Client {
 func (c *Client) Serve(ctx context.Context) error {
 	c.conn.SetReadLimit(readLimitBytes)
 
+	// Set up pong handler to extend read deadline on pong receipt
+	c.conn.SetPongHandler(func(string) error {
+		return c.conn.SetReadDeadline(time.Now().Add(pingInterval + pingTimeout))
+	})
+
 	writeCtx, cancelWrite := context.WithCancel(ctx)
 	defer cancelWrite()
 
@@ -56,11 +62,7 @@ func (c *Client) Serve(ctx context.Context) error {
 	go func() {
 		defer close(writeDone)
 		c.writeLoop(writeCtx)
-		// If writeLoop exited before readLoop (e.g., ping failure), force the
-		// connection closed so readLoop's wsjson.Read unblocks. Otherwise the
-		// client goroutine leaks and the hub keeps a stale entry. This is a
-		// no-op if readLoop already initiated the close via cancelWrite.
-		_ = c.conn.Close(websocket.StatusNormalClosure, "write loop exited")
+		c.conn.Close()
 	}()
 
 	err := c.readLoop(ctx)
@@ -75,9 +77,13 @@ func (c *Client) Serve(ctx context.Context) error {
 // to the hub's subscribe/unsubscribe handlers.
 func (c *Client) readLoop(ctx context.Context) error {
 	for {
-		var env Envelope
-		if err := wsjson.Read(ctx, c.conn, &env); err != nil {
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
 			return err
+		}
+		var env Envelope
+		if err := json.Unmarshal(message, &env); err != nil {
+			continue
 		}
 		switch env.Op {
 		case OpSubscribe:
@@ -113,14 +119,13 @@ func (c *Client) writeLoop(ctx context.Context) {
 			if !ok {
 				return
 			}
-			if err := wsjson.Write(ctx, c.conn, env); err != nil {
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteJSON(env); err != nil {
 				return
 			}
 		case <-ticker.C:
-			pingCtx, cancel := context.WithTimeout(ctx, pingTimeout)
-			err := c.conn.Ping(pingCtx)
-			cancel()
-			if err != nil {
+			_ = c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				return
 			}
 		case <-ctx.Done():
@@ -140,8 +145,7 @@ func (c *Client) enqueue(env Envelope) {
 	}
 
 	// Issue C: detect session_replaced kick on the user's kick topic and
-	// force-close the connection with WS code 4001 instead of delivering
-	// the event. The client's onclose handler redirects to signin.
+	// force-close the connection with WS code 4001.
 	if env.Op == OpEvent && env.Type == "session_replaced" {
 		if parsed, err := ParseTopic(env.Topic); err == nil && parsed.Kind == KindUserKick && parsed.ID == c.userID {
 			c.mu.Lock()
@@ -150,7 +154,8 @@ func (c *Client) enqueue(env Envelope) {
 				c.mu.Unlock()
 				go func() {
 					if c.conn != nil {
-						_ = c.conn.Close(4001, "session_replaced")
+						msg := websocket.FormatCloseMessage(4001, "session_replaced")
+						_ = c.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(writeWait))
 					}
 				}()
 				return
@@ -174,14 +179,12 @@ func (c *Client) enqueue(env Envelope) {
 	}
 }
 
-// addTopic records a topic subscription on the client. Must be called under
-// the hub's lock.
+// addTopic records a topic subscription on the client.
 func (c *Client) addTopic(topic string) {
 	c.topics[topic] = struct{}{}
 }
 
-// removeTopic removes a topic subscription from the client. Must be called
-// under the hub's lock.
+// removeTopic removes a topic subscription from the client.
 func (c *Client) removeTopic(topic string) {
 	delete(c.topics, topic)
 }

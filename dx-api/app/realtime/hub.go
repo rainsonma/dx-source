@@ -11,7 +11,7 @@ import (
 
 	"dx-api/app/consts"
 
-	"github.com/coder/websocket"
+	"github.com/gorilla/websocket"
 	"github.com/goravel/framework/facades"
 )
 
@@ -130,7 +130,8 @@ func (h *Hub) Shutdown(ctx context.Context) error {
 	for _, c := range clients {
 		go func(client *Client) {
 			if client.conn != nil {
-				_ = client.conn.Close(4002, "server_shutdown")
+				msg := websocket.FormatCloseMessage(4002, "server_shutdown")
+			_ = client.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
 			}
 		}(c)
 	}
@@ -155,7 +156,7 @@ func (h *Hub) Shutdown(ctx context.Context) error {
 			h.mu.RUnlock()
 			for _, c := range stragglers {
 				if c.conn != nil {
-					_ = c.conn.CloseNow()
+					_ = c.conn.Close()
 				}
 			}
 			goto done
@@ -315,7 +316,8 @@ func (h *Hub) fanout(topic string, ch <-chan Event) {
 func (h *Hub) kickSlowConsumer(c *Client) {
 	go func() {
 		if c.conn != nil {
-			_ = c.conn.Close(4003, "slow_consumer")
+			msg := websocket.FormatCloseMessage(4003, "slow_consumer")
+		_ = c.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
 		}
 	}()
 }
