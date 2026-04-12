@@ -416,3 +416,34 @@ func TestHub_ShutdownSetsFlag(t *testing.T) {
 		t.Error("should be shutting down after Shutdown")
 	}
 }
+
+func TestClient_SessionReplacedKickDetected(t *testing.T) {
+	hub := NewHub(newFakePubSub(), nil, allowAllAuthorizer())
+
+	c := &Client{
+		hub:    hub,
+		userID: "alice",
+		topics: map[string]struct{}{"user:alice:kick": {}},
+		send:   make(chan Envelope, 16),
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer func() { _ = recover(); close(done) }()
+		c.enqueue(Envelope{
+			Op:    OpEvent,
+			Topic: "user:alice:kick",
+			Type:  "session_replaced",
+		})
+	}()
+	<-done
+
+	time.Sleep(10 * time.Millisecond)
+
+	c.mu.Lock()
+	closed := c.closed
+	c.mu.Unlock()
+	if !closed {
+		t.Error("client should be marked closed after session_replaced kick")
+	}
+}

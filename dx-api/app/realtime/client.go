@@ -139,6 +139,27 @@ func (c *Client) enqueue(env Envelope) {
 		return
 	}
 
+	// Issue C: detect session_replaced kick on the user's kick topic and
+	// force-close the connection with WS code 4001 instead of delivering
+	// the event. The client's onclose handler redirects to signin.
+	if env.Op == OpEvent && env.Type == "session_replaced" {
+		if parsed, err := ParseTopic(env.Topic); err == nil && parsed.Kind == KindUserKick && parsed.ID == c.userID {
+			c.mu.Lock()
+			if !c.closed {
+				c.closed = true
+				c.mu.Unlock()
+				go func() {
+					if c.conn != nil {
+						_ = c.conn.Close(4001, "session_replaced")
+					}
+				}()
+				return
+			}
+			c.mu.Unlock()
+			return
+		}
+	}
+
 	select {
 	case c.send <- env:
 	default:

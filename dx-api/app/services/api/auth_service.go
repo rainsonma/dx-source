@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
+	"dx-api/app/realtime"
 )
 
 // issueSession generates a JWT via Goravel and stores login timestamp in Redis.
@@ -28,6 +30,11 @@ func issueSession(ctx contractshttp.Context, userID string) (string, error) {
 	if err := helpers.RedisSet(fmt.Sprintf("user_auth:%s:user", userID), loginTs, ttl); err != nil {
 		return "", fmt.Errorf("failed to store login timestamp: %w", err)
 	}
+
+	_ = realtime.Publish(context.Background(), realtime.UserKickTopic(userID), realtime.Event{
+		Type: "session_replaced",
+		Data: map[string]string{"reason": "another_device"},
+	})
 
 	return token, nil
 }
