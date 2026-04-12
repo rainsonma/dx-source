@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -159,7 +159,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
-  const subscribe = (topic: string, handler: EventHandler) => {
+  // useCallback with empty deps: subscribe is stable across renders because
+  // it only uses refs (wsRef, subsRef, ackedRef) which are themselves stable.
+  // Without useCallback, subscribe is a new function on every render, causing
+  // useTopic's useEffect (which has [topic, subscribe] deps) to fire on every
+  // render — creating a subscribe/cleanup/resubscribe cycle that races with
+  // the WS onopen handler and results in zero wire frames.
+  const subscribe = useCallback((topic: string, handler: EventHandler) => {
     let set = subsRef.current.get(topic);
     if (!set) {
       set = new Set();
@@ -184,7 +190,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         }
       }
     };
-  };
+  }, []);
 
   return (
     <WSContext.Provider value={{ status, subscribe, userId }}>
