@@ -14,7 +14,7 @@ const EMPTY_DATA: LeaderboardResult = { entries: [], myRank: null };
 /** Manage leaderboard tab state and data fetching */
 export function useLeaderboard() {
   const [type, setType] = useState<LeaderboardType>("playtime");
-  const [period, setPeriod] = useState<LeaderboardPeriod>("all");
+  const [period, setPeriod] = useState<LeaderboardPeriod>("month");
   const [data, setData] = useState<LeaderboardResult>(EMPTY_DATA);
   const [isLoading, setIsLoading] = useState(true);
 

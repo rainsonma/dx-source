@@ -429,7 +429,7 @@ export const favoriteApi = {
 
 // Leaderboard API functions
 export const leaderboardApi = {
-  /** Get leaderboard by type (exp|playtime) and period (all|day|week|month) */
+  /** Get leaderboard by type (exp|playtime) and period (day|week|month) */
   async getLeaderboard(type: string, period: string) {
     return apiClient.get<unknown>(`/api/leaderboard?type=${type}&period=${period}`);
   },

@@ -19,7 +19,6 @@ const TYPE_TABS: { label: string; value: LeaderboardType }[] = [
 ];
 
 const PERIOD_TABS: { label: string; value: LeaderboardPeriod }[] = [
-  { label: "总榜", value: "all" },
   { label: "日榜", value: "day" },
   { label: "周榜", value: "week" },
   { label: "月榜", value: "month" },
