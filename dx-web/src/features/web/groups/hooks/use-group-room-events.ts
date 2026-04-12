@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useMemo, useEffect } from "react";
-import { useGroupSSE } from "@/hooks/use-group-sse";
+import { useGroupEvents } from "@/hooks/use-group-events";
 import type {
   GroupGameStartEvent,
   GroupLevelCompleteEvent,
@@ -18,7 +18,7 @@ type GroupEventHandlers = {
   onDismissed?: () => void;
 };
 
-export function useGroupEvents(
+export function useGroupRoomEvents(
   groupId: string | null,
   handlers: GroupEventHandlers
 ) {
@@ -39,5 +39,5 @@ export function useGroupEvents(
     group_dismissed: () => handlersRef.current.onDismissed?.(),
   }), []);
 
-  useGroupSSE(groupId, listeners);
+  useGroupEvents(groupId, listeners);
 }

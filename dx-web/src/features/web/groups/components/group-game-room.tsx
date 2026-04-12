@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { swrMutate } from "@/lib/swr";
 import type { GroupDetail, RoomMember } from "../types/group";
 import { groupApi } from "../actions/group.action";
-import { useGroupEvents } from "../hooks/use-group-events";
+import { useGroupRoomEvents } from "../hooks/use-group-room-events";
 import { StartGameDialog } from "./start-game-dialog";
 
 const avatarColors = [
@@ -62,7 +62,7 @@ export function GroupGameRoom({ groupId }: GroupGameRoomProps) {
   }, [group, fetchRoomMembers]);
 
   // SSE: listen for game start, member join/leave
-  useGroupEvents(group ? groupId : null, {
+  useGroupRoomEvents(group ? groupId : null, {
     onGameStart: (event) => {
       try {
         sessionStorage.setItem(
