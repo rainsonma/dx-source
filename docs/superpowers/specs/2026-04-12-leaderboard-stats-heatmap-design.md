@@ -67,10 +67,10 @@ The heatmap query on `game_records` filters by `user_id` and `created_at` range.
 
 ### Solution
 
-Add a compound index via new migration:
+Add a compound index directly in the existing migration `20260405000004_create_game_records_table.go` (DB will be reset fresh):
 
-```sql
-CREATE INDEX idx_game_records_user_created ON game_records (user_id, created_at);
+```go
+table.Index("user_id", "created_at")
 ```
 
 No query rewrite needed. The existing `TO_CHAR` grouping is fine — it operates on a small result set (max ~365 rows) after the index narrows the scan.
