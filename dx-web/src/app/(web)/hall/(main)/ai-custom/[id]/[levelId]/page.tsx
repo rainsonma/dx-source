@@ -61,7 +61,7 @@ export default function CourseGameLevelPage({
       <BreadcrumbTopBar
         backHref={`/hall/ai-custom/${id}`}
         items={[
-          { label: "我创建的课程游戏", href: "/hall/ai-custom", maxChars: 10 },
+          { label: "我创建的课程", href: "/hall/ai-custom", maxChars: 10 },
           { label: game?.name ?? id, href: `/hall/ai-custom/${id}`, maxChars: 5 },
           { label: level?.name ?? levelId, maxChars: 5 },
         ]}
