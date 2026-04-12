@@ -1,12 +1,16 @@
 package bootstrap
 
 import (
+	"context"
+
 	"github.com/goravel/framework/contracts/console"
 	contractsfoundation "github.com/goravel/framework/contracts/foundation"
 	"github.com/goravel/framework/contracts/schedule"
 	"github.com/goravel/framework/foundation"
 
 	"dx-api/app/console/commands"
+	"dx-api/app/helpers"
+	"dx-api/app/realtime"
 	"dx-api/config"
 	"dx-api/routes"
 
@@ -14,7 +18,7 @@ import (
 )
 
 func Boot() contractsfoundation.Application {
-	return foundation.Setup().
+	app := foundation.Setup().
 		WithMigrations(Migrations).
 		WithSeeders(Seeders).
 		WithRouting(func() {
@@ -42,4 +46,20 @@ func Boot() contractsfoundation.Application {
 		WithProviders(Providers).
 		WithConfig(config.Boot).
 		Create()
+
+	setupRealtime(app)
+
+	return app
+}
+
+func setupRealtime(_ contractsfoundation.Application) {
+	redisClient := helpers.GetRedis()
+	ctx := context.Background()
+
+	pubsub := realtime.NewRedisPubSub(ctx, redisClient)
+	realtime.SetDefault(pubsub)
+
+	presence := realtime.NewPresence(redisClient)
+	authorizer := realtime.NewAuthorizer()
+	realtime.SetDefaultHub(realtime.NewHub(pubsub, presence, authorizer))
 }

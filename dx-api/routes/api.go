@@ -281,6 +281,10 @@ func Api() {
 			protected.Post("/user/ping", userSSEController.Ping)
 			protected.Get("/user/events", userSSEController.Events)
 
+			// WebSocket
+			wsController := apicontrollers.NewWSController()
+			protected.Get("/ws", wsController.Handle)
+
 			// User verify
 			userVerifyController := apicontrollers.NewUserVerifyController()
 			protected.Post("/users/verify-online", userVerifyController.VerifyOnline)
