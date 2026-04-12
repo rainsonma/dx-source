@@ -69,6 +69,11 @@ func (c *HallController) GetHeatmap(ctx contractshttp.Context) contractshttp.Res
 	return helpers.Success(ctx, data)
 }
 
+// GetMenus returns the sidebar menu structure.
+func (c *HallController) GetMenus(ctx contractshttp.Context) contractshttp.Response {
+	return helpers.Success(ctx, consts.HallMenuSections())
+}
+
 // currentYear returns the current year.
 func currentYear() int {
 	return time.Now().Year()
