@@ -147,12 +147,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
       if (wsRef.current) {
-        // Only close if the connection is actually open. In React 19
-        // StrictMode dev mode, the cleanup fires while the WS is still
-        // CONNECTING (readyState 0), producing a spurious console warning.
-        if (wsRef.current.readyState === WebSocket.OPEN) {
-          wsRef.current.close(1000, "unmount");
-        }
+        // Always close, even if still CONNECTING. Leaving an orphaned
+        // CONNECTING WebSocket open can cause "Invalid frame header"
+        // errors when the abandoned connection races with the new one.
+        // React StrictMode in dev will log a benign console warning
+        // ("WebSocket is closed before the connection is established")
+        // but that's preferable to leaving dangling server resources.
+        wsRef.current.close(1000, "unmount");
         wsRef.current = null;
       }
     };
