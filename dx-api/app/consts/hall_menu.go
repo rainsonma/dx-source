@@ -19,6 +19,7 @@ func HallMenuSections() []HallMenuSection {
 		{Items: []HallMenuItem{
 			{Icon: "LayoutDashboard", Label: "我的主页", Subtitle: "", Href: "/hall"},
 			{Icon: "Gamepad2", Label: "学习课程", Subtitle: "选择一个游戏模式，边玩边学英语！", Href: "/hall/games"},
+			{Icon: "BookMarked", Label: "同步练习", Subtitle: "同步参考练习，巩固学习内容", Href: "/hall/sync"},
 			{Icon: "Gamepad2", Label: "我的课程", Subtitle: "你玩过的所有学习课程", Href: "/hall/games/mine"},
 			{Icon: "Users", Label: "学习群组", Subtitle: "浏览并加入学习群组，与小伙伴一起进步", Href: "/hall/groups"},
 			{Icon: "Star", Label: "我的收藏", Subtitle: "收藏你喜欢的课程游戏和学习内容", Href: "/hall/favorites"},
