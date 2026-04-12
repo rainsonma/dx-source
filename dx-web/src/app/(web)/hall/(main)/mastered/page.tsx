@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
+import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 import { MasterContent } from "@/features/web/user-master/components/master-content";
 import type { MasterItem, MasterStats } from "@/features/web/user-master/actions/master.action";
 
 export default function MasterPage() {
+  const menu = useHallMenuItem("/hall/mastered");
   const [items, setItems] = useState<MasterItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [stats, setStats] = useState<MasterStats>({ total: 0, thisWeek: 0, thisMonth: 0 });
@@ -33,8 +35,8 @@ export default function MasterPage() {
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <PageTopBar
-        title="已掌握"
-        subtitle="你已经掌握的词汇和知识点"
+        title={menu?.label ?? ""}
+        subtitle={menu?.subtitle ?? ""}
         searchPlaceholder="搜索已掌握内容..."
       />
       <MasterContent

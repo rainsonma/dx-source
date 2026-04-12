@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
+import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 import { FavoriteCard } from "@/features/web/hall/components/favorite-card";
 
 type FavoriteGame = {
@@ -27,6 +28,7 @@ type ApiFavoriteItem = {
 };
 
 export default function FavoritesPage() {
+  const menu = useHallMenuItem("/hall/favorites");
   const [favorites, setFavorites] = useState<FavoriteGame[]>([]);
 
   useEffect(() => {
@@ -52,8 +54,8 @@ export default function FavoritesPage() {
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <PageTopBar
-        title="我的收藏"
-        subtitle="收藏你喜欢的课程游戏和学习内容"
+        title={menu?.label ?? ""}
+        subtitle={menu?.subtitle ?? ""}
         searchPlaceholder="搜索收藏..."
       />
 

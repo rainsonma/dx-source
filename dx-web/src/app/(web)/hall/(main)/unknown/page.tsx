@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
+import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 import { UnknownContent } from "@/features/web/user-unknown/components/unknown-content";
 import type { UnknownItem, UnknownStats } from "@/features/web/user-unknown/actions/unknown.action";
 
 export default function UnknownPage() {
+  const menu = useHallMenuItem("/hall/unknown");
   const [items, setItems] = useState<UnknownItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [stats, setStats] = useState<UnknownStats>({ total: 0, today: 0, lastThreeDays: 0 });
@@ -33,8 +35,8 @@ export default function UnknownPage() {
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <PageTopBar
-        title="生词本"
-        subtitle="记录你遇到的新单词和生词"
+        title={menu?.label ?? ""}
+        subtitle={menu?.subtitle ?? ""}
         searchPlaceholder="搜索生词..."
       />
       <UnknownContent

@@ -12,8 +12,10 @@ import { StatsBlock } from "@/features/web/me/components/stats-block";
 import { InviteBlock } from "@/features/web/me/components/invite-block";
 import { toMeProfile } from "@/features/web/me/types/me.types";
 import type { ApiProfileData } from "@/features/web/me/types/me.types";
+import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 
 export default function MePage() {
+  const menu = useHallMenuItem("/hall/me");
   const { data: raw, mutate } = useSWR<ApiProfileData>("/api/user/profile");
   const profile = useMemo(() => raw ? toMeProfile(raw) : null, [raw]);
 
@@ -24,8 +26,8 @@ export default function MePage() {
   return (
     <div className="flex min-h-full flex-col gap-6 px-4 py-5 md:px-8 md:py-7">
       <PageTopBar
-        title="个人中心"
-        subtitle="管理你的个人资料和账号信息"
+        title={menu?.label ?? ""}
+        subtitle={menu?.subtitle ?? ""}
       />
       <MeHero profile={profile} onProfileChanged={refreshProfile} />
       <div className="flex flex-col gap-5">
