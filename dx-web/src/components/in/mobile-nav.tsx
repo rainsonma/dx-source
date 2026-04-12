@@ -14,7 +14,6 @@ import {
 const navLinks = [
   { href: "/docs", label: "文档" },
   { href: "/features", label: "功能" },
-  { href: "/changelog", label: "更新日志" },
   { href: "#faq", label: "常见问题" },
   { href: "#contact", label: "联系我们" },
 ];

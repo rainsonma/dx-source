@@ -1,7 +1,6 @@
 import {
   Keyboard,
   Swords,
-  Headphones,
   Shuffle,
   Crosshair,
   type LucideIcon,
@@ -26,23 +25,15 @@ const features: {
     icon: Swords,
     iconClassName: "text-teal-600",
     bgClassName: "bg-blue-100",
-    title: "单词配对",
+    title: "词汇配对",
     description:
-      "与全球学习者实时对战，在紧张刺激的单词配对比拼中提升你的词汇量和反应速度。",
-  },
-  {
-    icon: Headphones,
-    iconClassName: "text-orange-500",
-    bgClassName: "bg-amber-100",
-    title: "听力闯关",
-    description:
-      "听音辨词，提升英语听力理解能力。从简单对话到复杂场景，逐步进阶突破听力瓶颈。",
+      "与全球学习者实时对战，在紧张刺激的词汇配对比拼中提升你的词汇量和反应速度。",
   },
   {
     icon: Shuffle,
     iconClassName: "text-emerald-600",
     bgClassName: "bg-pink-100",
-    title: "单词消消乐",
+    title: "词汇消消乐",
     description:
       "记忆配对消除游戏，将英文单词与中文释义快速匹配。考验记忆力与反应速度，越快消除分数越高。",
   },
@@ -82,9 +73,10 @@ export function FeaturesSection() {
   return (
     <section
       id="features"
-      className="flex w-full flex-col items-center gap-[60px] bg-gradient-to-b from-white to-slate-50 px-[120px] py-[100px]"
+      className="w-full bg-gradient-to-b from-white to-slate-50 py-[100px]"
     >
-      <div className="flex flex-col items-center gap-4">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-[60px] px-[120px]">
+        <div className="flex flex-col items-center gap-4">
         <span className="text-sm font-semibold tracking-wide text-violet-500">
           核心玩法
         </span>
@@ -95,17 +87,11 @@ export function FeaturesSection() {
           每个游戏针对不同英语技能，从词汇到听力到拼写，全面覆盖。
         </p>
       </div>
-      <div className="flex w-full flex-col gap-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.slice(0, 3).map((feature) => (
-            <FeatureCard key={feature.title} feature={feature} />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {features.slice(3).map((feature) => (
-            <FeatureCard key={feature.title} feature={feature} />
-          ))}
-        </div>
+      <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
+        {features.map((feature) => (
+          <FeatureCard key={feature.title} feature={feature} />
+        ))}
+      </div>
       </div>
     </section>
   );

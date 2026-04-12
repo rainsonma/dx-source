@@ -65,8 +65,9 @@ function AiFeatureCard({
 
 export function AiFeaturesSection() {
   return (
-    <section className="flex w-full flex-col items-center gap-[60px] bg-gradient-to-b from-slate-50 to-teal-50 px-[120px] py-[100px]">
-      <div className="flex flex-col items-center gap-4">
+    <section className="w-full bg-gradient-to-b from-slate-50 to-teal-50 py-[100px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-[60px] px-[120px]">
+        <div className="flex flex-col items-center gap-4">
         <span className="text-sm font-semibold tracking-wide text-teal-600">
           AI 驱动
         </span>
@@ -81,6 +82,7 @@ export function AiFeaturesSection() {
         {aiFeatures.map((feature) => (
           <AiFeatureCard key={feature.title} feature={feature} />
         ))}
+      </div>
       </div>
     </section>
   );

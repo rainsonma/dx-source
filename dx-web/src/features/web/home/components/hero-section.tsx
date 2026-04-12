@@ -3,7 +3,7 @@ import { Gamepad2, ArrowRight } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="flex w-full flex-col items-center gap-8 px-[120px] pb-[100px] pt-20">
+    <section className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-8 px-[120px] pb-[100px] pt-20">
       <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-5 py-2">
         <div className="h-2 w-2 rounded-full bg-green-400" />
         <span className="text-[13px] font-medium text-slate-500">

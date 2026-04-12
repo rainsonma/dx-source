@@ -18,7 +18,7 @@ const footerColumns = [
 export function Footer() {
   return (
     <footer id="contact" className="scroll-mt-20 w-full border-t border-slate-200 bg-slate-50">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-12 px-[120px] pb-10 pt-[60px]">
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-12 px-[120px] pb-10 pt-[60px]">
         {/* Top section */}
         <div className="flex w-full flex-col gap-10 xl:flex-row xl:justify-between">
           {/* Brand */}

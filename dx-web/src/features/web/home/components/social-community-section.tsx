@@ -62,8 +62,9 @@ function CommunityCard({
 
 export function SocialCommunitySection() {
   return (
-    <section className="flex w-full flex-col items-center gap-[60px] bg-gradient-to-b from-pink-50 to-orange-50 px-[120px] py-[100px]">
-      <div className="flex flex-col items-center gap-4">
+    <section className="w-full bg-gradient-to-b from-pink-50 to-orange-50 py-[100px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-[60px] px-[120px]">
+        <div className="flex flex-col items-center gap-4">
         <span className="text-sm font-semibold tracking-wide text-orange-600">
           社交学习
         </span>
@@ -78,6 +79,7 @@ export function SocialCommunitySection() {
         {communityFeatures.map((feature) => (
           <CommunityCard key={feature.title} feature={feature} />
         ))}
+      </div>
       </div>
     </section>
   );

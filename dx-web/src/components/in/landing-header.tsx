@@ -8,7 +8,7 @@ interface LandingHeaderProps {
 
 export function LandingHeader({ isLoggedIn = false }: LandingHeaderProps) {
   return (
-    <header className="flex h-20 w-full items-center justify-between px-5 lg:px-20">
+    <header className="mx-auto flex h-20 w-full max-w-[1280px] items-center justify-between px-5 lg:px-20">
       <Link href="/" className="flex items-center gap-2.5">
         <GraduationCap className="h-9 w-9 text-teal-600" />
         <span className="text-[22px] font-semibold text-slate-900">斗学</span>
@@ -25,12 +25,6 @@ export function LandingHeader({ isLoggedIn = false }: LandingHeaderProps) {
           className="text-[15px] font-medium text-slate-500 hover:text-slate-700"
         >
           功能
-        </Link>
-        <Link
-          href="/changelog"
-          className="text-[15px] font-medium text-slate-500 hover:text-slate-700"
-        >
-          更新日志
         </Link>
         <Link
           href="#faq"

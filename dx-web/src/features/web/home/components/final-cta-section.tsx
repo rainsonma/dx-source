@@ -3,8 +3,9 @@ import { Rocket } from "lucide-react";
 
 export function FinalCtaSection() {
   return (
-    <section className="flex w-full flex-col items-center gap-8 bg-gradient-to-b from-pink-50 to-teal-50 px-[120px] py-[100px]">
-      <div className="h-1 w-[800px] rounded-full bg-gradient-to-r from-teal-400/0 via-teal-400 via-30% to-violet-500/0" />
+    <section className="w-full bg-gradient-to-b from-pink-50 to-teal-50 py-[100px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-8 px-[120px]">
+        <div className="h-1 w-[800px] rounded-full bg-gradient-to-r from-teal-400/0 via-teal-400 via-30% to-violet-500/0" />
       <h2 className="text-center text-[52px] font-extrabold tracking-[-2px] text-slate-900">
         准备好开始你的冒险了吗？
       </h2>
@@ -18,6 +19,7 @@ export function FinalCtaSection() {
         <Rocket className="h-[22px] w-[22px] text-white" />
         <span className="text-[17px] font-bold text-white">开始你的斗学冒险</span>
       </Link>
+      </div>
     </section>
   );
 }

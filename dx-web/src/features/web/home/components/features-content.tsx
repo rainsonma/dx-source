@@ -2,7 +2,6 @@ import {
   Zap,
   Swords,
   Keyboard,
-  Headphones,
   Shuffle,
   Bomb,
   CheckCircle2,
@@ -16,10 +15,9 @@ import {
 import Link from "next/link";
 
 const gameCards = [
-  { icon: Swords, iconBg: "bg-blue-600/10", iconColor: "text-blue-600", title: "单词配对", desc: "在限定时间内快速配对英文单词和中文释义，提升词汇反应速度。", bullets: ["限时挑战模式", "多人实时对战", "自动适配难度"] },
+  { icon: Swords, iconBg: "bg-blue-600/10", iconColor: "text-blue-600", title: "词汇配对", desc: "在限定时间内快速配对英文单词和中文释义，提升词汇反应速度。", bullets: ["限时挑战模式", "多人实时对战", "自动适配难度"] },
   { icon: Keyboard, iconBg: "bg-purple-600/10", iconColor: "text-purple-600", title: "连词成句", desc: "根据提示连词成句，比拼速度和正确率，训练英语组句能力。", bullets: ["连词组句", "AI 语音播报", "拼写错误回顾"] },
-  { icon: Headphones, iconBg: "bg-amber-500/10", iconColor: "text-amber-500", title: "听力闯关", desc: "分级听力闯关，从句子听写到段落理解，系统化提升听力。", bullets: ["多级难度闯关", "原声音频素材", "智能评分反馈"] },
-  { icon: Shuffle, iconBg: "bg-pink-500/10", iconColor: "text-pink-500", title: "单词消消乐", desc: "趣味消除游戏与词汇记忆结合，在娱乐中巩固单词记忆。", bullets: ["趣味消除玩法", "词汇巩固复习", "连击加分机制"] },
+  { icon: Shuffle, iconBg: "bg-pink-500/10", iconColor: "text-pink-500", title: "词汇消消乐", desc: "趣味消除游戏与词汇记忆结合，在娱乐中巩固单词记忆。", bullets: ["趣味消除玩法", "词汇巩固复习", "连击加分机制"] },
 ];
 
 const bigCard = {
@@ -117,7 +115,7 @@ export function FeaturesContent() {
     <>
       {/* Hero */}
       <div className="bg-gradient-to-b from-teal-50 via-blue-50 via-45% via-purple-50 via-70% to-white">
-        <div className="flex flex-col gap-6 px-4 pb-16 pt-12 sm:px-8 md:px-16 md:pb-[100px] md:pt-20 lg:px-[120px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 pb-16 pt-12 sm:px-8 md:px-16 md:pb-[100px] md:pt-20 lg:px-[120px]">
           <div className="flex items-center gap-2 self-start rounded-full bg-teal-600/10 px-5 py-2">
             <Zap className="h-4 w-4 text-teal-600" />
             <span className="text-[13px] font-semibold text-teal-600">
@@ -134,7 +132,8 @@ export function FeaturesContent() {
       </div>
 
       {/* Game Modes */}
-      <section className="flex flex-col items-center gap-10 bg-gradient-to-b from-white to-teal-50 px-4 py-16 sm:px-8 md:gap-[60px] md:px-16 md:py-[100px] lg:px-[120px]">
+      <section className="w-full bg-gradient-to-b from-white to-teal-50 py-16 md:py-[100px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-4 sm:px-8 md:gap-[60px] md:px-16 lg:px-[120px]">
         <SectionHeader
           label="多重游戏模式"
           labelColor="text-purple-600"
@@ -149,10 +148,12 @@ export function FeaturesContent() {
           </div>
           <FeatureCard {...bigCard} />
         </div>
+        </div>
       </section>
 
       {/* Course Platform */}
-      <section className="flex flex-col items-center gap-10 bg-gradient-to-b from-teal-50 to-purple-50 px-4 py-16 sm:px-8 md:gap-[60px] md:px-16 md:py-[100px] lg:px-[120px]">
+      <section className="w-full bg-gradient-to-b from-teal-50 to-purple-50 py-16 md:py-[100px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-4 sm:px-8 md:gap-[60px] md:px-16 lg:px-[120px]">
         <SectionHeader
           label="闯关式课程"
           labelColor="text-purple-500"
@@ -171,13 +172,15 @@ export function FeaturesContent() {
             ))}
           </div>
           <p className="max-w-[737px] text-center text-sm leading-[1.7] text-slate-600 md:text-base">
-            每个课程由多个主题单元组成，每个单元包含 5-10 个游戏关卡。关卡类型涵盖单词配对、连词成句、听力闯关、语法探索和阅读理解。通关当前关卡才能解锁下一关，每个单元结束后有综合测试，确保知识点真正掌握。支持用户自定义创建课程，AI 根据指定主题自动生成关卡内容与难度梯度。
+            每个课程由多个主题单元组成，每个单元包含 5-10 个游戏关卡。关卡类型涵盖词汇配对、连词成句、听力闯关、语法探索和阅读理解。通关当前关卡才能解锁下一关，每个单元结束后有综合测试，确保知识点真正掌握。支持用户自定义创建课程，AI 根据指定主题自动生成关卡内容与难度梯度。
           </p>
+        </div>
         </div>
       </section>
 
       {/* Smart Vocab */}
-      <section className="flex flex-col items-center gap-10 bg-gradient-to-b from-purple-50 to-pink-50 px-4 py-16 sm:px-8 md:gap-[60px] md:px-16 md:py-[100px] lg:px-[120px]">
+      <section className="w-full bg-gradient-to-b from-purple-50 to-pink-50 py-16 md:py-[100px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-4 sm:px-8 md:gap-[60px] md:px-16 lg:px-[120px]">
         <SectionHeader
           label="科学记忆系统"
           labelColor="text-pink-500"
@@ -189,10 +192,12 @@ export function FeaturesContent() {
             <FeatureCard key={card.title} {...card} />
           ))}
         </div>
+        </div>
       </section>
 
       {/* Social Community */}
-      <section className="flex flex-col items-center gap-10 bg-gradient-to-b from-pink-50 to-orange-50 px-4 py-16 sm:px-8 md:gap-[60px] md:px-16 md:py-[100px] lg:px-[120px]">
+      <section className="w-full bg-gradient-to-b from-pink-50 to-orange-50 py-16 md:py-[100px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-4 sm:px-8 md:gap-[60px] md:px-16 lg:px-[120px]">
         <SectionHeader
           label="学习不孤单"
           labelColor="text-orange-600"
@@ -204,10 +209,12 @@ export function FeaturesContent() {
             <FeatureCard key={card.title} {...card} />
           ))}
         </div>
+        </div>
       </section>
 
       {/* CTA */}
-      <section className="flex flex-col items-center gap-8 bg-gradient-to-b from-orange-50 to-teal-50 px-4 py-16 sm:px-8 md:px-16 md:py-[100px] lg:px-[120px]">
+      <section className="w-full bg-gradient-to-b from-orange-50 to-teal-50 py-16 md:py-[100px]">
+        <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-8 px-4 sm:px-8 md:px-16 lg:px-[120px]">
         <div className="hidden h-1 w-full max-w-[800px] rounded-full bg-gradient-to-r from-teal-400/0 via-teal-400 via-30% via-purple-500 via-70% to-purple-500/0 md:block" />
         <h2 className="text-center text-3xl font-extrabold tracking-tighter text-slate-900 md:text-5xl">
           每一项功能，都为你的进步而生
@@ -228,6 +235,7 @@ export function FeaturesContent() {
           >
             查看文档
           </Link>
+        </div>
         </div>
       </section>
     </>

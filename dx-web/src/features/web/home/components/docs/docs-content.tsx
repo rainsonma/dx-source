@@ -3,7 +3,6 @@ import {
   Gamepad2,
   Brain,
   Users,
-  ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
@@ -70,6 +69,7 @@ const codeLines = [
 export function DocsPageContent() {
   return (
     <div className="flex flex-1 bg-slate-50">
+      <div className="mx-auto flex w-full max-w-[1280px]">
       {/* Left sidebar */}
       <aside className="hidden w-[260px] shrink-0 border-r border-slate-200 bg-white px-5 py-6 lg:block">
         <div className="flex flex-col gap-1">
@@ -209,17 +209,7 @@ export function DocsPageContent() {
         <div className="h-px w-full bg-slate-200" />
 
         {/* Page nav */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            className="flex flex-col gap-1 rounded-lg border border-slate-200 px-4 py-3"
-          >
-            <span className="text-xs text-slate-400">上一页</span>
-            <div className="flex items-center gap-1.5">
-              <ChevronLeft className="h-3.5 w-3.5 text-slate-500" />
-              <span className="text-sm font-medium text-slate-700">更新日志</span>
-            </div>
-          </button>
+        <div className="flex items-center justify-end">
           <button
             type="button"
             className="flex flex-col items-end gap-1 rounded-lg border border-slate-200 px-4 py-3"
@@ -262,6 +252,7 @@ export function DocsPageContent() {
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

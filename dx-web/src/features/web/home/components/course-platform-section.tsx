@@ -40,8 +40,9 @@ const pills: {
 
 export function CoursePlatformSection() {
   return (
-    <section className="flex w-full flex-col items-center gap-[60px] bg-gradient-to-b from-teal-50 to-violet-50 px-[120px] py-[100px]">
-      <div className="flex flex-col items-center gap-4">
+    <section className="w-full bg-gradient-to-b from-teal-50 to-violet-50 py-[100px]">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-[60px] px-[120px]">
+        <div className="flex flex-col items-center gap-4">
         <span className="text-sm font-semibold tracking-wide text-violet-500">
           课程体系
         </span>
@@ -68,6 +69,7 @@ export function CoursePlatformSection() {
             </div>
           );
         })}
+      </div>
       </div>
     </section>
   );
