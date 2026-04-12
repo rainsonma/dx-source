@@ -117,6 +117,10 @@ func TestAuthorize_GroupNotifyNonMember(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected group forbidden")
 	}
+	var rtErr realtimeError
+	if !errors.As(err, &rtErr) || rtErr.Code != consts.CodeGroupForbidden {
+		t.Errorf("want CodeGroupForbidden, got %+v", err)
+	}
 }
 
 func TestAuthorize_InvalidTopic(t *testing.T) {
