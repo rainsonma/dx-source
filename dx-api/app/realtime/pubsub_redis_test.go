@@ -165,25 +165,21 @@ func TestRedisPubSub_ConcurrentUnsubscribeAndDispatch(t *testing.T) {
 	var wg sync.WaitGroup
 
 	// Goroutine A: publisher
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for i := 0; i < 200; i++ {
+	wg.Go(func() {
+		for i := range 200 {
 			_ = ps.Publish(ctx, topic, Event{Type: "burst", Data: i})
 			time.Sleep(100 * time.Microsecond)
 		}
-	}()
+	})
 
 	// Goroutine B: subscribe/unsubscribe churn
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for i := 0; i < 200; i++ {
+	wg.Go(func() {
+		for range 200 {
 			_, unsub := ps.Subscribe(topic)
 			// Immediately unsubscribe — creates close-vs-send windows
 			unsub()
 		}
-	}()
+	})
 
 	wg.Wait()
 	// If we reach here without a panic under -race, the fix works.
