@@ -1,7 +1,10 @@
 package api
 
 import (
+	"bufio"
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"strings"
 
@@ -14,6 +17,32 @@ import (
 	"dx-api/app/helpers"
 	"dx-api/app/realtime"
 )
+
+// ginHijackBypass wraps Gin's ResponseWriter to bypass its "response already
+// written" check on Hijack(). coder/websocket's Accept calls WriteHeader(101)
+// then Hijack(), but Gin's responseWriter rejects Hijack after any WriteHeader
+// call. This wrapper unwraps all ResponseWriter layers (Goravel → Gin →
+// net/http) and delegates Hijack to the innermost writer which doesn't have
+// that restriction.
+type ginHijackBypass struct {
+	http.ResponseWriter
+}
+
+func (w *ginHijackBypass) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	rw := w.ResponseWriter
+	for {
+		u, ok := rw.(interface{ Unwrap() http.ResponseWriter })
+		if !ok {
+			break
+		}
+		rw = u.Unwrap()
+	}
+	hj, ok := rw.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("innermost ResponseWriter (%T) does not implement http.Hijacker", rw)
+	}
+	return hj.Hijack()
+}
 
 type WSController struct{}
 
@@ -42,8 +71,8 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 		originPatterns[i] = strings.TrimSpace(originPatterns[i])
 	}
 
-	w := ctx.Response().Writer()
 	r := ctx.Request().Origin()
+	w := &ginHijackBypass{ctx.Response().Writer()}
 
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		OriginPatterns:  originPatterns,
@@ -54,14 +83,6 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 	}
 	defer conn.Close(websocket.StatusInternalError, "server error")
 
-	// Block in Hub.Attach for the lifetime of the WebSocket connection.
-	// This handler runs inside the Timeout middleware's goroutine, which
-	// has a context.WithTimeout of http.request_timeout (set to 24h in
-	// config/http.go). We use a detached context so the WS read/write
-	// loops are immune to that timeout's context cancellation. The 24h
-	// value ensures the middleware never fires Abort(408) which would
-	// write HTTP bytes to the hijacked connection and corrupt the WS
-	// frame stream.
 	wsCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
