@@ -2,35 +2,34 @@ package helpers
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/goravel/framework/facades"
+	redis_facades "github.com/goravel/redis/facades"
 )
 
-var (
-	redisClient *redis.Client
-	redisOnce   sync.Once
-)
-
-// GetRedis returns the shared Redis client (singleton)
+// GetRedis returns the shared Redis client from Goravel's redis facade.
+// Uses the "default" connection defined in config/database.go.
+//
+// Previously this created its own *redis.Client singleton, which resulted
+// in two Redis clients in-process (one for Goravel's cache/queue/session
+// drivers, and one for our helpers). Consolidated here so that cache,
+// queue, session, online tracking, and WebSocket pub/sub all share a
+// single client with consistent configuration (TLS, cluster mode, etc.).
+//
+// In single-node mode (which Douxue uses), the UniversalClient returned
+// by the facade is a *redis.Client. Cluster mode would require different
+// plumbing.
 func GetRedis() *redis.Client {
-	redisOnce.Do(func() {
-		host := facades.Config().GetString("database.redis.default.host", "127.0.0.1")
-		port := facades.Config().GetString("database.redis.default.port", "6379")
-		password := facades.Config().GetString("database.redis.default.password", "")
-		db := facades.Config().GetInt("database.redis.default.database", 0)
-
-		redisClient = redis.NewClient(&redis.Options{
-			Addr:     fmt.Sprintf("%s:%s", host, port),
-			Password: password,
-			DB:       db,
-		})
-	})
-	return redisClient
+	client, err := redis_facades.Instance("default")
+	if err != nil {
+		panic("redis facade not initialized: " + err.Error())
+	}
+	if c, ok := client.(*redis.Client); ok {
+		return c
+	}
+	panic("redis facade returned non-*redis.Client (cluster mode not supported in helper)")
 }
 
 // RedisSet sets a key with TTL
