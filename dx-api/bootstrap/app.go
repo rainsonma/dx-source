@@ -42,6 +42,11 @@ func Boot() contractsfoundation.Application {
 				facades.Schedule().Command("app:expire-stale-orders").EveryFiveMinutes().SkipIfStillRunning().Name("expire-stale-orders"),
 			}
 		}).
+		WithRunners(func() []contractsfoundation.Runner {
+			return []contractsfoundation.Runner{
+				&realtime.RealtimeRunner{},
+			}
+		}).
 		WithRules(Rules).
 		WithProviders(Providers).
 		WithConfig(config.Boot).
