@@ -122,7 +122,7 @@ export function TestimonialsSection() {
           用户评价
         </span>
         <h2 className="text-4xl font-extrabold tracking-tight text-slate-900">
-          他们的英语，在游戏中开挂
+          他们的英语，在斗学开挂
         </h2>
       </div>
       <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

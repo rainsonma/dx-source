@@ -81,10 +81,10 @@ export function FeaturesSection() {
           核心玩法
         </span>
         <h2 className="text-4xl font-extrabold tracking-tight text-slate-900">
-          多种游戏，全方位提升
+          多种学习模式，全方位技能提升
         </h2>
         <p className="max-w-[520px] text-center text-lg text-slate-500">
-          每个游戏针对不同英语技能，从词汇到听力到拼写，全面覆盖。
+          每个学习模式针对不同英语技能，从简短词汇到长难语句，全面覆盖。
         </p>
       </div>
       <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">

@@ -135,10 +135,10 @@ export function FeaturesContent() {
       <section className="w-full bg-gradient-to-b from-white to-teal-50 py-16 md:py-[100px]">
         <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-4 sm:px-8 md:gap-[60px] md:px-16 lg:px-[120px]">
         <SectionHeader
-          label="多重游戏模式"
+          label="多重学习模式"
           labelColor="text-purple-600"
           title="玩中学，主动练"
-          subtitle="每种游戏模式专攻不同英语技能维度，结合即时反馈与竞技排名，让你在不知不觉中突破瓶颈。"
+          subtitle="每种学习模式专攻不同英语技能维度，结合即时反馈与竞技排名，让你在不知不觉中突破瓶颈。"
         />
         <div className="flex w-full flex-col gap-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

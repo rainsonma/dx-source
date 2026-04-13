@@ -72,7 +72,7 @@ export function AiFeaturesSection() {
           AI 驱动
         </span>
         <h2 className="text-4xl font-extrabold tracking-tight text-slate-900">
-          AI 陪你练，开口说英语
+          AI 陪伴，自由练习
         </h2>
         <p className="max-w-[580px] text-center text-lg text-slate-500">
           不只是练习，更是真实体验。AI 智能学习，建立英语自信。

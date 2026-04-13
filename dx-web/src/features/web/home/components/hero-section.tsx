@@ -29,7 +29,7 @@ export function HeroSection() {
           className="flex items-center gap-2.5 rounded-xl bg-teal-600 px-9 py-4 shadow-[0_4px_30px_rgba(13,148,136,0.27)] hover:bg-teal-700"
         >
           <Gamepad2 className="h-5 w-5 text-white" />
-          <span className="text-base font-semibold text-white">开始课程游戏</span>
+          <span className="text-base font-semibold text-white">开始斗学之旅</span>
         </Link>
         <Link
           href="/features"
