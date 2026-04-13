@@ -1,9 +1,14 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, Swords } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 import SignupSignin from "./topics/getting-started/signup-signin";
 import HallTour from "./topics/getting-started/hall-tour";
 import FirstSession from "./topics/getting-started/first-session";
+import LearningModesOverview from "./topics/learning-modes/overview";
+import SingleMode from "./topics/learning-modes/single-mode";
+import PkMode from "./topics/learning-modes/pk-mode";
+import GroupMode from "./topics/learning-modes/group-mode";
+import GameTypes from "./topics/learning-modes/game-types";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -40,6 +45,49 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "10 分钟跑通第一次学习：挑游戏、选关卡、选难度、完成答题、看结算。",
         Component: FirstSession,
+      },
+    ],
+  },
+  {
+    slug: "learning-modes",
+    title: "三种学习模式",
+    description: "单人、PK、小组三种玩法的完整介绍，斗学的核心玩法都在这里。",
+    icon: Swords,
+    accentClass: "border-rose-200 bg-rose-50 text-rose-600",
+    topics: [
+      {
+        slug: "overview",
+        title: "模式总览",
+        description: "三种模式的对比表：参与人数、对手、VIP 要求、典型场景。",
+        Component: LearningModesOverview,
+      },
+      {
+        slug: "single-mode",
+        title: "单人闯关模式",
+        description:
+          "默认模式，所有人可玩。了解如何开始、关卡解锁规则、会话机制。",
+        Component: SingleMode,
+      },
+      {
+        slug: "pk-mode",
+        title: "PK 对战模式",
+        description:
+          "与真人或 AI 机器人实时对战，抢先完成关卡获胜。需要 VIP。",
+        Component: PkMode,
+      },
+      {
+        slug: "group-mode",
+        title: "小组共学模式",
+        description:
+          "加入学习小组后一起闯关，支持个人排名和分组对战。",
+        Component: GroupMode,
+      },
+      {
+        slug: "game-types",
+        title: "游戏类型与技能矩阵",
+        description:
+          "四种游戏类型 × 三个难度 × 四种学习模式，练习组合丰富。",
+        Component: GameTypes,
       },
     ],
   },
