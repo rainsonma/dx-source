@@ -55,7 +55,7 @@ export default function LearningModesOverview() {
       <DocSection id="how-to-choose" title="我该选哪个">
         <DocCallout variant="tip" title="三个简单判断">
           想自己安静练习？选单人。想来点紧张刺激的对抗？选 PK——和机器人热身也行，和真人约战更带感。
-          想和朋友一起学习、互相监督？选小组。
+          想和朋友一起开局、看到彼此的进度？选小组。
         </DocCallout>
       </DocSection>
     </>
