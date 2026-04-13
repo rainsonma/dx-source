@@ -36,7 +36,7 @@ function InactivePill({ label, onClick }: { label: string; onClick?: () => void 
     <button
       type="button"
       onClick={onClick}
-      className="cursor-pointer text-xs text-muted-foreground hover:text-foreground"
+      className="cursor-pointer rounded-md px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
     >
       {label}
     </button>
