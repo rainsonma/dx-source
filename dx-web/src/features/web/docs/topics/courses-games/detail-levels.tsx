@@ -29,7 +29,7 @@ export default function DetailLevels() {
       <DocSection id="three-modes-from-here" title="从这里进入三种模式">
         <p>
           在详情页选好关卡后，你可以选择以单人、PK 或小组模式开始本关。具体差异见{" "}
-          <DocLink href="/docs/learning-modes/overview">三种学习模式总览</DocLink>
+          <DocLink href="/docs/learning-modes/overview">多种学习模式总览</DocLink>
           。
         </p>
       </DocSection>

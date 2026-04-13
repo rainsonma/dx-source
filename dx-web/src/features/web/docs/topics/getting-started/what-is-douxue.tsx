@@ -32,7 +32,7 @@ export default function WhatIsDouxue() {
             {
               icon: Gamepad2,
               iconColor: "text-teal-600",
-              title: "三种学习模式",
+              title: "多种学习模式",
               desc: "单人闯关、PK 对战、小组共学，同一套知识可以用三种不同节奏来学。",
             },
             {

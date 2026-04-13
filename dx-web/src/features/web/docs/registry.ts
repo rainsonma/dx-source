@@ -102,7 +102,7 @@ export const DOC_CATEGORIES: DocCategory[] = [
   },
   {
     slug: "learning-modes",
-    title: "三种学习模式",
+    title: "多种学习模式",
     description: "单人、PK、小组三种玩法的完整介绍，斗学的核心玩法都在这里。",
     icon: Swords,
     accentClass: "border-rose-200 bg-rose-50 text-rose-600",
