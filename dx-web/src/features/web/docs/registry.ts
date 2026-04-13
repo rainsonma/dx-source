@@ -1,4 +1,11 @@
-import { BookMarked, BookOpen, Library, Swords, TrendingUp } from "lucide-react";
+import {
+  BookMarked,
+  BookOpen,
+  Library,
+  MessageCircle,
+  Swords,
+  TrendingUp,
+} from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 import SignupSignin from "./topics/getting-started/signup-signin";
@@ -19,6 +26,10 @@ import ExpLevels from "./topics/progress/exp-levels";
 import ComboRating from "./topics/progress/combo-rating";
 import PlayStreak from "./topics/progress/play-streak";
 import LeaderboardTopic from "./topics/progress/leaderboard";
+import PostsComments from "./topics/community/posts-comments";
+import LikesFollows from "./topics/community/likes-follows";
+import Feeds from "./topics/community/feeds";
+import ProfileView from "./topics/community/profile-view";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -186,6 +197,41 @@ export const DOC_CATEGORIES: DocCategory[] = [
         title: "排行榜",
         description: "EXP / playtime × 日 / 周 / 月 的六种榜单组合。",
         Component: LeaderboardTopic,
+      },
+    ],
+  },
+  {
+    slug: "community",
+    title: "斗学社与好友",
+    description:
+      "斗学社是用户之间交流的社区：发帖、评论、点赞、关注、个人主页。",
+    icon: MessageCircle,
+    accentClass: "border-pink-200 bg-pink-50 text-pink-600",
+    topics: [
+      {
+        slug: "posts-comments",
+        title: "发帖与评论",
+        description:
+          "帖子正文、图片、标签的规则，以及评论为什么不能嵌套。",
+        Component: PostsComments,
+      },
+      {
+        slug: "likes-follows",
+        title: "点赞、收藏与关注",
+        description: "三个动作的规则和它们之间的区别。",
+        Component: LikesFollows,
+      },
+      {
+        slug: "feeds",
+        title: "社区动态流",
+        description: "最新 / 热门 / 关注中 / 我收藏的四种视角。",
+        Component: Feeds,
+      },
+      {
+        slug: "profile-view",
+        title: "个人主页与粉丝",
+        description: "看对方的等级、打卡、关注数和帖子流。",
+        Component: ProfileView,
       },
     ],
   },
