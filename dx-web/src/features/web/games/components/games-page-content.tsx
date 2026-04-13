@@ -8,15 +8,13 @@ import { GameCard } from "@/features/web/games/components/game-card"
 import { useInfinitePublicGames } from "@/features/web/games/hooks/use-infinite-public-games"
 
 type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean }
-type PressOption = { id: string; name: string }
 type Filters = { categoryIds?: string[]; pressId?: string; mode?: string }
 
 type GamesPageContentProps = {
   categories: CategoryOption[]
-  presses: PressOption[]
 }
 
-export function GamesPageContent({ categories, presses }: GamesPageContentProps) {
+export function GamesPageContent({ categories }: GamesPageContentProps) {
   const [filters, setFilters] = useState<Filters>({})
   const { games, isLoading, isValidating, hasMore, sentinelRef } =
     useInfinitePublicGames(filters)
@@ -25,9 +23,10 @@ export function GamesPageContent({ categories, presses }: GamesPageContentProps)
     <>
       <FilterSection
         categories={categories}
-        presses={presses}
+        presses={[]}
         filters={filters}
         onFiltersChange={setFilters}
+        showPresses={false}
       />
 
       {isLoading && <PageSpinner size="lg" />}

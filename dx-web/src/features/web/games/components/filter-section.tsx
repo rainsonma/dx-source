@@ -16,6 +16,7 @@ type FilterSectionProps = {
   presses: PressOption[];
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
+  showPresses?: boolean;
 };
 
 function ActivePill({ label, onClick }: { label: string; onClick?: () => void }) {
@@ -47,6 +48,7 @@ export function FilterSection({
   presses,
   filters,
   onFiltersChange,
+  showPresses = true,
 }: FilterSectionProps) {
   const topCategories = categories.filter((c) => c.depth === 0);
   const modeEntries = Object.entries(GAME_MODE_LABELS);
@@ -157,30 +159,34 @@ export function FilterSection({
 
       <div className="h-px w-full bg-border" />
 
-      {/* Publisher row */}
-      <div className="flex w-full flex-wrap items-center gap-4">
-        {!filters.pressId ? (
-          <ActivePill label="全部出版社" />
-        ) : (
-          <InactivePill
-            label="全部出版社"
-            onClick={() => onFiltersChange({ ...filters, pressId: undefined })}
-          />
-        )}
-        {presses.map((press) =>
-          filters.pressId === press.id ? (
-            <ActivePill key={press.id} label={press.name} />
-          ) : (
-            <InactivePill
-              key={press.id}
-              label={press.name}
-              onClick={() => onFiltersChange({ ...filters, pressId: press.id })}
-            />
-          )
-        )}
-      </div>
+      {showPresses && (
+        <>
+          {/* Publisher row */}
+          <div className="flex w-full flex-wrap items-center gap-4">
+            {!filters.pressId ? (
+              <ActivePill label="全部出版社" />
+            ) : (
+              <InactivePill
+                label="全部出版社"
+                onClick={() => onFiltersChange({ ...filters, pressId: undefined })}
+              />
+            )}
+            {presses.map((press) =>
+              filters.pressId === press.id ? (
+                <ActivePill key={press.id} label={press.name} />
+              ) : (
+                <InactivePill
+                  key={press.id}
+                  label={press.name}
+                  onClick={() => onFiltersChange({ ...filters, pressId: press.id })}
+                />
+              )
+            )}
+          </div>
 
-      <div className="h-px w-full bg-border" />
+          <div className="h-px w-full bg-border" />
+        </>
+      )}
 
       {/* Game mode row */}
       <div className="flex w-full flex-wrap items-center gap-3 lg:gap-4">
