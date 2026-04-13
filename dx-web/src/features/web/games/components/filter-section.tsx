@@ -24,7 +24,7 @@ function ActivePill({ label, onClick }: { label: string; onClick?: () => void })
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md bg-teal-600 px-3 py-1 text-xs font-semibold text-white"
+      className="rounded-md bg-teal-600 px-2 py-1 text-xs font-semibold text-white"
     >
       {label}
     </button>
@@ -36,7 +36,7 @@ function InactivePill({ label, onClick }: { label: string; onClick?: () => void 
     <button
       type="button"
       onClick={onClick}
-      className="cursor-pointer rounded-md px-3 py-1 text-xs text-muted-foreground hover:text-foreground"
+      className="cursor-pointer rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
     >
       {label}
     </button>
