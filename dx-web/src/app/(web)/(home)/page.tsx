@@ -16,12 +16,9 @@ export default async function HomePage() {
   const isLoggedIn = !!cookieStore.get("dx_token")?.value;
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white bg-[length:100%_720px] bg-top bg-no-repeat">
       <StickyHeader isLoggedIn={isLoggedIn} transparent />
-      {/* Hero wrapper with gradient background */}
-      <div className="flex w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white">
-        <HeroSection />
-      </div>
+      <HeroSection />
       <FeaturesSection />
       <AiFeaturesSection />
       <CoursePlatformSection />
