@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { LandingHeader } from "@/components/in/landing-header";
+import { StickyHeader } from "@/components/in/sticky-header";
 import { HeroSection } from "@/features/web/home/components/hero-section";
 import { FeaturesSection } from "@/features/web/home/components/features-section";
 import { AiFeaturesSection } from "@/features/web/home/components/ai-features-section";
@@ -17,9 +17,9 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
+      <StickyHeader isLoggedIn={isLoggedIn} />
       {/* Hero wrapper with gradient background */}
       <div className="flex w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white">
-        <LandingHeader isLoggedIn={isLoggedIn} />
         <HeroSection />
       </div>
       <FeaturesSection />

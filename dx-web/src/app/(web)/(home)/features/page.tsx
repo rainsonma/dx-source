@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { LandingHeader } from "@/components/in/landing-header";
+import { StickyHeader } from "@/components/in/sticky-header";
 import { FeaturesContent } from "@/features/web/home/components/features-content";
 import { Footer } from "@/components/in/footer";
 
@@ -9,7 +9,7 @@ export default async function FeaturesPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <LandingHeader isLoggedIn={isLoggedIn} />
+      <StickyHeader isLoggedIn={isLoggedIn} />
       <FeaturesContent />
       <Footer />
     </div>
