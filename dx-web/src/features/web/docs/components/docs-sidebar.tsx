@@ -24,7 +24,7 @@ export function DocsSidebar() {
             {ci > 0 && <div className="my-2 h-px w-full bg-slate-200" />}
             <Link
               href={catHref}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold ${
+              className={`flex items-center gap-2 rounded-md px-3 py-1 text-sm font-semibold ${
                 isActiveCat ? "text-teal-600" : "text-slate-900"
               }`}
             >
@@ -44,7 +44,7 @@ export function DocsSidebar() {
                   <Link
                     key={topic.slug}
                     href={topicHref}
-                    className={`flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm ${
+                    className={`flex items-center gap-2 rounded-md px-3 py-1 text-left text-sm ${
                       isActiveTopic
                         ? "bg-teal-50 font-medium text-teal-600"
                         : "text-slate-500 hover:text-slate-700"
