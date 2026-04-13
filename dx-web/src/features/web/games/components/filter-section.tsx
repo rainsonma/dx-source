@@ -115,10 +115,10 @@ export function FilterSection({
       {/* Category row */}
       <div className="flex w-full flex-wrap items-center gap-3 lg:gap-4">
         {!filters.categoryIds || filters.categoryIds.length === 0 ? (
-          <ActivePill label="全部分类" />
+          <ActivePill label="分类" />
         ) : (
           <InactivePill
-            label="全部分类"
+            label="分类"
             onClick={() => onFiltersChange({ ...filters, categoryIds: undefined })}
           />
         )}
@@ -164,10 +164,10 @@ export function FilterSection({
           {/* Publisher row */}
           <div className="flex w-full flex-wrap items-center gap-4">
             {!filters.pressId ? (
-              <ActivePill label="全部出版社" />
+              <ActivePill label="版本" />
             ) : (
               <InactivePill
-                label="全部出版社"
+                label="版本"
                 onClick={() => onFiltersChange({ ...filters, pressId: undefined })}
               />
             )}
@@ -191,10 +191,10 @@ export function FilterSection({
       {/* Game mode row */}
       <div className="flex w-full flex-wrap items-center gap-3 lg:gap-4">
         {!filters.mode ? (
-          <ActivePill label="全部游戏模式" />
+          <ActivePill label="模式" />
         ) : (
           <InactivePill
-            label="全部游戏模式"
+            label="模式"
             onClick={() => onFiltersChange({ ...filters, mode: undefined })}
           />
         )}
