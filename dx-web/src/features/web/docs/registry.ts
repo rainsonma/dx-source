@@ -1,6 +1,9 @@
 import { BookOpen } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
+import SignupSignin from "./topics/getting-started/signup-signin";
+import HallTour from "./topics/getting-started/hall-tour";
+import FirstSession from "./topics/getting-started/first-session";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -16,6 +19,27 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "斗学是一款融合游戏化机制与 AI 辅助的英语学习平台。来了解它的核心理念和四大能力。",
         Component: WhatIsDouxue,
+      },
+      {
+        slug: "signup-signin",
+        title: "注册与登录",
+        description:
+          "邮箱验证码、账号密码、微信扫码三种方式都可以，加上完整的账号规则和忘记密码流程。",
+        Component: SignupSignin,
+      },
+      {
+        slug: "hall-tour",
+        title: "学习首页导览",
+        description:
+          "登录进入大厅后，你会看到仪表盘、侧边栏、数据行、每日挑战。这里是每一块区域的含义。",
+        Component: HallTour,
+      },
+      {
+        slug: "first-session",
+        title: "新手第一课",
+        description:
+          "10 分钟跑通第一次学习：挑游戏、选关卡、选难度、完成答题、看结算。",
+        Component: FirstSession,
       },
     ],
   },
