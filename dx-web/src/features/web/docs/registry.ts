@@ -1,4 +1,4 @@
-import { BookOpen, Library, Swords } from "lucide-react";
+import { BookMarked, BookOpen, Library, Swords } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 import SignupSignin from "./topics/getting-started/signup-signin";
@@ -12,6 +12,9 @@ import GameTypes from "./topics/learning-modes/game-types";
 import Browsing from "./topics/courses-games/browsing";
 import DetailLevels from "./topics/courses-games/detail-levels";
 import Favorites from "./topics/courses-games/favorites";
+import Unknown from "./topics/vocabulary/unknown";
+import Review from "./topics/vocabulary/review";
+import Mastered from "./topics/vocabulary/mastered";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -119,6 +122,33 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "收藏游戏、查看收藏列表、区分&ldquo;玩过&rdquo;和&ldquo;我创建&rdquo;。",
         Component: Favorites,
+      },
+    ],
+  },
+  {
+    slug: "vocabulary",
+    title: "词汇管理",
+    description: "生词本、复习本、已掌握三本书自动联动，让词汇真正留下来。",
+    icon: BookMarked,
+    accentClass: "border-emerald-200 bg-emerald-50 text-emerald-600",
+    topics: [
+      {
+        slug: "unknown",
+        title: "生词本",
+        description: "收集生词、查看统计、转入复习本。",
+        Component: Unknown,
+      },
+      {
+        slug: "review",
+        title: "复习本与间隔重复",
+        description: "按 [1, 3, 7, 14, 30, 90] 天节奏做间隔重复复习。",
+        Component: Review,
+      },
+      {
+        slug: "mastered",
+        title: "已掌握",
+        description: "标记已掌握的词，查看统计，可反向取消。",
+        Component: Mastered,
       },
     ],
   },
