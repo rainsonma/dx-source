@@ -1,4 +1,4 @@
-import { BookMarked, BookOpen, Library, Swords } from "lucide-react";
+import { BookMarked, BookOpen, Library, Swords, TrendingUp } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 import SignupSignin from "./topics/getting-started/signup-signin";
@@ -15,6 +15,10 @@ import Favorites from "./topics/courses-games/favorites";
 import Unknown from "./topics/vocabulary/unknown";
 import Review from "./topics/vocabulary/review";
 import Mastered from "./topics/vocabulary/mastered";
+import ExpLevels from "./topics/progress/exp-levels";
+import ComboRating from "./topics/progress/combo-rating";
+import PlayStreak from "./topics/progress/play-streak";
+import LeaderboardTopic from "./topics/progress/leaderboard";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -149,6 +153,39 @@ export const DOC_CATEGORIES: DocCategory[] = [
         title: "已掌握",
         description: "标记已掌握的词，查看统计，可反向取消。",
         Component: Mastered,
+      },
+    ],
+  },
+  {
+    slug: "progress",
+    title: "成长与激励",
+    description: "经验、等级、连击、打卡、排行榜——看得见的成长路径。",
+    icon: TrendingUp,
+    accentClass: "border-amber-200 bg-amber-50 text-amber-600",
+    topics: [
+      {
+        slug: "exp-levels",
+        title: "经验与等级",
+        description: "经验来源、Lv. 0 → Lv. 100 成长曲线、60% 正确率阈值。",
+        Component: ExpLevels,
+      },
+      {
+        slug: "combo-rating",
+        title: "连击与评分",
+        description: "连击奖励和四档评分（优秀 / 良好 / 及格 / 继续加油）。",
+        Component: ComboRating,
+      },
+      {
+        slug: "play-streak",
+        title: "连续打卡",
+        description: "streak 每日更新规则和历史最高记录。",
+        Component: PlayStreak,
+      },
+      {
+        slug: "leaderboard",
+        title: "排行榜",
+        description: "EXP / playtime × 日 / 周 / 月 的六种榜单组合。",
+        Component: LeaderboardTopic,
       },
     ],
   },
