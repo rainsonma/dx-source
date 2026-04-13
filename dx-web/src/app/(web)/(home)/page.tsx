@@ -17,7 +17,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <StickyHeader isLoggedIn={isLoggedIn} />
+      <StickyHeader isLoggedIn={isLoggedIn} transparent />
       {/* Hero wrapper with gradient background */}
       <div className="flex w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white">
         <HeroSection />
