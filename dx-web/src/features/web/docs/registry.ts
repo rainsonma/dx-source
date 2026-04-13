@@ -9,6 +9,7 @@ import {
   Sparkles,
   Swords,
   TrendingUp,
+  UserCog,
   Users2,
 } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
@@ -55,6 +56,11 @@ import BeansMonthly from "./topics/membership/beans-monthly";
 import ReferralProgram from "./topics/invites/referral-program";
 import InviteCodes from "./topics/invites/invite-codes";
 import RedeemCodes from "./topics/invites/redeem-codes";
+import ProfileEdit from "./topics/account/profile-edit";
+import Security from "./topics/account/security";
+import Notices from "./topics/account/notices";
+import Feedback from "./topics/account/feedback";
+import Faq from "./topics/account/faq";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -434,6 +440,47 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "兑换码可换会员期限或能量豆。使用流程和失败原因。",
         Component: RedeemCodes,
+      },
+    ],
+  },
+  {
+    slug: "account",
+    title: "账户与帮助",
+    description: "资料设置、账号安全、通知、反馈，以及常见问题合集。",
+    icon: UserCog,
+    accentClass: "border-slate-200 bg-slate-50 text-slate-600",
+    topics: [
+      {
+        slug: "profile-edit",
+        title: "个人资料",
+        description:
+          "可编辑的资料字段、头像上传、用户名为什么只读。",
+        Component: ProfileEdit,
+      },
+      {
+        slug: "security",
+        title: "账号安全",
+        description: "改邮箱、改密码、登出、多设备单会话机制。",
+        Component: Security,
+      },
+      {
+        slug: "notices",
+        title: "通知中心",
+        description: "通知列表、未读角标和已读机制。",
+        Component: Notices,
+      },
+      {
+        slug: "feedback",
+        title: "提交反馈",
+        description: "五种反馈类型、联系方式和流程。",
+        Component: Feedback,
+      },
+      {
+        slug: "faq",
+        title: "常见问题",
+        description:
+          "账号、会员、学习、AI、技术五大分区的常见问答合集。",
+        Component: Faq,
       },
     ],
   },
