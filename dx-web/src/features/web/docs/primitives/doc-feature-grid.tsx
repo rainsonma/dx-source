@@ -28,7 +28,7 @@ export function DocFeatureGrid({ columns = 3, items }: Props) {
             key={i}
             className="flex flex-col gap-2.5 rounded-[10px] border border-slate-200 bg-white p-5"
           >
-            <Icon className={`h-7 w-7 ${item.iconColor}`} />
+            <Icon className={`h-7 w-7 ${item.iconColor}`} aria-hidden="true" />
             <span className="text-[15px] font-semibold text-slate-900">
               {item.title}
             </span>

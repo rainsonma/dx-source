@@ -54,7 +54,7 @@ export function DocCallout({ variant = "info", title, children }: Props) {
   const { icon: Icon, boxClass, titleClass, bodyClass } = VARIANTS[variant];
   return (
     <div className={`flex gap-3 rounded-lg border p-4 ${boxClass}`}>
-      <Icon className={`h-5 w-5 shrink-0 ${titleClass}`} />
+      <Icon className={`h-5 w-5 shrink-0 ${titleClass}`} aria-hidden="true" />
       <div className="flex flex-col gap-1">
         {title && (
           <span className={`text-[13px] font-semibold ${titleClass}`}>
