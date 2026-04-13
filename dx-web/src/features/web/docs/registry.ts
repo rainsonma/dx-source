@@ -5,6 +5,7 @@ import {
   MessageCircle,
   Swords,
   TrendingUp,
+  Users2,
 } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
@@ -30,6 +31,11 @@ import PostsComments from "./topics/community/posts-comments";
 import LikesFollows from "./topics/community/likes-follows";
 import Feeds from "./topics/community/feeds";
 import ProfileView from "./topics/community/profile-view";
+import GroupsOverview from "./topics/groups/overview";
+import CreateJoin from "./topics/groups/create-join";
+import MembersApplications from "./topics/groups/members-applications";
+import GroupsSubgroups from "./topics/groups/subgroups";
+import StartGame from "./topics/groups/start-game";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -232,6 +238,47 @@ export const DOC_CATEGORIES: DocCategory[] = [
         title: "个人主页与粉丝",
         description: "看对方的等级、打卡、关注数和帖子流。",
         Component: ProfileView,
+      },
+    ],
+  },
+  {
+    slug: "groups",
+    title: "学习小组",
+    description: "和朋友组队学习：创建、加入、管理、开局小组游戏。",
+    icon: Users2,
+    accentClass: "border-violet-200 bg-violet-50 text-violet-600",
+    topics: [
+      {
+        slug: "overview",
+        title: "什么是学习小组",
+        description: "小组的定位、硬限制（50 人 / 10 子分组）、VIP 要求。",
+        Component: GroupsOverview,
+      },
+      {
+        slug: "create-join",
+        title: "创建与加入",
+        description: "创建流程、三种加入方式、组主不能退出的规则。",
+        Component: CreateJoin,
+      },
+      {
+        slug: "members-applications",
+        title: "成员与申请管理",
+        description: "组主如何管理成员和申请；owner / member 两级角色。",
+        Component: MembersApplications,
+      },
+      {
+        slug: "subgroups",
+        title: "子分组 (Subgroups)",
+        description:
+          "用于 group_team 分组对战模式，每组最多 10 个子分组。",
+        Component: GroupsSubgroups,
+      },
+      {
+        slug: "start-game",
+        title: "开局与推进游戏",
+        description:
+          "组主开局四步走、推进下一关、强制结束、结算。",
+        Component: StartGame,
       },
     ],
   },
