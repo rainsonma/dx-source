@@ -3,6 +3,7 @@ import {
   BookOpen,
   Library,
   MessageCircle,
+  PencilLine,
   Sparkles,
   Swords,
   TrendingUp,
@@ -39,6 +40,11 @@ import GroupsSubgroups from "./topics/groups/subgroups";
 import StartGame from "./topics/groups/start-game";
 import AiCustomSentence from "./topics/ai/ai-custom-sentence";
 import AiCustomVocab from "./topics/ai/ai-custom-vocab";
+import CreatorIntro from "./topics/creation/creator-intro";
+import NewCourse from "./topics/creation/new-course";
+import LevelsUnits from "./topics/creation/levels-units";
+import ContentItemsTopic from "./topics/creation/content-items";
+import PublishWithdraw from "./topics/creation/publish-withdraw";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -305,6 +311,48 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "词汇变体：四步流程一致，按游戏类型限制每关词对数。",
         Component: AiCustomVocab,
+      },
+    ],
+  },
+  {
+    slug: "creation",
+    title: "创作课程",
+    description: "自己动手做一套学习内容：新建、加关卡、加内容、发布、撤回。",
+    icon: PencilLine,
+    accentClass: "border-sky-200 bg-sky-50 text-sky-600",
+    topics: [
+      {
+        slug: "creator-intro",
+        title: "创作者入门",
+        description: "为什么创作、课程层级结构、两种创建路径。",
+        Component: CreatorIntro,
+      },
+      {
+        slug: "new-course",
+        title: "新建课程",
+        description:
+          "基本信息字段和封面上传规则（≤2MB, JPEG/PNG）。",
+        Component: NewCourse,
+      },
+      {
+        slug: "levels-units",
+        title: "关卡与单元",
+        description:
+          "关卡和单元（metadata）的关系，内容类型限制。",
+        Component: LevelsUnits,
+      },
+      {
+        slug: "content-items",
+        title: "内容条目（题目）",
+        description: "添加、重排和删除内容条目的三种方式。",
+        Component: ContentItemsTopic,
+      },
+      {
+        slug: "publish-withdraw",
+        title: "发布与撤回",
+        description:
+          "发布前检查、生命周期（draft / published / withdraw）。",
+        Component: PublishWithdraw,
       },
     ],
   },
