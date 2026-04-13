@@ -111,104 +111,115 @@ export function FilterSection({
   }
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-xl border border-border bg-card px-4 py-3 lg:px-5 lg:py-4">
-      {/* Category row */}
-      <div className="flex w-full flex-wrap items-center gap-3 lg:gap-4">
-        {!filters.categoryIds || filters.categoryIds.length === 0 ? (
-          <ActivePill label="分类" />
-        ) : (
-          <InactivePill
-            label="分类"
-            onClick={() => onFiltersChange({ ...filters, categoryIds: undefined })}
-          />
-        )}
-        {topCategories.map((cat) =>
-          activeTopId === cat.id ? (
-            <ActivePill key={cat.id} label={cat.name} />
+    <div className="w-full rounded-xl border border-border bg-card px-4 py-3 lg:px-5 lg:py-4">
+      <div className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-3 lg:gap-y-4">
+        {/* 分类 label */}
+        <div className="flex items-center">
+          {!filters.categoryIds || filters.categoryIds.length === 0 ? (
+            <ActivePill label="分类" />
           ) : (
             <InactivePill
-              key={cat.id}
-              label={cat.name}
-              onClick={() => handleTopCategoryClick(cat.id)}
+              label="分类"
+              onClick={() => onFiltersChange({ ...filters, categoryIds: undefined })}
             />
-          )
-        )}
-      </div>
-
-      {/* Child category sub-row */}
-      {hasChildren && (
-        <div className="flex w-full flex-wrap items-center gap-3 pl-4 lg:gap-4">
-          {isAllWithinParent ? (
-            <ActivePill label="全部" />
-          ) : (
-            <InactivePill label="全部" onClick={handleAllChildrenClick} />
-          )}
-          {childCategories.map((cat) =>
-            selectedChildId === cat.id ? (
-              <ActivePill key={cat.id} label={cat.name} />
-            ) : (
-              <InactivePill
-                key={cat.id}
-                label={cat.name}
-                onClick={() => handleChildCategoryClick(cat.id)}
-              />
-            )
           )}
         </div>
-      )}
-
-      <div className="h-px w-full bg-border" />
-
-      {showPresses && (
-        <>
-          {/* Publisher row */}
-          <div className="flex w-full flex-wrap items-center gap-4">
-            {!filters.pressId ? (
-              <ActivePill label="版本" />
-            ) : (
-              <InactivePill
-                label="版本"
-                onClick={() => onFiltersChange({ ...filters, pressId: undefined })}
-              />
-            )}
-            {presses.map((press) =>
-              filters.pressId === press.id ? (
-                <ActivePill key={press.id} label={press.name} />
+        {/* Category pills */}
+        <div className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+            {topCategories.map((cat) =>
+              activeTopId === cat.id ? (
+                <ActivePill key={cat.id} label={cat.name} />
               ) : (
                 <InactivePill
-                  key={press.id}
-                  label={press.name}
-                  onClick={() => onFiltersChange({ ...filters, pressId: press.id })}
+                  key={cat.id}
+                  label={cat.name}
+                  onClick={() => handleTopCategoryClick(cat.id)}
                 />
               )
             )}
           </div>
+          {hasChildren && (
+            <div className="flex flex-wrap items-center gap-3 pl-4 lg:gap-4">
+              {isAllWithinParent ? (
+                <ActivePill label="全部" />
+              ) : (
+                <InactivePill label="全部" onClick={handleAllChildrenClick} />
+              )}
+              {childCategories.map((cat) =>
+                selectedChildId === cat.id ? (
+                  <ActivePill key={cat.id} label={cat.name} />
+                ) : (
+                  <InactivePill
+                    key={cat.id}
+                    label={cat.name}
+                    onClick={() => handleChildCategoryClick(cat.id)}
+                  />
+                )
+              )}
+            </div>
+          )}
+        </div>
 
-          <div className="h-px w-full bg-border" />
-        </>
-      )}
+        <div className="col-span-2 h-px w-full bg-border" />
 
-      {/* Game mode row */}
-      <div className="flex w-full flex-wrap items-center gap-3 lg:gap-4">
-        {!filters.mode ? (
-          <ActivePill label="模式" />
-        ) : (
-          <InactivePill
-            label="模式"
-            onClick={() => onFiltersChange({ ...filters, mode: undefined })}
-          />
+        {showPresses && (
+          <>
+            {/* 版本 label */}
+            <div className="flex items-center">
+              {!filters.pressId ? (
+                <ActivePill label="版本" />
+              ) : (
+                <InactivePill
+                  label="版本"
+                  onClick={() => onFiltersChange({ ...filters, pressId: undefined })}
+                />
+              )}
+            </div>
+            {/* Press pills */}
+            <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+              {presses.map((press) =>
+                filters.pressId === press.id ? (
+                  <ActivePill key={press.id} label={press.name} />
+                ) : (
+                  <InactivePill
+                    key={press.id}
+                    label={press.name}
+                    onClick={() => onFiltersChange({ ...filters, pressId: press.id })}
+                  />
+                )
+              )}
+            </div>
+
+            <div className="col-span-2 h-px w-full bg-border" />
+          </>
         )}
-        {modeEntries.map(([value, label]) =>
-          filters.mode === value ? (
-            <ActivePill key={value} label={label} />
+
+        {/* 模式 label */}
+        <div className="flex items-center">
+          {!filters.mode ? (
+            <ActivePill label="模式" />
           ) : (
             <InactivePill
-              key={value}
-              label={label}
-              onClick={() => onFiltersChange({ ...filters, mode: value })}
+              label="模式"
+              onClick={() => onFiltersChange({ ...filters, mode: undefined })}
             />
-          )
-        )}
+          )}
+        </div>
+        {/* Mode pills */}
+        <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+          {modeEntries.map(([value, label]) =>
+            filters.mode === value ? (
+              <ActivePill key={value} label={label} />
+            ) : (
+              <InactivePill
+                key={value}
+                label={label}
+                onClick={() => onFiltersChange({ ...filters, mode: value })}
+              />
+            )
+          )}
+        </div>
       </div>
     </div>
   );
