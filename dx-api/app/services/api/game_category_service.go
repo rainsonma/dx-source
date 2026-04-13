@@ -113,3 +113,29 @@ func ListSyncCategories() ([]CategoryData, error) {
 
 	return result, nil
 }
+
+// SyncCategoryIDs returns all category IDs in the sync subtree (root + descendants).
+// Used by game listing to exclude sync games from the default /hall/games view.
+// Returns an empty slice if the sync category is not found.
+func SyncCategoryIDs() ([]string, error) {
+	tree, err := loadCategoryTree()
+	if err != nil {
+		return nil, err
+	}
+
+	if tree.syncID == "" {
+		return []string{}, nil
+	}
+
+	ids := []string{tree.syncID}
+	var walk func(parentID string)
+	walk = func(parentID string) {
+		for _, cat := range tree.parentMap[parentID] {
+			ids = append(ids, cat.ID)
+			walk(cat.ID)
+		}
+	}
+	walk(tree.syncID)
+
+	return ids, nil
+}
