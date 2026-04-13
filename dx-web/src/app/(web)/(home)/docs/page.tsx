@@ -1,18 +1,17 @@
-import { cookies } from "next/headers";
-import { LandingHeader } from "@/components/in/landing-header";
-import { DocsPageContent } from "@/features/web/home/components/docs/docs-content";
-import { Footer } from "@/components/in/footer";
+import type { Metadata } from "next";
+import { DocsHomeHero } from "@/features/web/docs/components/docs-home-hero";
+import { DocsCategoryGrid } from "@/features/web/docs/components/docs-category-grid";
 
-export default async function DocsPage() {
-  const cookieStore = await cookies();
-  const isLoggedIn = !!cookieStore.get("dx_token")?.value;
+export const metadata: Metadata = {
+  title: "斗学帮助中心",
+  description: "了解每一项功能的详细用法，让学习更顺畅。",
+};
 
+export default function DocsLandingPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <LandingHeader isLoggedIn={isLoggedIn} />
-      <div className="h-px w-full bg-slate-200" />
-      <DocsPageContent />
-      <Footer />
-    </div>
+    <>
+      <DocsHomeHero />
+      <DocsCategoryGrid />
+    </>
   );
 }

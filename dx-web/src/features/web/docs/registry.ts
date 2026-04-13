@@ -1,7 +1,25 @@
+import { BookOpen } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
+import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 
-// Categories are added incrementally by content tasks (11-22).
-export const DOC_CATEGORIES: DocCategory[] = [];
+export const DOC_CATEGORIES: DocCategory[] = [
+  {
+    slug: "getting-started",
+    title: "开始使用",
+    description: "第一次使用斗学？从这里开始。",
+    icon: BookOpen,
+    accentClass: "border-teal-200 bg-teal-50 text-teal-600",
+    topics: [
+      {
+        slug: "what-is-douxue",
+        title: "认识斗学",
+        description:
+          "斗学是一款融合游戏化机制与 AI 辅助的英语学习平台。来了解它的核心理念和四大能力。",
+        Component: WhatIsDouxue,
+      },
+    ],
+  },
+];
 
 export function findCategory(slug: string): DocCategory | undefined {
   return DOC_CATEGORIES.find((c) => c.slug === slug);
