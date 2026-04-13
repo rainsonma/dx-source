@@ -27,7 +27,7 @@ export default function Benefits() {
               icon: Swords,
               iconColor: "text-rose-600",
               title: "PK 对战",
-              desc: "所有 PK 模式（和机器人、和真人）都需要 VIP。",
+              desc: "随机匹配和指定对手两种 PK 都需要 VIP。",
             },
             {
               icon: Users2,

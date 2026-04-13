@@ -26,7 +26,7 @@ export default function LearningModesOverview() {
             },
             {
               label: "对手",
-              values: ["无（自己）", "机器人 或 真人", "小组成员"],
+              values: ["无（自己）", "随机 或 指定", "小组成员"],
             },
             {
               label: "VIP 要求",
@@ -54,7 +54,7 @@ export default function LearningModesOverview() {
 
       <DocSection id="how-to-choose" title="我该选哪个">
         <DocCallout variant="tip" title="三个简单判断">
-          想自己安静练习？选单人。想来点紧张刺激的对抗？选 PK——和机器人热身也行，和真人约战更带感。
+          想自己安静练习？选单人。想来点紧张刺激的对抗？选 PK——可以随机匹配立刻开始，也可以指定一个朋友约战。
           想和朋友一起开局、看到彼此的进度？选小组。
         </DocCallout>
       </DocSection>

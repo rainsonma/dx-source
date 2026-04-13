@@ -51,7 +51,7 @@ export default function FirstSession() {
           <DocLink href="/docs/learning-modes/overview">多种学习模式</DocLink>
           {" "}
           了解单人、PK、小组之间的差异；也可以直接尝试一下 PK
-          模式，挑战机器人对手会比单人更紧张刺激（PK 需要 VIP 会员）。
+          模式，实时对战的紧张节奏会比单人更刺激（PK 需要 VIP 会员）。
         </p>
         <DocCallout variant="tip" title="慢慢来，不急">
           好玩的游戏自己会把你带回来，不需要一次刷完。比起一天硬刷两小时，每天 10-15 分钟&ldquo;想再来一局&rdquo;的那种冲动，才是真正能让英语长进的方式。

@@ -124,7 +124,7 @@ export const DOC_CATEGORIES: DocCategory[] = [
         slug: "pk-mode",
         title: "PK 对战模式",
         description:
-          "与真人或 AI 机器人实时对战，抢先完成关卡获胜。需要 VIP。",
+          "实时 1v1 对战，抢先完成关卡获胜。可以随机匹配或指定对手，需要 VIP。",
         Component: PkMode,
       },
       {

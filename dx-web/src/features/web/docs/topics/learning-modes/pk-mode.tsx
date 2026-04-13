@@ -16,18 +16,18 @@ export default function PkMode() {
           PK 模式适合你已经熟悉基础玩法、想来点刺激的时候；或者和朋友约战，互相比拼。
         </p>
         <DocCallout variant="warning" title="仅 VIP 可用">
-          PK 的所有形式（包括和机器人对战）都需要 VIP 会员。如果你还没开通，会在进入时被提示升级。
+          PK 的所有形式都需要 VIP 会员。如果你还没开通，会在进入时被提示升级。
         </DocCallout>
       </DocSection>
 
       <DocSection id="two-types" title="两种对战方式">
         <DocCompareTable
-          columns={["random（随机机器人）", "specified（指定真人）"]}
+          columns={["random（随机匹配）", "specified（指定对手）"]}
           labelHeader="维度"
           rows={[
             {
-              label: "对手",
-              values: ["AI 机器人", "在线的好友或陌生人"],
+              label: "匹配方式",
+              values: ["系统自动为你配对", "自己选择一个人"],
             },
             {
               label: "等待时间",
@@ -39,43 +39,40 @@ export default function PkMode() {
             },
             {
               label: "典型场景",
-              values: ["一个人想练节奏", "和朋友约战"],
+              values: ["想立刻开始", "和朋友约战"],
             },
           ]}
         />
       </DocSection>
 
-      <DocSection id="robot-difficulty" title="机器人三档难度">
+      <DocSection id="difficulty" title="随机匹配的难度选择">
         <p>
-          选择&ldquo;随机机器人&rdquo;时，你可以指定机器人的难度。三档各自的参数如下：
+          选择&ldquo;随机匹配&rdquo;时，你可以挑一个想要的难度档位——从轻松到紧张三档：
         </p>
         <DocKeyValue
           items={[
             {
               key: "easy（简单）",
-              value: "正确率 50–70%",
-              note: "延迟 7–12 秒，连击打断率 50%",
+              value: "轻松热身",
+              note: "适合放松节奏、刚开始练",
             },
             {
               key: "normal（普通）",
-              value: "正确率 70–85%",
-              note: "延迟 5–8 秒，连击打断率 30%",
+              value: "正常强度",
+              note: "大多数人的首选",
             },
             {
               key: "hard（困难）",
-              value: "正确率 85–95%",
-              note: "延迟 3–5 秒，连击打断率 10%",
+              value: "高强度对抗",
+              note: "适合想挑战极限的你",
             },
           ]}
         />
-        <p>
-          &ldquo;延迟&rdquo;是机器人在每题上的思考时间——延迟越低，它答题越快；&ldquo;连击打断率&rdquo;是机器人故意答错打断自己连击的概率，打断率越低越稳。
-        </p>
       </DocSection>
 
-      <DocSection id="invite-flow" title="邀请真人对战">
+      <DocSection id="invite-flow" title="指定对手的邀请流程">
         <p>
-          选择&ldquo;指定真人&rdquo;时，你需要主动发起邀请：
+          选择&ldquo;指定对手&rdquo;时，你需要主动发起邀请：
         </p>
         <DocSteps
           steps={[
