@@ -13,11 +13,11 @@ import {
   type CommissionTier,
 } from "@/features/web/invite/helpers/invite-rules";
 
-type Props = {
+type InviteRulesSectionProps = {
   userGrade: UserGrade | null;
 };
 
-export function InviteRulesSection({ userGrade }: Props) {
+export function InviteRulesSection({ userGrade }: InviteRulesSectionProps) {
   const isLoading = userGrade === null;
   const isFreeUser = userGrade === "free";
 
@@ -149,7 +149,7 @@ function LockedHint() {
       </div>
       <Link
         href="/purchase/membership"
-        className="inline-flex items-center gap-1.5 rounded-[10px] bg-teal-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-700"
+        className="inline-flex items-center gap-1.5 rounded-[10px] bg-teal-600 px-4 py-2 text-xs font-semibold text-white outline-none transition-colors hover:bg-teal-700 focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         升级会员
       </Link>
