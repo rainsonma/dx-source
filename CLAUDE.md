@@ -186,4 +186,3 @@ DEEPSEEK_API_KEY=
 - **Security** — validate input, check ownership, use error sentinels
 - **Never modify** `dx-web/src/components/ui/` (shadcn/ui managed)
 - **Commit style** — `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
-- **Always ask** before git commit
