@@ -3,6 +3,7 @@ import {
   BookOpen,
   Library,
   MessageCircle,
+  Sparkles,
   Swords,
   TrendingUp,
   Users2,
@@ -36,6 +37,8 @@ import CreateJoin from "./topics/groups/create-join";
 import MembersApplications from "./topics/groups/members-applications";
 import GroupsSubgroups from "./topics/groups/subgroups";
 import StartGame from "./topics/groups/start-game";
+import AiCustomSentence from "./topics/ai/ai-custom-sentence";
+import AiCustomVocab from "./topics/ai/ai-custom-vocab";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -279,6 +282,29 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "组主开局四步走、推进下一关、强制结束、结算。",
         Component: StartGame,
+      },
+    ],
+  },
+  {
+    slug: "ai",
+    title: "AI 智能学习",
+    description: "让 AI 根据你的关键词和难度生成课程，消耗能量豆，失败退还。",
+    icon: Sparkles,
+    accentClass: "border-purple-200 bg-purple-50 text-purple-600",
+    topics: [
+      {
+        slug: "ai-custom-sentence",
+        title: "AI 随心学（句子）",
+        description:
+          "让 AI 生成完整英语故事：四步流程、CEFR 难度、能量豆消耗。",
+        Component: AiCustomSentence,
+      },
+      {
+        slug: "ai-custom-vocab",
+        title: "AI 随心学（词汇）",
+        description:
+          "词汇变体：四步流程一致，按游戏类型限制每关词对数。",
+        Component: AiCustomVocab,
       },
     ],
   },
