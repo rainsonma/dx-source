@@ -19,6 +19,7 @@ export function DocsToc() {
       id: h.id,
       label: h.textContent ?? "",
     }));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: reading DOM headings after mount is a one-shot sync from the external system (DOM) into component state
     setHeadings(hs);
 
     if (hs.length === 0) return;

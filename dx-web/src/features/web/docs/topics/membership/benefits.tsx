@@ -1,6 +1,5 @@
 import {
   Coins,
-  Crown,
   HeadphonesIcon,
   Sparkles,
   Swords,
