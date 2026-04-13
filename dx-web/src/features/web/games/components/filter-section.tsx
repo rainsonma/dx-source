@@ -125,8 +125,8 @@ export function FilterSection({
           )}
         </div>
         {/* Category pills */}
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             {topCategories.map((cat) =>
               activeTopId === cat.id ? (
                 <ActivePill key={cat.id} label={cat.name} />
@@ -140,7 +140,7 @@ export function FilterSection({
             )}
           </div>
           {hasChildren && (
-            <div className="flex flex-wrap items-center gap-3 pl-4 lg:gap-4">
+            <div className="flex flex-wrap items-center gap-1 pl-4">
               {isAllWithinParent ? (
                 <ActivePill label="全部" />
               ) : (
@@ -177,7 +177,7 @@ export function FilterSection({
               )}
             </div>
             {/* Press pills */}
-            <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+            <div className="flex flex-wrap items-center gap-1">
               {presses.map((press) =>
                 filters.pressId === press.id ? (
                   <ActivePill key={press.id} label={press.name} />
@@ -207,7 +207,7 @@ export function FilterSection({
           )}
         </div>
         {/* Mode pills */}
-        <div className="flex flex-wrap items-center gap-3 lg:gap-4">
+        <div className="flex flex-wrap items-center gap-1">
           {modeEntries.map(([value, label]) =>
             filters.mode === value ? (
               <ActivePill key={value} label={label} />
