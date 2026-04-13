@@ -89,11 +89,13 @@ function CommissionTierCard({ tier }: { tier: CommissionTier }) {
 
   return (
     <div className={`flex flex-col ${cardClass}`}>
-      <div className="flex items-center gap-1.5">
-        <span className="text-sm font-semibold text-foreground">{tier.label}</span>
-        {isLifetime && <Crown className="h-3.5 w-3.5 text-teal-600" />}
+      <div className="flex items-center justify-between pb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-semibold text-foreground">{tier.label}</span>
+          {isLifetime && <Crown className="h-3.5 w-3.5 text-teal-600" />}
+        </div>
+        <span className="text-xs text-muted-foreground">{tier.sublabel}</span>
       </div>
-      <span className="pb-2 pt-0.5 text-xs text-muted-foreground">{tier.sublabel}</span>
       <div className="flex flex-col">
         {commissionRewardKeys.map((key) => (
           <div
@@ -115,22 +117,24 @@ function InviteeDiscountsBlock() {
   return (
     <div className="flex flex-col gap-3">
       <SubHeader title="被邀请者专属折扣" />
-      <div className="flex flex-col">
-        {inviteeDiscounts.map((discount) => (
-          <div
-            key={discount.grade}
-            className="flex items-center justify-between border-b border-border/40 py-2 last:border-0"
-          >
-            <span className="text-sm text-muted-foreground">{discount.label}</span>
-            <span className="text-sm font-semibold text-foreground">
-              {formatRewardValue(discount.value)}
-            </span>
-          </div>
-        ))}
+      <div className="rounded-[10px] border border-border bg-card p-4">
+        <div className="flex flex-col">
+          {inviteeDiscounts.map((discount) => (
+            <div
+              key={discount.grade}
+              className="flex items-center justify-between border-b border-border/40 py-2 last:border-0"
+            >
+              <span className="text-sm text-muted-foreground">{discount.label}</span>
+              <span className="text-sm font-semibold text-foreground">
+                {formatRewardValue(discount.value)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <p className="pt-3 text-xs text-muted-foreground">
+          * 未获邀请直接购买者无折扣优惠
+        </p>
       </div>
-      <p className="pt-1 text-xs text-muted-foreground">
-        * 未获邀请直接购买者无折扣优惠
-      </p>
     </div>
   );
 }
