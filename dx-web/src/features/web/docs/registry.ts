@@ -1,4 +1,4 @@
-import { BookOpen, Swords } from "lucide-react";
+import { BookOpen, Library, Swords } from "lucide-react";
 import type { DocCategory, TopicRef } from "./types";
 import WhatIsDouxue from "./topics/getting-started/what-is-douxue";
 import SignupSignin from "./topics/getting-started/signup-signin";
@@ -9,6 +9,9 @@ import SingleMode from "./topics/learning-modes/single-mode";
 import PkMode from "./topics/learning-modes/pk-mode";
 import GroupMode from "./topics/learning-modes/group-mode";
 import GameTypes from "./topics/learning-modes/game-types";
+import Browsing from "./topics/courses-games/browsing";
+import DetailLevels from "./topics/courses-games/detail-levels";
+import Favorites from "./topics/courses-games/favorites";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -88,6 +91,34 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "四种游戏类型 × 三个难度 × 四种学习模式，练习组合丰富。",
         Component: GameTypes,
+      },
+    ],
+  },
+  {
+    slug: "courses-games",
+    title: "课程与游戏",
+    description: "如何挑游戏、查看关卡、管理收藏。",
+    icon: Library,
+    accentClass: "border-blue-200 bg-blue-50 text-blue-600",
+    topics: [
+      {
+        slug: "browsing",
+        title: "挑选游戏",
+        description: "游戏广场的筛选、搜索和卡片结构一览。",
+        Component: Browsing,
+      },
+      {
+        slug: "detail-levels",
+        title: "游戏详情与关卡",
+        description: "游戏详情页、关卡网格、首关免费规则。",
+        Component: DetailLevels,
+      },
+      {
+        slug: "favorites",
+        title: "收藏与我的游戏",
+        description:
+          "收藏游戏、查看收藏列表、区分&ldquo;玩过&rdquo;和&ldquo;我创建&rdquo;。",
+        Component: Favorites,
       },
     ],
   },
