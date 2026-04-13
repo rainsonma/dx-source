@@ -8,14 +8,14 @@ import {
   DollarSign,
   UserCheck,
   TrendingUp,
-  ScrollText,
-  Info,
   Share2,
 } from "lucide-react";
 
 import { InviteQrCard } from "@/features/web/invite/components/invite-qr-card";
 import { InviteReferralTable } from "@/features/web/invite/components/invite-referral-table";
 import { ShareSnippetsModal } from "@/features/web/invite/components/share-snippets-modal";
+import { InviteRulesSection } from "@/features/web/invite/components/invite-rules-section";
+import type { UserGrade } from "@/consts/user-grade";
 import type { InviteStats } from "@/features/web/invite/helpers/invite-stats.helper";
 import type { ReferralItem } from "@/features/web/invite/actions/invite.action";
 
@@ -24,17 +24,16 @@ type InviteContentProps = {
   referrals: ReferralItem[];
   totalPages: number;
   stats: InviteStats;
+  userGrade: UserGrade | null;
 };
 
-const rules = [
-  "邀请好友通过您的专属链接注册斗学平台",
-  "好友成功注册并完成首次购买会员即算邀请成功",
-  "月度会员佣金 ¥9.90，季度会员 ¥29.70，年度会员 ¥89.70",
-  "佣金每月 15 日统一结算，可提现至绑定的银行账户",
-  "邀请人数不设上限，邀请越多佣金越多",
-];
-
-export function InviteContent({ inviteUrl, referrals, totalPages, stats }: InviteContentProps) {
+export function InviteContent({
+  inviteUrl,
+  referrals,
+  totalPages,
+  stats,
+  userGrade,
+}: InviteContentProps) {
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -158,26 +157,7 @@ export function InviteContent({ inviteUrl, referrals, totalPages, stats }: Invit
       </div>
 
       {/* Rules card */}
-      <div className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4 lg:p-6">
-        <div className="flex items-center gap-2">
-          <ScrollText className="h-[18px] w-[18px] text-teal-600" />
-          <span className="text-base font-semibold text-foreground">活动规则</span>
-        </div>
-        <div className="flex flex-col gap-3">
-          {rules.map((rule, i) => (
-            <div key={i} className="flex gap-2.5">
-              <span className="text-sm font-semibold text-teal-600">{i + 1}.</span>
-              <span className="text-sm text-muted-foreground">{rule}</span>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2 rounded-[10px] border border-amber-500/20 bg-amber-50/10 p-3">
-          <Info className="h-3.5 w-3.5 shrink-0 text-amber-500" />
-          <span className="text-xs leading-relaxed text-amber-800">
-            注意：佣金奖励仅限被邀请好友首次购买会员时发放，续费订单不参与佣金计算。
-          </span>
-        </div>
-      </div>
+      <InviteRulesSection userGrade={userGrade} />
 
       {/* Share snippets modal */}
       <ShareSnippetsModal

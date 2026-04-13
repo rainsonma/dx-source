@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { apiClient } from "@/lib/api-client";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { InviteContent } from "@/features/web/invite/components/invite-content";
 import type { InviteStats } from "@/features/web/invite/helpers/invite-stats.helper";
 import type { ReferralItem } from "@/features/web/invite/actions/invite.action";
+import type { ApiProfileData } from "@/features/web/me/types/me.types";
+import type { UserGrade } from "@/consts/user-grade";
 
 type ApiInviteData = {
   inviteCode: string;
@@ -27,6 +30,16 @@ export default function InvitePage() {
   const [referrals, setReferrals] = useState<ReferralItem[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [stats, setStats] = useState<InviteStats>(emptyStats);
+
+  const { data: profileData, error: profileError } = useSWR<ApiProfileData>(
+    "/api/user/profile"
+  );
+
+  const userGrade: UserGrade | null = profileError
+    ? "free"
+    : profileData
+      ? (profileData.grade as UserGrade)
+      : null;
 
   useEffect(() => {
     async function load() {
@@ -69,6 +82,7 @@ export default function InvitePage() {
         referrals={referrals}
         totalPages={totalPages}
         stats={stats}
+        userGrade={userGrade}
       />
     </div>
   );
