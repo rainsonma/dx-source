@@ -2,6 +2,7 @@ import {
   BookMarked,
   BookOpen,
   Crown,
+  Gift,
   Library,
   MessageCircle,
   PencilLine,
@@ -51,6 +52,9 @@ import Benefits from "./topics/membership/benefits";
 import PurchaseFlow from "./topics/membership/purchase-flow";
 import BeansPackages from "./topics/membership/beans-packages";
 import BeansMonthly from "./topics/membership/beans-monthly";
+import ReferralProgram from "./topics/invites/referral-program";
+import InviteCodes from "./topics/invites/invite-codes";
+import RedeemCodes from "./topics/invites/redeem-codes";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -402,6 +406,34 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "月度赠送节奏、赠送日规则、月末特殊处理、清零机制。",
         Component: BeansMonthly,
+      },
+    ],
+  },
+  {
+    slug: "invites",
+    title: "邀请与兑换",
+    description: "邀请好友赚佣金、区分两种邀请码、使用兑换码。",
+    icon: Gift,
+    accentClass: "border-orange-200 bg-orange-50 text-orange-600",
+    topics: [
+      {
+        slug: "referral-program",
+        title: "邀请好友赚佣金",
+        description: "推广页、四项统计、状态流和佣金结算。",
+        Component: ReferralProgram,
+      },
+      {
+        slug: "invite-codes",
+        title: "邀请码与群组码",
+        description: "两种邀请码的区别和使用场景。",
+        Component: InviteCodes,
+      },
+      {
+        slug: "redeem-codes",
+        title: "兑换码",
+        description:
+          "兑换码可换会员期限或能量豆。使用流程和失败原因。",
+        Component: RedeemCodes,
       },
     ],
   },
