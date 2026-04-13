@@ -1,6 +1,7 @@
 import {
   BookMarked,
   BookOpen,
+  Crown,
   Library,
   MessageCircle,
   PencilLine,
@@ -45,6 +46,11 @@ import NewCourse from "./topics/creation/new-course";
 import LevelsUnits from "./topics/creation/levels-units";
 import ContentItemsTopic from "./topics/creation/content-items";
 import PublishWithdraw from "./topics/creation/publish-withdraw";
+import TiersCompare from "./topics/membership/tiers-compare";
+import Benefits from "./topics/membership/benefits";
+import PurchaseFlow from "./topics/membership/purchase-flow";
+import BeansPackages from "./topics/membership/beans-packages";
+import BeansMonthly from "./topics/membership/beans-monthly";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -353,6 +359,49 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "发布前检查、生命周期（draft / published / withdraw）。",
         Component: PublishWithdraw,
+      },
+    ],
+  },
+  {
+    slug: "membership",
+    title: "会员与能量豆",
+    description:
+      "会员五档对比、权益、购买流程，以及能量豆的购买和月度赠送。",
+    icon: Crown,
+    accentClass: "border-yellow-200 bg-yellow-50 text-yellow-600",
+    topics: [
+      {
+        slug: "tiers-compare",
+        title: "会员等级对比",
+        description: "五档价格、有效期、完整权益对比表。",
+        Component: TiersCompare,
+      },
+      {
+        slug: "benefits",
+        title: "会员权益",
+        description:
+          "解锁全部关卡、PK、小组创建、AI 随心学、能量豆赠送、支持。",
+        Component: Benefits,
+      },
+      {
+        slug: "purchase-flow",
+        title: "购买流程",
+        description:
+          "五步完成购买、订单状态流转、30 分钟过期规则。",
+        Component: PurchaseFlow,
+      },
+      {
+        slug: "beans-packages",
+        title: "能量豆购买",
+        description: "五档充值包的价格和赠送比例。",
+        Component: BeansPackages,
+      },
+      {
+        slug: "beans-monthly",
+        title: "月度赠送与清零",
+        description:
+          "月度赠送节奏、赠送日规则、月末特殊处理、清零机制。",
+        Component: BeansMonthly,
       },
     ],
   },
