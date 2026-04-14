@@ -47,30 +47,52 @@ Both junctions were created with a partial unique index `(game_level_id, content
 
 One new migration: `20260415000001_relax_junction_unique_indexes_and_add_dedup_index.go`
 
+**Safety design.** `game_metas` is currently empty (the junction tables were just introduced and there is no live data yet). `game_items` already has substantial data backfilled from the legacy `content_items.game_level_id` column. The migration must preserve all `game_items` rows and avoid leaving the columns unindexed or briefly unguarded.
+
+We use the **create-new-then-drop-old** ordering. At every point in the migration, the columns are indexed and the application invariants hold. Both the data and the unique constraint exist throughout the build of the new index; the unique constraint is only dropped after the new index is fully in place.
+
 `Up()`:
 
 ```sql
--- game_metas: drop unique, create non-unique
-DROP INDEX IF EXISTS idx_game_metas_level_meta_unique;
+-- 1. Create new non-unique partial index BEFORE dropping the old unique one.
+--    Both indexes coexist briefly. Reads/writes continue to work; the old
+--    unique constraint is still enforced (which is fine — no duplicates yet).
 CREATE INDEX idx_game_metas_level_meta
   ON game_metas (game_level_id, content_meta_id)
   WHERE deleted_at IS NULL;
 
--- game_items: drop unique, create non-unique
-DROP INDEX IF EXISTS idx_game_items_level_item_unique;
 CREATE INDEX idx_game_items_level_item
   ON game_items (game_level_id, content_item_id)
   WHERE deleted_at IS NULL;
 
--- speed up dedup lookups on content_metas
+-- 2. Drop the old unique partial indexes. Columns remain indexed via step 1.
+DROP INDEX IF EXISTS idx_game_metas_level_meta_unique;
+DROP INDEX IF EXISTS idx_game_items_level_item_unique;
+
+-- 3. Add the dedup-lookup index on content_metas.
 CREATE INDEX IF NOT EXISTS idx_content_metas_dedup_lookup
   ON content_metas (source_type, source_data)
   WHERE deleted_at IS NULL;
 ```
 
-`Down()` reverses: re-creates the two unique partial indexes and drops `idx_content_metas_dedup_lookup`.
+**Why this ordering is safe with existing data:**
 
-`Down()` will fail if the table has multiple `game_metas` (or `game_items`) rows that share the same `(level, content_*_id)` after the new code starts producing intentional duplicates. That's expected — `Down()` is for migration rollback during development, not a permanent escape hatch.
+- `DROP INDEX` is non-destructive — it removes only the B-tree, not the underlying rows. Every `game_items` row is preserved exactly as it was.
+- `CREATE INDEX` (non-unique) cannot fail on existing data — there's no constraint to violate. Postgres just reads every row and builds the index.
+- The data is already compliant with the old unique constraint (it has been enforced since day one), so even re-creating a unique index would succeed. There is no risk of "data is too messy to index."
+- Between `CREATE` and `DROP` in the migration, the columns have **two** indexes covering them — never zero. Query planners will use whichever they prefer; correctness is identical.
+- The unique constraint is only dropped AFTER the new (non-unique) index is fully built. Until that point, the application cannot insert duplicates anyway because the new dedup-aware code is not yet deployed.
+
+**Locking notes:**
+
+- `CREATE INDEX` (without `CONCURRENTLY`) takes a `SHARE` lock that blocks writes to the table during the build. For `game_items` with lots of data, this lock window could be a few seconds. Reads continue to work.
+- `DROP INDEX` takes a brief `ACCESS EXCLUSIVE` lock (milliseconds).
+- For a development environment without live writers, this is fine.
+- For a production environment with live traffic, replace `CREATE INDEX` with `CREATE INDEX CONCURRENTLY` and `DROP INDEX` with `DROP INDEX CONCURRENTLY`. Goravel's migration runner does NOT wrap migrations in a transaction, so `CONCURRENTLY` is permitted. This is opt-in via a deployment-time switch (TBD by the operator), since the current development stage doesn't need it.
+
+`Down()` reverses: drops `idx_content_metas_dedup_lookup`, re-creates the two unique partial indexes (under their original names), then drops the new non-unique indexes.
+
+`Down()` will fail if the table has accumulated multiple `game_metas` (or `game_items`) rows that share the same `(level, content_*_id)` after the new dedup-aware code starts producing intentional duplicates. That's expected — `Down()` is for migration rollback during development before duplicates exist, not a permanent escape hatch.
 
 ### Save flow — `SaveMetadataBatch`
 
