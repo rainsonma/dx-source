@@ -595,13 +595,14 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	// Fetch content items for the level
 	contentTypes := consts.DegreeContentTypes[degree]
 	contentQuery := query.Model(&models.ContentItem{}).
-		Where("game_level_id", gameLevelID).
-		Where("is_active", true)
+		Select("content_items.*").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
+		Where("gi.game_level_id", gameLevelID)
 	if len(contentTypes) > 0 {
-		contentQuery = contentQuery.Where("content_type IN ?", contentTypes)
+		contentQuery = contentQuery.Where("content_items.content_type IN ?", contentTypes)
 	}
 	var items []models.ContentItem
-	if err := contentQuery.Order("\"order\" asc").Get(&items); err != nil || len(items) == 0 {
+	if err := contentQuery.Order(`gi."order" ASC`).Get(&items); err != nil || len(items) == 0 {
 		fmt.Printf("[PK] No content items for pk=%s level=%s\n", pkID, gameLevelID)
 		return
 	}

@@ -310,13 +310,7 @@ func RecordAnswer(userID string, input RecordAnswerInput) error {
 		return ErrRateLimited
 	}
 
-	safeDuration := input.Duration
-	if safeDuration < 0 {
-		safeDuration = 0
-	}
-	if safeDuration > 3600 {
-		safeDuration = 3600
-	}
+	safeDuration := max(0, min(input.Duration, 3600))
 
 	tx, err := facades.Orm().Query().Begin()
 	if err != nil {
@@ -600,14 +594,15 @@ func verifyOwnership(userID, sessionID string) error {
 	return nil
 }
 
-// countLevelItems counts active content items for a level, filtered by degree.
+// countLevelItems counts content items linked to a level via game_items,
+// filtered by the degree's allowed content types. Shared by single play,
+// PK play, and group play.
 func countLevelItems(query orm.Query, gameLevelID, degree string) (int64, error) {
-	q := query.Model(&models.ContentItem{}).
-		Where("game_level_id", gameLevelID).
-		Where("is_active", true)
-	allowedTypes, ok := consts.DegreeContentTypes[degree]
-	if ok && allowedTypes != nil {
-		q = q.Where("content_type IN ?", allowedTypes)
+	q := query.Model(&models.GameItem{}).
+		Join("JOIN content_items ci ON ci.id = game_items.content_item_id AND ci.deleted_at IS NULL").
+		Where("game_items.game_level_id", gameLevelID)
+	if allowedTypes, ok := consts.DegreeContentTypes[degree]; ok && allowedTypes != nil {
+		q = q.Where("ci.content_type IN ?", allowedTypes)
 	}
 	return q.Count()
 }
