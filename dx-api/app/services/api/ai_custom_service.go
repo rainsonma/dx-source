@@ -96,9 +96,8 @@ func GenerateMetadata(userID string, difficulty string, keywords []string) (*Gen
 		return nil, err
 	}
 
-	if strings.HasPrefix(result, "WARNING:") {
-		warning := strings.TrimSpace(strings.TrimPrefix(result, "WARNING:"))
-		return &GenerateMetadataResult{Warning: warning}, nil
+	if rest, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &GenerateMetadataResult{Warning: strings.TrimSpace(rest)}, nil
 	}
 
 	return &GenerateMetadataResult{
@@ -165,9 +164,8 @@ func FormatMetadata(userID string, content string, formatType string) (*FormatMe
 		return nil, err
 	}
 
-	if strings.HasPrefix(result, "WARNING:") {
-		warning := strings.TrimSpace(strings.TrimPrefix(result, "WARNING:"))
-		return &FormatMetadataResult{Warning: warning}, nil
+	if rest, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &FormatMetadataResult{Warning: strings.TrimSpace(rest)}, nil
 	}
 
 	formatted, sourceTypes := parseFormattedLines(result)
