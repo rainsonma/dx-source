@@ -249,8 +249,31 @@ func forceCleanup(categoryID string, names []string) (int, error) {
 			levelIDs = append(levelIDs, l.ID)
 		}
 
-		// Delete junction rows first, then content by game_level_id
+		// Delete content via the junction (pre-reuse 1:1 invariant), then the
+		// junction rows themselves.
 		if len(levelIDs) > 0 {
+			if _, err := query.Exec(
+				`UPDATE content_items SET deleted_at = NOW()
+				 WHERE deleted_at IS NULL
+				   AND id IN (
+				     SELECT content_item_id FROM game_items
+				     WHERE game_level_id IN ? AND deleted_at IS NULL
+				   )`,
+				levelIDs,
+			); err != nil {
+				return 0, fmt.Errorf("failed to delete content items for game %s: %w", game.ID, err)
+			}
+			if _, err := query.Exec(
+				`UPDATE content_metas SET deleted_at = NOW()
+				 WHERE deleted_at IS NULL
+				   AND id IN (
+				     SELECT content_meta_id FROM game_metas
+				     WHERE game_level_id IN ? AND deleted_at IS NULL
+				   )`,
+				levelIDs,
+			); err != nil {
+				return 0, fmt.Errorf("failed to delete content metas for game %s: %w", game.ID, err)
+			}
 			if _, err := query.Exec(
 				"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
 				levelIDs,
@@ -262,18 +285,6 @@ func forceCleanup(categoryID string, names []string) (int, error) {
 				levelIDs,
 			); err != nil {
 				return 0, fmt.Errorf("failed to delete game_metas for game %s: %w", game.ID, err)
-			}
-			if _, err := query.Exec(
-				"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
-				levelIDs,
-			); err != nil {
-				return 0, fmt.Errorf("failed to delete content items for game %s: %w", game.ID, err)
-			}
-			if _, err := query.Exec(
-				"UPDATE content_metas SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
-				levelIDs,
-			); err != nil {
-				return 0, fmt.Errorf("failed to delete content metas for game %s: %w", game.ID, err)
 			}
 		}
 
@@ -365,11 +376,12 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 			return fmt.Errorf("failed to create level %s: %w", level.Title, err)
 		}
 
-		// Build content items in batches; also collect the full set for the
-		// junction insert that follows (metas are not imported by this command).
+		// Build content items in batches; also collect the full set and their
+		// computed order values for the junction insert that follows (metas
+		// are not imported by this command).
 		var batch []models.ContentItem
 		allItems := make([]models.ContentItem, 0, len(level.Sentences))
-		var metas []models.ContentMeta
+		allItemOrders := make([]float64, 0, len(level.Sentences))
 		for _, item := range level.Sentences {
 			items, err := transformItems(item.Content, item.WordDetails)
 			if err != nil {
@@ -383,17 +395,15 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 
 			ci := models.ContentItem{
 				ID:          uuid.Must(uuid.NewV7()).String(),
-				GameLevelID: levelID,
 				Content:     item.Content,
 				ContentType: item.Type,
 				Translation: &item.Chinese,
 				Items:       &items,
 				Structure:   structure,
-				Order:       float64(item.SortOrder * 1000),
-				IsActive:    true,
 			}
 			batch = append(batch, ci)
 			allItems = append(allItems, ci)
+			allItemOrders = append(allItemOrders, float64(item.SortOrder*1000))
 
 			if len(batch) >= batchSize {
 				if err := tx.Create(&batch); err != nil {
@@ -410,10 +420,7 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 			}
 		}
 
-		if err := createGameMetasBatch(tx, gameID, levelID, metas); err != nil {
-			return fmt.Errorf("failed to create game_metas: %w", err)
-		}
-		if err := createGameItemsBatch(tx, gameID, levelID, allItems); err != nil {
+		if err := createGameItemsBatch(tx, gameID, levelID, allItems, allItemOrders); err != nil {
 			return fmt.Errorf("failed to create game_items: %w", err)
 		}
 	}
@@ -421,39 +428,21 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 	return nil
 }
 
-// createGameItemsBatch inserts game_items rows in bulk, one per content_item.
-// Uses the provided query handle so it participates in the caller's transaction.
-func createGameItemsBatch(tx orm.Query, gameID, gameLevelID string, contentItems []models.ContentItem) error {
+// createGameItemsBatch inserts game_items rows in bulk, one per content_item,
+// each with its corresponding junction order. Uses the provided query handle so
+// it participates in the caller's transaction.
+func createGameItemsBatch(tx orm.Query, gameID, gameLevelID string, contentItems []models.ContentItem, orders []float64) error {
 	if len(contentItems) == 0 {
 		return nil
 	}
 	batch := make([]models.GameItem, 0, len(contentItems))
-	for _, ci := range contentItems {
+	for i, ci := range contentItems {
 		batch = append(batch, models.GameItem{
 			ID:            uuid.Must(uuid.NewV7()).String(),
 			GameID:        gameID,
 			GameLevelID:   gameLevelID,
 			ContentItemID: ci.ID,
-			Order:         ci.Order,
-		})
-	}
-	return tx.Create(&batch)
-}
-
-// createGameMetasBatch inserts game_metas rows in bulk, one per content_meta.
-// Uses the provided query handle so it participates in the caller's transaction.
-func createGameMetasBatch(tx orm.Query, gameID, gameLevelID string, contentMetas []models.ContentMeta) error {
-	if len(contentMetas) == 0 {
-		return nil
-	}
-	batch := make([]models.GameMeta, 0, len(contentMetas))
-	for _, cm := range contentMetas {
-		batch = append(batch, models.GameMeta{
-			ID:            uuid.Must(uuid.NewV7()).String(),
-			GameID:        gameID,
-			GameLevelID:   gameLevelID,
-			ContentMetaID: cm.ID,
-			Order:         cm.Order,
+			Order:         orders[i],
 		})
 	}
 	return tx.Create(&batch)

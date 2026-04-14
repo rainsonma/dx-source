@@ -60,5 +60,6 @@ func Migrations() []schema.Migration {
 		&migrations.M20260407000001CreateGameJunctionTables{},
 		&migrations.M20260414000001CreateGameMetasAndGameItemsTables{},
 		&migrations.M20260414000002BackfillJunctionTables{},
+		&migrations.M20260414000003DropLegacyColumnsFromContentTables{},
 	}
 }

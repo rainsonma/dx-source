@@ -9,7 +9,6 @@ type ContentItem struct {
 	orm.Timestamps
 	orm.SoftDeletes
 	ID            string         `gorm:"column:id;primaryKey" json:"id"`
-	GameLevelID   string         `gorm:"column:game_level_id" json:"game_level_id"`
 	ContentMetaID *string        `gorm:"column:content_meta_id" json:"content_meta_id"`
 	Content       string         `gorm:"column:content" json:"content"`
 	ContentType   string         `gorm:"column:content_type" json:"content_type"`
@@ -20,9 +19,7 @@ type ContentItem struct {
 	Explanation   *string        `gorm:"column:explanation" json:"explanation"`
 	Items         *string        `gorm:"column:items;type:jsonb" json:"items"`
 	Structure     *string        `gorm:"column:structure;type:jsonb" json:"structure"`
-	Order         float64        `gorm:"column:order" json:"order"`
 	Tags          pq.StringArray `gorm:"column:tags;type:text[]" json:"tags"`
-	IsActive      bool           `gorm:"column:is_active" json:"is_active"`
 }
 
 // TableName returns the database table name.

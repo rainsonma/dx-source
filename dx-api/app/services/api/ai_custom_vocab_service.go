@@ -194,17 +194,50 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter
 	}
 	gameID := level.GameID
 
-	// Fetch unbroken metas linked to this level via game_metas junction
-	var metas []models.ContentMeta
-	if err := facades.Orm().Query().Model(&models.ContentMeta{}).
-		Select("content_metas.*").
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
-		Where("gm.game_level_id", gameLevelID).
-		Where("content_metas.is_break_done", false).
-		Order(`gm."order" ASC`).
-		Get(&metas); err != nil {
+	// Fetch unbroken metas linked to this level via game_metas junction.
+	// We need gm."order" as the base order for each generated content item, so
+	// we load the junction rows first, then the matching content_metas by id.
+	var gameMetas []models.GameMeta
+	if err := facades.Orm().Query().
+		Where("game_level_id", gameLevelID).
+		Order(`"order" ASC`).
+		Get(&gameMetas); err != nil {
+		writeVocabSSEError(writer, fmt.Errorf("failed to load game_metas: %w", err))
+		return
+	}
+	if len(gameMetas) == 0 {
+		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
+		writer.Close()
+		return
+	}
+
+	metaIDs := make([]string, 0, len(gameMetas))
+	for _, gm := range gameMetas {
+		metaIDs = append(metaIDs, gm.ContentMetaID)
+	}
+
+	var rawMetas []models.ContentMeta
+	if err := facades.Orm().Query().
+		Where("id IN ?", metaIDs).
+		Where("is_break_done", false).
+		Get(&rawMetas); err != nil {
 		writeVocabSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
+	}
+	cmByID := make(map[string]models.ContentMeta, len(rawMetas))
+	for _, cm := range rawMetas {
+		cmByID[cm.ID] = cm
+	}
+
+	metas := make([]models.ContentMeta, 0, len(gameMetas))
+	metaOrders := make([]float64, 0, len(gameMetas))
+	for _, gm := range gameMetas {
+		cm, ok := cmByID[gm.ContentMetaID]
+		if !ok {
+			continue
+		}
+		metas = append(metas, cm)
+		metaOrders = append(metaOrders, gm.Order)
 	}
 
 	if len(metas) == 0 {
@@ -229,15 +262,15 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter
 
 	total := len(metas)
 
-	for _, meta := range metas {
+	for i, meta := range metas {
 		wg.Add(1)
 		sem <- struct{}{}
 
-		go func(m models.ContentMeta) {
+		go func(m models.ContentMeta, baseOrder float64) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			success := processVocabBreakMeta(m, gameID, gameLevelID)
+			success := processVocabBreakMeta(m, gameID, gameLevelID, baseOrder)
 			d := atomic.AddInt64(&done, 1)
 
 			if success {
@@ -247,7 +280,7 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter
 				atomic.AddInt64(&failed, 1)
 				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "failed"})
 			}
-		}(meta)
+		}(meta, metaOrders[i])
 	}
 
 	wg.Wait()
@@ -270,7 +303,9 @@ func BreakVocabMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter
 
 // processVocabBreakMeta creates exactly 1 content item per meta.
 // Single word -> contentType "word", multi-word -> "phrase". No AI call.
-func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) bool {
+// baseOrder is the junction order of this meta (game_metas."order"); the new
+// item lands at baseOrder + 10.
+func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string, baseOrder float64) bool {
 	contentType := "word"
 	if strings.Contains(strings.TrimSpace(meta.SourceData), " ") {
 		contentType = "phrase"
@@ -278,16 +313,14 @@ func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) 
 
 	id := uuid.Must(uuid.NewV7()).String()
 	metaID := meta.ID
+	itemOrder := baseOrder + 10
 
 	item := models.ContentItem{
 		ID:            id,
-		GameLevelID:   gameLevelID,
 		ContentMetaID: &metaID,
 		Content:       meta.SourceData,
 		ContentType:   contentType,
 		Translation:   meta.Translation,
-		Order:         meta.Order + 10,
-		IsActive:      true,
 	}
 	if err := facades.Orm().Query().Create(&item); err != nil {
 		return false
@@ -298,7 +331,7 @@ func processVocabBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) 
 		GameID:        gameID,
 		GameLevelID:   gameLevelID,
 		ContentItemID: item.ID,
-		Order:         item.Order,
+		Order:         itemOrder,
 	}
 	if err := facades.Orm().Query().Create(&gi); err != nil {
 		return false
