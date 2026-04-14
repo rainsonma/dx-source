@@ -131,6 +131,7 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 	// Create metas in batch
 	for i, e := range entries {
 		id := uuid.Must(uuid.NewV7()).String()
+		order := maxOrder + float64((i+1)*1000)
 		meta := models.ContentMeta{
 			ID:          id,
 			GameLevelID: gameLevelID,
@@ -139,10 +140,21 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 			SourceData:  e.SourceData,
 			Translation: e.Translation,
 			IsBreakDone: false,
-			Order:       maxOrder + float64((i+1)*1000),
+			Order:       order,
 		}
 		if err := facades.Orm().Query().Create(&meta); err != nil {
 			return 0, fmt.Errorf("failed to create content meta: %w", err)
+		}
+
+		gm := models.GameMeta{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        level.GameID,
+			GameLevelID:   gameLevelID,
+			ContentMetaID: meta.ID,
+			Order:         order,
+		}
+		if err := facades.Orm().Query().Create(&gm); err != nil {
+			return 0, fmt.Errorf("failed to create game meta: %w", err)
 		}
 	}
 
@@ -365,6 +377,17 @@ func InsertContentItem(userID, gameID, gameLevelID, contentMetaID string, conten
 
 	if err := facades.Orm().Query().Create(&item); err != nil {
 		return nil, fmt.Errorf("failed to create content item: %w", err)
+	}
+
+	gi := models.GameItem{
+		ID:            uuid.Must(uuid.NewV7()).String(),
+		GameID:        level.GameID,
+		GameLevelID:   gameLevelID,
+		ContentItemID: item.ID,
+		Order:         item.Order,
+	}
+	if err := facades.Orm().Query().Create(&gi); err != nil {
+		return nil, fmt.Errorf("failed to create game item: %w", err)
 	}
 
 	return &CourseContentItemData{
