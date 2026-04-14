@@ -37,9 +37,10 @@ func GetLevelContent(userID, gameLevelID string, degree string) ([]ContentItemDa
 	// Determine allowed content types from degree
 	allowedTypes, hasDegree := consts.DegreeContentTypes[degree]
 
-	query := facades.Orm().Query().
-		Where("content_items.game_level_id", gameLevelID).
-		Where("content_items.is_active", true)
+	query := facades.Orm().Query().Model(&models.ContentItem{}).
+		Select("content_items.*").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
+		Where("gi.game_level_id", gameLevelID)
 
 	// If degree is defined and has specific content type restrictions, filter by them
 	if hasDegree && allowedTypes != nil {
@@ -47,7 +48,7 @@ func GetLevelContent(userID, gameLevelID string, degree string) ([]ContentItemDa
 	}
 
 	var items []models.ContentItem
-	if err := query.Order("content_items.\"order\" ASC").Get(&items); err != nil {
+	if err := query.Order(`gi."order" ASC`).Get(&items); err != nil {
 		return nil, fmt.Errorf("failed to get level content: %w", err)
 	}
 
