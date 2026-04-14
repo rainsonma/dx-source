@@ -566,12 +566,14 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 	}
 	_ = level
 
-	// Fetch broken metas (ready for item generation)
+	// Fetch broken metas (ready for item generation) linked to this level via game_metas junction
 	var metas []models.ContentMeta
-	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Where("is_break_done", true).
-		Order("\"order\" ASC").
+	if err := facades.Orm().Query().Model(&models.ContentMeta{}).
+		Select("content_metas.*").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
+		Where("gm.game_level_id", gameLevelID).
+		Where("content_metas.is_break_done", true).
+		Order(`gm."order" ASC`).
 		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
