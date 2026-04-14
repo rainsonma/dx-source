@@ -309,9 +309,9 @@ func PublishGame(userID, gameID string) error {
 	}
 
 	for _, l := range levels {
-		itemCount, err3 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Where("game_level_id", l.ID).
-			Where("is_active", true).
+		itemCount, err3 := facades.Orm().Query().Model(&models.GameItem{}).
+			Join("JOIN content_items ci ON ci.id = game_items.content_item_id AND ci.deleted_at IS NULL").
+			Where("game_items.game_level_id", l.ID).
 			Count()
 		if err3 != nil {
 			return fmt.Errorf("failed to count items: %w", err3)
@@ -320,10 +320,10 @@ func PublishGame(userID, gameID string) error {
 			return fmt.Errorf("关卡「%s」没有练习内容", l.Name)
 		}
 
-		ungeneratedCount, err4 := facades.Orm().Query().Model(&models.ContentItem{}).
-			Where("game_level_id", l.ID).
-			Where("is_active", true).
-			Where("items IS NULL").
+		ungeneratedCount, err4 := facades.Orm().Query().Model(&models.GameItem{}).
+			Join("JOIN content_items ci ON ci.id = game_items.content_item_id AND ci.deleted_at IS NULL").
+			Where("game_items.game_level_id", l.ID).
+			Where("ci.items IS NULL").
 			Count()
 		if err4 != nil {
 			return fmt.Errorf("failed to count ungenerated items: %w", err4)
@@ -514,9 +514,8 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 
 	levelData := make([]CourseGameLevelData, 0, len(levels))
 	for _, l := range levels {
-		itemCount, _ := facades.Orm().Query().Model(&models.ContentItem{}).
+		itemCount, _ := facades.Orm().Query().Model(&models.GameItem{}).
 			Where("game_level_id", l.ID).
-			Where("is_active", true).
 			Count()
 		levelData = append(levelData, CourseGameLevelData{
 			ID:          l.ID,
