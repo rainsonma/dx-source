@@ -310,13 +310,7 @@ func RecordAnswer(userID string, input RecordAnswerInput) error {
 		return ErrRateLimited
 	}
 
-	safeDuration := input.Duration
-	if safeDuration < 0 {
-		safeDuration = 0
-	}
-	if safeDuration > 3600 {
-		safeDuration = 3600
-	}
+	safeDuration := max(0, min(input.Duration, 3600))
 
 	tx, err := facades.Orm().Query().Begin()
 	if err != nil {
