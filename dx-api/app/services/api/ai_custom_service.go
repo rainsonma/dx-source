@@ -317,14 +317,16 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 		writeSSEError(writer, ErrGamePublished)
 		return
 	}
-	_ = level // used for validation only
+	gameID := level.GameID
 
-	// Fetch unbroken metas
+	// Fetch unbroken metas linked to this level via game_metas junction
 	var metas []models.ContentMeta
-	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
-		Where("is_break_done", false).
-		Order("\"order\" ASC").
+	if err := facades.Orm().Query().Model(&models.ContentMeta{}).
+		Select("content_metas.*").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
+		Where("gm.game_level_id", gameLevelID).
+		Where("content_metas.is_break_done", false).
+		Order(`gm."order" ASC`).
 		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
@@ -373,7 +375,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			success := processBreakMeta(m, gameLevelID)
+			success := processBreakMeta(m, gameID, gameLevelID)
 			d := atomic.AddInt64(&done, 1)
 
 			if success {
@@ -405,7 +407,7 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	writer.Close()
 }
 
-func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
+func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) bool {
 	userMsg := "English: " + meta.SourceData
 	if meta.Translation != nil && *meta.Translation != "" {
 		userMsg += "\nChinese translation: " + *meta.Translation
@@ -458,6 +460,17 @@ func processBreakMeta(meta models.ContentMeta, gameLevelID string) bool {
 			IsActive:      true,
 		}
 		if err := facades.Orm().Query().Create(&item); err != nil {
+			return false
+		}
+
+		gi := models.GameItem{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
+			ContentItemID: item.ID,
+			Order:         item.Order,
+		}
+		if err := facades.Orm().Query().Create(&gi); err != nil {
 			return false
 		}
 	}
@@ -581,10 +594,12 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 	}
 
 	var pendingItems []models.ContentItem
-	if err := facades.Orm().Query().
-		Where("content_meta_id IN ?", metaIDs).
-		Where("is_active", true).
-		Where("items IS NULL").
+	if err := facades.Orm().Query().Model(&models.ContentItem{}).
+		Select("content_items.*").
+		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
+		Where("gi.game_level_id", gameLevelID).
+		Where("content_items.content_meta_id IN ?", metaIDs).
+		Where("content_items.items IS NULL").
 		Get(&pendingItems); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load pending items: %w", err))
 		return
