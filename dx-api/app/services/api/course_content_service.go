@@ -73,8 +73,10 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 
 	// Check existing capacity
 	var existingMetas []models.ContentMeta
-	if err := facades.Orm().Query().
-		Where("game_level_id", gameLevelID).
+	if err := facades.Orm().Query().Model(&models.ContentMeta{}).
+		Select("content_metas.*").
+		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
+		Where("gm.game_level_id", gameLevelID).
 		Get(&existingMetas); err != nil {
 		return 0, fmt.Errorf("failed to count metas: %w", err)
 	}
@@ -178,8 +180,7 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
-	_, err := getCourseGameOwned(userID, gameID)
-	if err != nil {
+	if _, err := getCourseGameOwned(userID, gameID); err != nil {
 		return nil, err
 	}
 
@@ -192,75 +193,108 @@ func GetContentItemsByMeta(userID, gameID, gameLevelID string) ([]LevelContentDa
 		return nil, ErrLevelNotFound
 	}
 
-	// Load metas ordered
-	var metas []models.ContentMeta
+	// 1. Load game_metas for this level in order.
+	var gameMetas []models.GameMeta
 	if err := facades.Orm().Query().
 		Where("game_level_id", gameLevelID).
 		Order("\"order\" ASC").
-		Get(&metas); err != nil {
-		return nil, fmt.Errorf("failed to load metas: %w", err)
+		Get(&gameMetas); err != nil {
+		return nil, fmt.Errorf("failed to load game_metas: %w", err)
 	}
-
-	if len(metas) == 0 {
+	if len(gameMetas) == 0 {
 		return []LevelContentData{}, nil
 	}
 
-	// Load all items for this level
-	var items []models.ContentItem
+	// 2. Load the referenced content_metas by ID.
+	metaIDs := make([]string, 0, len(gameMetas))
+	for _, gm := range gameMetas {
+		metaIDs = append(metaIDs, gm.ContentMetaID)
+	}
+	var contentMetas []models.ContentMeta
+	if err := facades.Orm().Query().
+		Where("id IN ?", metaIDs).
+		Get(&contentMetas); err != nil {
+		return nil, fmt.Errorf("failed to load content_metas: %w", err)
+	}
+	metaByID := make(map[string]models.ContentMeta, len(contentMetas))
+	for _, cm := range contentMetas {
+		metaByID[cm.ID] = cm
+	}
+
+	// 3. Load game_items for this level in order.
+	var gameItems []models.GameItem
 	if err := facades.Orm().Query().
 		Where("game_level_id", gameLevelID).
-		Where("is_active", true).
 		Order("\"order\" ASC").
-		Get(&items); err != nil {
-		return nil, fmt.Errorf("failed to load items: %w", err)
+		Get(&gameItems); err != nil {
+		return nil, fmt.Errorf("failed to load game_items: %w", err)
 	}
 
-	// Group items by meta ID
+	// 4. Load the referenced content_items by ID.
+	var items []models.ContentItem
+	if len(gameItems) > 0 {
+		itemIDs := make([]string, 0, len(gameItems))
+		for _, gi := range gameItems {
+			itemIDs = append(itemIDs, gi.ContentItemID)
+		}
+		if err := facades.Orm().Query().
+			Where("id IN ?", itemIDs).
+			Get(&items); err != nil {
+			return nil, fmt.Errorf("failed to load content_items: %w", err)
+		}
+	}
+	itemByID := make(map[string]models.ContentItem, len(items))
+	for _, it := range items {
+		itemByID[it.ID] = it
+	}
+
+	// 5. Build items-by-meta map, preserving game_items.order as the authoritative
+	//    per-level order.
 	itemsByMeta := make(map[string][]CourseContentItemData)
-	for _, item := range items {
-		metaID := ""
-		if item.ContentMetaID != nil {
-			metaID = *item.ContentMetaID
+	for _, gi := range gameItems {
+		it, ok := itemByID[gi.ContentItemID]
+		if !ok {
+			continue
 		}
-		var itemsJSON json.RawMessage
-		if item.Items != nil {
-			itemsJSON = json.RawMessage(*item.Items)
+		metaKey := ""
+		if it.ContentMetaID != nil {
+			metaKey = *it.ContentMetaID
 		}
-		itemsByMeta[metaID] = append(itemsByMeta[metaID], CourseContentItemData{
-			ID:            item.ID,
-			ContentMetaID: item.ContentMetaID,
-			Content:       item.Content,
-			ContentType:   item.ContentType,
-			Translation:   item.Translation,
-			Items:         itemsJSON,
-			Order:         item.Order,
+		raw := json.RawMessage("null")
+		if it.Items != nil {
+			raw = json.RawMessage(*it.Items)
+		}
+		itemsByMeta[metaKey] = append(itemsByMeta[metaKey], CourseContentItemData{
+			ID:            it.ID,
+			ContentMetaID: it.ContentMetaID,
+			Content:       it.Content,
+			ContentType:   it.ContentType,
+			Translation:   it.Translation,
+			Items:         raw,
+			Order:         gi.Order, // from game_items (authoritative)
 		})
 	}
 
-	// Build grouped result
-	result := make([]LevelContentData, 0, len(metas))
-	for _, meta := range metas {
-		metaData := ContentMetaData{
-			ID:          meta.ID,
-			SourceFrom:  meta.SourceFrom,
-			SourceType:  meta.SourceType,
-			SourceData:  meta.SourceData,
-			Translation: meta.Translation,
-			IsBreakDone: meta.IsBreakDone,
-			Order:       meta.Order,
+	// 6. Assemble result in game_metas.order.
+	result := make([]LevelContentData, 0, len(gameMetas))
+	for _, gm := range gameMetas {
+		cm, ok := metaByID[gm.ContentMetaID]
+		if !ok {
+			continue
 		}
-
-		metaItems := itemsByMeta[meta.ID]
-		if metaItems == nil {
-			metaItems = []CourseContentItemData{}
-		}
-
 		result = append(result, LevelContentData{
-			Meta:  metaData,
-			Items: metaItems,
+			Meta: ContentMetaData{
+				ID:          cm.ID,
+				SourceFrom:  cm.SourceFrom,
+				SourceType:  cm.SourceType,
+				SourceData:  cm.SourceData,
+				Translation: cm.Translation,
+				IsBreakDone: cm.IsBreakDone,
+				Order:       gm.Order, // from game_metas (authoritative)
+			},
+			Items: itemsByMeta[cm.ID],
 		})
 	}
-
 	return result, nil
 }
 
@@ -524,11 +558,15 @@ func DeleteMetadata(userID, gameID, metaID string) error {
 
 // verifyMetaBelongsToGame checks that a content meta belongs to a game via its level.
 func verifyMetaBelongsToGame(metaID, gameID string) error {
-	var meta models.ContentMeta
-	if err := facades.Orm().Query().
-		Where("id", metaID).
-		Where("game_level_id IN (SELECT id FROM game_levels WHERE game_id = ? AND deleted_at IS NULL)", gameID).
-		First(&meta); err != nil || meta.ID == "" {
+	count, err := facades.Orm().Query().Model(&models.GameMeta{}).
+		Join("JOIN game_levels gl ON gl.id = game_metas.game_level_id AND gl.deleted_at IS NULL").
+		Where("game_metas.content_meta_id", metaID).
+		Where("gl.game_id", gameID).
+		Count()
+	if err != nil {
+		return fmt.Errorf("failed to verify meta: %w", err)
+	}
+	if count == 0 {
 		return ErrMetaNotFound
 	}
 	return nil
@@ -536,20 +574,25 @@ func verifyMetaBelongsToGame(metaID, gameID string) error {
 
 // verifyItemBelongsToGame checks that a content item belongs to a game via its level.
 func verifyItemBelongsToGame(itemID, gameID string) error {
-	var item models.ContentItem
-	if err := facades.Orm().Query().
-		Where("id", itemID).
-		Where("game_level_id IN (SELECT id FROM game_levels WHERE game_id = ? AND deleted_at IS NULL)", gameID).
-		First(&item); err != nil || item.ID == "" {
+	count, err := facades.Orm().Query().Model(&models.GameItem{}).
+		Join("JOIN game_levels gl ON gl.id = game_items.game_level_id AND gl.deleted_at IS NULL").
+		Where("game_items.content_item_id", itemID).
+		Where("gl.game_id", gameID).
+		Count()
+	if err != nil {
+		return fmt.Errorf("failed to verify item: %w", err)
+	}
+	if count == 0 {
 		return ErrContentItemNotFound
 	}
 	return nil
 }
 
 // calculateInsertionOrder computes the order for a new item relative to a reference item.
+// referenceItemID is a content_item ID; lookups go through the game_items junction.
 func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (float64, error) {
 	if referenceItemID == "" {
-		var lastItem models.ContentItem
+		var lastItem models.GameItem
 		if err := facades.Orm().Query().
 			Where("game_level_id", gameLevelID).
 			Order("\"order\" DESC").
@@ -559,16 +602,19 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 		return lastItem.Order + 1000, nil
 	}
 
-	// Find reference item
-	var refItem models.ContentItem
-	if err := facades.Orm().Query().Where("id", referenceItemID).First(&refItem); err != nil {
+	// Find reference item via the junction (referenceItemID is a content_item ID).
+	var refItem models.GameItem
+	if err := facades.Orm().Query().
+		Where("game_level_id", gameLevelID).
+		Where("content_item_id", referenceItemID).
+		First(&refItem); err != nil {
 		return 0, fmt.Errorf("failed to find reference item: %w", err)
 	}
 	if refItem.ID == "" {
 		return 0, ErrContentItemNotFound
 	}
 
-	var items []models.ContentItem
+	var items []models.GameItem
 	if err := facades.Orm().Query().
 		Where("game_level_id", gameLevelID).
 		Order("\"order\" ASC").
@@ -579,7 +625,7 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 	// Find reference index
 	refIdx := -1
 	for i, item := range items {
-		if item.ID == referenceItemID {
+		if item.ContentItemID == referenceItemID {
 			refIdx = i
 			break
 		}
