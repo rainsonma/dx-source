@@ -279,9 +279,22 @@ No changes. Both already use the junction and check "is there at least one row b
 
 ## Frontend impact
 
-**None.** The endpoint contract, request payload, and response shape are unchanged. `AddMetadataDialog`, `AddVocabDialog`, `saveMetadataAction`, and `parseMetadataText` need no edits. The level content refresh after save (SWR re-fetch) automatically renders the deduped state, including any pre-existing breakdown items inherited via reuse.
+**Save flow: zero changes.** The save endpoint contract, request payload, and response shape are unchanged. `AddMetadataDialog`, `AddVocabDialog`, `saveMetadataAction`, and `parseMetadataText` need no edits. The level content refresh after save (SWR re-fetch) automatically renders the deduped state, including any pre-existing breakdown items inherited via reuse.
 
-The two delete controllers (`DeleteContentItem`, `DeleteMetadata`) need to plumb `gameLevelID` from their route params (already in the URL) into the service call. No frontend payload changes; existing route shapes are preserved.
+**Delete flow: small surgery.** The two existing delete routes do NOT carry `levelId` in the URL today, so the controllers can't know which level the user is deleting from — which is critical now that the same content can appear in multiple levels. We rewrite the routes to put the level into the path:
+
+| Old route | New route |
+|---|---|
+| `DELETE /api/course-games/{id}/metadata/{metaId}` | `DELETE /api/course-games/{id}/levels/{levelId}/metadata/{metaId}` |
+| `DELETE /api/course-games/{id}/content-items/{itemId}` | `DELETE /api/course-games/{id}/levels/{levelId}/content-items/{itemId}` |
+
+`DELETE /api/course-games/{id}/levels/{levelId}/content-items` (the bulk delete-all-level-content) is unchanged — it already has `{levelId}` in the path.
+
+Frontend changes required:
+1. `dx-web/src/features/web/ai-custom/actions/course-game.action.ts`: `deleteMetaAction(gameId, metaId)` → `deleteMetaAction(gameId, levelId, metaId)`; same for `deleteContentItemAction`. Update both URL strings to include `/levels/${levelId}/`.
+2. `dx-web/src/features/web/ai-custom/components/level-units-panel.tsx`: the two call sites at lines ~494 and ~532 already have `levelId` in scope (it's a prop on the panel) — just pass it as the second argument.
+
+No other call sites — both actions are only used by `level-units-panel.tsx`.
 
 ## Data safety
 
