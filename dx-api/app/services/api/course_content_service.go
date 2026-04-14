@@ -472,7 +472,25 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
+	// Load the item up front so we know its meta and level for the junction
+	// soft-delete and the is_break_done reset.
+	var item models.ContentItem
+	if err := facades.Orm().Query().Where("id", itemID).First(&item); err != nil {
+		return fmt.Errorf("failed to load content item: %w", err)
+	}
+	if item.ID == "" {
+		return ErrContentItemNotFound
+	}
+
 	return facades.Orm().Transaction(func(tx orm.Query) error {
+		// Soft-delete the junction row first (pre-reuse 1:1 invariant)
+		if _, err := tx.Exec(
+			"UPDATE game_items SET deleted_at = NOW() WHERE content_item_id = ? AND deleted_at IS NULL",
+			itemID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_item: %w", err)
+		}
+
 		// Soft-delete content item
 		if _, err := tx.Exec(
 			"UPDATE content_items SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
@@ -481,19 +499,26 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 			return fmt.Errorf("failed to delete content item: %w", err)
 		}
 
-		// Reset is_break_done when meta has no remaining active items
-		if _, err := tx.Exec(
-			`UPDATE content_metas SET is_break_done = false
-			 WHERE id = (SELECT content_meta_id FROM content_items WHERE id = ?)
-			   AND deleted_at IS NULL
-			   AND NOT EXISTS (
-			     SELECT 1 FROM content_items
-			     WHERE content_meta_id = content_metas.id
-			       AND deleted_at IS NULL
-			   )`,
-			itemID,
-		); err != nil {
-			return fmt.Errorf("failed to reset meta break status: %w", err)
+		// Reset is_break_done when the meta has no remaining active game_items
+		// in this level. Counts via the junction so that level-scoped reuse is
+		// correct once cross-level reuse lands.
+		if item.ContentMetaID != nil {
+			if _, err := tx.Exec(
+				`UPDATE content_metas SET is_break_done = false
+				 WHERE id = ?
+				   AND deleted_at IS NULL
+				   AND NOT EXISTS (
+				     SELECT 1 FROM game_items gi
+				     JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
+				     WHERE ci.content_meta_id = content_metas.id
+				       AND gi.game_level_id = ?
+				       AND gi.deleted_at IS NULL
+				   )`,
+				*item.ContentMetaID,
+				item.GameLevelID,
+			); err != nil {
+				return fmt.Errorf("failed to reset meta break status: %w", err)
+			}
 		}
 		return nil
 	})
@@ -524,6 +549,18 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 
 	// Delete content in transaction
 	return facades.Orm().Transaction(func(tx orm.Query) error {
+		if _, err := tx.Exec(
+			"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			gameLevelID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_items: %w", err)
+		}
+		if _, err := tx.Exec(
+			"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			gameLevelID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+		}
 		if _, err := tx.Exec(
 			"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
 			gameLevelID,
@@ -559,6 +596,22 @@ func DeleteMetadata(userID, gameID, metaID string) error {
 	}
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {
+		// Soft-delete junction rows first (pre-reuse 1:1 invariant)
+		if _, err := tx.Exec(
+			`UPDATE game_items SET deleted_at = NOW()
+			 WHERE content_item_id IN (SELECT id FROM content_items WHERE content_meta_id = ?)
+			   AND deleted_at IS NULL`,
+			metaID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_items for meta: %w", err)
+		}
+		if _, err := tx.Exec(
+			"UPDATE game_metas SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",
+			metaID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+		}
+
 		// Soft-delete content items belonging to this meta
 		if _, err := tx.Exec(
 			"UPDATE content_items SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",

@@ -252,6 +252,18 @@ func DeleteGame(userID, gameID string) error {
 		// Cascade soft-delete content
 		if len(levelIDs) > 0 {
 			if _, err := tx.Exec(
+				"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
+				levelIDs,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete game_items: %w", err)
+			}
+			if _, err := tx.Exec(
+				"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
+				levelIDs,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+			}
+			if _, err := tx.Exec(
 				"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
 				levelIDs,
 			); err != nil {
@@ -435,6 +447,18 @@ func DeleteLevel(userID, gameID, levelID string) error {
 	}
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {
+		if _, err := tx.Exec(
+			"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			levelID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_items: %w", err)
+		}
+		if _, err := tx.Exec(
+			"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			levelID,
+		); err != nil {
+			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+		}
 		if _, err := tx.Exec(
 			"UPDATE content_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
 			levelID,
