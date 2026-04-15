@@ -25,8 +25,9 @@ Non-obvious facts about the local dev environment that the plan's literal shell 
 3. **Go commands that touch the DB must run inside the `dx-api` container.** Host-side `.env` only contains `APP_KEY`; real DB credentials come from `deploy/env/.env.dev` which is injected into the `dx-api` container by docker-compose. That means:
     - `go build ./...` and `go vet ./...` — OK from host (no DB connection).
     - `go run . artisan migrate` — container only. Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go run . artisan migrate` from the repo root. Note the `artisan` subcommand word — Goravel's migrate lives under `artisan`.
-    - `go test -race ./tests/feature/ -v` — container only when the test suite connects to the DB (which the feature tests do). Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go test -race -run "..." ./tests/feature/ -v`.
+    - `go test ./tests/feature/ -v` — container only when the test suite connects to the DB (which the feature tests do). Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go test -run "..." ./tests/feature/ -v`.
     - `go test ./app/...` with unit tests that don't touch the DB — OK from host.
+    - **No `-race` inside the dx-api container.** The dev image does not ship a C toolchain, so `go test -race` fails with "go: -race requires cgo; enable cgo by setting CGO_ENABLED=1". Run feature tests without `-race`. Task 17 handles `-race` separately from the host for the packages that compile there.
     The dx-api container is a Go dev image with the repo mounted at `/app`, so edits on the host take effect immediately inside the container; no rebuild needed between iterations.
 
 Baseline row counts captured by Task 1 before the Task 2 migration (used for post-migration verification — counts must match afterward):
