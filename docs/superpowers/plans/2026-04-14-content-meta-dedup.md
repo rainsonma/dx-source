@@ -13,7 +13,7 @@ Everything else in this plan — Tasks 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1
 
 ## Local environment note (required reading for every task)
 
-Two non-obvious facts about the local dev environment that the plan's literal shell commands don't reflect:
+Non-obvious facts about the local dev environment that the plan's literal shell commands don't reflect:
 
 1. **The database name is `dxdb`, not `douxue`.** Everywhere below you see `douxue` in a `psql`/`pg_dump`/`pg_restore` command, change it to `dxdb`. (File system paths like `/Users/rainsen/Programs/Projects/douxue/...` are the path to the project folder and should NOT change.)
 2. **No host-side `psql`/`pg_dump`/`pg_restore`.** Postgres runs inside the docker-compose `postgres` service defined in `deploy/docker-compose.dev.yml`. Every DB command must go through `docker compose -f deploy/docker-compose.dev.yml exec -T postgres ...` from the `dx-source/` repo root. Example template for the row-count verification command:
@@ -22,6 +22,12 @@ Two non-obvious facts about the local dev environment that the plan's literal sh
       psql -U postgres -d dxdb -c "SELECT ..."
     ```
     For `pg_dump` you pipe stdout from `docker compose exec -T postgres pg_dump ...` to a host file. For `pg_restore --list`, copy the dump into the container first with `docker compose cp` and read it from there.
+3. **Go commands that touch the DB must run inside the `dx-api` container.** Host-side `.env` only contains `APP_KEY`; real DB credentials come from `deploy/env/.env.dev` which is injected into the `dx-api` container by docker-compose. That means:
+    - `go build ./...` and `go vet ./...` — OK from host (no DB connection).
+    - `go run . artisan migrate` — container only. Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go run . artisan migrate` from the repo root. Note the `artisan` subcommand word — Goravel's migrate lives under `artisan`.
+    - `go test -race ./tests/feature/ -v` — container only when the test suite connects to the DB (which the feature tests do). Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go test -race -run "..." ./tests/feature/ -v`.
+    - `go test ./app/...` with unit tests that don't touch the DB — OK from host.
+    The dx-api container is a Go dev image with the repo mounted at `/app`, so edits on the host take effect immediately inside the container; no rebuild needed between iterations.
 
 Baseline row counts captured by Task 1 before the Task 2 migration (used for post-migration verification — counts must match afterward):
 
