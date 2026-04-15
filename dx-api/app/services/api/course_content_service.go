@@ -48,6 +48,82 @@ type ContentMetaData struct {
 	Order       float64 `json:"order"`
 }
 
+// metaDedupKey is the identity tuple used for content_metas reuse.
+// Translation is normalized: a nil/empty translation collapses to "".
+type metaDedupKey struct {
+	SourceType  string
+	SourceData  string
+	Translation string
+}
+
+func makeMetaDedupKey(e MetadataEntry) metaDedupKey {
+	t := ""
+	if e.Translation != nil {
+		t = *e.Translation
+	}
+	return metaDedupKey{e.SourceType, e.SourceData, t}
+}
+
+// existingMetaRef is a content_metas row already owned by the user that
+// can be reused on save.
+type existingMetaRef struct {
+	ID          string `gorm:"column:id"`
+	SourceType  string `gorm:"column:source_type"`
+	SourceData  string `gorm:"column:source_data"`
+	Translation string `gorm:"column:translation"` // COALESCE'd to ""
+	IsBreakDone bool   `gorm:"column:is_break_done"`
+}
+
+// findExistingMetasForBatch loads, in a single query, all content_metas rows
+// owned by userID that match any (source_type, source_data) pair in the
+// batch. Returns a map keyed on metaDedupKey; first match wins per key.
+func findExistingMetasForBatch(userID string, entries []MetadataEntry) (map[metaDedupKey]existingMetaRef, error) {
+	if len(entries) == 0 {
+		return map[metaDedupKey]existingMetaRef{}, nil
+	}
+
+	typeSet := map[string]struct{}{}
+	dataSet := map[string]struct{}{}
+	for _, e := range entries {
+		typeSet[e.SourceType] = struct{}{}
+		dataSet[e.SourceData] = struct{}{}
+	}
+	sourceTypes := make([]string, 0, len(typeSet))
+	for t := range typeSet {
+		sourceTypes = append(sourceTypes, t)
+	}
+	sourceData := make([]string, 0, len(dataSet))
+	for d := range dataSet {
+		sourceData = append(sourceData, d)
+	}
+
+	var rows []existingMetaRef
+	if err := facades.Orm().Query().Raw(
+		`SELECT DISTINCT cm.id, cm.source_type, cm.source_data,
+		        COALESCE(cm.translation, '') AS translation, cm.is_break_done
+		   FROM content_metas cm
+		   JOIN game_metas gm ON gm.content_meta_id = cm.id AND gm.deleted_at IS NULL
+		   JOIN game_levels gl ON gl.id = gm.game_level_id AND gl.deleted_at IS NULL
+		   JOIN games g ON g.id = gl.game_id AND g.deleted_at IS NULL
+		  WHERE cm.deleted_at IS NULL
+		    AND g.user_id = ?
+		    AND cm.source_type IN ?
+		    AND cm.source_data IN ?`,
+		userID, sourceTypes, sourceData,
+	).Scan(&rows); err != nil {
+		return nil, fmt.Errorf("failed to query existing metas for dedup: %w", err)
+	}
+
+	out := make(map[metaDedupKey]existingMetaRef, len(rows))
+	for _, r := range rows {
+		key := metaDedupKey{r.SourceType, r.SourceData, r.Translation}
+		if _, exists := out[key]; !exists {
+			out[key] = r
+		}
+	}
+	return out, nil
+}
+
 // SaveMetadataBatch creates content metadata entries in batch with capacity validation.
 func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEntry, sourceFrom string) (int, error) {
 	if err := requireVip(userID); err != nil {
@@ -134,32 +210,77 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		}
 	}
 
-	// Create metas in batch
-	for i, e := range entries {
-		id := uuid.Must(uuid.NewV7()).String()
-		order := maxOrder + float64((i+1)*1000)
-		meta := models.ContentMeta{
-			ID:          id,
-			SourceFrom:  sourceFrom,
-			SourceType:  e.SourceType,
-			SourceData:  e.SourceData,
-			Translation: e.Translation,
-			IsBreakDone: false,
-		}
-		if err := facades.Orm().Query().Create(&meta); err != nil {
-			return 0, fmt.Errorf("failed to create content meta: %w", err)
-		}
+	// Create metas in batch — dedup against the user's existing content.
+	existingByKey, err := findExistingMetasForBatch(userID, entries)
+	if err != nil {
+		return 0, err
+	}
 
-		gm := models.GameMeta{
-			ID:            uuid.Must(uuid.NewV7()).String(),
-			GameID:        level.GameID,
-			GameLevelID:   gameLevelID,
-			ContentMetaID: meta.ID,
-			Order:         order,
+	// State carried across the entry loop for items reuse.
+	itemsByMetaCache := map[string][]string{} // metaID -> ordered content_item IDs
+	var maxItemOrderInLevel *float64
+	itemsAddedSoFar := 0
+
+	if err := facades.Orm().Transaction(func(tx orm.Query) error {
+		for i, e := range entries {
+			key := makeMetaDedupKey(e)
+
+			var metaID string
+			var isBreakDone bool
+			if existing, ok := existingByKey[key]; ok {
+				metaID = existing.ID
+				isBreakDone = existing.IsBreakDone
+			} else {
+				metaID = uuid.Must(uuid.NewV7()).String()
+				meta := models.ContentMeta{
+					ID:          metaID,
+					SourceFrom:  sourceFrom,
+					SourceType:  e.SourceType,
+					SourceData:  e.SourceData,
+					Translation: e.Translation,
+					IsBreakDone: false,
+				}
+				if err := tx.Create(&meta); err != nil {
+					return fmt.Errorf("failed to create content meta: %w", err)
+				}
+				// Add to map so subsequent within-batch identical entries reuse this row.
+				existingByKey[key] = existingMetaRef{
+					ID:          metaID,
+					SourceType:  e.SourceType,
+					SourceData:  e.SourceData,
+					Translation: key.Translation,
+					IsBreakDone: false,
+				}
+				isBreakDone = false
+			}
+
+			// Always create a fresh game_metas junction row (allows in-level repetition).
+			gm := models.GameMeta{
+				ID:            uuid.Must(uuid.NewV7()).String(),
+				GameID:        level.GameID,
+				GameLevelID:   gameLevelID,
+				ContentMetaID: metaID,
+				Order:         maxOrder + float64((i+1)*1000),
+			}
+			if err := tx.Create(&gm); err != nil {
+				return fmt.Errorf("failed to create game meta: %w", err)
+			}
+
+			// If we are reusing a meta that has already been broken down,
+			// also create game_items rows in this level pointing at the
+			// existing content_items.
+			if isBreakDone {
+				if err := reuseItemsIntoLevel(
+					tx, metaID, gameLevelID, level.GameID,
+					itemsByMetaCache, &maxItemOrderInLevel, &itemsAddedSoFar,
+				); err != nil {
+					return err
+				}
+			}
 		}
-		if err := facades.Orm().Query().Create(&gm); err != nil {
-			return 0, fmt.Errorf("failed to create game meta: %w", err)
-		}
+		return nil
+	}); err != nil {
+		return 0, err
 	}
 
 	return len(entries), nil
@@ -756,4 +877,72 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 	}
 	nextOrder := items[refIdx+1].Order
 	return (refItem.Order + nextOrder) / 2, nil
+}
+
+// reuseItemsIntoLevel creates game_items rows in gameLevelID for every active
+// content_item belonging to metaID. Item IDs are loaded once per metaID via
+// itemsByMetaCache. The level's pre-save max game_items.order is loaded once
+// via maxItemOrderInLevel. itemsAddedSoFar is incremented for every new
+// game_items row to keep ordering monotonically increasing across multiple
+// reused metas in the same batch.
+func reuseItemsIntoLevel(
+	tx orm.Query,
+	metaID, gameLevelID, gameID string,
+	itemsByMetaCache map[string][]string,
+	maxItemOrderInLevel **float64,
+	itemsAddedSoFar *int,
+) error {
+	itemIDs, ok := itemsByMetaCache[metaID]
+	if !ok {
+		var rows []struct {
+			ID string `gorm:"column:id"`
+		}
+		if err := tx.Raw(
+			`SELECT id FROM content_items
+			  WHERE content_meta_id = ? AND deleted_at IS NULL
+			  ORDER BY id`,
+			metaID,
+		).Scan(&rows); err != nil {
+			return fmt.Errorf("failed to load content_items for reuse: %w", err)
+		}
+		itemIDs = make([]string, 0, len(rows))
+		for _, r := range rows {
+			itemIDs = append(itemIDs, r.ID)
+		}
+		itemsByMetaCache[metaID] = itemIDs
+	}
+	if len(itemIDs) == 0 {
+		return nil
+	}
+
+	if *maxItemOrderInLevel == nil {
+		var row struct {
+			MaxOrder float64 `gorm:"column:max_order"`
+		}
+		if err := tx.Raw(
+			`SELECT COALESCE(MAX("order"), 0) AS max_order
+			   FROM game_items
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
+			gameLevelID,
+		).Scan(&row); err != nil {
+			return fmt.Errorf("failed to load max game_items order: %w", err)
+		}
+		v := row.MaxOrder
+		*maxItemOrderInLevel = &v
+	}
+
+	for j, contentItemID := range itemIDs {
+		gi := models.GameItem{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
+			ContentItemID: contentItemID,
+			Order:         **maxItemOrderInLevel + float64((*itemsAddedSoFar+j+1)*1000),
+		}
+		if err := tx.Create(&gi); err != nil {
+			return fmt.Errorf("failed to create game item: %w", err)
+		}
+	}
+	*itemsAddedSoFar += len(itemIDs)
+	return nil
 }
