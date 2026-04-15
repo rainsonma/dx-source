@@ -669,7 +669,10 @@ func DeleteContentItem(userID, gameID, gameLevelID, itemID string) error {
 	})
 }
 
-// DeleteAllLevelContent removes all content items and metas from a level.
+// DeleteAllLevelContent removes all content from a level. With reuse enabled,
+// the level's junction rows are soft-deleted unconditionally; underlying
+// content_metas / content_items are soft-deleted only when no other junction
+// references them.
 func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
@@ -692,43 +695,87 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Delete content in transaction. Pre-reuse, game_items/game_metas are 1:1
-	// with content_items/content_metas, so we drive the content cascade off the
-	// junction rows that point at this level.
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		if _, err := tx.Exec(
-			`UPDATE content_items SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (
-			     SELECT content_item_id FROM game_items
-			     WHERE game_level_id = ? AND deleted_at IS NULL
-			   )`,
-			gameLevelID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content items: %w", err)
+		// 1. Collect distinct content_meta_ids and content_item_ids referenced
+		//    by this level BEFORE we soft-delete the junctions.
+		var metaRows []struct {
+			ID string `gorm:"column:content_meta_id"`
 		}
-		if _, err := tx.Exec(
-			`UPDATE content_metas SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (
-			     SELECT content_meta_id FROM game_metas
-			     WHERE game_level_id = ? AND deleted_at IS NULL
-			   )`,
+		if err := tx.Raw(
+			`SELECT DISTINCT content_meta_id FROM game_metas
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content metas: %w", err)
+		).Scan(&metaRows); err != nil {
+			return fmt.Errorf("failed to collect metas: %w", err)
 		}
+
+		var itemRows []struct {
+			ID string `gorm:"column:content_item_id"`
+		}
+		if err := tx.Raw(
+			`SELECT DISTINCT content_item_id FROM game_items
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
+			gameLevelID,
+		).Scan(&itemRows); err != nil {
+			return fmt.Errorf("failed to collect items: %w", err)
+		}
+
+		// 2. Soft-delete junctions for this level.
 		if _, err := tx.Exec(
-			"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			`UPDATE game_items SET deleted_at = NOW()
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_items: %w", err)
 		}
 		if _, err := tx.Exec(
-			"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			`UPDATE game_metas SET deleted_at = NOW()
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+		}
+
+		// 3. For each collected content_item_id, count remaining live game_items;
+		//    if 0, soft-delete the content_item.
+		for _, r := range itemRows {
+			n, err := tx.Table("game_items").
+				Where("content_item_id", r.ID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_items: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_items SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_item: %w", err)
+				}
+			}
+		}
+
+		// 4. For each collected content_meta_id, count remaining live game_metas;
+		//    if 0, soft-delete the content_meta.
+		for _, r := range metaRows {
+			n, err := tx.Table("game_metas").
+				Where("content_meta_id", r.ID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_metas: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_metas SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_meta: %w", err)
+				}
+			}
 		}
 		return nil
 	})

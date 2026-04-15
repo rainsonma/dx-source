@@ -537,3 +537,32 @@ func (s *ContentDedupSuite) TestDeleteContentItem_PreservesSharedItem() {
 	// Level A's junction is intact
 	s.Equal(int64(1), s.countGameItemsInLevel(levelA))
 }
+
+// TestDeleteAllLevelContent_PreservesSharedContent verifies that bulk
+// deletion of one level's content does not delete content shared with another level.
+func (s *ContentDedupSuite) TestDeleteAllLevelContent_PreservesSharedContent() {
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	gameB := s.seedGame(consts.GameModeWordSentence)
+	levelB := s.seedLevel(gameB)
+
+	entries := []api.MetadataEntry{
+		{SourceData: "first", Translation: strPtr("一"), SourceType: "vocab"},
+		{SourceData: "second", Translation: strPtr("二"), SourceType: "vocab"},
+	}
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA, entries, "manual")
+	s.Require().NoError(err)
+	_, err = api.SaveMetadataBatch(s.userID, gameB, levelB, entries, "manual")
+	s.Require().NoError(err)
+
+	// Two metas exist, each referenced by both levels
+	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID))
+
+	// Bulk delete everything in level A
+	s.Require().NoError(api.DeleteAllLevelContent(s.userID, gameA, levelA))
+
+	// content_metas still exist (level B references them)
+	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID), "shared content survives bulk delete")
+	s.Equal(int64(0), s.countGameMetasInLevel(levelA))
+	s.Equal(int64(2), s.countGameMetasInLevel(levelB))
+}
