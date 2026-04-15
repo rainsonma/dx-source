@@ -88,8 +88,14 @@ func (s *ContentDedupSuite) seedLevel(gameID string) string {
 	return id
 }
 
-// strPtr returns a pointer to the given string.
-func strPtr(v string) *string { return &v }
+// strPtr returns a pointer to a fresh string with the given value. Tests
+// use this to pass *string literals to MetadataEntry.Translation without
+// introducing a named local per call site.
+func strPtr(v string) *string {
+	p := new(string)
+	*p = v
+	return p
+}
 
 // countMetasOwnedByUser returns the number of live content_metas reachable
 // from the given user via the junction chain.
