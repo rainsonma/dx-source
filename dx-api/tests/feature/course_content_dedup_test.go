@@ -64,7 +64,7 @@ func (s *ContentDedupSuite) seedGame(mode string) string {
 	id := uuid.Must(uuid.NewV7()).String()
 	g := models.Game{
 		ID:       id,
-		Name:     "test game " + id[:8],
+		Name:     "test_" + id,
 		UserID:   &s.userID,
 		Mode:     mode,
 		IsActive: true,
@@ -157,4 +157,31 @@ func (s *ContentDedupSuite) TestSave_FreshEntries_AllCreated() {
 
 	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID))
 	s.Equal(int64(2), s.countGameMetasInLevel(levelID))
+}
+
+// TestSave_DedupAcrossGames_ReusesContentMeta verifies that saving the same
+// content into a second game owned by the same user reuses the existing
+// content_metas row instead of creating a new one.
+func (s *ContentDedupSuite) TestSave_DedupAcrossGames_ReusesContentMeta() {
+	// Game A — original content
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	entries := []api.MetadataEntry{
+		{SourceData: "shared sentence", Translation: strPtr("共享句子"), SourceType: "sentence"},
+	}
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA, entries, "manual")
+	s.Require().NoError(err)
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID))
+
+	// Game B — same content, different game
+	gameB := s.seedGame(consts.GameModeWordSentence)
+	levelB := s.seedLevel(gameB)
+	_, err = api.SaveMetadataBatch(s.userID, gameB, levelB, entries, "manual")
+	s.Require().NoError(err)
+
+	// content_metas row count must still be 1 (deduped), but both levels
+	// have one game_metas junction row each.
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID), "content_metas should be reused")
+	s.Equal(int64(1), s.countGameMetasInLevel(levelA))
+	s.Equal(int64(1), s.countGameMetasInLevel(levelB))
 }
