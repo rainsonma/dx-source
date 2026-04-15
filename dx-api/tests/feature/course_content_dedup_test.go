@@ -44,15 +44,18 @@ func (s *ContentDedupSuite) TearDownTest() {
 	s.userID = ""
 }
 
-// seedVipUser inserts a lifetime-grade user and returns its id.
+// seedVipUser inserts a lifetime-grade user and returns its id. Username
+// and InviteCode use the full UUID so consecutive calls in the same
+// millisecond don't collide on the users_username_unique / users_invite_code_unique
+// constraints — UUID v7's first 8 hex chars are a timestamp prefix, not random.
 func (s *ContentDedupSuite) seedVipUser() string {
 	id := uuid.Must(uuid.NewV7()).String()
 	user := models.User{
 		ID:         id,
-		Username:   "test_" + id[:8],
+		Username:   "test_" + id,
 		Grade:      consts.UserGradeLifetime,
 		IsActive:   true,
-		InviteCode: id[:8],
+		InviteCode: "c" + id[24:],
 		Password:   "x",
 	}
 	s.Require().NoError(facades.Orm().Query().Create(&user))
@@ -268,4 +271,45 @@ func (s *ContentDedupSuite) TestSave_DifferentSourceTypes_DoNotDedup() {
 
 	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID), "different source_types are not deduped")
 	s.Equal(int64(2), s.countGameMetasInLevel(levelID))
+}
+
+// TestSave_CrossUserIsolation verifies that User B's identical content does NOT
+// reuse User A's content_meta. Each user has a private dedup pool.
+func (s *ContentDedupSuite) TestSave_CrossUserIsolation() {
+	// User A saves "secret" (using the SetupTest-provided s.userID)
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA,
+		[]api.MetadataEntry{{SourceData: "secret", Translation: strPtr("秘密"), SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// User B saves the same content in their own game. Seed User B directly
+	// (can't use s.seedGame / s.seedLevel because those read s.userID).
+	userB := s.seedVipUser()
+	defer func() {
+		q := facades.Orm().Query()
+		_, _ = q.Exec(`DELETE FROM game_items WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, userB)
+		_, _ = q.Exec(`DELETE FROM game_metas WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, userB)
+		_, _ = q.Exec(`DELETE FROM content_metas WHERE id IN (SELECT cm.id FROM content_metas cm JOIN game_metas gm ON gm.content_meta_id = cm.id JOIN games g ON g.id = gm.game_id WHERE g.user_id = ?)`, userB)
+		_, _ = q.Exec(`DELETE FROM game_levels WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, userB)
+		_, _ = q.Exec(`DELETE FROM games WHERE user_id = ?`, userB)
+		_, _ = q.Exec(`DELETE FROM users WHERE id = ?`, userB)
+	}()
+
+	gameB := uuid.Must(uuid.NewV7()).String()
+	gB := models.Game{ID: gameB, Name: "B", UserID: &userB, Mode: consts.GameModeWordSentence, IsActive: true, Status: consts.GameStatusDraft}
+	s.Require().NoError(facades.Orm().Query().Create(&gB))
+	levelB := uuid.Must(uuid.NewV7()).String()
+	lvB := models.GameLevel{ID: levelB, GameID: gameB, Name: "L1", IsActive: true, Order: 1000}
+	s.Require().NoError(facades.Orm().Query().Create(&lvB))
+
+	_, err = api.SaveMetadataBatch(userB, gameB, levelB,
+		[]api.MetadataEntry{{SourceData: "secret", Translation: strPtr("秘密"), SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// Each user should own exactly 1 content_meta — no leakage.
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID))
+	s.Equal(int64(1), s.countMetasOwnedByUser(userB))
 }
