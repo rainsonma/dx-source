@@ -72,8 +72,28 @@ func (c *BackfillMetas) Handle(ctx console.Context) error {
 		return nil
 	}
 
-	// Placeholder — filled in by Task 8.
-	ctx.Info(fmt.Sprintf("batch-size=%d (not yet implemented; elapsed %s)", batchSize, time.Since(start)))
+	var processed int64
+	for processed < total {
+		chunk := batchSize
+		if remaining := int(total - processed); remaining < chunk {
+			chunk = remaining
+		}
+
+		n, err := backfillChunk(chunk)
+		if err != nil {
+			return fmt.Errorf("chunk at offset %d: %w", processed, err)
+		}
+		if n == 0 {
+			// No more rows match the filter — done even if the initial count
+			// suggested otherwise (another process could have consumed some).
+			break
+		}
+		processed += int64(n)
+		ctx.Info(fmt.Sprintf("[%d/%d] done in %s", processed, total, time.Since(start)))
+	}
+
+	ctx.NewLine()
+	ctx.Info(fmt.Sprintf("backfill complete: %d rows in %s", processed, time.Since(start)))
 	return nil
 }
 
