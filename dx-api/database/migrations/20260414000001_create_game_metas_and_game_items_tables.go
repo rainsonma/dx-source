@@ -26,6 +26,8 @@ func (r *M20260414000001CreateGameMetasAndGameItemsTables) Up() error {
 			table.Index("game_id")
 			table.Index("content_meta_id")
 			table.Index("created_at")
+			table.Index("game_level_id", "content_meta_id", "deleted_at").Name("idx_game_metas_level_meta")
+			table.Index("game_level_id", "deleted_at", "order").Name("idx_game_metas_level_order")
 		}); err != nil {
 			return err
 		}
@@ -45,6 +47,8 @@ func (r *M20260414000001CreateGameMetasAndGameItemsTables) Up() error {
 			table.Index("game_id")
 			table.Index("content_item_id")
 			table.Index("created_at")
+			table.Index("game_level_id", "content_item_id", "deleted_at").Name("idx_game_items_level_item")
+			table.Index("game_level_id", "deleted_at", "order").Name("idx_game_items_level_order")
 		}); err != nil {
 			return err
 		}
