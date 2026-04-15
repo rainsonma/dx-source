@@ -2,9 +2,13 @@ package commands
 
 import (
 	"dx-api/app/consts"
+	"dx-api/app/models"
+	"fmt"
+	"time"
 
 	"github.com/goravel/framework/contracts/console"
 	"github.com/goravel/framework/contracts/console/command"
+	"github.com/goravel/framework/facades"
 )
 
 type BackfillMetas struct{}
@@ -39,15 +43,49 @@ func (c *BackfillMetas) Extend() command.Extend {
 }
 
 func (c *BackfillMetas) Handle(ctx console.Context) error {
-	// Placeholder — filled in by Task 5.
-	ctx.Info("backfill-metas: not implemented yet")
+	start := time.Now()
+	batchSize := ctx.OptionInt("batch-size")
+	limit := ctx.OptionInt("limit")
+	dryRun := ctx.OptionBool("dry-run")
+
+	if batchSize <= 0 {
+		batchSize = 5000
+	}
+
+	total, err := countBackfillCandidates()
+	if err != nil {
+		return fmt.Errorf("failed to count candidates: %w", err)
+	}
+	if limit > 0 && int64(limit) < total {
+		total = int64(limit)
+	}
+	ctx.Info(fmt.Sprintf("backfill candidates: %d", total))
+	if total == 0 {
+		ctx.Info("nothing to backfill")
+		return nil
+	}
+	if dryRun {
+		ctx.Info("dry-run — no writes")
+		return nil
+	}
+
+	// Placeholder — filled in by Task 8.
+	ctx.Info(fmt.Sprintf("batch-size=%d (not yet implemented; elapsed %s)", batchSize, time.Since(start)))
 	return nil
+}
+
+// countBackfillCandidates returns the number of content_items still needing a meta.
+func countBackfillCandidates() (int64, error) {
+	return facades.Orm().Query().Model(&models.ContentItem{}).
+		Where("content_meta_id IS NULL").
+		Count()
 }
 
 // deriveSourceType maps a content_items.content_type to the corresponding
 // content_metas.source_type per the backfill rule:
-//   sentence → sentence (complete sentence)
-//   word, phrase, block → vocab (all non-complete units)
+//
+//	sentence → sentence (complete sentence)
+//	word, phrase, block → vocab (all non-complete units)
 func deriveSourceType(contentType string) string {
 	if contentType == consts.ContentTypeSentence {
 		return consts.SourceTypeSentence
