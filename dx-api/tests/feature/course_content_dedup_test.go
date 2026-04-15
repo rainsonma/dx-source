@@ -140,5 +140,21 @@ func (s *ContentDedupSuite) TestSetup_BootsAndSeeds() {
 	s.NotEmpty(levelID)
 }
 
-// silence unused-import warning until later tasks add tests using the api package.
-var _ = api.SaveMetadataBatch
+// TestSave_FreshEntries_AllCreated verifies that submitting brand-new metadata
+// creates one content_metas row and one game_metas row per entry.
+func (s *ContentDedupSuite) TestSave_FreshEntries_AllCreated() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+
+	entries := []api.MetadataEntry{
+		{SourceData: "Hello world.", Translation: strPtr("你好世界。"), SourceType: "sentence"},
+		{SourceData: "apple", Translation: strPtr("苹果"), SourceType: "vocab"},
+	}
+
+	count, err := api.SaveMetadataBatch(s.userID, gameID, levelID, entries, "manual")
+	s.Require().NoError(err)
+	s.Equal(2, count)
+
+	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID))
+	s.Equal(int64(2), s.countGameMetasInLevel(levelID))
+}
