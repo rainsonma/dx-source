@@ -586,8 +586,10 @@ func ReorderContentItems(userID, gameID, gameLevelID, itemID string, newOrder fl
 	return nil
 }
 
-// DeleteContentItem removes a single content item.
-func DeleteContentItem(userID, gameID, itemID string) error {
+// DeleteContentItem removes a content item from one level. With reuse enabled,
+// only the level's game_items junction row is soft-deleted; the underlying
+// content_item is soft-deleted only when no other junction references it.
+func DeleteContentItem(userID, gameID, gameLevelID, itemID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -604,8 +606,8 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
-	// Load the item and its level (via game_items junction) up front so we know
-	// the meta and level for the is_break_done reset below.
+	// Load the underlying content_item up front so we know its content_meta_id
+	// for the is_break_done reset below.
 	var item models.ContentItem
 	if err := facades.Orm().Query().Where("id", itemID).First(&item); err != nil {
 		return fmt.Errorf("failed to load content item: %w", err)
@@ -614,49 +616,51 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return ErrContentItemNotFound
 	}
 
-	var gi models.GameItem
-	if err := facades.Orm().Query().Where("content_item_id", itemID).First(&gi); err != nil {
-		return fmt.Errorf("failed to load game_item: %w", err)
-	}
-	if gi.ID == "" {
-		return ErrContentItemNotFound
-	}
-	itemLevelID := gi.GameLevelID
-
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Soft-delete the junction row first (pre-reuse 1:1 invariant)
+		// 1. Soft-delete this level's game_items rows for this item (all repetitions).
 		if _, err := tx.Exec(
-			"UPDATE game_items SET deleted_at = NOW() WHERE content_item_id = ? AND deleted_at IS NULL",
-			itemID,
+			`UPDATE game_items SET deleted_at = NOW()
+			  WHERE content_item_id = ?
+			    AND game_level_id = ?
+			    AND deleted_at IS NULL`,
+			itemID, gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_item: %w", err)
 		}
 
-		// Soft-delete content item
-		if _, err := tx.Exec(
-			"UPDATE content_items SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
-			itemID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content item: %w", err)
+		// 2. Count live game_items across all levels for this content_item.
+		n, err := tx.Table("game_items").
+			Where("content_item_id", itemID).
+			Where("deleted_at IS NULL").
+			Count()
+		if err != nil {
+			return fmt.Errorf("failed to count game_items: %w", err)
+		}
+		if n == 0 {
+			if _, err := tx.Exec(
+				`UPDATE content_items SET deleted_at = NOW()
+				  WHERE id = ? AND deleted_at IS NULL`,
+				itemID,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete content_item: %w", err)
+			}
 		}
 
-		// Reset is_break_done when the meta has no remaining active game_items
-		// in this level. Counts via the junction so that level-scoped reuse is
-		// correct once cross-level reuse lands.
+		// 3. Reset is_break_done if this LEVEL has no remaining game_items
+		//    for the meta. (Existing per-level logic, preserved.)
 		if item.ContentMetaID != nil {
 			if _, err := tx.Exec(
 				`UPDATE content_metas SET is_break_done = false
-				 WHERE id = ?
-				   AND deleted_at IS NULL
-				   AND NOT EXISTS (
-				     SELECT 1 FROM game_items gi
-				     JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
-				     WHERE ci.content_meta_id = content_metas.id
-				       AND gi.game_level_id = ?
-				       AND gi.deleted_at IS NULL
-				   )`,
-				*item.ContentMetaID,
-				itemLevelID,
+				  WHERE id = ?
+				    AND deleted_at IS NULL
+				    AND NOT EXISTS (
+				      SELECT 1 FROM game_items gi
+				      JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
+				      WHERE ci.content_meta_id = content_metas.id
+				        AND gi.game_level_id = ?
+				        AND gi.deleted_at IS NULL
+				    )`,
+				*item.ContentMetaID, gameLevelID,
 			); err != nil {
 				return fmt.Errorf("failed to reset meta break status: %w", err)
 			}

@@ -480,3 +480,60 @@ func (s *ContentDedupSuite) TestSave_CapacityCountsDedupedEntries() {
 	_, err = api.SaveMetadataBatch(s.userID, gameID, levelID, entries, "manual")
 	s.Error(err, "capacity check must consider total entries, not just net new metas")
 }
+
+// TestDeleteContentItem_PreservesSharedItem verifies that deleting an item
+// from one level leaves the underlying content_item alive when another level
+// still references it.
+func (s *ContentDedupSuite) TestDeleteContentItem_PreservesSharedItem() {
+	// Set up a meta with one item, then reuse it across two levels
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA,
+		[]api.MetadataEntry{{SourceData: "shareit", Translation: strPtr("共享"), SourceType: "sentence"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// Find the meta scoped to THIS test's user (not a stale 'shareit' from a prior run)
+	var metaID string
+	row := struct{ ID string }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT cm.id FROM content_metas cm
+		   JOIN game_metas gm ON gm.content_meta_id = cm.id
+		   JOIN games g ON g.id = gm.game_id
+		  WHERE g.user_id = ? AND cm.source_data = 'shareit' AND cm.deleted_at IS NULL
+		  LIMIT 1`,
+		s.userID,
+	).Scan(&row))
+	metaID = row.ID
+	s.Require().NotEmpty(metaID)
+
+	// Add an item to the meta in level A
+	itemID := uuid.Must(uuid.NewV7()).String()
+	item := models.ContentItem{ID: itemID, ContentMetaID: &metaID, Content: "share", ContentType: "word"}
+	s.Require().NoError(facades.Orm().Query().Create(&item))
+	gi := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: itemID, Order: 1000}
+	s.Require().NoError(facades.Orm().Query().Create(&gi))
+	_, err = facades.Orm().Query().Exec(`UPDATE content_metas SET is_break_done = true WHERE id = ?`, metaID)
+	s.Require().NoError(err)
+
+	// Reuse the meta into level B — items get linked too
+	gameB := s.seedGame(consts.GameModeWordSentence)
+	levelB := s.seedLevel(gameB)
+	_, err = api.SaveMetadataBatch(s.userID, gameB, levelB,
+		[]api.MetadataEntry{{SourceData: "shareit", Translation: strPtr("共享"), SourceType: "sentence"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// Delete the item from level B
+	s.Require().NoError(api.DeleteContentItem(s.userID, gameB, levelB, itemID))
+
+	// content_items row should still exist (level A still references it)
+	n, err := facades.Orm().Query().Model(&models.ContentItem{}).Where("id", itemID).Count()
+	s.Require().NoError(err)
+	s.Equal(int64(1), n, "shared content_item should not be deleted")
+
+	// Level B's junction is gone
+	s.Equal(int64(0), s.countGameItemsInLevel(levelB))
+	// Level A's junction is intact
+	s.Equal(int64(1), s.countGameItemsInLevel(levelA))
+}

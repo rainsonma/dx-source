@@ -257,7 +257,7 @@ func Api() {
 				cg.Post("/{id}/levels/{levelId}/content-items", courseGameController.InsertContentItem)
 				cg.Put("/{id}/content-items/{itemId}", courseGameController.UpdateContentItemText)
 				cg.Put("/{id}/content-items/reorder", courseGameController.ReorderContentItems)
-				cg.Delete("/{id}/content-items/{itemId}", courseGameController.DeleteContentItem)
+				cg.Delete("/{id}/levels/{levelId}/content-items/{itemId}", courseGameController.DeleteContentItem)
 				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
 			})
 
