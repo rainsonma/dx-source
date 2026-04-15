@@ -318,11 +318,12 @@ export async function insertContentItemAction(
 /** Delete a single metadata entry via Go API. */
 export async function deleteMetaAction(
   gameId: string,
+  levelId: string,
   metaId: string
 ): Promise<SimpleActionResult> {
   try {
     const res = await apiClient.delete<null>(
-      `/api/course-games/${gameId}/metadata/${metaId}`
+      `/api/course-games/${gameId}/levels/${levelId}/metadata/${metaId}`
     );
     if (res.code !== 0) return { error: res.message };
     return { success: true };
@@ -334,11 +335,12 @@ export async function deleteMetaAction(
 /** Delete a content item via Go API. */
 export async function deleteContentItemAction(
   gameId: string,
+  levelId: string,
   itemId: string
 ): Promise<SimpleActionResult> {
   try {
     const res = await apiClient.delete<null>(
-      `/api/course-games/${gameId}/content-items/${itemId}`
+      `/api/course-games/${gameId}/levels/${levelId}/content-items/${itemId}`
     );
     if (res.code !== 0) return { error: res.message };
     return { success: true };
