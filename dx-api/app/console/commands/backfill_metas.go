@@ -92,3 +92,42 @@ func deriveSourceType(contentType string) string {
 	}
 	return consts.SourceTypeVocab
 }
+
+// backfillRow is a single (content_item, game_item) pair we need to process.
+type backfillRow struct {
+	CIID        string  `gorm:"column:ci_id"`
+	Content     string  `gorm:"column:content"`
+	ContentType string  `gorm:"column:content_type"`
+	Translation *string `gorm:"column:translation"`
+	GameID      string  `gorm:"column:game_id"`
+	GameLevelID string  `gorm:"column:game_level_id"`
+	GIOrder     float64 `gorm:"column:gi_order"`
+}
+
+// loadBackfillChunk selects up to `size` content_items that still need a meta,
+// joined with their game_item so we know the target game/level/order.
+// Rows are ordered by content_items.id (UUIDv7, time-sortable) so every run
+// processes the oldest unlinked rows first.
+func loadBackfillChunk(size int) ([]backfillRow, error) {
+	var rows []backfillRow
+	if err := facades.Orm().Query().Raw(`
+		SELECT ci.id AS ci_id,
+		       ci.content,
+		       ci.content_type,
+		       ci.translation,
+		       gi.game_id,
+		       gi.game_level_id,
+		       gi."order" AS gi_order
+		FROM content_items ci
+		JOIN game_items gi
+		  ON gi.content_item_id = ci.id
+		 AND gi.deleted_at IS NULL
+		WHERE ci.content_meta_id IS NULL
+		  AND ci.deleted_at IS NULL
+		ORDER BY ci.id
+		LIMIT ?
+	`, size).Scan(&rows); err != nil {
+		return nil, fmt.Errorf("failed to load chunk: %w", err)
+	}
+	return rows, nil
+}
