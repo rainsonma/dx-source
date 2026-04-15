@@ -10,6 +10,20 @@ related:
 
 # Content Meta & Item Deduplication on Save
 
+## Resumption status (2026-04-15)
+
+The junction-index part of this work was split off and landed separately: `game_metas` and `game_items` were created with non-unique partial indexes directly (merged into `20260414000001_create_game_metas_and_game_items_tables.go`), so the original "relax unique to non-unique" migration step is no longer needed.
+
+Still pending from this spec:
+
+- **Schema:** create `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL`.
+- **Save flow:** rewrite the create-loop in `SaveMetadataBatch` (including transactional wrapping, dedup lookup, items reuse on `is_break_done=true`).
+- **Delete flow:** reference-counted `DeleteMetadata`, `DeleteContentItem`, `DeleteAllLevelContent` with `gameLevelID` threaded through signatures and routes.
+- **Frontend:** `deleteMetaAction` / `deleteContentItemAction` and their call sites in `level-units-panel.tsx` pass `levelId` through the new path-based routes.
+- **Tests:** new `course_content_dedup_test.go` suite covering save dedup, items reuse, cross-user isolation, and reference-counted deletes.
+
+Context that changed since this spec was written: the `app:backfill-metas` command landed, so `content_metas` now contains ~1.22M `source_from='import'` rows owned by the 1,202 oldest real users (imported games have real `user_id` values, not NULL). Per the spec's identity rule (`source_from` is NOT part of identity), these imported metas are legitimate dedup candidates for their owning users — intentional, not an oversight. No logic change; the performance argument for `idx_content_metas_dedup_lookup` is now stronger, which the spec already anticipated.
+
 ## Goal
 
 When a user adds new metadata to a level on the AI-Custom page, the backend must:

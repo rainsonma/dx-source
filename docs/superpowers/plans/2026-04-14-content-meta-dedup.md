@@ -2,9 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+## Resumption status (2026-04-15)
+
+Two pieces of context for anyone picking this plan up mid-flight:
+
+1. **The `game_metas` / `game_items` unique → non-unique index relax is already DONE.** It was split into its own PR and merged directly into the create migration (`20260414000001_create_game_metas_and_game_items_tables.go`). Both tables now use `table.Index(...)` with the original names `idx_game_metas_level_meta` and `idx_game_items_level_item`. **Task 2 below has been rewritten accordingly** — it now creates ONLY the `idx_content_metas_dedup_lookup` index. The historical relax steps, the create-new-then-drop-old safety dance, and the `CONCURRENTLY` discussion no longer apply to the resumed work.
+2. **The `app:backfill-metas` command landed.** `content_metas` now contains ~1.22M `source_from='import'` rows owned by the 1,202 oldest real users. Under the spec's identity rule (which does NOT include `source_from`), these imported metas are legitimate dedup candidates for their owning users. No logic change — this is already the spec's intent. It does mean pre-migration `pg_dump` (Task 1) matters more now: the affected table is no longer trivially small.
+
+Everything else in this plan — Tasks 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 — is still pending and still valid as written. Execute in order.
+
 **Goal:** When a user adds metadata to a level, reuse existing identical `content_metas` (and any associated broken-down `content_items`) by creating new junction rows instead of inserting duplicate underlying rows. Update delete paths to be reference-counted so reuse is safe.
 
-**Architecture:** Single Goravel migration relaxes two unique partial indexes on `game_metas` / `game_items` and adds a dedup-lookup index on `content_metas`. `SaveMetadataBatch` gains a per-batch dedup map keyed on `(source_type, source_data, normalized_translation)` scoped to the current user's own games. Reused metas with `is_break_done = true` get parallel `game_items` rows in the new level pointing at existing `content_items`. Three delete service functions are rewritten to soft-delete junctions for the current scope and only soft-delete underlying rows when no live junctions remain anywhere. Two REST routes change shape to carry `levelId` in the path.
+**Architecture:** A single Goravel migration adds `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL` — the junction non-unique indexes were already merged into their create migration and are out of scope here. `SaveMetadataBatch` gains a per-batch dedup map keyed on `(source_type, source_data, normalized_translation)` scoped to the current user's own games. Reused metas with `is_break_done = true` get parallel `game_items` rows in the new level pointing at existing `content_items`. Three delete service functions are rewritten to soft-delete junctions for the current scope and only soft-delete underlying rows when no live junctions remain anywhere. Two REST routes change shape to carry `levelId` in the path.
 
 **Tech Stack:** Go 1.x + Goravel framework, GORM, PostgreSQL, Next.js 16 (frontend, minor edit), stretchr/testify suite for tests.
 
@@ -16,7 +25,7 @@
 
 | File | Action | Responsibility |
 |---|---|---|
-| `dx-api/database/migrations/20260415000001_relax_junction_indexes_and_add_dedup_lookup.go` | Create | Index migration: drop unique partial indexes, add non-unique replacements + content_metas dedup-lookup index |
+| `dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go` | Create | Add `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL` |
 | `dx-api/app/services/api/course_content_service.go` | Modify | `SaveMetadataBatch` rewrite (dedup loop), three delete functions rewritten with reference counting |
 | `dx-api/app/http/controllers/api/course_game_controller.go` | Modify | `DeleteMetadata` and `DeleteContentItem` plumb `levelId` from new path params |
 | `dx-api/routes/api.go` | Modify | Two DELETE routes get `/levels/{levelId}/` injected |
@@ -80,29 +89,32 @@ Expected: commit succeeds.
 
 ---
 
-## Task 2: Migration — relax junction indexes and add dedup lookup index
+## Task 2: Migration — add `idx_content_metas_dedup_lookup`
 
 **Files:**
-- Create: `dx-api/database/migrations/20260415000001_relax_junction_indexes_and_add_dedup_lookup.go`
-- Modify: `dx-api/database/kernel.go` (register the migration if needed — verify the project's registration mechanism first)
+- Create: `dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go`
 
-- [ ] **Step 1: Check how migrations are registered in this project**
+**Scope note.** The historical "relax junction unique indexes to non-unique" step that used to live in this task is already DONE — the non-unique indexes were merged directly into the junction create migration. This task now adds exactly one new index on `content_metas`: the dedup-lookup support index that the save-path SELECT in Task 6 depends on.
+
+**Goravel migration pattern reminder (from repo memory).** `facades.Schema().Create(...)` and `facades.Orm().Query().Exec(...)` use separate database connections, so mixing `Schema.Create` and raw-SQL DDL in the same migration file is unsafe. This migration is 100% raw-SQL DDL, so it's fine as a single file.
+
+- [ ] **Step 1: Confirm how migrations are registered**
 
 ```bash
 ls /Users/rainsen/Programs/Projects/douxue/dx-source/dx-api/database/
 ```
 
-Then look for any kernel.go or migration registration file:
+Then check the registration pattern:
 
 ```bash
 grep -rn "20260414000001\|migrations\." /Users/rainsen/Programs/Projects/douxue/dx-source/dx-api/database/ 2>/dev/null | head -20
 ```
 
-Expected: locate the registration file (likely `dx-api/database/kernel.go` or similar) and confirm the pattern. If migrations are auto-discovered, no registration is needed.
+Expected: locate the registration file (likely `dx-api/database/kernel.go`) and confirm the pattern. If migrations are auto-discovered from the `migrations/` directory, no registration is needed.
 
 - [ ] **Step 2: Create the migration file**
 
-Create `/Users/rainsen/Programs/Projects/douxue/dx-source/dx-api/database/migrations/20260415000001_relax_junction_indexes_and_add_dedup_lookup.go` with this content:
+Create `/Users/rainsen/Programs/Projects/douxue/dx-source/dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go`:
 
 ```go
 package migrations
@@ -111,67 +123,39 @@ import (
 	"github.com/goravel/framework/facades"
 )
 
-type M20260415000001RelaxJunctionIndexesAndAddDedupLookup struct{}
+type M20260415000001AddContentMetasDedupLookupIndex struct{}
 
-func (r *M20260415000001RelaxJunctionIndexesAndAddDedupLookup) Signature() string {
-	return "20260415000001_relax_junction_indexes_and_add_dedup_lookup"
+func (r *M20260415000001AddContentMetasDedupLookupIndex) Signature() string {
+	return "20260415000001_add_content_metas_dedup_lookup_index"
 }
 
-func (r *M20260415000001RelaxJunctionIndexesAndAddDedupLookup) Up() error {
-	stmts := []string{
-		// 1. Create new non-unique partial indexes BEFORE dropping the old unique ones.
-		//    Both indexes coexist briefly. The unique constraint is still enforced
-		//    until step 2 runs, which is fine — no duplicates exist yet.
-		`CREATE INDEX IF NOT EXISTS idx_game_metas_level_meta
-		   ON game_metas (game_level_id, content_meta_id)
-		   WHERE deleted_at IS NULL`,
-		`CREATE INDEX IF NOT EXISTS idx_game_items_level_item
-		   ON game_items (game_level_id, content_item_id)
-		   WHERE deleted_at IS NULL`,
-
-		// 2. Drop the old unique partial indexes. The columns remain indexed via step 1.
-		`DROP INDEX IF EXISTS idx_game_metas_level_meta_unique`,
-		`DROP INDEX IF EXISTS idx_game_items_level_item_unique`,
-
-		// 3. Add the dedup-lookup index on content_metas.
+func (r *M20260415000001AddContentMetasDedupLookupIndex) Up() error {
+	// Supports the per-user dedup SELECT in SaveMetadataBatch:
+	//   WHERE cm.deleted_at IS NULL
+	//     AND cm.source_type IN ?
+	//     AND cm.source_data IN ?
+	//   AND <join to games via user_id>
+	_, err := facades.Orm().Query().Exec(
 		`CREATE INDEX IF NOT EXISTS idx_content_metas_dedup_lookup
 		   ON content_metas (source_type, source_data)
 		   WHERE deleted_at IS NULL`,
-	}
-	for _, s := range stmts {
-		if _, err := facades.Orm().Query().Exec(s); err != nil {
-			return err
-		}
-	}
-	return nil
+	)
+	return err
 }
 
-func (r *M20260415000001RelaxJunctionIndexesAndAddDedupLookup) Down() error {
-	stmts := []string{
+func (r *M20260415000001AddContentMetasDedupLookupIndex) Down() error {
+	_, err := facades.Orm().Query().Exec(
 		`DROP INDEX IF EXISTS idx_content_metas_dedup_lookup`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_game_metas_level_meta_unique
-		   ON game_metas (game_level_id, content_meta_id)
-		   WHERE deleted_at IS NULL`,
-		`CREATE UNIQUE INDEX IF NOT EXISTS idx_game_items_level_item_unique
-		   ON game_items (game_level_id, content_item_id)
-		   WHERE deleted_at IS NULL`,
-		`DROP INDEX IF EXISTS idx_game_metas_level_meta`,
-		`DROP INDEX IF EXISTS idx_game_items_level_item`,
-	}
-	for _, s := range stmts {
-		if _, err := facades.Orm().Query().Exec(s); err != nil {
-			return err
-		}
-	}
-	return nil
+	)
+	return err
 }
 ```
 
-- [ ] **Step 3: If the project requires explicit migration registration, register it**
+- [ ] **Step 3: Register the migration if the project requires it**
 
-If Step 1 found a registration file (e.g., `dx-api/database/kernel.go` with a list of migrations), append the new migration there following the existing pattern. If migrations are auto-discovered, skip this step.
+If Step 1 found an explicit registration file (e.g., `dx-api/database/kernel.go` with a slice of migrations), append the new migration there following the existing pattern. If migrations are auto-discovered, skip this step.
 
-- [ ] **Step 4: Verify the file compiles**
+- [ ] **Step 4: Build**
 
 ```bash
 cd /Users/rainsen/Programs/Projects/douxue/dx-source/dx-api && go build ./...
@@ -187,18 +171,23 @@ cd /Users/rainsen/Programs/Projects/douxue/dx-source/dx-api && go run . migrate
 
 Expected: migration logs success. Should report the new migration applied.
 
-- [ ] **Step 6: Verify indexes in PostgreSQL**
+**Locking note.** `CREATE INDEX` (without `CONCURRENTLY`) takes a `SHARE` lock on `content_metas` that blocks writes while the index builds. With ~1.22M rows the build can take a few seconds. For local dev this is fine. For a production Postgres with live writers, replace the body of `Up()` with `CREATE INDEX CONCURRENTLY`; Goravel's migration runner does NOT wrap migrations in a transaction, so `CONCURRENTLY` is permitted.
+
+- [ ] **Step 6: Verify the new index in PostgreSQL**
 
 ```bash
-psql -h localhost -U postgres -d douxue -c "SELECT indexname, indexdef FROM pg_indexes WHERE tablename IN ('game_metas','game_items','content_metas') AND indexname LIKE '%level_meta%' OR indexname LIKE '%level_item%' OR indexname LIKE '%dedup%' ORDER BY indexname;"
+psql -h localhost -U postgres -d douxue -c "SELECT indexname, indexdef FROM pg_indexes WHERE indexname = 'idx_content_metas_dedup_lookup';"
 ```
 
-Expected:
-- `idx_game_metas_level_meta` exists, NOT unique
-- `idx_game_items_level_item` exists, NOT unique
-- `idx_game_metas_level_meta_unique` is GONE
-- `idx_game_items_level_item_unique` is GONE
-- `idx_content_metas_dedup_lookup` exists
+Expected: exactly one row showing the `CREATE INDEX ... ON public.content_metas USING btree (source_type, source_data) WHERE (deleted_at IS NULL)` definition.
+
+Also confirm the pre-existing junction indexes are untouched:
+
+```bash
+psql -h localhost -U postgres -d douxue -c "SELECT indexname FROM pg_indexes WHERE indexname IN ('idx_game_metas_level_meta','idx_game_items_level_item') ORDER BY indexname;"
+```
+
+Expected: both names present (already relaxed to non-unique earlier).
 
 - [ ] **Step 7: Verify row counts are unchanged**
 
@@ -206,12 +195,12 @@ Expected:
 psql -h localhost -U postgres -d douxue -c "SELECT 'content_metas' AS t, COUNT(*) FROM content_metas WHERE deleted_at IS NULL UNION ALL SELECT 'content_items', COUNT(*) FROM content_items WHERE deleted_at IS NULL UNION ALL SELECT 'game_metas', COUNT(*) FROM game_metas WHERE deleted_at IS NULL UNION ALL SELECT 'game_items', COUNT(*) FROM game_items WHERE deleted_at IS NULL;"
 ```
 
-Expected: identical to the counts captured in Task 1 Step 4. If different, STOP and investigate.
+Expected: identical to the counts captured in Task 1 Step 4. Adding an index is non-destructive; if counts differ, STOP and investigate.
 
 - [ ] **Step 8: Commit**
 
 ```bash
-cd /Users/rainsen/Programs/Projects/douxue/dx-source && git add dx-api/database/migrations/20260415000001_relax_junction_indexes_and_add_dedup_lookup.go && git commit -m "feat(api): relax junction unique indexes and add content_metas dedup index"
+cd /Users/rainsen/Programs/Projects/douxue/dx-source && git add dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go && git commit -m "feat(api): add content_metas dedup-lookup index"
 ```
 
 Expected: commit succeeds.
@@ -820,11 +809,11 @@ cd /Users/rainsen/Programs/Projects/douxue/dx-source/dx-api && go test -race -ru
 
 Expected: PASS. (The Task 6 implementation already supports this — the test verifies it.)
 
-If FAIL, the migration might not have dropped the unique index on `game_metas`. Run:
+If FAIL, confirm the junction index on `game_metas` is non-unique (it should already be, from the earlier merge into the create migration):
 ```bash
 psql -h localhost -U postgres -d douxue -c "\d game_metas"
 ```
-and confirm `idx_game_metas_level_meta_unique` is gone and `idx_game_metas_level_meta` (NOT unique) exists.
+Expect `idx_game_metas_level_meta` present and NOT unique. If it's still unique, something is out of sync with the current state of `20260414000001_create_game_metas_and_game_items_tables.go` — stop and investigate before continuing.
 
 - [ ] **Step 3: Commit**
 
@@ -2049,7 +2038,8 @@ If everything passes, the implementation is complete. Notify the user with a sum
 
 | Spec section | Implemented in |
 |---|---|
-| Schema migration: drop unique indexes, add dedup-lookup index | Task 2 |
+| Schema: relax junction unique indexes to non-unique | **ALREADY DONE** (merged into the create migration — out of scope for this resumption) |
+| Schema: add `idx_content_metas_dedup_lookup` on `content_metas` | Task 2 (narrowed) |
 | Save dedup logic, helpers, transaction | Tasks 4-11 (tests) + Task 6 (impl) |
 | Within-batch dedup | Task 7 |
 | Items reuse on broken-down meta | Task 10 (test) + Task 6 (impl, via `reuseItemsIntoLevel`) |
