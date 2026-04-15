@@ -384,3 +384,32 @@ func (s *ContentDedupSuite) TestSave_ReuseBrokenDownMeta_CopiesItemsViaJunction(
 	}
 	s.ElementsMatch([]string{item1.ID, item2.ID}, itemIDs)
 }
+
+// TestSave_CapacityCountsDedupedEntries verifies that deduped entries STILL
+// count toward the level's capacity limit (capacity reflects displayed items,
+// not unique underlying rows).
+func (s *ContentDedupSuite) TestSave_CapacityCountsDedupedEntries() {
+	gameID := s.seedGame(consts.GameModeVocabMatch)
+	levelID := s.seedLevel(gameID)
+
+	// Pre-fill the level to one short of MaxMetasPerLevel.
+	preEntries := make([]api.MetadataEntry, consts.MaxMetasPerLevel-1)
+	for i := range preEntries {
+		preEntries[i] = api.MetadataEntry{
+			SourceData:  uuid.Must(uuid.NewV7()).String(),
+			Translation: strPtr("t"),
+			SourceType:  "vocab",
+		}
+	}
+	_, err := api.SaveMetadataBatch(s.userID, gameID, levelID, preEntries, "manual")
+	s.Require().NoError(err)
+
+	// Now try to add 2 entries that would dedup to 0 new content_metas — but
+	// they are 2 displayable items, pushing the level over capacity.
+	entries := []api.MetadataEntry{
+		preEntries[0], // dedups
+		preEntries[1], // dedups
+	}
+	_, err = api.SaveMetadataBatch(s.userID, gameID, levelID, entries, "manual")
+	s.Error(err, "capacity check must consider total entries, not just net new metas")
+}
