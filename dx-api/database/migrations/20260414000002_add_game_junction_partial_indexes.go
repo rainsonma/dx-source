@@ -12,9 +12,9 @@ func (r *M20260414000002AddGameJunctionPartialIndexes) Signature() string {
 
 func (r *M20260414000002AddGameJunctionPartialIndexes) Up() error {
 	indexes := []string{
-		`CREATE UNIQUE INDEX idx_game_metas_level_meta_unique ON game_metas (game_level_id, content_meta_id) WHERE deleted_at IS NULL`,
+		`CREATE INDEX idx_game_metas_level_meta ON game_metas (game_level_id, content_meta_id, deleted_at)`,
 		`CREATE INDEX idx_game_metas_level_order ON game_metas (game_level_id, deleted_at, "order")`,
-		`CREATE UNIQUE INDEX idx_game_items_level_item_unique ON game_items (game_level_id, content_item_id) WHERE deleted_at IS NULL`,
+		`CREATE INDEX idx_game_items_level_item ON game_items (game_level_id, content_item_id, deleted_at)`,
 		`CREATE INDEX idx_game_items_level_order ON game_items (game_level_id, deleted_at, "order")`,
 	}
 	for _, sql := range indexes {
@@ -28,9 +28,9 @@ func (r *M20260414000002AddGameJunctionPartialIndexes) Up() error {
 func (r *M20260414000002AddGameJunctionPartialIndexes) Down() error {
 	indexes := []string{
 		`DROP INDEX IF EXISTS idx_game_items_level_order`,
-		`DROP INDEX IF EXISTS idx_game_items_level_item_unique`,
+		`DROP INDEX IF EXISTS idx_game_items_level_item`,
 		`DROP INDEX IF EXISTS idx_game_metas_level_order`,
-		`DROP INDEX IF EXISTS idx_game_metas_level_meta_unique`,
+		`DROP INDEX IF EXISTS idx_game_metas_level_meta`,
 	}
 	for _, sql := range indexes {
 		if _, err := facades.Orm().Query().Exec(sql); err != nil {
