@@ -730,8 +730,11 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 	})
 }
 
-// DeleteMetadata removes a single metadata entry and its associated content items.
-func DeleteMetadata(userID, gameID, metaID string) error {
+// DeleteMetadata removes a metadata entry from one level. With reuse enabled,
+// only the level's junction row(s) are soft-deleted; the underlying
+// content_metas / content_items rows are soft-deleted only when no other
+// junction references them.
+func DeleteMetadata(userID, gameID, gameLevelID, metaID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -749,53 +752,103 @@ func DeleteMetadata(userID, gameID, metaID string) error {
 	}
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Soft-delete junction rows first (pre-reuse 1:1 invariant)
+		// 1. Collect content_item_ids referenced by this level for this meta.
+		var itemRows []struct {
+			ContentItemID string `gorm:"column:content_item_id"`
+		}
+		if err := tx.Raw(
+			`SELECT gi.content_item_id
+			   FROM game_items gi
+			   JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
+			  WHERE ci.content_meta_id = ?
+			    AND gi.game_level_id = ?
+			    AND gi.deleted_at IS NULL`,
+			metaID, gameLevelID,
+		).Scan(&itemRows); err != nil {
+			return fmt.Errorf("failed to collect items for delete: %w", err)
+		}
+
+		// 2. Soft-delete the level-scoped game_items rows (all repetitions).
 		if _, err := tx.Exec(
 			`UPDATE game_items SET deleted_at = NOW()
-			 WHERE content_item_id IN (SELECT id FROM content_items WHERE content_meta_id = ?)
-			   AND deleted_at IS NULL`,
-			metaID,
+			  WHERE game_level_id = ?
+			    AND content_item_id IN (
+			      SELECT id FROM content_items WHERE content_meta_id = ?
+			    )
+			    AND deleted_at IS NULL`,
+			gameLevelID, metaID,
 		); err != nil {
-			return fmt.Errorf("failed to soft-delete game_items for meta: %w", err)
+			return fmt.Errorf("failed to soft-delete game_items: %w", err)
 		}
+
+		// 3. Soft-delete the level-scoped game_metas rows (all repetitions).
 		if _, err := tx.Exec(
-			"UPDATE game_metas SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",
-			metaID,
+			`UPDATE game_metas SET deleted_at = NOW()
+			  WHERE content_meta_id = ?
+			    AND game_level_id = ?
+			    AND deleted_at IS NULL`,
+			metaID, gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
 		}
 
-		// Soft-delete content items belonging to this meta
-		if _, err := tx.Exec(
-			"UPDATE content_items SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",
-			metaID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content items for meta: %w", err)
+		// 4. For each orphaned content_item_id, count remaining live junctions
+		//    across ALL levels; if 0, soft-delete the content_item.
+		seen := map[string]struct{}{}
+		for _, r := range itemRows {
+			if _, ok := seen[r.ContentItemID]; ok {
+				continue
+			}
+			seen[r.ContentItemID] = struct{}{}
+			n, err := tx.Table("game_items").
+				Where("content_item_id", r.ContentItemID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_items: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_items SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ContentItemID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_item: %w", err)
+				}
+			}
 		}
 
-		// Soft-delete the content meta
-		if _, err := tx.Exec(
-			"UPDATE content_metas SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
-			metaID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content meta: %w", err)
+		// 5. Count remaining live game_metas for this content_meta across ALL levels.
+		n, err := tx.Table("game_metas").
+			Where("content_meta_id", metaID).
+			Where("deleted_at IS NULL").
+			Count()
+		if err != nil {
+			return fmt.Errorf("failed to count game_metas: %w", err)
 		}
-
+		if n == 0 {
+			if _, err := tx.Exec(
+				`UPDATE content_metas SET deleted_at = NOW()
+				  WHERE id = ? AND deleted_at IS NULL`,
+				metaID,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete content_meta: %w", err)
+			}
+		}
 		return nil
 	})
 }
 
-// verifyMetaBelongsToGame checks that a content meta belongs to a game via its level.
+// verifyMetaBelongsToGame checks that a content meta belongs to a game.
 func verifyMetaBelongsToGame(metaID, gameID string) error {
-	count, err := facades.Orm().Query().Model(&models.GameMeta{}).
-		Join("JOIN game_levels gl ON gl.id = game_metas.game_level_id AND gl.deleted_at IS NULL").
-		Where("game_metas.content_meta_id", metaID).
-		Where("gl.game_id", gameID).
+	n, err := facades.Orm().Query().Model(&models.GameMeta{}).
+		Where("content_meta_id", metaID).
+		Where("game_id", gameID).
 		Count()
 	if err != nil {
 		return fmt.Errorf("failed to verify meta: %w", err)
 	}
-	if count == 0 {
+	if n == 0 {
 		return ErrMetaNotFound
 	}
 	return nil

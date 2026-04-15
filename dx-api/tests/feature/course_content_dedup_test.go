@@ -385,6 +385,73 @@ func (s *ContentDedupSuite) TestSave_ReuseBrokenDownMeta_CopiesItemsViaJunction(
 	s.ElementsMatch([]string{item1.ID, item2.ID}, itemIDs)
 }
 
+// TestDeleteMetadata_PreservesSharedMeta verifies that deleting a meta from
+// one level leaves a shared meta intact in another level.
+func (s *ContentDedupSuite) TestDeleteMetadata_PreservesSharedMeta() {
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	gameB := s.seedGame(consts.GameModeWordSentence)
+	levelB := s.seedLevel(gameB)
+
+	entries := []api.MetadataEntry{
+		{SourceData: "shared", Translation: strPtr("共享"), SourceType: "vocab"},
+	}
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA, entries, "manual")
+	s.Require().NoError(err)
+	_, err = api.SaveMetadataBatch(s.userID, gameB, levelB, entries, "manual")
+	s.Require().NoError(err)
+
+	// Find the shared meta ID
+	var metaID string
+	row := struct{ ID string }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT id FROM content_metas WHERE source_data = 'shared' AND deleted_at IS NULL LIMIT 1`,
+	).Scan(&row))
+	metaID = row.ID
+
+	// Delete it from level A
+	s.Require().NoError(api.DeleteMetadata(s.userID, gameA, levelA, metaID))
+
+	// content_metas row should still exist (level B references it)
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID))
+	// Level A junction is gone
+	s.Equal(int64(0), s.countGameMetasInLevel(levelA))
+	// Level B junction still present
+	s.Equal(int64(1), s.countGameMetasInLevel(levelB))
+}
+
+// TestDeleteMetadata_LastReferenceSoftDeletesUnderlying verifies that deleting
+// the only reference to a meta DOES soft-delete the underlying content_metas.
+func (s *ContentDedupSuite) TestDeleteMetadata_LastReferenceSoftDeletesUnderlying() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+	entries := []api.MetadataEntry{
+		{SourceData: "lonely", Translation: strPtr("孤独"), SourceType: "vocab"},
+	}
+	_, err := api.SaveMetadataBatch(s.userID, gameID, levelID, entries, "manual")
+	s.Require().NoError(err)
+
+	var metaID string
+	row := struct{ ID string }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT id FROM content_metas WHERE source_data = 'lonely' AND deleted_at IS NULL LIMIT 1`,
+	).Scan(&row))
+	metaID = row.ID
+
+	s.Require().NoError(api.DeleteMetadata(s.userID, gameID, levelID, metaID))
+
+	s.Equal(int64(0), s.countMetasOwnedByUser(s.userID), "underlying should be soft-deleted")
+
+	// Verify it's soft-deleted not hard-deleted
+	dtRow := struct {
+		DeletedAt *string `gorm:"column:deleted_at"`
+	}{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT deleted_at FROM content_metas WHERE id = ?`, metaID,
+	).Scan(&dtRow))
+	s.NotNil(dtRow.DeletedAt, "soft delete sets deleted_at")
+}
+
 // TestSave_CapacityCountsDedupedEntries verifies that deduped entries STILL
 // count toward the level's capacity limit (capacity reflects displayed items,
 // not unique underlying rows).
