@@ -185,3 +185,23 @@ func (s *ContentDedupSuite) TestSave_DedupAcrossGames_ReusesContentMeta() {
 	s.Equal(int64(1), s.countGameMetasInLevel(levelA))
 	s.Equal(int64(1), s.countGameMetasInLevel(levelB))
 }
+
+// TestSave_WithinBatchRepetition_OneMetaTwoJunctions verifies that submitting
+// the same entry twice in one batch creates ONE content_meta row but TWO
+// game_meta junction rows.
+func (s *ContentDedupSuite) TestSave_WithinBatchRepetition_OneMetaTwoJunctions() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+
+	entries := []api.MetadataEntry{
+		{SourceData: "repeat me", Translation: strPtr("重复"), SourceType: "vocab"},
+		{SourceData: "repeat me", Translation: strPtr("重复"), SourceType: "vocab"},
+	}
+
+	count, err := api.SaveMetadataBatch(s.userID, gameID, levelID, entries, "manual")
+	s.Require().NoError(err)
+	s.Equal(2, count)
+
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID), "content_metas deduped within batch")
+	s.Equal(int64(2), s.countGameMetasInLevel(levelID), "two junction rows created")
+}
