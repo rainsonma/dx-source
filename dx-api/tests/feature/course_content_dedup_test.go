@@ -1,0 +1,138 @@
+package feature
+
+import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/facades"
+	"github.com/stretchr/testify/suite"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
+	api "dx-api/app/services/api"
+	"dx-api/tests"
+)
+
+type ContentDedupSuite struct {
+	suite.Suite
+	tests.TestCase
+	userID string
+}
+
+func TestContentDedupSuite(t *testing.T) {
+	suite.Run(t, new(ContentDedupSuite))
+}
+
+// SetupTest creates an isolated VIP user for each test and cleans up after.
+func (s *ContentDedupSuite) SetupTest() {
+	s.userID = s.seedVipUser()
+}
+
+func (s *ContentDedupSuite) TearDownTest() {
+	if s.userID == "" {
+		return
+	}
+	// Cascade soft-delete via raw SQL — content tests own all rows under this user.
+	q := facades.Orm().Query()
+	_, _ = q.Exec(`DELETE FROM game_items WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM game_metas WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM content_items WHERE content_meta_id IN (SELECT cm.id FROM content_metas cm JOIN game_metas gm ON gm.content_meta_id = cm.id JOIN games g ON g.id = gm.game_id WHERE g.user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM content_metas WHERE id IN (SELECT cm.id FROM content_metas cm LEFT JOIN game_metas gm ON gm.content_meta_id = cm.id LEFT JOIN games g ON g.id = gm.game_id WHERE g.user_id = ? OR g.user_id IS NULL AND cm.created_at > NOW() - INTERVAL '1 hour')`, s.userID)
+	_, _ = q.Exec(`DELETE FROM game_levels WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM games WHERE user_id = ?`, s.userID)
+	_, _ = q.Exec(`DELETE FROM users WHERE id = ?`, s.userID)
+	s.userID = ""
+}
+
+// seedVipUser inserts a lifetime-grade user and returns its id.
+func (s *ContentDedupSuite) seedVipUser() string {
+	id := uuid.Must(uuid.NewV7()).String()
+	user := models.User{
+		ID:         id,
+		Username:   "test_" + id[:8],
+		Grade:      consts.UserGradeLifetime,
+		IsActive:   true,
+		InviteCode: id[:8],
+		Password:   "x",
+	}
+	s.Require().NoError(facades.Orm().Query().Create(&user))
+	return id
+}
+
+// seedGame inserts a draft course game owned by s.userID with the given mode.
+func (s *ContentDedupSuite) seedGame(mode string) string {
+	id := uuid.Must(uuid.NewV7()).String()
+	g := models.Game{
+		ID:       id,
+		Name:     "test game " + id[:8],
+		UserID:   &s.userID,
+		Mode:     mode,
+		IsActive: true,
+		Status:   consts.GameStatusDraft,
+	}
+	s.Require().NoError(facades.Orm().Query().Create(&g))
+	return id
+}
+
+// seedLevel inserts a level row for the given game and returns its id.
+func (s *ContentDedupSuite) seedLevel(gameID string) string {
+	id := uuid.Must(uuid.NewV7()).String()
+	lv := models.GameLevel{
+		ID:       id,
+		GameID:   gameID,
+		Name:     "L1",
+		IsActive: true,
+		Order:    1000,
+	}
+	s.Require().NoError(facades.Orm().Query().Create(&lv))
+	return id
+}
+
+// strPtr returns a pointer to the given string.
+func strPtr(v string) *string { return &v }
+
+// countMetasOwnedByUser returns the number of live content_metas reachable
+// from the given user via the junction chain.
+func (s *ContentDedupSuite) countMetasOwnedByUser(userID string) int64 {
+	var n int64
+	row := struct{ N int64 }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT COUNT(DISTINCT cm.id) AS n
+		   FROM content_metas cm
+		   JOIN game_metas gm ON gm.content_meta_id = cm.id AND gm.deleted_at IS NULL
+		   JOIN game_levels gl ON gl.id = gm.game_level_id AND gl.deleted_at IS NULL
+		   JOIN games g ON g.id = gl.game_id AND g.deleted_at IS NULL
+		  WHERE cm.deleted_at IS NULL AND g.user_id = ?`,
+		userID,
+	).Scan(&row))
+	n = row.N
+	return n
+}
+
+// countGameMetasInLevel returns the number of live game_metas in the level.
+func (s *ContentDedupSuite) countGameMetasInLevel(levelID string) int64 {
+	n, err := facades.Orm().Query().Model(&models.GameMeta{}).
+		Where("game_level_id", levelID).Count()
+	s.Require().NoError(err)
+	return n
+}
+
+// countGameItemsInLevel returns the number of live game_items in the level.
+func (s *ContentDedupSuite) countGameItemsInLevel(levelID string) int64 {
+	n, err := facades.Orm().Query().Model(&models.GameItem{}).
+		Where("game_level_id", levelID).Count()
+	s.Require().NoError(err)
+	return n
+}
+
+// Smoke test — verifies the suite boots and the seed helpers work.
+func (s *ContentDedupSuite) TestSetup_BootsAndSeeds() {
+	s.NotEmpty(s.userID)
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+	s.NotEmpty(gameID)
+	s.NotEmpty(levelID)
+}
+
+// silence unused-import warning until later tasks add tests using the api package.
+var _ = api.SaveMetadataBatch
