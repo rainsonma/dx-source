@@ -652,7 +652,10 @@ export const courseGameApi = {
     return apiClient.put<null>(`/api/course-games/${gameId}/content-items/${itemId}`, data);
   },
   /** Reorder content items */
-  async reorderContentItems(gameId: string, data: { itemId: string; newOrder: number }) {
+  async reorderContentItems(
+    gameId: string,
+    data: { gameLevelId: string; itemId: string; newOrder: number }
+  ) {
     return apiClient.put<null>(`/api/course-games/${gameId}/content-items/reorder`, data);
   },
   /** Delete a single content item */

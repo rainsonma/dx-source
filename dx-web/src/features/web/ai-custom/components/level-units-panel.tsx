@@ -343,6 +343,7 @@ export function LevelUnitsPanel({
       try {
         const result = await reorderItemAction(
           gameId,
+          levelId,
           active.id as string,
           newOrder
         );
@@ -354,7 +355,7 @@ export function LevelUnitsPanel({
         setIsReorderingItem(false);
       }
     },
-    [contentItems, gameId, isReorderingItem]
+    [contentItems, gameId, isReorderingItem, levelId]
   );
 
   const handleUpdateItemText = useCallback(

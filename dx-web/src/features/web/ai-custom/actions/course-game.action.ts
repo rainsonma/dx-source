@@ -249,13 +249,14 @@ export async function fetchContentItemsAction(
 /** Reorder a content item via Go API. */
 export async function reorderItemAction(
   gameId: string,
+  gameLevelId: string,
   itemId: string,
   newOrder: number
 ): Promise<SimpleActionResult> {
   try {
     const res = await apiClient.put<null>(
       `/api/course-games/${gameId}/content-items/reorder`,
-      { itemId, newOrder }
+      { gameLevelId, itemId, newOrder }
     );
     if (res.code !== 0) return { error: res.message };
     return { success: true };

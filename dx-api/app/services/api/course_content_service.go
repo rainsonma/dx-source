@@ -165,8 +165,8 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 	return len(entries), nil
 }
 
-// ReorderMetadata updates the order of a content metadata entry.
-func ReorderMetadata(userID, gameID, metaID string, newOrder float64) error {
+// ReorderMetadata updates the order of a content metadata entry within a level.
+func ReorderMetadata(userID, gameID, gameLevelID, metaID string, newOrder float64) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -185,8 +185,9 @@ func ReorderMetadata(userID, gameID, metaID string, newOrder float64) error {
 	}
 
 	if _, err := facades.Orm().Query().Exec(
-		`UPDATE game_metas SET "order" = ? WHERE content_meta_id = ? AND deleted_at IS NULL`,
-		newOrder, metaID,
+		`UPDATE game_metas SET "order" = ?
+		   WHERE game_level_id = ? AND content_meta_id = ? AND deleted_at IS NULL`,
+		newOrder, gameLevelID, metaID,
 	); err != nil {
 		return fmt.Errorf("failed to reorder metadata: %w", err)
 	}
@@ -435,8 +436,8 @@ func UpdateContentItemText(userID, gameID, itemID, content string, translation *
 	return nil
 }
 
-// ReorderContentItems updates the order of a content item.
-func ReorderContentItems(userID, gameID, itemID string, newOrder float64) error {
+// ReorderContentItems updates the order of a content item within a level.
+func ReorderContentItems(userID, gameID, gameLevelID, itemID string, newOrder float64) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -454,8 +455,9 @@ func ReorderContentItems(userID, gameID, itemID string, newOrder float64) error 
 	}
 
 	if _, err := facades.Orm().Query().Exec(
-		`UPDATE game_items SET "order" = ? WHERE content_item_id = ? AND deleted_at IS NULL`,
-		newOrder, itemID,
+		`UPDATE game_items SET "order" = ?
+		   WHERE game_level_id = ? AND content_item_id = ? AND deleted_at IS NULL`,
+		newOrder, gameLevelID, itemID,
 	); err != nil {
 		return fmt.Errorf("failed to reorder content item: %w", err)
 	}

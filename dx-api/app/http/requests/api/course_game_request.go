@@ -258,22 +258,26 @@ func (r *UpdateContentItemTextRequest) Messages(ctx http.Context) map[string]str
 // ---------- ReorderContentItemRequest ----------
 
 type ReorderContentItemRequest struct {
-	ItemID   string  `json:"itemId"`
-	NewOrder float64 `json:"newOrder"`
+	GameLevelID string  `json:"gameLevelId"`
+	ItemID      string  `json:"itemId"`
+	NewOrder    float64 `json:"newOrder"`
 }
 
 func (r *ReorderContentItemRequest) Authorize(ctx http.Context) error { return nil }
 func (r *ReorderContentItemRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"itemId":   "required|uuid",
-		"newOrder": "required|min:0",
+		"gameLevelId": "required|uuid",
+		"itemId":      "required|uuid",
+		"newOrder":    "required|min:0",
 	}
 }
 func (r *ReorderContentItemRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"itemId.required":   "请指定内容项",
-		"itemId.uuid":       "无效的内容项ID",
-		"newOrder.required": "请指定排序位置",
-		"newOrder.min":      "排序位置不能为负数",
+		"gameLevelId.required": "请指定关卡",
+		"gameLevelId.uuid":     "无效的关卡ID",
+		"itemId.required":      "请指定内容项",
+		"itemId.uuid":          "无效的内容项ID",
+		"newOrder.required":    "请指定排序位置",
+		"newOrder.min":         "排序位置不能为负数",
 	}
 }

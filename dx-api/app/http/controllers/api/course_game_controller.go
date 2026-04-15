@@ -291,7 +291,7 @@ func (c *CourseGameController) ReorderMetadata(ctx contractshttp.Context) contra
 		return resp
 	}
 
-	if err := services.ReorderMetadata(userID, gameID, req.MetaID, req.NewOrder); err != nil {
+	if err := services.ReorderMetadata(userID, gameID, req.GameLevelID, req.MetaID, req.NewOrder); err != nil {
 		return mapCourseGameError(ctx, err)
 	}
 
@@ -407,7 +407,7 @@ func (c *CourseGameController) ReorderContentItems(ctx contractshttp.Context) co
 		return resp
 	}
 
-	if err := services.ReorderContentItems(userID, gameID, req.ItemID, req.NewOrder); err != nil {
+	if err := services.ReorderContentItems(userID, gameID, req.GameLevelID, req.ItemID, req.NewOrder); err != nil {
 		return mapCourseGameError(ctx, err)
 	}
 
