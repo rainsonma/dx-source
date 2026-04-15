@@ -11,6 +11,27 @@ Two pieces of context for anyone picking this plan up mid-flight:
 
 Everything else in this plan — Tasks 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 — is still pending and still valid as written. Execute in order.
 
+## Local environment note (required reading for every task)
+
+Two non-obvious facts about the local dev environment that the plan's literal shell commands don't reflect:
+
+1. **The database name is `dxdb`, not `douxue`.** Everywhere below you see `douxue` in a `psql`/`pg_dump`/`pg_restore` command, change it to `dxdb`. (File system paths like `/Users/rainsen/Programs/Projects/douxue/...` are the path to the project folder and should NOT change.)
+2. **No host-side `psql`/`pg_dump`/`pg_restore`.** Postgres runs inside the docker-compose `postgres` service defined in `deploy/docker-compose.dev.yml`. Every DB command must go through `docker compose -f deploy/docker-compose.dev.yml exec -T postgres ...` from the `dx-source/` repo root. Example template for the row-count verification command:
+    ```
+    docker compose -f deploy/docker-compose.dev.yml exec -T postgres \
+      psql -U postgres -d dxdb -c "SELECT ..."
+    ```
+    For `pg_dump` you pipe stdout from `docker compose exec -T postgres pg_dump ...` to a host file. For `pg_restore --list`, copy the dump into the container first with `docker compose cp` and read it from there.
+
+Baseline row counts captured by Task 1 before the Task 2 migration (used for post-migration verification — counts must match afterward):
+
+| Table | Live row count |
+|---|---|
+| content_metas | 1,220,803 |
+| content_items | 1,220,803 |
+| game_metas | 1,220,803 |
+| game_items | 1,220,803 |
+
 **Goal:** When a user adds metadata to a level, reuse existing identical `content_metas` (and any associated broken-down `content_items`) by creating new junction rows instead of inserting duplicate underlying rows. Update delete paths to be reference-counted so reuse is safe.
 
 **Architecture:** A single Goravel migration adds `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL` — the junction non-unique indexes were already merged into their create migration and are out of scope here. `SaveMetadataBatch` gains a per-batch dedup map keyed on `(source_type, source_data, normalized_translation)` scoped to the current user's own games. Reused metas with `is_break_done = true` get parallel `game_items` rows in the new level pointing at existing `content_items`. Three delete service functions are rewritten to soft-delete junctions for the current scope and only soft-delete underlying rows when no live junctions remain anywhere. Two REST routes change shape to carry `levelId` in the path.
