@@ -205,3 +205,67 @@ func (s *ContentDedupSuite) TestSave_WithinBatchRepetition_OneMetaTwoJunctions()
 	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID), "content_metas deduped within batch")
 	s.Equal(int64(2), s.countGameMetasInLevel(levelID), "two junction rows created")
 }
+
+// TestSave_NullEqualsEmpty verifies that NULL and "" translations are treated
+// as equivalent for dedup purposes.
+func (s *ContentDedupSuite) TestSave_NullEqualsEmpty() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+
+	// Save with NULL translation
+	_, err := api.SaveMetadataBatch(s.userID, gameID, levelID,
+		[]api.MetadataEntry{{SourceData: "fish", Translation: nil, SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID))
+
+	// Save with empty-string translation in another level
+	level2 := s.seedLevel(gameID)
+	emptyStr := ""
+	_, err = api.SaveMetadataBatch(s.userID, gameID, level2,
+		[]api.MetadataEntry{{SourceData: "fish", Translation: &emptyStr, SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+
+	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID), "NULL and empty translation must dedup")
+	s.Equal(int64(1), s.countGameMetasInLevel(levelID))
+	s.Equal(int64(1), s.countGameMetasInLevel(level2))
+}
+
+// TestSave_DifferentTranslations_DoNotDedup verifies that the same source_data
+// with different translations creates two separate content_metas rows.
+func (s *ContentDedupSuite) TestSave_DifferentTranslations_DoNotDedup() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+
+	_, err := api.SaveMetadataBatch(s.userID, gameID, levelID,
+		[]api.MetadataEntry{{SourceData: "bank", Translation: strPtr("银行"), SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+
+	level2 := s.seedLevel(gameID)
+	_, err = api.SaveMetadataBatch(s.userID, gameID, level2,
+		[]api.MetadataEntry{{SourceData: "bank", Translation: strPtr("河岸"), SourceType: "vocab"}},
+		"manual")
+	s.Require().NoError(err)
+
+	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID), "different translations are not deduped")
+}
+
+// TestSave_DifferentSourceTypes_DoNotDedup verifies that the same source_data
+// with different source_types creates two separate content_metas rows.
+func (s *ContentDedupSuite) TestSave_DifferentSourceTypes_DoNotDedup() {
+	gameID := s.seedGame(consts.GameModeWordSentence)
+	levelID := s.seedLevel(gameID)
+
+	_, err := api.SaveMetadataBatch(s.userID, gameID, levelID,
+		[]api.MetadataEntry{
+			{SourceData: "apple", Translation: strPtr("苹果"), SourceType: "vocab"},
+			{SourceData: "apple", Translation: strPtr("苹果"), SourceType: "sentence"},
+		},
+		"manual")
+	s.Require().NoError(err)
+
+	s.Equal(int64(2), s.countMetasOwnedByUser(s.userID), "different source_types are not deduped")
+	s.Equal(int64(2), s.countGameMetasInLevel(levelID))
+}
