@@ -313,3 +313,74 @@ func (s *ContentDedupSuite) TestSave_CrossUserIsolation() {
 	s.Equal(int64(1), s.countMetasOwnedByUser(s.userID))
 	s.Equal(int64(1), s.countMetasOwnedByUser(userB))
 }
+
+// TestSave_ReuseBrokenDownMeta_CopiesItemsViaJunction verifies that reusing a
+// meta with is_break_done=true creates parallel game_items rows in the new
+// level pointing at the existing content_items (no row duplication).
+func (s *ContentDedupSuite) TestSave_ReuseBrokenDownMeta_CopiesItemsViaJunction() {
+	// Set up Game A with a broken-down meta
+	gameA := s.seedGame(consts.GameModeWordSentence)
+	levelA := s.seedLevel(gameA)
+	_, err := api.SaveMetadataBatch(s.userID, gameA, levelA,
+		[]api.MetadataEntry{{SourceData: "broken sentence", Translation: strPtr("已拆解"), SourceType: "sentence"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// Find the meta and mark it broken-down with two manual content_items.
+	var metaID string
+	row := struct{ ID string }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT cm.id FROM content_metas cm
+		   JOIN game_metas gm ON gm.content_meta_id = cm.id
+		   JOIN game_levels gl ON gl.id = gm.game_level_id
+		   JOIN games g ON g.id = gl.game_id
+		  WHERE g.user_id = ? AND cm.source_data = 'broken sentence'`,
+		s.userID,
+	).Scan(&row))
+	metaID = row.ID
+	s.Require().NotEmpty(metaID)
+
+	item1 := models.ContentItem{ID: uuid.Must(uuid.NewV7()).String(), ContentMetaID: &metaID, Content: "broken", ContentType: "word"}
+	item2 := models.ContentItem{ID: uuid.Must(uuid.NewV7()).String(), ContentMetaID: &metaID, Content: "sentence", ContentType: "word"}
+	s.Require().NoError(facades.Orm().Query().Create(&item1))
+	s.Require().NoError(facades.Orm().Query().Create(&item2))
+
+	// Link items to level A via game_items junction
+	gi1 := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item1.ID, Order: 1000}
+	gi2 := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item2.ID, Order: 2000}
+	s.Require().NoError(facades.Orm().Query().Create(&gi1))
+	s.Require().NoError(facades.Orm().Query().Create(&gi2))
+
+	// Mark meta as broken-down
+	_, err = facades.Orm().Query().Exec(`UPDATE content_metas SET is_break_done = true WHERE id = ?`, metaID)
+	s.Require().NoError(err)
+
+	// Now reuse the meta in a new level via dedup
+	gameB := s.seedGame(consts.GameModeWordSentence)
+	levelB := s.seedLevel(gameB)
+	_, err = api.SaveMetadataBatch(s.userID, gameB, levelB,
+		[]api.MetadataEntry{{SourceData: "broken sentence", Translation: strPtr("已拆解"), SourceType: "sentence"}},
+		"manual")
+	s.Require().NoError(err)
+
+	// content_items table should still have only 2 rows for this meta (no duplication)
+	var itemCount int64
+	itemCount, err = facades.Orm().Query().Model(&models.ContentItem{}).Where("content_meta_id", metaID).Count()
+	s.Require().NoError(err)
+	s.Equal(int64(2), itemCount, "content_items should not be duplicated")
+
+	// Level B should now have 2 game_items pointing at the existing content_items
+	s.Equal(int64(2), s.countGameItemsInLevel(levelB))
+
+	// Both should reference the original IDs
+	var itemIDs []string
+	itemIDsRows := []struct{ ContentItemID string }{}
+	s.Require().NoError(facades.Orm().Query().Raw(
+		`SELECT content_item_id FROM game_items WHERE game_level_id = ? ORDER BY "order"`,
+		levelB,
+	).Scan(&itemIDsRows))
+	for _, r := range itemIDsRows {
+		itemIDs = append(itemIDs, r.ContentItemID)
+	}
+	s.ElementsMatch([]string{item1.ID, item2.ID}, itemIDs)
+}
