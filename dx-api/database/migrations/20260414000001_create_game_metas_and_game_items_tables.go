@@ -29,20 +29,6 @@ func (r *M20260414000001CreateGameMetasAndGameItemsTables) Up() error {
 		}); err != nil {
 			return err
 		}
-		// Partial indexes (not exposed by Blueprint)
-		if _, err := facades.Orm().Query().Exec(
-			`CREATE UNIQUE INDEX idx_game_metas_level_meta_unique
-			 ON game_metas (game_level_id, content_meta_id)
-			 WHERE deleted_at IS NULL`,
-		); err != nil {
-			return err
-		}
-		if _, err := facades.Orm().Query().Exec(
-			`CREATE INDEX idx_game_metas_level_order
-			 ON game_metas (game_level_id, deleted_at, "order")`,
-		); err != nil {
-			return err
-		}
 	}
 
 	// 2. game_items
@@ -60,19 +46,6 @@ func (r *M20260414000001CreateGameMetasAndGameItemsTables) Up() error {
 			table.Index("content_item_id")
 			table.Index("created_at")
 		}); err != nil {
-			return err
-		}
-		if _, err := facades.Orm().Query().Exec(
-			`CREATE UNIQUE INDEX idx_game_items_level_item_unique
-			 ON game_items (game_level_id, content_item_id)
-			 WHERE deleted_at IS NULL`,
-		); err != nil {
-			return err
-		}
-		if _, err := facades.Orm().Query().Exec(
-			`CREATE INDEX idx_game_items_level_order
-			 ON game_items (game_level_id, deleted_at, "order")`,
-		); err != nil {
 			return err
 		}
 	}
