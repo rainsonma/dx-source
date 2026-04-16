@@ -63,7 +63,7 @@ type PlayedGameData struct {
 }
 
 // ListPublishedGames returns published games with cursor pagination and optional filters.
-func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID string, mode string) ([]GameCardData, string, bool, error) {
+func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID string, mode string, q string) ([]GameCardData, string, bool, error) {
 	if limit <= 0 {
 		limit = 12
 	}
@@ -81,6 +81,9 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 	}
 	if mode != "" {
 		query = query.Where("mode", mode)
+	}
+	if q != "" {
+		query = query.Where("name ILIKE ?", "%"+q+"%")
 	}
 
 	if cursor != "" {

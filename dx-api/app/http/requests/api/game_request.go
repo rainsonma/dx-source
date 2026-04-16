@@ -17,6 +17,7 @@ type ListGamesRequest struct {
 	CategoryIDs string `form:"categoryIds" json:"categoryIds"`
 	PressID     string `form:"pressId" json:"pressId"`
 	Mode        string `form:"mode" json:"mode"`
+	Q           string `form:"q" json:"q"`
 }
 
 // ParseCategoryIDs splits the comma-separated categoryIds into individual IDs.
@@ -40,12 +41,14 @@ func (r *ListGamesRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
 		"pressId": "uuid",
 		"mode":    helpers.InEnum("mode"),
+		"q":       "max_len:50",
 	}
 }
 func (r *ListGamesRequest) Filters(ctx http.Context) map[string]string {
 	return map[string]string{
 		"cursor":  "trim",
 		"pressId": "trim",
+		"q":       "trim",
 	}
 }
 func (r *ListGamesRequest) Messages(ctx http.Context) map[string]string {
@@ -54,6 +57,7 @@ func (r *ListGamesRequest) Messages(ctx http.Context) map[string]string {
 		"limit.max":    "每页数量不能超过50",
 		"pressId.uuid": "无效的出版社ID",
 		"mode.in":      "无效的游戏模式",
+		"q.max_len":    "搜索关键词不能超过50个字符",
 	}
 }
 

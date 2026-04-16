@@ -29,7 +29,7 @@ func (c *GameController) List(ctx contractshttp.Context) contractshttp.Response 
 		limit = 50
 	}
 
-	games, nextCursor, hasMore, err := services.ListPublishedGames(req.Cursor, limit, req.ParseCategoryIDs(), req.PressID, req.Mode)
+	games, nextCursor, hasMore, err := services.ListPublishedGames(req.Cursor, limit, req.ParseCategoryIDs(), req.PressID, req.Mode, req.Q)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list games")
 	}
