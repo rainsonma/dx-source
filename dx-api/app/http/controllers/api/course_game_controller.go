@@ -479,6 +479,8 @@ func mapCourseGameError(ctx contractshttp.Context, err error) contractshttp.Resp
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeContentNotFound, "练习单元不存在或无权操作")
 	case errors.Is(err, services.ErrCapacityExceeded):
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "超出关卡内容上限")
+	case errors.Is(err, services.ErrBatchSizeInvalid):
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "词汇数量必须是批次大小的倍数")
 	case errors.Is(err, services.ErrItemLimitExceeded):
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "每条元数据练习单元数量已达上限")
 	case errors.Is(err, services.ErrVipRequired):

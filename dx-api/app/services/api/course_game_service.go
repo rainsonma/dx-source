@@ -379,6 +379,11 @@ func PublishGame(userID, gameID string) error {
 		if ungeneratedCount > 0 {
 			return fmt.Errorf("关卡「%s」有未生成的练习单元", l.Name)
 		}
+		// Vocab modes: item count must be a multiple of the batch size
+		batchSize := consts.VocabBatchSize(game.Mode)
+		if batchSize > 0 && itemCount%int64(batchSize) != 0 {
+			return fmt.Errorf("关卡「%s」词汇数量必须是 %d 的倍数（当前 %d 条）", l.Name, batchSize, itemCount)
+		}
 	}
 
 	if _, err := facades.Orm().Query().Model(&models.Game{}).Where("id", gameID).Update("status", consts.GameStatusPublished); err != nil {

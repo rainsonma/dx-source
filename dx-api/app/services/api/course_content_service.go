@@ -170,6 +170,11 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		if len(existing)+len(entries) > consts.MaxMetasPerLevel {
 			return 0, ErrCapacityExceeded
 		}
+		// Vocab modes: entries must be a multiple of the batch size
+		batchSize := consts.VocabBatchSize(game.Mode)
+		if batchSize > 0 && len(entries)%batchSize != 0 {
+			return 0, ErrBatchSizeInvalid
+		}
 	} else {
 		// Word-sentence mode: existing ratio formula
 		existingSentences := 0
