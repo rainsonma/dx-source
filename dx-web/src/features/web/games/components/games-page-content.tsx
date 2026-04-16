@@ -6,6 +6,7 @@ import { PageSpinner } from "@/components/in/page-spinner"
 import { FilterSection } from "@/features/web/games/components/filter-section"
 import { GameCard } from "@/features/web/games/components/game-card"
 import { useInfinitePublicGames } from "@/features/web/games/hooks/use-infinite-public-games"
+import { useGameSearchText } from "@/features/web/games/stores/game-search-store"
 
 type CategoryOption = { id: string; name: string; depth: number; isLeaf: boolean }
 type PressOption = { id: string; name: string }
@@ -20,8 +21,9 @@ const SYNC_CATEGORY_NAME = "同步练习"
 
 export function GamesPageContent({ categories, presses }: GamesPageContentProps) {
   const [filters, setFilters] = useState<Filters>({})
+  const q = useGameSearchText((s) => s.q)
   const { games, isLoading, isValidating, hasMore, sentinelRef } =
-    useInfinitePublicGames(filters)
+    useInfinitePublicGames({ ...filters, q })
 
   const syncRootId = useMemo(
     () => categories.find((c) => c.name === SYNC_CATEGORY_NAME && c.depth === 0)?.id,

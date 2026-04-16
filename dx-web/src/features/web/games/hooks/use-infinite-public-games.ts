@@ -9,6 +9,7 @@ type Filters = {
   categoryIds?: string[]
   pressId?: string
   mode?: string
+  q?: string
 }
 
 export function useInfinitePublicGames(filters: Filters = {}) {
@@ -22,6 +23,7 @@ export function useInfinitePublicGames(filters: Filters = {}) {
     if (filters.categoryIds?.length) params.set("categoryIds", filters.categoryIds.join(","))
     if (filters.pressId) params.set("pressId", filters.pressId)
     if (filters.mode) params.set("mode", filters.mode)
+    if (filters.q) params.set("q", filters.q)
     const qs = params.toString()
     return `/api/games${qs ? `?${qs}` : ""}`
   }
