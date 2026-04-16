@@ -306,12 +306,13 @@ func (c *CourseGameController) DeleteMetadata(ctx contractshttp.Context) contrac
 	}
 
 	gameID := ctx.Request().Route("id")
+	levelID := ctx.Request().Route("levelId")
 	metaID := ctx.Request().Route("metaId")
-	if gameID == "" || metaID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and meta id are required")
+	if gameID == "" || levelID == "" || metaID == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id, level id and meta id are required")
 	}
 
-	if err := services.DeleteMetadata(userID, gameID, metaID); err != nil {
+	if err := services.DeleteMetadata(userID, gameID, levelID, metaID); err != nil {
 		return mapCourseGameError(ctx, err)
 	}
 
@@ -422,12 +423,13 @@ func (c *CourseGameController) DeleteContentItem(ctx contractshttp.Context) cont
 	}
 
 	gameID := ctx.Request().Route("id")
+	levelID := ctx.Request().Route("levelId")
 	itemID := ctx.Request().Route("itemId")
-	if gameID == "" || itemID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id and item id are required")
+	if gameID == "" || levelID == "" || itemID == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id, level id and item id are required")
 	}
 
-	if err := services.DeleteContentItem(userID, gameID, itemID); err != nil {
+	if err := services.DeleteContentItem(userID, gameID, levelID, itemID); err != nil {
 		return mapCourseGameError(ctx, err)
 	}
 

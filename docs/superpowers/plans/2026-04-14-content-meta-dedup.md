@@ -11,6 +11,34 @@ Two pieces of context for anyone picking this plan up mid-flight:
 
 Everything else in this plan — Tasks 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 — is still pending and still valid as written. Execute in order.
 
+## Local environment note (required reading for every task)
+
+Non-obvious facts about the local dev environment that the plan's literal shell commands don't reflect:
+
+1. **The database name is `dxdb`, not `douxue`.** Everywhere below you see `douxue` in a `psql`/`pg_dump`/`pg_restore` command, change it to `dxdb`. (File system paths like `/Users/rainsen/Programs/Projects/douxue/...` are the path to the project folder and should NOT change.)
+2. **No host-side `psql`/`pg_dump`/`pg_restore`.** Postgres runs inside the docker-compose `postgres` service defined in `deploy/docker-compose.dev.yml`. Every DB command must go through `docker compose -f deploy/docker-compose.dev.yml exec -T postgres ...` from the `dx-source/` repo root. Example template for the row-count verification command:
+    ```
+    docker compose -f deploy/docker-compose.dev.yml exec -T postgres \
+      psql -U postgres -d dxdb -c "SELECT ..."
+    ```
+    For `pg_dump` you pipe stdout from `docker compose exec -T postgres pg_dump ...` to a host file. For `pg_restore --list`, copy the dump into the container first with `docker compose cp` and read it from there.
+3. **Go commands that touch the DB must run inside the `dx-api` container.** Host-side `.env` only contains `APP_KEY`; real DB credentials come from `deploy/env/.env.dev` which is injected into the `dx-api` container by docker-compose. That means:
+    - `go build ./...` and `go vet ./...` — OK from host (no DB connection).
+    - `go run . artisan migrate` — container only. Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go run . artisan migrate` from the repo root. Note the `artisan` subcommand word — Goravel's migrate lives under `artisan`.
+    - `go test ./tests/feature/ -v` — container only when the test suite connects to the DB (which the feature tests do). Run via `docker compose -f deploy/docker-compose.dev.yml exec -T dx-api go test -run "..." ./tests/feature/ -v`.
+    - `go test ./app/...` with unit tests that don't touch the DB — OK from host.
+    - **No `-race` inside the dx-api container.** The dev image does not ship a C toolchain, so `go test -race` fails with "go: -race requires cgo; enable cgo by setting CGO_ENABLED=1". Run feature tests without `-race`. Task 17 handles `-race` separately from the host for the packages that compile there.
+    The dx-api container is a Go dev image with the repo mounted at `/app`, so edits on the host take effect immediately inside the container; no rebuild needed between iterations.
+
+Baseline row counts captured by Task 1 before the Task 2 migration (used for post-migration verification — counts must match afterward):
+
+| Table | Live row count |
+|---|---|
+| content_metas | 1,220,803 |
+| content_items | 1,220,803 |
+| game_metas | 1,220,803 |
+| game_items | 1,220,803 |
+
 **Goal:** When a user adds metadata to a level, reuse existing identical `content_metas` (and any associated broken-down `content_items`) by creating new junction rows instead of inserting duplicate underlying rows. Update delete paths to be reference-counted so reuse is safe.
 
 **Architecture:** A single Goravel migration adds `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL` — the junction non-unique indexes were already merged into their create migration and are out of scope here. `SaveMetadataBatch` gains a per-batch dedup map keyed on `(source_type, source_data, normalized_translation)` scoped to the current user's own games. Reused metas with `is_break_done = true` get parallel `game_items` rows in the new level pointing at existing `content_items`. Three delete service functions are rewritten to soft-delete junctions for the current scope and only soft-delete underlying rows when no live junctions remain anywhere. Two REST routes change shape to carry `levelId` in the path.
@@ -25,7 +53,7 @@ Everything else in this plan — Tasks 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1
 
 | File | Action | Responsibility |
 |---|---|---|
-| `dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go` | Create | Add `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL` |
+| `dx-api/database/migrations/20260415000001_add_content_metas_dedup_lookup_index.go` | Create | Add `idx_content_metas_dedup_lookup` on `content_metas (source_data, source_type) WHERE deleted_at IS NULL` |
 | `dx-api/app/services/api/course_content_service.go` | Modify | `SaveMetadataBatch` rewrite (dedup loop), three delete functions rewritten with reference counting |
 | `dx-api/app/http/controllers/api/course_game_controller.go` | Modify | `DeleteMetadata` and `DeleteContentItem` plumb `levelId` from new path params |
 | `dx-api/routes/api.go` | Modify | Two DELETE routes get `/levels/{levelId}/` injected |
@@ -132,12 +160,18 @@ func (r *M20260415000001AddContentMetasDedupLookupIndex) Signature() string {
 func (r *M20260415000001AddContentMetasDedupLookupIndex) Up() error {
 	// Supports the per-user dedup SELECT in SaveMetadataBatch:
 	//   WHERE cm.deleted_at IS NULL
-	//     AND cm.source_type IN ?
 	//     AND cm.source_data IN ?
+	//     AND cm.source_type IN ?
 	//   AND <join to games via user_id>
+	//
+	// Column order is (source_data, source_type) because source_data has
+	// ~millions of distinct values on our dataset while source_type only has
+	// 2 ('sentence' | 'vocab'). Leading with the more-selective column
+	// narrows the B-tree scan aggressively before the second-column filter
+	// runs — ~2-5x faster than the reverse order on the 1.22M-row table.
 	_, err := facades.Orm().Query().Exec(
 		`CREATE INDEX IF NOT EXISTS idx_content_metas_dedup_lookup
-		   ON content_metas (source_type, source_data)
+		   ON content_metas (source_data, source_type)
 		   WHERE deleted_at IS NULL`,
 	)
 	return err
@@ -179,7 +213,7 @@ Expected: migration logs success. Should report the new migration applied.
 psql -h localhost -U postgres -d douxue -c "SELECT indexname, indexdef FROM pg_indexes WHERE indexname = 'idx_content_metas_dedup_lookup';"
 ```
 
-Expected: exactly one row showing the `CREATE INDEX ... ON public.content_metas USING btree (source_type, source_data) WHERE (deleted_at IS NULL)` definition.
+Expected: exactly one row showing the `CREATE INDEX ... ON public.content_metas USING btree (source_data, source_type) WHERE (deleted_at IS NULL)` definition.
 
 Also confirm the pre-existing junction indexes are untouched:
 

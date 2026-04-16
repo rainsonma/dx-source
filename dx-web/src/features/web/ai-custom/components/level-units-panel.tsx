@@ -492,14 +492,14 @@ export function LevelUnitsPanel({
       setContentItems([]);
     }
 
-    const result = await deleteMetaAction(gameId, pendingDeleteMetaId);
+    const result = await deleteMetaAction(gameId, levelId, pendingDeleteMetaId);
     if (result.error) {
       setMetas(prevMetas);
       toast.error(result.error);
     }
 
     setPendingDeleteMetaId(null);
-  }, [pendingDeleteMetaId, metas, selectedId, gameId]);
+  }, [pendingDeleteMetaId, metas, selectedId, gameId, levelId]);
 
   const handleRequestDeleteItem = useCallback((itemId: string) => {
     setPendingDeleteItemId(itemId);
@@ -530,7 +530,7 @@ export function LevelUnitsPanel({
       })
     );
 
-    const result = await deleteContentItemAction(gameId, pendingDeleteItemId);
+    const result = await deleteContentItemAction(gameId, levelId, pendingDeleteItemId);
     if (result.error) {
       setContentItems(prevItems);
       setMetas(prevMetas);
@@ -538,7 +538,7 @@ export function LevelUnitsPanel({
     }
 
     setPendingDeleteItemId(null);
-  }, [pendingDeleteItemId, contentItems, metas, selectedId, gameId]);
+  }, [pendingDeleteItemId, contentItems, metas, selectedId, gameId, levelId]);
 
   const handleConfirmDeleteAll = useCallback(async () => {
     setDeleteAllConfirmOpen(false);

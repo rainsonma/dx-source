@@ -48,6 +48,82 @@ type ContentMetaData struct {
 	Order       float64 `json:"order"`
 }
 
+// metaDedupKey is the identity tuple used for content_metas reuse.
+// Translation is normalized: a nil/empty translation collapses to "".
+type metaDedupKey struct {
+	SourceType  string
+	SourceData  string
+	Translation string
+}
+
+func makeMetaDedupKey(e MetadataEntry) metaDedupKey {
+	t := ""
+	if e.Translation != nil {
+		t = *e.Translation
+	}
+	return metaDedupKey{e.SourceType, e.SourceData, t}
+}
+
+// existingMetaRef is a content_metas row already owned by the user that
+// can be reused on save.
+type existingMetaRef struct {
+	ID          string `gorm:"column:id"`
+	SourceType  string `gorm:"column:source_type"`
+	SourceData  string `gorm:"column:source_data"`
+	Translation string `gorm:"column:translation"` // COALESCE'd to ""
+	IsBreakDone bool   `gorm:"column:is_break_done"`
+}
+
+// findExistingMetasForBatch loads, in a single query, all content_metas rows
+// owned by userID that match any (source_type, source_data) pair in the
+// batch. Returns a map keyed on metaDedupKey; first match wins per key.
+func findExistingMetasForBatch(userID string, entries []MetadataEntry) (map[metaDedupKey]existingMetaRef, error) {
+	if len(entries) == 0 {
+		return map[metaDedupKey]existingMetaRef{}, nil
+	}
+
+	typeSet := map[string]struct{}{}
+	dataSet := map[string]struct{}{}
+	for _, e := range entries {
+		typeSet[e.SourceType] = struct{}{}
+		dataSet[e.SourceData] = struct{}{}
+	}
+	sourceTypes := make([]string, 0, len(typeSet))
+	for t := range typeSet {
+		sourceTypes = append(sourceTypes, t)
+	}
+	sourceData := make([]string, 0, len(dataSet))
+	for d := range dataSet {
+		sourceData = append(sourceData, d)
+	}
+
+	var rows []existingMetaRef
+	if err := facades.Orm().Query().Raw(
+		`SELECT DISTINCT cm.id, cm.source_type, cm.source_data,
+		        COALESCE(cm.translation, '') AS translation, cm.is_break_done
+		   FROM content_metas cm
+		   JOIN game_metas gm ON gm.content_meta_id = cm.id AND gm.deleted_at IS NULL
+		   JOIN game_levels gl ON gl.id = gm.game_level_id AND gl.deleted_at IS NULL
+		   JOIN games g ON g.id = gl.game_id AND g.deleted_at IS NULL
+		  WHERE cm.deleted_at IS NULL
+		    AND g.user_id = ?
+		    AND cm.source_type IN ?
+		    AND cm.source_data IN ?`,
+		userID, sourceTypes, sourceData,
+	).Scan(&rows); err != nil {
+		return nil, fmt.Errorf("failed to query existing metas for dedup: %w", err)
+	}
+
+	out := make(map[metaDedupKey]existingMetaRef, len(rows))
+	for _, r := range rows {
+		key := metaDedupKey{r.SourceType, r.SourceData, r.Translation}
+		if _, exists := out[key]; !exists {
+			out[key] = r
+		}
+	}
+	return out, nil
+}
+
 // SaveMetadataBatch creates content metadata entries in batch with capacity validation.
 func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEntry, sourceFrom string) (int, error) {
 	if err := requireVip(userID); err != nil {
@@ -134,32 +210,77 @@ func SaveMetadataBatch(userID, gameID, gameLevelID string, entries []MetadataEnt
 		}
 	}
 
-	// Create metas in batch
-	for i, e := range entries {
-		id := uuid.Must(uuid.NewV7()).String()
-		order := maxOrder + float64((i+1)*1000)
-		meta := models.ContentMeta{
-			ID:          id,
-			SourceFrom:  sourceFrom,
-			SourceType:  e.SourceType,
-			SourceData:  e.SourceData,
-			Translation: e.Translation,
-			IsBreakDone: false,
-		}
-		if err := facades.Orm().Query().Create(&meta); err != nil {
-			return 0, fmt.Errorf("failed to create content meta: %w", err)
-		}
+	// Create metas in batch — dedup against the user's existing content.
+	existingByKey, err := findExistingMetasForBatch(userID, entries)
+	if err != nil {
+		return 0, err
+	}
 
-		gm := models.GameMeta{
-			ID:            uuid.Must(uuid.NewV7()).String(),
-			GameID:        level.GameID,
-			GameLevelID:   gameLevelID,
-			ContentMetaID: meta.ID,
-			Order:         order,
+	// State carried across the entry loop for items reuse.
+	itemsByMetaCache := map[string][]string{} // metaID -> ordered content_item IDs
+	var maxItemOrderInLevel *float64
+	itemsAddedSoFar := 0
+
+	if err := facades.Orm().Transaction(func(tx orm.Query) error {
+		for i, e := range entries {
+			key := makeMetaDedupKey(e)
+
+			var metaID string
+			var isBreakDone bool
+			if existing, ok := existingByKey[key]; ok {
+				metaID = existing.ID
+				isBreakDone = existing.IsBreakDone
+			} else {
+				metaID = uuid.Must(uuid.NewV7()).String()
+				meta := models.ContentMeta{
+					ID:          metaID,
+					SourceFrom:  sourceFrom,
+					SourceType:  e.SourceType,
+					SourceData:  e.SourceData,
+					Translation: e.Translation,
+					IsBreakDone: false,
+				}
+				if err := tx.Create(&meta); err != nil {
+					return fmt.Errorf("failed to create content meta: %w", err)
+				}
+				// Add to map so subsequent within-batch identical entries reuse this row.
+				existingByKey[key] = existingMetaRef{
+					ID:          metaID,
+					SourceType:  e.SourceType,
+					SourceData:  e.SourceData,
+					Translation: key.Translation,
+					IsBreakDone: false,
+				}
+				isBreakDone = false
+			}
+
+			// Always create a fresh game_metas junction row (allows in-level repetition).
+			gm := models.GameMeta{
+				ID:            uuid.Must(uuid.NewV7()).String(),
+				GameID:        level.GameID,
+				GameLevelID:   gameLevelID,
+				ContentMetaID: metaID,
+				Order:         maxOrder + float64((i+1)*1000),
+			}
+			if err := tx.Create(&gm); err != nil {
+				return fmt.Errorf("failed to create game meta: %w", err)
+			}
+
+			// If we are reusing a meta that has already been broken down,
+			// also create game_items rows in this level pointing at the
+			// existing content_items.
+			if isBreakDone {
+				if err := reuseItemsIntoLevel(
+					tx, metaID, gameLevelID, level.GameID,
+					itemsByMetaCache, &maxItemOrderInLevel, &itemsAddedSoFar,
+				); err != nil {
+					return err
+				}
+			}
 		}
-		if err := facades.Orm().Query().Create(&gm); err != nil {
-			return 0, fmt.Errorf("failed to create game meta: %w", err)
-		}
+		return nil
+	}); err != nil {
+		return 0, err
 	}
 
 	return len(entries), nil
@@ -465,8 +586,10 @@ func ReorderContentItems(userID, gameID, gameLevelID, itemID string, newOrder fl
 	return nil
 }
 
-// DeleteContentItem removes a single content item.
-func DeleteContentItem(userID, gameID, itemID string) error {
+// DeleteContentItem removes a content item from one level. With reuse enabled,
+// only the level's game_items junction row is soft-deleted; the underlying
+// content_item is soft-deleted only when no other junction references it.
+func DeleteContentItem(userID, gameID, gameLevelID, itemID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -483,8 +606,8 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return err
 	}
 
-	// Load the item and its level (via game_items junction) up front so we know
-	// the meta and level for the is_break_done reset below.
+	// Load the underlying content_item up front so we know its content_meta_id
+	// for the is_break_done reset below.
 	var item models.ContentItem
 	if err := facades.Orm().Query().Where("id", itemID).First(&item); err != nil {
 		return fmt.Errorf("failed to load content item: %w", err)
@@ -493,49 +616,51 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 		return ErrContentItemNotFound
 	}
 
-	var gi models.GameItem
-	if err := facades.Orm().Query().Where("content_item_id", itemID).First(&gi); err != nil {
-		return fmt.Errorf("failed to load game_item: %w", err)
-	}
-	if gi.ID == "" {
-		return ErrContentItemNotFound
-	}
-	itemLevelID := gi.GameLevelID
-
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Soft-delete the junction row first (pre-reuse 1:1 invariant)
+		// 1. Soft-delete this level's game_items rows for this item (all repetitions).
 		if _, err := tx.Exec(
-			"UPDATE game_items SET deleted_at = NOW() WHERE content_item_id = ? AND deleted_at IS NULL",
-			itemID,
+			`UPDATE game_items SET deleted_at = NOW()
+			  WHERE content_item_id = ?
+			    AND game_level_id = ?
+			    AND deleted_at IS NULL`,
+			itemID, gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_item: %w", err)
 		}
 
-		// Soft-delete content item
-		if _, err := tx.Exec(
-			"UPDATE content_items SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
-			itemID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content item: %w", err)
+		// 2. Count live game_items across all levels for this content_item.
+		n, err := tx.Table("game_items").
+			Where("content_item_id", itemID).
+			Where("deleted_at IS NULL").
+			Count()
+		if err != nil {
+			return fmt.Errorf("failed to count game_items: %w", err)
+		}
+		if n == 0 {
+			if _, err := tx.Exec(
+				`UPDATE content_items SET deleted_at = NOW()
+				  WHERE id = ? AND deleted_at IS NULL`,
+				itemID,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete content_item: %w", err)
+			}
 		}
 
-		// Reset is_break_done when the meta has no remaining active game_items
-		// in this level. Counts via the junction so that level-scoped reuse is
-		// correct once cross-level reuse lands.
+		// 3. Reset is_break_done if this LEVEL has no remaining game_items
+		//    for the meta. (Existing per-level logic, preserved.)
 		if item.ContentMetaID != nil {
 			if _, err := tx.Exec(
 				`UPDATE content_metas SET is_break_done = false
-				 WHERE id = ?
-				   AND deleted_at IS NULL
-				   AND NOT EXISTS (
-				     SELECT 1 FROM game_items gi
-				     JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
-				     WHERE ci.content_meta_id = content_metas.id
-				       AND gi.game_level_id = ?
-				       AND gi.deleted_at IS NULL
-				   )`,
-				*item.ContentMetaID,
-				itemLevelID,
+				  WHERE id = ?
+				    AND deleted_at IS NULL
+				    AND NOT EXISTS (
+				      SELECT 1 FROM game_items gi
+				      JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
+				      WHERE ci.content_meta_id = content_metas.id
+				        AND gi.game_level_id = ?
+				        AND gi.deleted_at IS NULL
+				    )`,
+				*item.ContentMetaID, gameLevelID,
 			); err != nil {
 				return fmt.Errorf("failed to reset meta break status: %w", err)
 			}
@@ -544,7 +669,10 @@ func DeleteContentItem(userID, gameID, itemID string) error {
 	})
 }
 
-// DeleteAllLevelContent removes all content items and metas from a level.
+// DeleteAllLevelContent removes all content from a level. With reuse enabled,
+// the level's junction rows are soft-deleted unconditionally; underlying
+// content_metas / content_items are soft-deleted only when no other junction
+// references them.
 func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
@@ -567,50 +695,97 @@ func DeleteAllLevelContent(userID, gameID, gameLevelID string) error {
 		return ErrLevelNotFound
 	}
 
-	// Delete content in transaction. Pre-reuse, game_items/game_metas are 1:1
-	// with content_items/content_metas, so we drive the content cascade off the
-	// junction rows that point at this level.
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		if _, err := tx.Exec(
-			`UPDATE content_items SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (
-			     SELECT content_item_id FROM game_items
-			     WHERE game_level_id = ? AND deleted_at IS NULL
-			   )`,
-			gameLevelID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content items: %w", err)
+		// 1. Collect distinct content_meta_ids and content_item_ids referenced
+		//    by this level BEFORE we soft-delete the junctions.
+		var metaRows []struct {
+			ID string `gorm:"column:content_meta_id"`
 		}
-		if _, err := tx.Exec(
-			`UPDATE content_metas SET deleted_at = NOW()
-			 WHERE deleted_at IS NULL
-			   AND id IN (
-			     SELECT content_meta_id FROM game_metas
-			     WHERE game_level_id = ? AND deleted_at IS NULL
-			   )`,
+		if err := tx.Raw(
+			`SELECT DISTINCT content_meta_id FROM game_metas
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content metas: %w", err)
+		).Scan(&metaRows); err != nil {
+			return fmt.Errorf("failed to collect metas: %w", err)
 		}
+
+		var itemRows []struct {
+			ID string `gorm:"column:content_item_id"`
+		}
+		if err := tx.Raw(
+			`SELECT DISTINCT content_item_id FROM game_items
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
+			gameLevelID,
+		).Scan(&itemRows); err != nil {
+			return fmt.Errorf("failed to collect items: %w", err)
+		}
+
+		// 2. Soft-delete junctions for this level.
 		if _, err := tx.Exec(
-			"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			`UPDATE game_items SET deleted_at = NOW()
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_items: %w", err)
 		}
 		if _, err := tx.Exec(
-			"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id = ? AND deleted_at IS NULL",
+			`UPDATE game_metas SET deleted_at = NOW()
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
 			gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
+		}
+
+		// 3. For each collected content_item_id, count remaining live game_items;
+		//    if 0, soft-delete the content_item.
+		for _, r := range itemRows {
+			n, err := tx.Table("game_items").
+				Where("content_item_id", r.ID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_items: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_items SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_item: %w", err)
+				}
+			}
+		}
+
+		// 4. For each collected content_meta_id, count remaining live game_metas;
+		//    if 0, soft-delete the content_meta.
+		for _, r := range metaRows {
+			n, err := tx.Table("game_metas").
+				Where("content_meta_id", r.ID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_metas: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_metas SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_meta: %w", err)
+				}
+			}
 		}
 		return nil
 	})
 }
 
-// DeleteMetadata removes a single metadata entry and its associated content items.
-func DeleteMetadata(userID, gameID, metaID string) error {
+// DeleteMetadata removes a metadata entry from one level. With reuse enabled,
+// only the level's junction row(s) are soft-deleted; the underlying
+// content_metas / content_items rows are soft-deleted only when no other
+// junction references them.
+func DeleteMetadata(userID, gameID, gameLevelID, metaID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -628,53 +803,103 @@ func DeleteMetadata(userID, gameID, metaID string) error {
 	}
 
 	return facades.Orm().Transaction(func(tx orm.Query) error {
-		// Soft-delete junction rows first (pre-reuse 1:1 invariant)
+		// 1. Collect content_item_ids referenced by this level for this meta.
+		var itemRows []struct {
+			ContentItemID string `gorm:"column:content_item_id"`
+		}
+		if err := tx.Raw(
+			`SELECT gi.content_item_id
+			   FROM game_items gi
+			   JOIN content_items ci ON ci.id = gi.content_item_id AND ci.deleted_at IS NULL
+			  WHERE ci.content_meta_id = ?
+			    AND gi.game_level_id = ?
+			    AND gi.deleted_at IS NULL`,
+			metaID, gameLevelID,
+		).Scan(&itemRows); err != nil {
+			return fmt.Errorf("failed to collect items for delete: %w", err)
+		}
+
+		// 2. Soft-delete the level-scoped game_items rows (all repetitions).
 		if _, err := tx.Exec(
 			`UPDATE game_items SET deleted_at = NOW()
-			 WHERE content_item_id IN (SELECT id FROM content_items WHERE content_meta_id = ?)
-			   AND deleted_at IS NULL`,
-			metaID,
+			  WHERE game_level_id = ?
+			    AND content_item_id IN (
+			      SELECT id FROM content_items WHERE content_meta_id = ?
+			    )
+			    AND deleted_at IS NULL`,
+			gameLevelID, metaID,
 		); err != nil {
-			return fmt.Errorf("failed to soft-delete game_items for meta: %w", err)
+			return fmt.Errorf("failed to soft-delete game_items: %w", err)
 		}
+
+		// 3. Soft-delete the level-scoped game_metas rows (all repetitions).
 		if _, err := tx.Exec(
-			"UPDATE game_metas SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",
-			metaID,
+			`UPDATE game_metas SET deleted_at = NOW()
+			  WHERE content_meta_id = ?
+			    AND game_level_id = ?
+			    AND deleted_at IS NULL`,
+			metaID, gameLevelID,
 		); err != nil {
 			return fmt.Errorf("failed to soft-delete game_metas: %w", err)
 		}
 
-		// Soft-delete content items belonging to this meta
-		if _, err := tx.Exec(
-			"UPDATE content_items SET deleted_at = NOW() WHERE content_meta_id = ? AND deleted_at IS NULL",
-			metaID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content items for meta: %w", err)
+		// 4. For each orphaned content_item_id, count remaining live junctions
+		//    across ALL levels; if 0, soft-delete the content_item.
+		seen := map[string]struct{}{}
+		for _, r := range itemRows {
+			if _, ok := seen[r.ContentItemID]; ok {
+				continue
+			}
+			seen[r.ContentItemID] = struct{}{}
+			n, err := tx.Table("game_items").
+				Where("content_item_id", r.ContentItemID).
+				Where("deleted_at IS NULL").
+				Count()
+			if err != nil {
+				return fmt.Errorf("failed to count game_items: %w", err)
+			}
+			if n == 0 {
+				if _, err := tx.Exec(
+					`UPDATE content_items SET deleted_at = NOW()
+					  WHERE id = ? AND deleted_at IS NULL`,
+					r.ContentItemID,
+				); err != nil {
+					return fmt.Errorf("failed to soft-delete content_item: %w", err)
+				}
+			}
 		}
 
-		// Soft-delete the content meta
-		if _, err := tx.Exec(
-			"UPDATE content_metas SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL",
-			metaID,
-		); err != nil {
-			return fmt.Errorf("failed to delete content meta: %w", err)
+		// 5. Count remaining live game_metas for this content_meta across ALL levels.
+		n, err := tx.Table("game_metas").
+			Where("content_meta_id", metaID).
+			Where("deleted_at IS NULL").
+			Count()
+		if err != nil {
+			return fmt.Errorf("failed to count game_metas: %w", err)
 		}
-
+		if n == 0 {
+			if _, err := tx.Exec(
+				`UPDATE content_metas SET deleted_at = NOW()
+				  WHERE id = ? AND deleted_at IS NULL`,
+				metaID,
+			); err != nil {
+				return fmt.Errorf("failed to soft-delete content_meta: %w", err)
+			}
+		}
 		return nil
 	})
 }
 
-// verifyMetaBelongsToGame checks that a content meta belongs to a game via its level.
+// verifyMetaBelongsToGame checks that a content meta belongs to a game.
 func verifyMetaBelongsToGame(metaID, gameID string) error {
-	count, err := facades.Orm().Query().Model(&models.GameMeta{}).
-		Join("JOIN game_levels gl ON gl.id = game_metas.game_level_id AND gl.deleted_at IS NULL").
-		Where("game_metas.content_meta_id", metaID).
-		Where("gl.game_id", gameID).
+	n, err := facades.Orm().Query().Model(&models.GameMeta{}).
+		Where("content_meta_id", metaID).
+		Where("game_id", gameID).
 		Count()
 	if err != nil {
 		return fmt.Errorf("failed to verify meta: %w", err)
 	}
-	if count == 0 {
+	if n == 0 {
 		return ErrMetaNotFound
 	}
 	return nil
@@ -756,4 +981,72 @@ func calculateInsertionOrder(gameLevelID, referenceItemID, direction string) (fl
 	}
 	nextOrder := items[refIdx+1].Order
 	return (refItem.Order + nextOrder) / 2, nil
+}
+
+// reuseItemsIntoLevel creates game_items rows in gameLevelID for every active
+// content_item belonging to metaID. Item IDs are loaded once per metaID via
+// itemsByMetaCache. The level's pre-save max game_items.order is loaded once
+// via maxItemOrderInLevel. itemsAddedSoFar is incremented for every new
+// game_items row to keep ordering monotonically increasing across multiple
+// reused metas in the same batch.
+func reuseItemsIntoLevel(
+	tx orm.Query,
+	metaID, gameLevelID, gameID string,
+	itemsByMetaCache map[string][]string,
+	maxItemOrderInLevel **float64,
+	itemsAddedSoFar *int,
+) error {
+	itemIDs, ok := itemsByMetaCache[metaID]
+	if !ok {
+		var rows []struct {
+			ID string `gorm:"column:id"`
+		}
+		if err := tx.Raw(
+			`SELECT id FROM content_items
+			  WHERE content_meta_id = ? AND deleted_at IS NULL
+			  ORDER BY id`,
+			metaID,
+		).Scan(&rows); err != nil {
+			return fmt.Errorf("failed to load content_items for reuse: %w", err)
+		}
+		itemIDs = make([]string, 0, len(rows))
+		for _, r := range rows {
+			itemIDs = append(itemIDs, r.ID)
+		}
+		itemsByMetaCache[metaID] = itemIDs
+	}
+	if len(itemIDs) == 0 {
+		return nil
+	}
+
+	if *maxItemOrderInLevel == nil {
+		var row struct {
+			MaxOrder float64 `gorm:"column:max_order"`
+		}
+		if err := tx.Raw(
+			`SELECT COALESCE(MAX("order"), 0) AS max_order
+			   FROM game_items
+			  WHERE game_level_id = ? AND deleted_at IS NULL`,
+			gameLevelID,
+		).Scan(&row); err != nil {
+			return fmt.Errorf("failed to load max game_items order: %w", err)
+		}
+		v := row.MaxOrder
+		*maxItemOrderInLevel = &v
+	}
+
+	for j, contentItemID := range itemIDs {
+		gi := models.GameItem{
+			ID:            uuid.Must(uuid.NewV7()).String(),
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
+			ContentItemID: contentItemID,
+			Order:         **maxItemOrderInLevel + float64((*itemsAddedSoFar+j+1)*1000),
+		}
+		if err := tx.Create(&gi); err != nil {
+			return fmt.Errorf("failed to create game item: %w", err)
+		}
+	}
+	*itemsAddedSoFar += len(itemIDs)
+	return nil
 }

@@ -16,7 +16,7 @@ The junction-index part of this work was split off and landed separately: `game_
 
 Still pending from this spec:
 
-- **Schema:** create `idx_content_metas_dedup_lookup` on `content_metas (source_type, source_data) WHERE deleted_at IS NULL`.
+- **Schema:** create `idx_content_metas_dedup_lookup` on `content_metas (source_data, source_type) WHERE deleted_at IS NULL`. Column order is `source_data` first because it is highly selective (~millions of distinct values) and `source_type` has only two (`'sentence'`, `'vocab'`); leading with the more selective column narrows the B-tree scan aggressively before the second-column filter runs.
 - **Save flow:** rewrite the create-loop in `SaveMetadataBatch` (including transactional wrapping, dedup lookup, items reuse on `is_break_done=true`).
 - **Delete flow:** reference-counted `DeleteMetadata`, `DeleteContentItem`, `DeleteAllLevelContent` with `gameLevelID` threaded through signatures and routes.
 - **Frontend:** `deleteMetaAction` / `deleteContentItemAction` and their call sites in `level-units-panel.tsx` pass `levelId` through the new path-based routes.
@@ -83,9 +83,12 @@ CREATE INDEX idx_game_items_level_item
 DROP INDEX IF EXISTS idx_game_metas_level_meta_unique;
 DROP INDEX IF EXISTS idx_game_items_level_item_unique;
 
--- 3. Add the dedup-lookup index on content_metas.
+-- 3. Add the dedup-lookup index on content_metas. Leading column is
+--    source_data because it has ~millions of distinct values on our data;
+--    source_type only has 2 ('sentence' | 'vocab'), so leading with the
+--    more-selective column minimizes the B-tree scan.
 CREATE INDEX IF NOT EXISTS idx_content_metas_dedup_lookup
-  ON content_metas (source_type, source_data)
+  ON content_metas (source_data, source_type)
   WHERE deleted_at IS NULL;
 ```
 
