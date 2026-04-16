@@ -67,4 +67,5 @@ var (
 	ErrCannotChallengeSelf  = errors.New("不能挑战自己")
 	ErrInvitationNotPending = errors.New("邀请状态已变更")
 	ErrGameNameTaken        = errors.New("游戏名称已存在")
+	ErrBatchSizeInvalid     = errors.New("词汇数量不是批次大小的倍数")
 )

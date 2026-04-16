@@ -27,3 +27,16 @@ func VocabGenerateCount(mode string) int {
 func IsVocabMode(mode string) bool {
 	return mode == GameModeVocabBattle || mode == GameModeVocabMatch || mode == GameModeVocabElimination
 }
+
+// VocabBatchSize returns the required batch size for the given vocab mode.
+// Returns 0 for modes with no batch constraint (vocab-battle).
+func VocabBatchSize(mode string) int {
+	switch mode {
+	case GameModeVocabMatch:
+		return VocabMatchCount
+	case GameModeVocabElimination:
+		return VocabEliminationCount
+	default:
+		return 0
+	}
+}
