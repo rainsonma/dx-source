@@ -41,6 +41,7 @@ export async function createCourseGameAction(
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,
       coverId: (formData.get("coverId") as string) || undefined,
+      isPrivate: formData.get("isPrivate") === "true",
     };
 
     const res = await apiClient.post<{ id: string }>("/api/course-games", body);
@@ -170,6 +171,7 @@ export async function updateCourseGameAction(
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,
       coverId: (formData.get("coverId") as string) || undefined,
+      isPrivate: formData.get("isPrivate") === "true",
     };
 
     const res = await apiClient.put<null>(`/api/course-games/${gameId}`, body);

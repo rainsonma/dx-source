@@ -12,6 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/features/com/images/components/image-uploader";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { GAME_MODE_OPTIONS } from "@/consts/game-mode";
 import { IMAGE_ROLES } from "@/consts/image-role";
 import { useCreateCourseGame } from "@/features/web/ai-custom/hooks/use-create-course-game";
@@ -32,6 +34,7 @@ export function CreateCourseForm({
   onClose,
 }: CreateCourseFormProps) {
   const [pressId, setPressId] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
   const { state, formAction, isPending, coverId, setCoverId } =
     useCreateCourseGame(onClose);
 
@@ -185,6 +188,22 @@ export function CreateCourseForm({
           />
           <input type="hidden" name="coverId" value={coverId ?? ""} />
         </div>
+
+        {/* Private switch */}
+        <div className="flex items-center justify-between rounded-[10px] border border-border px-4 py-3">
+          <Label htmlFor="isPrivate" className="text-sm font-medium text-foreground">
+            私有
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              (仅自己可见)
+            </span>
+          </Label>
+          <Switch
+            id="isPrivate"
+            checked={isPrivate}
+            onCheckedChange={setIsPrivate}
+          />
+        </div>
+        <input type="hidden" name="isPrivate" value={isPrivate ? "true" : "false"} />
       </div>
 
       {/* Footer buttons */}

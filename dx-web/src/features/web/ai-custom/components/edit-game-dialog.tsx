@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Pencil, X, Loader2, Check } from "lucide-react";
 import {
   Dialog,
@@ -17,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/features/com/images/components/image-uploader";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { GAME_MODE_OPTIONS } from "@/consts/game-mode";
 import { IMAGE_ROLES } from "@/consts/image-role";
 import { useUpdateCourseGame } from "@/features/web/ai-custom/hooks/use-update-course-game";
@@ -41,6 +44,7 @@ type EditGameDialogProps = {
     gamePressId: string | null;
     coverId: string | null;
     coverUrl: string | null;
+    isPrivate: boolean;
   };
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -56,6 +60,7 @@ export function EditGameDialog({
 }: EditGameDialogProps) {
   const { state, formAction, isPending, coverId, setCoverId } =
     useUpdateCourseGame(gameId, () => onOpenChange(false));
+  const [isPrivate, setIsPrivate] = useState(defaultValues.isPrivate);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -246,6 +251,22 @@ export function EditGameDialog({
                 value={coverId ?? defaultValues.coverId ?? ""}
               />
             </div>
+
+            {/* Private switch */}
+            <div className="flex items-center justify-between rounded-[10px] border border-border px-4 py-3">
+              <Label htmlFor="editIsPrivate" className="text-sm font-medium text-foreground">
+                私有
+                <span className="ml-1 text-xs font-normal text-muted-foreground">
+                  (仅自己可见)
+                </span>
+              </Label>
+              <Switch
+                id="editIsPrivate"
+                checked={isPrivate}
+                onCheckedChange={setIsPrivate}
+              />
+            </div>
+            <input type="hidden" name="isPrivate" value={isPrivate ? "true" : "false"} />
           </div>
 
           {/* Footer buttons */}

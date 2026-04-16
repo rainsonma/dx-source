@@ -49,6 +49,7 @@ type GameHeroCardProps = {
     gameCategoryId: string | null;
     gamePressId: string | null;
     coverId: string | null;
+    isPrivate: boolean;
     _count: { levels: number; stats: number };
   };
   categories: CategoryOption[];
@@ -227,6 +228,7 @@ export function GameHeroCard({
           gamePressId: game.gamePressId,
           coverId: game.coverId,
           coverUrl: game.cover?.url ?? null,
+          isPrivate: game.isPrivate,
         }}
         open={editOpen}
         onOpenChange={setEditOpen}
