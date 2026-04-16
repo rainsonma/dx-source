@@ -33,6 +33,7 @@ func SearchGamesForGroup(userID, query string, limit int) ([]GroupGameSearchItem
 	q := facades.Orm().Query().
 		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
+		Where("is_private", false).
 		Order("created_at DESC").
 		Limit(limit)
 
@@ -102,6 +103,9 @@ func SetGroupGame(userID, groupID, gameID, gameMode string, startGameLevelID *st
 	}
 	if game.Status != consts.GameStatusPublished {
 		return ErrGameNotPublished
+	}
+	if game.IsPrivate {
+		return ErrGameNotFound
 	}
 
 	if startGameLevelID != nil && *startGameLevelID != "" {
