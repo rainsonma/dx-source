@@ -39,7 +39,7 @@ func (r *M20260322000036CreateContentMetasTable) Up() error {
 			// 2 ('sentence' | 'vocab'). Leading with the more-selective column
 			// narrows the B-tree scan aggressively before the second-column filter
 			// runs — ~2-5x faster than the reverse order on the 1.22M-row table.
-			table.Index("source_data", "source_type").Name("idx_content_metas_dedup_lookup")
+			table.Index("source_data", "source_type", "deleted_at").Name("idx_content_metas_dedup_lookup")
 		})
 	}
 	return nil
