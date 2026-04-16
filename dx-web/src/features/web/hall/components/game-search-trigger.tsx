@@ -38,17 +38,24 @@ export function GameSearchTrigger({
             <span className="flex-1 truncate text-left text-[13px] text-foreground">
               {q}
             </span>
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               aria-label="清除搜索"
               onClick={(e) => {
                 e.stopPropagation();
                 clearQ();
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                  clearQ();
+                }
+              }}
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" />
-            </button>
+            </div>
           </>
         ) : (
           <>
