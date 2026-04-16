@@ -70,7 +70,8 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 
 	query := facades.Orm().Query().
 		Where("status", consts.GameStatusPublished).
-		Where("is_active", true)
+		Where("is_active", true).
+		Where("is_private", false)
 
 	if len(categoryIDs) > 0 {
 		query = query.Where("game_category_id IN ?", categoryIDs)
@@ -222,6 +223,7 @@ func SearchGames(queryStr string, limit int) ([]GameSearchResultData, error) {
 	if err := facades.Orm().Query().
 		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
+		Where("is_private", false).
 		Where("name ILIKE ?", "%"+queryStr+"%").
 		Order("created_at DESC").
 		Limit(limit).
@@ -305,6 +307,7 @@ func GetPlayedGames(userID string) ([]PlayedGameData, error) {
 		Where("id IN ?", gameIDs).
 		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
+		Where("is_private", false).
 		Get(&games); err != nil {
 		return nil, fmt.Errorf("failed to load games: %w", err)
 	}
@@ -359,6 +362,7 @@ func GetGameDetail(gameID string) (*GameDetailData, error) {
 		Where("id", gameID).
 		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
+		Where("is_private", false).
 		First(&game); err != nil {
 		return nil, fmt.Errorf("failed to find game: %w", err)
 	}
