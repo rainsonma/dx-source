@@ -74,7 +74,7 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 		pressID = &req.GamePressID
 	}
 
-	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID)
+	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID, req.IsPrivate)
 	if err != nil {
 		return mapCourseGameError(ctx, err)
 	}
@@ -108,7 +108,7 @@ func (c *CourseGameController) Update(ctx contractshttp.Context) contractshttp.R
 		pressID = &req.GamePressID
 	}
 
-	err = services.UpdateGame(userID, gameID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID)
+	err = services.UpdateGame(userID, gameID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID, req.IsPrivate)
 	if err != nil {
 		return mapCourseGameError(ctx, err)
 	}

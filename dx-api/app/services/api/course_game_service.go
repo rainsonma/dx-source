@@ -46,6 +46,7 @@ type CourseGameDetailData struct {
 	Description    *string               `json:"description"`
 	Mode           string                `json:"mode"`
 	Status         string                `json:"status"`
+	IsPrivate      bool                  `json:"isPrivate"`
 	GameCategoryID *string               `json:"gameCategoryId"`
 	GamePressID    *string               `json:"gamePressId"`
 	CoverID        *string               `json:"coverId"`
@@ -165,7 +166,7 @@ func getCourseGameOwned(userID, gameID string) (*models.Game, error) {
 }
 
 // CreateGame creates a new course game in draft status.
-func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverID *string) (string, error) {
+func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverID *string, isPrivate bool) (string, error) {
 	if err := requireVip(userID); err != nil {
 		return "", err
 	}
@@ -183,6 +184,7 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 		Order:          1000,
 		IsActive:       true,
 		Status:         consts.GameStatusDraft,
+		IsPrivate:      isPrivate,
 	}
 
 	if err := facades.Orm().Query().Create(&game); err != nil {
@@ -196,7 +198,7 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 }
 
 // UpdateGame updates a course game's properties. Rejects edits to published games.
-func UpdateGame(userID, gameID, name string, description *string, mode string, categoryID, pressID, coverID *string) error {
+func UpdateGame(userID, gameID, name string, description *string, mode string, categoryID, pressID, coverID *string, isPrivate bool) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -216,6 +218,7 @@ func UpdateGame(userID, gameID, name string, description *string, mode string, c
 		"game_category_id": categoryID,
 		"game_press_id":    pressID,
 		"cover_id":         coverID,
+		"is_private":       isPrivate,
 	}); err != nil {
 		return fmt.Errorf("failed to update game: %w", err)
 	}
@@ -651,6 +654,7 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		Description:    game.Description,
 		Mode:           game.Mode,
 		Status:         game.Status,
+		IsPrivate:      game.IsPrivate,
 		GameCategoryID: game.GameCategoryID,
 		GamePressID:    game.GamePressID,
 		CoverID:        game.CoverID,
