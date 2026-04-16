@@ -34,6 +34,7 @@ import {
   CircleCheck,
   CircleDashed,
   ShieldAlert,
+  TriangleAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -77,7 +78,7 @@ type ContentGroup = {
   items: LevelContentItem[];
 };
 import { MAX_SENTENCES, MAX_VOCAB } from "@/features/web/ai-custom/helpers/format-metadata";
-import { MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
+import { MAX_METAS_PER_LEVEL, vocabBatchSize } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
 import { SOURCE_TYPES } from "@/consts/source-type";
 import { ProcessingOverlay } from "@/features/web/ai-custom/components/processing-overlay";
 import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
@@ -574,6 +575,8 @@ export function LevelUnitsPanel({
     ? metas.length >= MAX_METAS_PER_LEVEL
     : metaSentenceCount / MAX_SENTENCES + metaVocabCount / MAX_VOCAB >= 1;
   const totalItemCount = metas.reduce((sum, m) => sum + m.itemCount, 0);
+  const levelBatchSize = vocabBatchSize(gameMode);
+  const isBatchInvalid = isVocabMode && levelBatchSize > 0 && metas.length > 0 && metas.length % levelBatchSize !== 0;
 
   return (
     <>
@@ -668,6 +671,12 @@ export function LevelUnitsPanel({
                 </>
               )}
               <span className="ml-auto flex items-center gap-1 lg:ml-0 xl:ml-auto"><Puzzle className="h-3 w-3" />练习单元总数：<span className="font-semibold text-teal-800">{totalItemCount}</span></span>
+              {isBatchInvalid && (
+                <span className="flex items-center gap-1 text-amber-600">
+                  <TriangleAlert className="h-3 w-3" />
+                  数量需为 {levelBatchSize} 的倍数
+                </span>
+              )}
             </div>
           </div>
 
