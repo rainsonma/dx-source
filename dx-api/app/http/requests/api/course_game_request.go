@@ -15,6 +15,7 @@ type CreateGameRequest struct {
 	GameCategoryID string  `form:"gameCategoryId" json:"gameCategoryId"`
 	GamePressID    string  `form:"gamePressId" json:"gamePressId"`
 	CoverID        *string `form:"coverId" json:"coverId"`
+	IsPrivate      bool    `form:"isPrivate" json:"isPrivate"`
 }
 
 func (r *CreateGameRequest) Authorize(ctx http.Context) error { return nil }
@@ -58,6 +59,7 @@ type UpdateGameRequest struct {
 	GameCategoryID string  `form:"gameCategoryId" json:"gameCategoryId"`
 	GamePressID    string  `form:"gamePressId" json:"gamePressId"`
 	CoverID        *string `form:"coverId" json:"coverId"`
+	IsPrivate      bool    `form:"isPrivate" json:"isPrivate"`
 }
 
 func (r *UpdateGameRequest) Authorize(ctx http.Context) error { return nil }

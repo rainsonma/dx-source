@@ -31,6 +31,7 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.TimestampsTz()
 			table.SoftDeletesTz()
 			table.Boolean("is_selective").Default(false)
+			table.Boolean("is_private").Default(false)
 			table.Unique("name")
 			table.Index("user_id")
 			table.Index("mode")
@@ -39,6 +40,7 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Index("order")
 			table.Index("is_active")
 			table.Index("cover_id")
+			table.Index("is_private")
 		})
 	}
 	return nil

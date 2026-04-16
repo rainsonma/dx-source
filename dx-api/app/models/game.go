@@ -18,6 +18,7 @@ type Game struct {
 	IsActive       bool    `gorm:"column:is_active" json:"is_active"`
 	Status         string  `gorm:"column:status" json:"status"`
 	IsSelective    bool    `gorm:"column:is_selective" json:"is_selective"`
+	IsPrivate      bool    `gorm:"column:is_private" json:"is_private"`
 }
 
 func (g *Game) TableName() string {
