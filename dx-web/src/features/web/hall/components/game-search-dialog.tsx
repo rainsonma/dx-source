@@ -43,7 +43,7 @@ export function GameSearchDialog() {
 
   const trimmedQuery = query.trim();
 
-  /** Reset selection to top search item whenever query changes */
+  /* eslint-disable react-hooks/set-state-in-effect -- reset cmdk selection when query changes */
   useEffect(() => {
     if (trimmedQuery) {
       setSelectedValue(SEARCH_ITEM_VALUE);
@@ -51,6 +51,7 @@ export function GameSearchDialog() {
       setSelectedValue("");
     }
   }, [trimmedQuery]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   /** Navigate to games list with text filter */
   function handleSearchSelect() {
