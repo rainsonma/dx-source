@@ -12,16 +12,17 @@ type VocabManualTabProps = {
   onChange: (value: string) => void;
   error?: string;
   maxPairs: number;
+  batchSize: number;
 };
 
-export function VocabManualTab({ value, onChange, error, maxPairs }: VocabManualTabProps) {
+export function VocabManualTab({ value, onChange, error, maxPairs, batchSize }: VocabManualTabProps) {
   return (
     <div className="flex flex-col gap-3 px-6 py-3">
       <div className="flex flex-col gap-2">
         <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3.5 py-3 text-xs leading-relaxed">
           <span className="shrink-0 font-semibold text-amber-600">输入说明：</span>
           <span className="text-amber-500">
-            请输入英文-中文词汇对，英文一行、中文释义下一行，依次交替。每次最多添加 {maxPairs} 对词汇。
+            请输入英文-中文词汇对，英文一行、中文释义下一行，依次交替。每次最多添加 {maxPairs} 对词汇{batchSize > 0 ? `，数量须为 ${batchSize} 的倍数` : ""}。
           </span>
         </div>
         <div className="flex items-start gap-2 rounded-xl bg-muted px-3.5 py-3 text-xs leading-relaxed">

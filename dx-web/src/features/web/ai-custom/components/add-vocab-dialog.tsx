@@ -25,7 +25,7 @@ import type { GameMode } from "@/consts/game-mode";
 import { SOURCE_FROMS } from "@/consts/source-from";
 import { VocabManualTab } from "@/features/web/ai-custom/components/vocab-manual-tab";
 import { VocabAiTab, getKeywordsWarning } from "@/features/web/ai-custom/components/vocab-ai-tab";
-import { parseVocabText, maxPairsForMode, MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
+import { parseVocabText, maxPairsForMode, vocabBatchSize, MAX_METAS_PER_LEVEL } from "@/features/web/ai-custom/helpers/vocab-format-metadata";
 import { saveMetadataAction } from "@/features/web/ai-custom/actions/course-game.action";
 import { formatVocab } from "@/features/web/ai-custom/helpers/vocab-format-api";
 import { generateVocab } from "@/features/web/ai-custom/helpers/vocab-generate-api";
@@ -67,6 +67,7 @@ export function AddVocabDialog({
   const [beanAvailable, setBeanAvailable] = useState(0);
 
   const maxPairs = maxPairsForMode(gameMode);
+  const batchSize = vocabBatchSize(gameMode);
 
   function handleBeanError(result: { code?: string; required?: number; available?: number }) {
     if (result.code === "INSUFFICIENT_BEANS") {
@@ -99,7 +100,7 @@ export function AddVocabDialog({
   }
 
   function handleSave() {
-    const result = parseVocabText(manualText, maxPairs);
+    const result = parseVocabText(manualText, maxPairs, batchSize);
 
     if (!result.ok) {
       setErrorMessage(result.error);
@@ -295,6 +296,7 @@ export function AddVocabDialog({
               onChange={(v) => { setManualText(v); setErrorMessage(""); setIsFromAi(false); }}
               error={errorMessage}
               maxPairs={maxPairs}
+              batchSize={batchSize}
             />
           ) : (
             <VocabAiTab

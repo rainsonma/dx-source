@@ -14,6 +14,14 @@ export function maxPairsForMode(mode: GameMode): number {
   }
 }
 
+export function vocabBatchSize(mode: GameMode): number {
+  switch (mode) {
+    case "vocab-match": return 5;
+    case "vocab-elimination": return 8;
+    default: return 0;
+  }
+}
+
 export type VocabPair = {
   sourceData: string;
   translation: string;
@@ -27,7 +35,7 @@ export type ParseVocabResult =
   | { ok: true; pairs: VocabPair[] }
   | { ok: false; error: string };
 
-export function parseVocabText(raw: string, maxPairs: number): ParseVocabResult {
+export function parseVocabText(raw: string, maxPairs: number, batchSize: number): ParseVocabResult {
   const lines = raw
     .split("\n")
     .map((l) => l.trim())
@@ -65,6 +73,10 @@ export function parseVocabText(raw: string, maxPairs: number): ParseVocabResult 
 
   if (pairs.length > maxPairs) {
     return { ok: false, error: `词汇数量（${pairs.length}）超过当前模式上限 ${maxPairs} 对，请精简后重试` };
+  }
+
+  if (batchSize > 0 && pairs.length % batchSize !== 0) {
+    return { ok: false, error: `词汇数量必须是 ${batchSize} 的倍数（当前 ${pairs.length} 条）` };
   }
 
   return { ok: true, pairs };
