@@ -82,7 +82,7 @@ export function useGameSearch() {
 
   /** The items to display: search results when typing, recent games otherwise */
   const displayItems = query.trim() ? results : recentGames;
-  const groupLabel = query.trim() ? "搜索结果" : "最近玩过";
+  const groupLabel = query.trim() ? "猜你想学" : "最近玩过";
   const showGroup = displayItems.length > 0;
 
   return {
