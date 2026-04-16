@@ -42,6 +42,7 @@ export function useVocabMatch() {
   const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemStartTimeRef = useRef<number>(Date.now());
   const reviewedIdsRef = useRef(new Set<string>());
+  const advanceCalledRef = useRef(false);
 
   const totalItems = contentItems?.length ?? 0;
 
@@ -72,6 +73,7 @@ export function useVocabMatch() {
     setMatchedIndices(new Set());
     setWrongPair(null);
     itemStartTimeRef.current = Date.now();
+    advanceCalledRef.current = false;
   }, [batchStart]);
 
   useEffect(() => {
@@ -134,6 +136,8 @@ export function useVocabMatch() {
   );
 
   const advanceBatch = useCallback(() => {
+    if (advanceCalledRef.current) return;
+    advanceCalledRef.current = true;
     const nextStart = batchEnd;
     if (nextStart >= totalItems) {
       setPhase("result");
@@ -186,6 +190,17 @@ export function useVocabMatch() {
     [selectedWordIndex, matchedIndices, batchItems, wrongPair, fireServerRecord, advanceBatch]
   );
 
+  const isBatchComplete = matchedIndices.size === batchItems.length && batchItems.length > 0;
+  const isLastBatch = batchEnd >= totalItems;
+
+  const nextBatch = useCallback(() => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+    advanceBatch();
+  }, [advanceBatch]);
+
   return {
     batchItems,
     shuffledDefs,
@@ -196,5 +211,8 @@ export function useVocabMatch() {
     combo,
     selectWord,
     selectDef,
+    isBatchComplete,
+    isLastBatch,
+    nextBatch,
   };
 }
