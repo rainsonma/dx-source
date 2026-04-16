@@ -52,7 +52,6 @@ func Api() {
 		})
 		gameCategoryController := apicontrollers.NewGameCategoryController()
 		router.Get("/game-categories", gameCategoryController.Categories)
-		router.Get("/game-categories/sync", gameCategoryController.SyncCategories)
 		gamePressController := apicontrollers.NewGamePressController()
 		router.Get("/game-presses", gamePressController.Presses)
 

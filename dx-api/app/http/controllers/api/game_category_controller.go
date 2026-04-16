@@ -25,13 +25,3 @@ func (c *GameCategoryController) Categories(ctx contractshttp.Context) contracts
 
 	return helpers.Success(ctx, categories)
 }
-
-// SyncCategories returns the sync subtree categories.
-func (c *GameCategoryController) SyncCategories(ctx contractshttp.Context) contractshttp.Response {
-	categories, err := services.ListSyncCategories()
-	if err != nil {
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list sync categories")
-	}
-
-	return helpers.Success(ctx, categories)
-}

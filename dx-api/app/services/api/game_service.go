@@ -75,17 +75,6 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 
 	if len(categoryIDs) > 0 {
 		query = query.Where("game_category_id IN ?", categoryIDs)
-	} else {
-		// No explicit category filter — exclude sync subtree games from the default listing
-		// so they only appear on /hall/sync. Callers that want sync games must pass the
-		// sync category IDs explicitly (e.g., the sync page).
-		syncIDs, err := SyncCategoryIDs()
-		if err != nil {
-			return nil, "", false, err
-		}
-		if len(syncIDs) > 0 {
-			query = query.Where("(game_category_id NOT IN ? OR game_category_id IS NULL)", syncIDs)
-		}
 	}
 	if pressID != "" {
 		query = query.Where("game_press_id", pressID)
