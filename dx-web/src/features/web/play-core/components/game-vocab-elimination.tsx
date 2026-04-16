@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 import { useVocabElimination } from "@/features/web/play-core/hooks/use-vocab-elimination";
 
 export function GameVocabElimination() {
@@ -12,6 +12,9 @@ export function GameVocabElimination() {
     progress,
     combo,
     selectTile,
+    isBatchComplete,
+    isLastBatch,
+    nextBatch,
   } = useVocabElimination();
 
   if (gridRows.length === 0) return null;
@@ -87,9 +90,23 @@ export function GameVocabElimination() {
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        点击两个匹配的方块进行消除
-      </p>
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          点击两个匹配的方块进行消除
+        </p>
+        {!isLastBatch && (
+          <button
+            type="button"
+            disabled={!isBatchComplete}
+            onClick={nextBatch}
+            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-40"
+          >
+            下一组
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

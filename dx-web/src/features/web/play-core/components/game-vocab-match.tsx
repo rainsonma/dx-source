@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, Circle, CheckCircle2 } from "lucide-react";
+import { Zap, Circle, CheckCircle2, ArrowRight } from "lucide-react";
 import { useVocabMatch } from "@/features/web/play-core/hooks/use-vocab-match";
 
 export function GameVocabMatch() {
@@ -14,6 +14,9 @@ export function GameVocabMatch() {
     combo,
     selectWord,
     selectDef,
+    isBatchComplete,
+    isLastBatch,
+    nextBatch,
   } = useVocabMatch();
 
   if (batchItems.length === 0) return null;
@@ -132,9 +135,23 @@ export function GameVocabMatch() {
         </div>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
-        点击左侧单词，再点击右侧匹配的释义
-      </p>
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          点击左侧单词，再点击右侧匹配的释义
+        </p>
+        {!isLastBatch && (
+          <button
+            type="button"
+            disabled={!isBatchComplete}
+            onClick={nextBatch}
+            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-40"
+          >
+            下一组
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
