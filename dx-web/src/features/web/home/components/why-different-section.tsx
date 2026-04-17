@@ -84,7 +84,7 @@ function Row({
           {row.before}
           <motion.span
             aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-1/2 h-[1.5px] bg-slate-300"
+            className="pointer-events-none absolute left-0 top-1/2 h-[1.5px] bg-red-500"
             initial={reduced ? { scaleX: 1, originX: 0 } : { scaleX: 0, originX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true, amount: 0.6 }}
