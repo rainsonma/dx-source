@@ -1,23 +1,37 @@
+import Link from "next/link";
 import { GraduationCap } from "lucide-react";
+import { PLACEHOLDERS } from "@/features/com/legal/constants";
+
+const LEGAL_LINKS: { label: string; href: string }[] = [
+  { label: "用户协议", href: "/docs/account/user-agreement" },
+  { label: "隐私政策", href: "/docs/account/privacy-policy" },
+  { label: "监护人同意书", href: "/docs/account/guardian-consent" },
+  { label: "产品服务协议", href: "/docs/account/product-service" },
+];
 
 const footerColumns = [
   {
-    title: "服务条款",
-    links: ["用户协议", "隐私政策", "监护人同意书", "产品服务协议", "Cookie 政策"],
-  },
-  {
     title: "斗学产品",
-    links: ["渐进学习法", "AI 智能定制", "多重游戏模式", "丰富课程体系", "社群小组"],
+    links: [
+      "渐进学习法",
+      "AI 智能定制",
+      "多重游戏模式",
+      "丰富课程体系",
+      "社群小组",
+    ],
   },
   {
     title: "斗学团队",
-    links: ["关于我们", "建议反馈", "内容投稿", "商务合作", "bs@douxue.cc"],
+    links: ["关于我们", "建议反馈", "内容投稿", "商务合作"],
   },
 ];
 
 export function Footer() {
   return (
-    <footer id="contact" className="scroll-mt-20 w-full border-t border-slate-200 bg-slate-50">
+    <footer
+      id="contact"
+      className="scroll-mt-20 w-full border-t border-slate-200 bg-slate-50"
+    >
       <div className="mx-auto flex max-w-[1280px] flex-col gap-12 px-[120px] pb-10 pt-[60px]">
         {/* Top section */}
         <div className="flex w-full flex-col gap-10 xl:flex-row xl:justify-between">
@@ -34,6 +48,23 @@ export function Footer() {
 
           {/* Link columns */}
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:flex xl:gap-16">
+            {/* 服务条款 — real links */}
+            <div className="flex flex-col gap-4">
+              <h4 className="text-[13px] font-semibold tracking-[1px] text-slate-900">
+                服务条款
+              </h4>
+              {LEGAL_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="text-sm text-slate-500 hover:text-slate-700"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+
+            {/* Other columns — mock spans, unchanged behavior */}
             {footerColumns.map((col) => (
               <div key={col.title} className="flex flex-col gap-4">
                 <h4 className="text-[13px] font-semibold tracking-[1px] text-slate-900">
@@ -69,10 +100,10 @@ export function Footer() {
         {/* Bottom copyright */}
         <div className="flex w-full flex-col items-center gap-2">
           <span className="text-[13px] text-slate-400">
-            © 2026 douxue.cc 版权所有
+            © 2026 douxue.fun 版权所有
           </span>
           <span className="text-[13px] text-slate-400">
-            京公网安备 xxxxxxxxxxxxxx 号  京 ICP 备 xxxxxxxxxx 号
+            京公网安备 {PLACEHOLDERS.pscRecordNo} · 京 ICP 备 {PLACEHOLDERS.icpNumber}
           </span>
         </div>
       </div>

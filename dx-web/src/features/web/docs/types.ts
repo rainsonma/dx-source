@@ -6,6 +6,7 @@ export type DocTopic = {
   title: string;
   description: string;
   Component: ComponentType;
+  groupLabel?: string;
 };
 
 export type DocCategory = {

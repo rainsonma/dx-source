@@ -5,6 +5,7 @@ import { Eye, EyeOff, Gift, MessageCircle, Loader2, CircleCheck, CircleAlert } f
 
 import { WechatQrCard } from "@/features/web/auth/components/wechat-qr-card";
 import { useSignup } from "@/features/web/auth/hooks/use-signup";
+import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 
 type SignUpFormProps = {
   hasInviteRef?: boolean;
@@ -200,11 +201,11 @@ export function SignUpForm({ hasInviteRef }: SignUpFormProps) {
                 )}
               </div>
               <span className="text-xs text-slate-700">
-                我已阅读并同意{" "}
-                <span className="text-teal-600">用户协议</span>、
-                <span className="text-teal-600">隐私政策</span>、
-                <span className="text-teal-600">监护人同意书</span>、
-                <span className="text-teal-600">产品服务协议</span>
+                同意{" "}
+                <AgreementLink slug="user-agreement" />
+                <AgreementLink slug="privacy-policy" />
+                <AgreementLink slug="guardian-consent" />
+                <AgreementLink slug="product-service" />
               </span>
             </label>
 

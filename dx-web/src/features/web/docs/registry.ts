@@ -61,6 +61,12 @@ import Security from "./topics/account/security";
 import Notices from "./topics/account/notices";
 import Feedback from "./topics/account/feedback";
 import Faq from "./topics/account/faq";
+import {
+  UserAgreementDoc,
+  PrivacyPolicyDoc,
+  GuardianConsentDoc,
+  ProductServiceDoc,
+} from "@/features/com/legal/registry";
 
 export const DOC_CATEGORIES: DocCategory[] = [
   {
@@ -481,6 +487,35 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "账号、会员、学习、AI、技术五大分区的常见问答合集。",
         Component: Faq,
+      },
+      {
+        slug: "user-agreement",
+        title: "用户协议",
+        description:
+          "斗学账号注册、账号管理、用户权责、知识产权、免责与注销等完整条款。",
+        Component: UserAgreementDoc,
+        groupLabel: "法律条款",
+      },
+      {
+        slug: "privacy-policy",
+        title: "隐私政策",
+        description:
+          "我们如何收集、使用、存储、共享、保护您的个人信息，以及您的权利行使方式。",
+        Component: PrivacyPolicyDoc,
+      },
+      {
+        slug: "guardian-consent",
+        title: "监护人同意书",
+        description:
+          "未成年人使用斗学前，监护人需知情并同意的相关条款与权责说明。",
+        Component: GuardianConsentDoc,
+      },
+      {
+        slug: "product-service",
+        title: "产品服务协议",
+        description:
+          "会员订阅与支付、服务暂停与终止、退款规则、知识产权及争议解决等条款。",
+        Component: ProductServiceDoc,
       },
     ],
   },

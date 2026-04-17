@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DOC_CATEGORIES } from "@/features/web/docs/registry";
@@ -41,23 +42,29 @@ export function DocsSidebar() {
                 const topicHref = `/docs/${category.slug}/${topic.slug}`;
                 const isActiveTopic = pathname === topicHref;
                 return (
-                  <Link
-                    key={topic.slug}
-                    href={topicHref}
-                    className={`flex items-center gap-2 rounded-md px-3 py-1 text-left text-sm ${
-                      isActiveTopic
-                        ? "bg-teal-50 font-medium text-teal-600"
-                        : "text-slate-500 hover:text-slate-700"
-                    }`}
-                  >
-                    <div
-                      className={`h-5 w-[3px] rounded-sm ${
-                        isActiveTopic ? "bg-teal-600" : "bg-transparent"
+                  <Fragment key={topic.slug}>
+                    {topic.groupLabel && (
+                      <div className="mt-3 mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        {topic.groupLabel}
+                      </div>
+                    )}
+                    <Link
+                      href={topicHref}
+                      className={`flex items-center gap-2 rounded-md px-3 py-1 text-left text-sm ${
+                        isActiveTopic
+                          ? "bg-teal-50 font-medium text-teal-600"
+                          : "text-slate-500 hover:text-slate-700"
                       }`}
-                      aria-hidden="true"
-                    />
-                    {topic.title}
-                  </Link>
+                    >
+                      <div
+                        className={`h-5 w-[3px] rounded-sm ${
+                          isActiveTopic ? "bg-teal-600" : "bg-transparent"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      {topic.title}
+                    </Link>
+                  </Fragment>
                 );
               })}
             </div>
