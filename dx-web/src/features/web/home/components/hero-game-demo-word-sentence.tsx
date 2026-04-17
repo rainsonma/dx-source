@@ -28,7 +28,7 @@ export function HeroGameDemoWordSentence({ active }: Props) {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <p className="text-xs text-slate-500">请把下面的单词拼成正确的句子：</p>
+      <p className="text-xs text-slate-500">拼出每个学习单元完成正确的句子：</p>
       <div className="flex flex-wrap gap-2">
         {WORDS.map((w, i) => (
           <motion.span
