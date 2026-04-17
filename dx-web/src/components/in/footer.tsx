@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { GraduationCap } from "lucide-react";
+import { PLACEHOLDERS } from "@/features/com/legal/constants";
 
 const LEGAL_LINKS: { label: string; href: string }[] = [
   { label: "用户协议", href: "/docs/account/user-agreement" },
@@ -103,7 +104,7 @@ export function Footer() {
             © 2026 douxue.fun 版权所有
           </span>
           <span className="text-[13px] text-slate-400">
-            京公网安备 xxxxxxxxxxxxxx 号  京 ICP 备 xxxxxxxxxx 号
+            京公网安备 {PLACEHOLDERS.pscRecordNo} · 京 ICP 备 {PLACEHOLDERS.icpNumber}
           </span>
         </div>
       </div>
