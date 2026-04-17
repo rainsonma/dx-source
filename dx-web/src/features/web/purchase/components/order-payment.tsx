@@ -116,7 +116,7 @@ export function OrderPayment({ orderId }: { orderId: string }) {
   ];
 
   return (
-    <div className="flex w-full max-w-[520px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_32px_rgba(15,23,42,0.1)]">
+    <div className="flex w-full max-w-[693px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_32px_rgba(15,23,42,0.1)]">
       {/* Order summary */}
       <div className="flex flex-col gap-3.5 px-7 py-6">
         <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ export function OrderPayment({ orderId }: { orderId: string }) {
 
       {/* Agreement */}
       <div className="px-7 py-4">
-        <label className="flex cursor-pointer gap-2.5">
+        <label className="flex cursor-pointer items-center gap-2.5">
           <button
             type="button"
             onClick={() => setAgreed(!agreed)}
@@ -157,21 +157,17 @@ export function OrderPayment({ orderId }: { orderId: string }) {
           >
             {agreed && <Check className="h-2.5 w-2.5 text-white" />}
           </button>
-          <div className="flex flex-col gap-1">
-            <span className="text-sm text-slate-700">
-              我已阅读并同意以下协议
-            </span>
-            <span className="text-xs">
-              <AgreementLink slug="product-service" />
-            </span>
-          </div>
+          <span className="text-sm text-slate-700">
+            我已阅读并同意以下协议
+          </span>
+          <AgreementLink slug="product-service" className="text-sm text-teal-600 underline-offset-2 hover:text-teal-700 hover:underline" />
         </label>
       </div>
 
       <div className="h-px w-full bg-slate-200" />
 
       {/* Payment method */}
-      <div className="flex flex-col gap-4 px-7 py-4">
+      <div className="flex items-center gap-8 px-7 py-4">
         {methods.map((m) => (
           <button
             key={m.key}

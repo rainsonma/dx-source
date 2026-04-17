@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 import {
   Dialog,
   DialogContent,
@@ -24,7 +22,7 @@ export function AgreementDialog({ slug, open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="flex h-[85vh] max-h-[85vh] w-full max-w-[720px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[720px]"
+        className="flex h-[85vh] max-h-[85vh] w-full max-w-[960px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[960px]"
         showCloseButton
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-4">
@@ -42,15 +40,7 @@ export function AgreementDialog({ slug, open, onOpenChange }: Props) {
             <Body />
           </div>
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-3">
-          <Link
-            href={`/docs/account/${agreement.slug}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-teal-600 hover:text-teal-700"
-          >
-            在完整页面查看 →
-          </Link>
+        <div className="flex items-center justify-end border-t border-slate-200 bg-slate-50 px-6 py-3">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
