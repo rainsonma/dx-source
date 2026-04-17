@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Send,
   Undo2,
   Pencil,
   Trash2,
   Loader2,
+  Play,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -174,7 +176,19 @@ export function GameHeroCard({
                     发布
                   </span>
                 </button>
-              )}              {isPublished && (
+              )}
+              {isPublished && (
+                <Link
+                  href={`/hall/games/${game.id}`}
+                  className="flex items-center gap-2 rounded-xl bg-gradient-to-b from-teal-500 to-teal-700 px-6 py-2.5"
+                >
+                  <Play className="h-4 w-4 text-white" />
+                  <span className="text-sm font-semibold text-white">
+                    去玩
+                  </span>
+                </Link>
+              )}
+              {isPublished && (
                 <button
                   type="button"
                   onClick={() => setWithdrawOpen(true)}
