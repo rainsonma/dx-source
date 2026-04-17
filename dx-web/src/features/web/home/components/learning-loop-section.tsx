@@ -19,7 +19,7 @@ const LEVELS = [
 const VOCAB = [
   {
     title: "生词本",
-    desc: "自动沉淀你不会的词",
+    desc: "持续沉淀你不会的词汇",
     Icon: BookOpen,
     iconColor: "#EC4899",
     bg: "bg-pink-500/10",
@@ -57,7 +57,7 @@ export function LearningLoopSection() {
             学习闭环 · 从陌生到掌握
           </span>
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 md:text-4xl">
-            一套系统，追踪你每一个单词的命运
+            一套系统，追踪你每一个学习单元的命运
           </h2>
         </motion.div>
 
@@ -114,7 +114,7 @@ export function LearningLoopSection() {
               />
             </div>
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-slate-500">
-              每次游戏自动沉淀单词 <ArrowRight className="inline h-3 w-3" />
+              通过每轮学习不断沉淀 <ArrowRight className="inline h-3 w-3" />
             </div>
           </motion.div>
 
