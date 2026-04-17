@@ -39,9 +39,9 @@ function AgreementCheckbox({
       </div>
       <span className="text-xs text-slate-700">
         同意{" "}
-        <AgreementLink slug="user-agreement" />、
-        <AgreementLink slug="privacy-policy" />、
-        <AgreementLink slug="guardian-consent" />、
+        <AgreementLink slug="user-agreement" />
+        <AgreementLink slug="privacy-policy" />
+        <AgreementLink slug="guardian-consent" />
         <AgreementLink slug="cookie-policy" />
       </span>
     </label>
