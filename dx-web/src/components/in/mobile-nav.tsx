@@ -10,12 +10,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { HashNavLink } from "@/components/in/hash-nav-link";
 
-const navLinks = [
-  { href: "/wiki", label: "Wiki" },
-  { href: "/#features", label: "Features" },
-  { href: "#faq", label: "常见问题" },
-  { href: "#contact", label: "联系我们" },
+type NavLink =
+  | { kind: "route"; href: string; label: string }
+  | { kind: "hash"; hash: string; label: string };
+
+const navLinks: NavLink[] = [
+  { kind: "route", href: "/wiki", label: "Wiki" },
+  { kind: "hash", hash: "features", label: "Features" },
+  { kind: "hash", hash: "faq", label: "常见问题" },
+  { kind: "hash", hash: "contact", label: "联系我们" },
 ];
 
 interface MobileNavProps {
@@ -35,16 +40,32 @@ export function MobileNav({ isLoggedIn }: MobileNavProps) {
           <SheetTitle className="text-left text-lg">菜单</SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col gap-1 px-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="rounded-md px-3 py-2.5 text-[15px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const className =
+              "rounded-md px-3 py-2.5 text-[15px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900";
+            if (link.kind === "hash") {
+              return (
+                <HashNavLink
+                  key={link.label}
+                  hash={link.hash}
+                  className={className}
+                  onNavigate={() => setOpen(false)}
+                >
+                  {link.label}
+                </HashNavLink>
+              );
+            }
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className={className}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
         <div className="mt-auto flex flex-col gap-3 border-t border-slate-200 p-4">
           {isLoggedIn ? (

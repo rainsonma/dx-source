@@ -68,7 +68,10 @@ const FAQS: Faq[] = [
 
 export function FaqSection() {
   return (
-    <section className="w-full bg-gradient-to-b from-white to-slate-50 py-[80px] md:py-[100px]">
+    <section
+      id="faq"
+      className="w-full bg-gradient-to-b from-white to-slate-50 py-[80px] md:py-[100px]"
+    >
       <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-5 md:px-10 md:gap-12 lg:px-[120px]">
         <motion.div
           className="flex flex-col items-center gap-4 text-center"
