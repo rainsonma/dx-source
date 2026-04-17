@@ -5,6 +5,7 @@ import { Eye, EyeOff, MessageCircle, Loader2, CircleCheck, CircleAlert } from "l
 
 import { WechatQrCard } from "@/features/web/auth/components/wechat-qr-card";
 import { useSignIn } from "@/features/web/auth/hooks/use-signin";
+import { AgreementInlineList } from "@/features/com/legal/components/agreement-inline-list";
 
 export function SignInForm() {
   const {
@@ -262,6 +263,18 @@ export function SignInForm() {
 
           {/* Separator */}
           <div className="h-px bg-slate-200" />
+
+          {/* Agreement hint */}
+          <AgreementInlineList
+            prefix="登录即代表同意 "
+            slugs={[
+              "user-agreement",
+              "privacy-policy",
+              "guardian-consent",
+              "cookie-policy",
+            ]}
+            className="text-xs text-slate-400"
+          />
 
           {/* Footer */}
           <div className="flex items-center justify-between">
