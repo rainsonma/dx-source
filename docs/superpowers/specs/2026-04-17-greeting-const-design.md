@@ -70,12 +70,12 @@ type Greeting struct {
 
 // PickGreeting returns a Greeting whose Title matches the hour of t (interpreted
 // in Asia/Shanghai) and whose Subtitle is a random entry from the band's pool.
-// rng is injected so callers can seed for tests; callers in production should
-// pass a freshly seeded *rand.Rand.
-func PickGreeting(t time.Time, rng *rand.Rand) Greeting
+// Uses math/rand/v2 top-level rand.IntN for subtitle selection — same pattern as
+// dx-api/app/services/api/mock_user_service.go and game_play_pk_service.go.
+func PickGreeting(t time.Time) Greeting
 ```
 
-Internal shape: a private `greetingBand` struct holding `{ title string; subtitles []string }` and a private `greetingBands()` function returning the four bands in a slice ordered morning → evening. The title/subtitle strings are declared as untyped constants near the top of the file.
+Internal shape: a private `greetingBand` struct holding `{ title string; subtitles []string }` and a private package-level slice `greetingBands` with the four bands in order morning → evening. The title/subtitle literals are declared directly inside that slice.
 
 Hour selection helper:
 
@@ -91,10 +91,10 @@ Shanghai timezone is loaded once at package init via `time.LoadLocation("Asia/Sh
 
 Table-driven tests covering:
 - `bandFor` for each hour 0–23 returning the expected index.
-- `PickGreeting` with a fixed `rng` (e.g. `rand.New(rand.NewSource(1))`) returning a stable `(Title, Subtitle)` pair for representative hours in each band.
-- Boundary hours: 04:59 → evening, 05:00 → morning, 10:59 → morning, 11:00 → noon, 12:59 → noon, 13:00 → afternoon, 17:59 → afternoon, 18:00 → evening.
-- Property: for any seed, `PickGreeting(t).Subtitle` belongs to the subtitle pool of the band implied by `t`'s hour. Iterate enough seeds (e.g. 100) to exercise every subtitle slot for each band.
-- Sanity: every title is non-empty, every subtitle is non-empty and ≤ 20 runes.
+- `PickGreeting` title for representative hours in each band, plus UTC→Shanghai conversion (e.g. 00:00 UTC → 08:00 Shanghai → morning).
+- Boundary hours: 4 → evening, 5 → morning, 10 → morning, 11 → noon, 12 → noon, 13 → afternoon, 17 → afternoon, 18 → evening.
+- Property: `PickGreeting(t).Subtitle` always belongs to the subtitle pool of the band implied by `t`'s hour. Call many times per hour (e.g. 50) to exercise randomness.
+- Sanity: 4 bands, every title non-empty, every band has exactly 5 subtitles, every subtitle non-empty and ≤ 20 runes.
 
 ### 3. Modified: `dx-api/app/services/api/hall_service.go`
 
@@ -114,13 +114,12 @@ type DashboardData struct {
 In `GetDashboard` (just before the final `return`), add:
 
 ```go
-rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-greeting := consts.PickGreeting(time.Now(), rng)
+greeting := consts.PickGreeting(time.Now())
 ```
 
 and assign `Greeting: greeting` into the returned `DashboardData`. No other field, query, or behavior changes.
 
-Imports added: `"math/rand"`, `"dx-api/app/consts"`.
+Imports added: `"dx-api/app/consts"`.
 
 ### 4. No controller or routing change
 
