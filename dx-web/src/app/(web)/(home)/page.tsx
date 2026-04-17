@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { StickyHeader } from "@/components/in/sticky-header";
 import { HeroSection } from "@/features/web/home/components/hero-section";
+import { WhyDifferentSection } from "@/features/web/home/components/why-different-section";
 import { FeaturesSection } from "@/features/web/home/components/features-section";
 import { AiFeaturesSection } from "@/features/web/home/components/ai-features-section";
-import { CoursePlatformSection } from "@/features/web/home/components/course-platform-section";
-import { SmartVocabularySection } from "@/features/web/home/components/smart-vocabulary-section";
-import { SocialCommunitySection } from "@/features/web/home/components/social-community-section";
-import { StatsSection } from "@/features/web/home/components/stats-section";
-import { TestimonialsSection } from "@/features/web/home/components/testimonials-section";
+import { LearningLoopSection } from "@/features/web/home/components/learning-loop-section";
+import { CommunitySection } from "@/features/web/home/components/community-section";
+import { MembershipSection } from "@/features/web/home/components/membership-section";
+import { FaqSection } from "@/features/web/home/components/faq-section";
 import { FinalCtaSection } from "@/features/web/home/components/final-cta-section";
 import { Footer } from "@/components/in/footer";
 
@@ -16,16 +16,16 @@ export default async function HomePage() {
   const isLoggedIn = !!cookieStore.get("dx_token")?.value;
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white bg-[length:100%_720px] bg-top bg-no-repeat">
+    <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white bg-[length:100%_620px] bg-top bg-no-repeat">
       <StickyHeader isLoggedIn={isLoggedIn} transparent />
       <HeroSection isLoggedIn={isLoggedIn} />
+      <WhyDifferentSection />
       <FeaturesSection />
       <AiFeaturesSection />
-      <CoursePlatformSection />
-      <SmartVocabularySection />
-      <SocialCommunitySection />
-      <StatsSection />
-      <TestimonialsSection />
+      <LearningLoopSection />
+      <CommunitySection />
+      <MembershipSection />
+      <FaqSection />
       <FinalCtaSection isLoggedIn={isLoggedIn} />
       <Footer />
     </div>
