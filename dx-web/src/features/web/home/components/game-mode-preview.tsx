@@ -159,7 +159,7 @@ function VocabBattlePreview({ animate }: { animate: boolean }) {
           animate ? { duration: 2.2, times: [0, 0.5, 0.8, 1], repeat: Infinity } : undefined
         }
       />
-      <span className="text-[11px] font-semibold text-rose-600">AI</span>
+      <span className="text-[11px] font-semibold text-rose-600">对</span>
     </Strip>
   );
 }
