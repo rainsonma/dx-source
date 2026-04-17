@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
 
@@ -17,6 +18,7 @@ type DashboardData struct {
 	ReviewStats  ReviewStats       `json:"reviewStats"`
 	Sessions     []SessionProgress `json:"sessions"`
 	TodayAnswers int               `json:"todayAnswers"`
+	Greeting     consts.Greeting   `json:"greeting"`
 }
 
 // DashboardProfile is the user profile subset shown on the dashboard.
@@ -134,6 +136,7 @@ func GetDashboard(userID string) (*DashboardData, error) {
 		ReviewStats:  *reviewStats,
 		Sessions:     sessions,
 		TodayAnswers: todayAnswers,
+		Greeting:     consts.PickGreeting(time.Now()),
 	}, nil
 }
 
