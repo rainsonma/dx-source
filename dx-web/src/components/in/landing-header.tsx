@@ -21,10 +21,10 @@ export function LandingHeader({ isLoggedIn = false }: LandingHeaderProps) {
           Wiki
         </Link>
         <Link
-          href="/features"
+          href="/#features"
           className="text-[15px] font-medium text-slate-500 hover:text-slate-700"
         >
-          功能
+          Features
         </Link>
         <Link
           href="#faq"

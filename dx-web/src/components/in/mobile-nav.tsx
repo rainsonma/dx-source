@@ -13,7 +13,7 @@ import {
 
 const navLinks = [
   { href: "/wiki", label: "Wiki" },
-  { href: "/features", label: "功能" },
+  { href: "/#features", label: "Features" },
   { href: "#faq", label: "常见问题" },
   { href: "#contact", label: "联系我们" },
 ];
