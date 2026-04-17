@@ -1,7 +1,7 @@
 // dx-web/src/features/web/home/hooks/use-in-view.ts
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
@@ -17,23 +17,34 @@ export function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export function useInView<T extends Element>(
-  options: IntersectionObserverInit = { threshold: 0.2 },
-): { ref: React.RefObject<T | null>; inView: boolean } {
-  const ref = useRef<T | null>(null);
+interface UseInViewOptions {
+  threshold?: number;
+  rootMargin?: string;
+  root?: Element | Document | null;
+}
+
+export function useInView<T extends Element = HTMLElement>(
+  options: UseInViewOptions = {},
+): { ref: (node: T | null) => void; inView: boolean } {
+  const { threshold = 0.2, rootMargin, root } = options;
+  const [node, setNode] = useState<T | null>(null);
   const [inView, setInView] = useState(false);
 
+  const ref = useCallback((next: T | null) => {
+    setNode(next);
+  }, []);
+
   useEffect(() => {
-    const node = ref.current;
     if (!node) return;
-    const obs = new IntersectionObserver(([entry]) => {
-      setInView(entry.isIntersecting);
-    }, options);
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+      },
+      { threshold, rootMargin, root },
+    );
     obs.observe(node);
     return () => obs.disconnect();
-    // options is a stable object literal at call sites; re-running on identity change would be churn.
-
-  }, []);
+  }, [node, threshold, rootMargin, root]);
 
   return { ref, inView };
 }
