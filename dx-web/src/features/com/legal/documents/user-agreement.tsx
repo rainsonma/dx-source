@@ -34,7 +34,7 @@ export function UserAgreementDoc() {
         ）提供的产品和服务。{BRAND}
         系专注于英语学习的在线服务平台，通过游戏化学习机制（任务、等级、排行榜、虚拟道具，包括能量豆等）、社区功能（发帖、评论、小组、关注）及
         AI 辅助能力，为用户提供有趣、高效的英语学习体验。{BRAND}运营主体为{" "}
-        <P>{PLACEHOLDERS.companyName}</P>（以下简称 &ldquo;本平台&rdquo; 或
+        <P>{PLACEHOLDERS.companyName}</P>（注册地址：<P>{PLACEHOLDERS.companyAddr}</P>，以下简称 &ldquo;本平台&rdquo; 或
         &ldquo;运营方&rdquo;）。
       </p>
       <p>
@@ -168,8 +168,8 @@ export function UserAgreementDoc() {
             在平台社区、小组内自由发布符合法律法规和平台规则的用户内容；
           </li>
           <li>
-            依据平台《隐私政策》（<AgreementLink slug="privacy-policy" />
-            ），查询、更正、删除本人个人信息，以及撤回相关授权同意；
+            依据平台 <AgreementLink slug="privacy-policy" />
+            查询、更正、删除本人个人信息，以及撤回相关授权同意；
           </li>
           <li>
             在合法前提下，通过账号设置页面对本人账号的功能、通知、隐私等进行管理；
