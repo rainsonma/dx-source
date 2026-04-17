@@ -52,7 +52,9 @@ type CourseGameDetailData struct {
 	CoverID        *string               `json:"coverId"`
 	CoverURL       *string               `json:"coverUrl"`
 	Levels         []CourseGameLevelData `json:"levels"`
+	User           *CourseGameOwnerData  `json:"user"`
 	CreatedAt      any                   `json:"createdAt"`
+	UpdatedAt      any                   `json:"updatedAt"`
 }
 
 // CourseGameLevelData represents a level in a course game.
@@ -62,6 +64,12 @@ type CourseGameLevelData struct {
 	Description *string `json:"description"`
 	Order       float64 `json:"order"`
 	ItemCount   int64   `json:"itemCount"`
+}
+
+// CourseGameOwnerData represents the minimal creator info shown on a game detail.
+type CourseGameOwnerData struct {
+	ID       string `json:"id"`
+	Username string `json:"username"`
 }
 
 // ListUserGames returns the user's own games with cursor pagination and optional status filter.
@@ -634,6 +642,15 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		}
 	}
 
+	// Load owner (soft reference — code-level FK; graceful if missing)
+	var owner *CourseGameOwnerData
+	if game.UserID != nil && *game.UserID != "" {
+		var u models.User
+		if err := facades.Orm().Query().Where("id", *game.UserID).First(&u); err == nil && u.ID != "" {
+			owner = &CourseGameOwnerData{ID: u.ID, Username: u.Username}
+		}
+	}
+
 	levelData := make([]CourseGameLevelData, 0, len(levels))
 	for _, l := range levels {
 		itemCount, _ := facades.Orm().Query().Model(&models.GameItem{}).
@@ -660,7 +677,9 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		CoverID:        game.CoverID,
 		CoverURL:       coverURL,
 		Levels:         levelData,
+		User:           owner,
 		CreatedAt:      game.CreatedAt,
+		UpdatedAt:      game.UpdatedAt,
 	}, nil
 }
 
