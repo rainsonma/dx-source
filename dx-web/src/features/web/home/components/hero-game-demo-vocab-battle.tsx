@@ -68,7 +68,7 @@ export function HeroGameDemoVocabBattle({ active }: Props) {
         <div className="relative h-2 w-full overflow-hidden rounded-full bg-slate-100">
           <motion.div
             className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-rose-400 to-rose-600"
-            initial={{ width: "100%" }}
+            initial={reduced ? { width: "55%" } : { width: "100%" }}
             animate={{ width: reduced ? "55%" : ["100%", "100%", "55%"] }}
             transition={
               reduced
