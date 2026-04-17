@@ -43,12 +43,11 @@ func Api() {
 			})
 		})
 
-		// Public game routes
+		// Public game routes (list + search only; detail is protected below)
 		gameController := &apicontrollers.GameController{}
 		router.Prefix("/games").Group(func(games route.Router) {
 			games.Get("/", gameController.List)
 			games.Get("/search", gameController.Search)
-			games.Get("/{id}", gameController.Detail)
 		})
 		gameCategoryController := apicontrollers.NewGameCategoryController()
 		router.Get("/game-categories", gameCategoryController.Categories)
@@ -97,6 +96,7 @@ func Api() {
 			contentController := &apicontrollers.ContentController{}
 			gameStatsController := apicontrollers.NewGameStatsController()
 			userFavoriteController := apicontrollers.NewUserFavoriteController()
+			protected.Get("/games/{id}", gameController.Detail)
 			protected.Get("/games/played", gameController.Played)
 			protected.Get("/games/{id}/stats", gameStatsController.Stats)
 			protected.Get("/games/{id}/favorited", userFavoriteController.Favorited)
