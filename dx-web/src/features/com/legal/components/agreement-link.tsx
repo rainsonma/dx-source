@@ -17,7 +17,10 @@ export function AgreementLink({ slug, className }: Props) {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
         className={
           className ??
           "text-teal-600 underline-offset-2 hover:text-teal-700 hover:underline"
