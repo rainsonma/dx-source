@@ -15,6 +15,22 @@ const SceneWordSentence = dynamic(
   { ssr: false },
 );
 
+const SceneVocabMatch = dynamic(
+  () =>
+    import("@/features/web/home/components/hero-game-demo-vocab-match").then(
+      (m) => m.HeroGameDemoVocabMatch,
+    ),
+  { ssr: false },
+);
+
+const SceneVocabElim = dynamic(
+  () =>
+    import("@/features/web/home/components/hero-game-demo-vocab-elim").then(
+      (m) => m.HeroGameDemoVocabElim,
+    ),
+  { ssr: false },
+);
+
 const SceneVocabBattle = dynamic(
   () =>
     import("@/features/web/home/components/hero-game-demo-vocab-battle").then(
@@ -29,6 +45,18 @@ const SCENES = [
     label: "连词成句",
     ariaLabel: "切换到连词成句演示",
     Scene: SceneWordSentence,
+  },
+  {
+    key: "vocab-match",
+    label: "词汇配对",
+    ariaLabel: "切换到词汇配对演示",
+    Scene: SceneVocabMatch,
+  },
+  {
+    key: "vocab-elim",
+    label: "词汇消消乐",
+    ariaLabel: "切换到词汇消消乐演示",
+    Scene: SceneVocabElim,
   },
   {
     key: "vocab-battle",

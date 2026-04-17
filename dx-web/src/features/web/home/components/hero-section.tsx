@@ -32,7 +32,7 @@ export function HeroSection({ isLoggedIn }: HeroSectionProps) {
         每天 10 分钟，英语悄悄就流利了
       </p>
       <p className="sr-only">
-        下方演示了连词成句和词汇对轰两种玩法的循环动画。
+        下方演示了连词成句、词汇配对、词汇消消乐和词汇对轰四种玩法的循环动画。
       </p>
       <div className="flex flex-col items-center gap-4 md:flex-row">
         <Link
