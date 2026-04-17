@@ -32,26 +32,27 @@ function StreakHeatmap() {
     <motion.div
       className="mt-2 flex gap-1"
       initial="hidden"
-      whileInView={reduced ? undefined : "show"}
+      whileInView="show"
       viewport={{ once: true, amount: 0.6 }}
       variants={{
         hidden: {},
-        show: { transition: { staggerChildren: 0.08 } },
+        show: { transition: { staggerChildren: reduced ? 0 : 0.08 } },
       }}
     >
-      {cells.map((_, i) => (
-        <motion.span
-          key={i}
-          className="h-5 w-5 rounded"
-          variants={{
-            hidden: { backgroundColor: i < 6 ? "#0d9488" : "#99f6e4" },
-            show: {
-              backgroundColor: i < 6 ? "#0d9488" : "#99f6e4",
-            },
-          }}
-          transition={{ duration: 0 }}
-        />
-      ))}
+      {cells.map((_, i) => {
+        const finalColor = i < 6 ? "#0d9488" : "#99f6e4";
+        return (
+          <motion.span
+            key={i}
+            className="h-5 w-5 rounded"
+            variants={{
+              hidden: { backgroundColor: reduced ? finalColor : "#f1f5f9" },
+              show: { backgroundColor: finalColor },
+            }}
+            transition={reduced ? { duration: 0 } : { duration: 0.3 }}
+          />
+        );
+      })}
     </motion.div>
   );
 }
