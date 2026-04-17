@@ -29,7 +29,7 @@ export function StickyHeader({
     <div
       className={`sticky top-0 z-50 w-full transition-[background-color,border-color,backdrop-filter] duration-300 ${
         showBackground
-          ? "border-b border-slate-200 bg-white/80 backdrop-blur-md"
+          ? "border-b border-slate-200/70 bg-white/60 backdrop-blur-lg"
           : "border-b border-transparent bg-transparent"
       }`}
     >
