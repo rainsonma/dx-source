@@ -91,7 +91,7 @@ export function Footer() {
             © 2026 douxue.fun 版权所有
           </span>
           <span className="text-[13px] text-slate-400">
-            京公网安备 {PLACEHOLDERS.pscRecordNo} · 京 ICP 备 {PLACEHOLDERS.icpNumber}
+            京 ICP 备 {PLACEHOLDERS.icpNumber} · 京公网安备 {PLACEHOLDERS.pscRecordNo}
           </span>
         </div>
       </div>
