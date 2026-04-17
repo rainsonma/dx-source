@@ -7,7 +7,6 @@ const LEGAL_LINKS: { label: string; href: string }[] = [
   { label: "隐私政策", href: "/docs/account/privacy-policy" },
   { label: "监护人同意书", href: "/docs/account/guardian-consent" },
   { label: "产品服务协议", href: "/docs/account/product-service" },
-  { label: "Cookie 政策", href: "/docs/account/cookie-policy" },
 ];
 
 const footerColumns = [

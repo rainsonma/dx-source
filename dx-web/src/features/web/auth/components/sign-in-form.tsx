@@ -42,7 +42,6 @@ function AgreementCheckbox({
         <AgreementLink slug="user-agreement" />
         <AgreementLink slug="privacy-policy" />
         <AgreementLink slug="guardian-consent" />
-        <AgreementLink slug="cookie-policy" />
       </span>
     </label>
   );

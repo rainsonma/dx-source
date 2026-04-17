@@ -2,7 +2,6 @@ import { UserAgreementDoc } from "./documents/user-agreement";
 import { PrivacyPolicyDoc } from "./documents/privacy-policy";
 import { GuardianConsentDoc } from "./documents/guardian-consent";
 import { ProductServiceDoc } from "./documents/product-service";
-import { CookiePolicyDoc } from "./documents/cookie-policy";
 import { EFFECTIVE_DATE, LAST_UPDATED } from "./constants";
 import type { LegalAgreement, LegalAgreementSlug } from "./types";
 
@@ -11,7 +10,6 @@ export {
   PrivacyPolicyDoc,
   GuardianConsentDoc,
   ProductServiceDoc,
-  CookiePolicyDoc,
 };
 
 export const LEGAL_AGREEMENTS: LegalAgreement[] = [
@@ -54,16 +52,6 @@ export const LEGAL_AGREEMENTS: LegalAgreement[] = [
     effectiveDate: EFFECTIVE_DATE,
     lastUpdated: LAST_UPDATED,
     Component: ProductServiceDoc,
-  },
-  {
-    slug: "cookie-policy",
-    title: "Cookie 政策",
-    shortTitle: "《Cookie 政策》",
-    description:
-      "我们在斗学网站使用的 Cookie 及类似技术的类型、目的与您的选择。",
-    effectiveDate: EFFECTIVE_DATE,
-    lastUpdated: LAST_UPDATED,
-    Component: CookiePolicyDoc,
   },
 ];
 

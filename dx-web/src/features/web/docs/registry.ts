@@ -66,7 +66,6 @@ import {
   PrivacyPolicyDoc,
   GuardianConsentDoc,
   ProductServiceDoc,
-  CookiePolicyDoc,
 } from "@/features/com/legal/registry";
 
 export const DOC_CATEGORIES: DocCategory[] = [
@@ -517,13 +516,6 @@ export const DOC_CATEGORIES: DocCategory[] = [
         description:
           "会员订阅与支付、服务暂停与终止、退款规则、知识产权及争议解决等条款。",
         Component: ProductServiceDoc,
-      },
-      {
-        slug: "cookie-policy",
-        title: "Cookie 政策",
-        description:
-          "我们在斗学网站使用的 Cookie 及类似技术的类型、目的与您的选择。",
-        Component: CookiePolicyDoc,
       },
     ],
   },

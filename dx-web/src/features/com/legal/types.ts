@@ -4,8 +4,7 @@ export type LegalAgreementSlug =
   | "user-agreement"
   | "privacy-policy"
   | "guardian-consent"
-  | "product-service"
-  | "cookie-policy";
+  | "product-service";
 
 export type LegalAgreement = {
   slug: LegalAgreementSlug;

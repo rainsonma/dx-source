@@ -596,8 +596,7 @@ export function UserAgreementDoc() {
         <p>
           本协议与以下文件共同构成用户与本平台之间关于使用本平台服务的完整协议，并取代此前的口头或书面约定：
           <AgreementLink slug="privacy-policy" />、
-          <AgreementLink slug="product-service" />、
-          <AgreementLink slug="cookie-policy" />。
+          <AgreementLink slug="product-service" />。
         </p>
 
         <p>
