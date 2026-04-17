@@ -50,7 +50,7 @@ export default function AiCustomSentence() {
       <DocSection id="cost" title="每一步都消耗能量豆">
         <p>
           AI 随心学的每一步都要消耗能量豆。能量豆是斗学的软通货，每月会员自动赠送一部分，也可以单独购买。如果某一步 AI 生成失败（网络、模型异常），消耗的豆会自动退还，不会白白扣掉。详情见{" "}
-          <DocLink href="/docs/membership/beans-monthly">月度赠送与清零</DocLink>
+          <DocLink href="/wiki/membership/beans-monthly">月度赠送与清零</DocLink>
           。
         </p>
         <DocCallout variant="warning" title="仅 VIP 可用">

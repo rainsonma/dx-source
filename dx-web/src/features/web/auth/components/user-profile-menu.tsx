@@ -49,7 +49,7 @@ const menuItems = [
     ],
   },
   {
-    group: [{ label: "帮助文档", icon: FileText, href: "/docs" }],
+    group: [{ label: "Wiki", icon: FileText, href: "/wiki" }],
   },
 ];
 

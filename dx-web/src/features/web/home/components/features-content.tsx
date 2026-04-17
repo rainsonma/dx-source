@@ -230,10 +230,10 @@ export function FeaturesContent() {
             免费注册
           </Link>
           <Link
-            href="/docs"
+            href="/wiki"
             className="rounded-xl border border-slate-300 px-9 py-4 text-base font-medium text-slate-700 hover:bg-slate-50"
           >
-            查看文档
+            查看 Wiki
           </Link>
         </div>
         </div>

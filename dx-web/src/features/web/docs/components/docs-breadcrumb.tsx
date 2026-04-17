@@ -9,14 +9,14 @@ type Props = {
 export function DocsBreadcrumb({ category, topic }: Props) {
   return (
     <div className="flex items-center gap-2 text-[13px]">
-      <Link href="/docs" className="text-slate-400 hover:text-slate-600">
-        文档
+      <Link href="/wiki" className="text-slate-400 hover:text-slate-600">
+        Wiki
       </Link>
       <span className="text-slate-300">/</span>
       {topic ? (
         <>
           <Link
-            href={`/docs/${category.slug}`}
+            href={`/wiki/${category.slug}`}
             className="text-slate-400 hover:text-slate-600"
           >
             {category.title}

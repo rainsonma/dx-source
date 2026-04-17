@@ -37,7 +37,7 @@ export default function Review() {
       <DocSection id="flow" title="复习后发生什么">
         <p>
           完成一次复习后，系统按当前间隔把这条词推到下一档。如果你连续正确复习几次，这条词最终会被视为&ldquo;已掌握&rdquo;，不再出现在复习列表里——详情见{" "}
-          <DocLink href="/docs/vocabulary/mastered">已掌握</DocLink>
+          <DocLink href="/wiki/vocabulary/mastered">已掌握</DocLink>
           。
         </p>
       </DocSection>

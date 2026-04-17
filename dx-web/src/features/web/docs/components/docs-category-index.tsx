@@ -40,7 +40,7 @@ export function DocsCategoryIndex({ category }: Props) {
               </div>
             )}
             <Link
-              href={`/docs/${category.slug}/${topic.slug}`}
+              href={`/wiki/${category.slug}/${topic.slug}`}
               className="group flex items-center gap-4 rounded-[10px] border border-slate-200 bg-white p-5 hover:border-slate-300"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-600">

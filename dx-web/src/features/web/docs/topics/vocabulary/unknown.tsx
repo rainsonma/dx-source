@@ -40,7 +40,7 @@ export default function Unknown() {
       <DocSection id="next" title="接下来呢">
         <p>
           加入生词本只是第一步。要让词真正留下来，需要把它转入{" "}
-          <DocLink href="/docs/vocabulary/review">复习本</DocLink>
+          <DocLink href="/wiki/vocabulary/review">复习本</DocLink>
           {" "}
           ——那里按间隔重复的节奏自动安排复习时机，比你自己&ldquo;想起来再翻&rdquo;要有效得多。
         </p>

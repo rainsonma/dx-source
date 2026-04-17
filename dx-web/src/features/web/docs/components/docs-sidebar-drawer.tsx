@@ -20,7 +20,7 @@ export function DocsSidebarDrawer() {
       <SheetContent side="left" className="w-[280px] overflow-y-auto p-5">
         <SheetHeader>
           <SheetTitle className="text-left text-sm font-extrabold">
-            斗学文档
+            斗学 Wiki
           </SheetTitle>
         </SheetHeader>
         <div className="mt-4">

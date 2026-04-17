@@ -11,13 +11,13 @@ export function DocsSidebar() {
   return (
     <div className="flex flex-col gap-1">
       <Link
-        href="/docs"
+        href="/wiki"
         className="mb-3 text-sm font-extrabold tracking-tight text-slate-900 hover:text-teal-600"
       >
-        斗学文档
+        斗学 Wiki
       </Link>
       {DOC_CATEGORIES.map((category, ci) => {
-        const catHref = `/docs/${category.slug}`;
+        const catHref = `/wiki/${category.slug}`;
         const isActiveCat = pathname?.startsWith(catHref) ?? false;
         const CatIcon = category.icon;
         return (
@@ -39,7 +39,7 @@ export function DocsSidebar() {
             </Link>
             <div className="mt-1 flex flex-col gap-1">
               {category.topics.map((topic) => {
-                const topicHref = `/docs/${category.slug}/${topic.slug}`;
+                const topicHref = `/wiki/${category.slug}/${topic.slug}`;
                 const isActiveTopic = pathname === topicHref;
                 return (
                   <Fragment key={topic.slug}>

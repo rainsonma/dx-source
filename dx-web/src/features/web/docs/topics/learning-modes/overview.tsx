@@ -47,7 +47,7 @@ export default function LearningModesOverview() {
       <DocSection id="shared-basics" title="多种模式的共同基础">
         <p>
           不管你选哪一种模式，底层都共享同一套体系：四种游戏类型、三个难度（初/中/高）、四种学习模式（听说读写）。也就是说你的游戏选择一旦确定，切换学习模式不会让你重新学一套新机制——详见{" "}
-          <DocLink href="/docs/learning-modes/game-types">游戏类型与技能矩阵</DocLink>
+          <DocLink href="/wiki/learning-modes/game-types">游戏类型与技能矩阵</DocLink>
           。
         </p>
       </DocSection>

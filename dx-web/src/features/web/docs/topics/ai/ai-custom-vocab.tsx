@@ -27,7 +27,7 @@ export default function AiCustomVocab() {
         />
         <p>
           词汇版本的流程和句子版完全一致，同样是四步；每一步同样消耗能量豆，失败自动退还。区别只在于生成内容的类型。详见{" "}
-          <DocLink href="/docs/ai/ai-custom-sentence">AI 随心学（句子）</DocLink>
+          <DocLink href="/wiki/ai/ai-custom-sentence">AI 随心学（句子）</DocLink>
           对流程的完整介绍。
         </p>
       </DocSection>

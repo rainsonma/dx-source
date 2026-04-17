@@ -15,10 +15,10 @@ export function LandingHeader({ isLoggedIn = false }: LandingHeaderProps) {
       </Link>
       <nav className="hidden items-center gap-9 lg:flex">
         <Link
-          href="/docs"
+          href="/wiki"
           className="text-[15px] font-medium text-slate-500 hover:text-slate-700"
         >
-          文档
+          Wiki
         </Link>
         <Link
           href="/features"

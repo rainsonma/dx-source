@@ -48,7 +48,7 @@ export default function FirstSession() {
       <DocSection id="what-next" title="接下来可以做什么">
         <p>
           打完第一关只是开始。你可以先看看{" "}
-          <DocLink href="/docs/learning-modes/overview">多种学习模式</DocLink>
+          <DocLink href="/wiki/learning-modes/overview">多种学习模式</DocLink>
           {" "}
           了解单人、PK、小组之间的差异；也可以直接尝试一下 PK
           模式，实时对战的紧张节奏会比单人更刺激（PK 需要 VIP 会员）。

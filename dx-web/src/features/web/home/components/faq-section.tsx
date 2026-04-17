@@ -22,47 +22,47 @@ const FAQS: Faq[] = [
   {
     q: "斗学适合什么水平的学习者？",
     a: "从零基础到雅思/托福备考都可以：课程按 CEFR 难度分级，多种玩法覆盖听说读写，每天 10 分钟就能坚持。",
-    href: "/docs/getting-started/what-is-douxue",
+    href: "/wiki/getting-started/what-is-douxue",
   },
   {
     q: "能量豆是什么？怎么获得和消耗？",
     a: "能量豆用于使用 AI 随心学等高级功能。注册赠送、每日登录、购买、或会员月度赠送都可获得；AI 生成失败会全额退还。",
-    href: "/docs/membership/beans-monthly",
+    href: "/wiki/membership/beans-monthly",
   },
   {
     q: "免费用户能玩到哪些内容？",
     a: "免费用户可以玩每个课程的首关、使用基础游戏模式、加入少量学习群。付费后解锁全部关卡与 PK、小组、AI 等能力。",
-    href: "/docs/membership/tiers-compare",
+    href: "/wiki/membership/tiers-compare",
   },
   {
     q: "会员自动续费怎么关掉？",
     a: "在购买页或订单中心随时关闭自动续费，当前周期到期后不再扣款，已享权益保留到期。",
-    href: "/docs/membership/purchase-flow",
+    href: "/wiki/membership/purchase-flow",
   },
   {
     q: "未成年人可以用吗？需要家长同意吗？",
     a: "8 周岁以上可以使用；涉及付费功能需要监护人阅读并同意《监护人同意书》。我们对未成年人有专门的隐私与内容保护规则。",
-    href: "/docs/account/guardian-consent",
+    href: "/wiki/account/guardian-consent",
   },
   {
     q: "支持微信支付和支付宝吗？",
     a: "支持。订单创建后会跳转到选定的支付方式，30 分钟内未支付订单自动失效。",
-    href: "/docs/membership/purchase-flow",
+    href: "/wiki/membership/purchase-flow",
   },
   {
     q: "我的学习数据会怎么保护？",
     a: "数据存储在中国境内，采用传输与存储加密。你可以随时查询、更正、删除或注销账号。完整条款见《隐私政策》。",
-    href: "/docs/account/privacy-policy",
+    href: "/wiki/account/privacy-policy",
   },
   {
     q: "邀请返佣什么时候到账？",
     a: "永久会员邀请的新用户首次付费后，按 30% 比例计入你的返佣余额；完成攻略期与结算后按规则发放。",
-    href: "/docs/invites/referral-program",
+    href: "/wiki/invites/referral-program",
   },
   {
     q: "如何提交反馈或报告游戏问题？",
     a: "在「我的 → 提交反馈」页提交，支持多种类型；游戏内关卡问题可以直接从结算页上报。",
-    href: "/docs/account/feedback",
+    href: "/wiki/account/feedback",
   },
 ];
 

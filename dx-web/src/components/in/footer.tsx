@@ -5,26 +5,26 @@ import { PLACEHOLDERS } from "@/features/com/legal/constants";
 type FooterLink = { label: string; href: string };
 
 const LEGAL_LINKS: FooterLink[] = [
-  { label: "用户协议", href: "/docs/account/user-agreement" },
-  { label: "隐私政策", href: "/docs/account/privacy-policy" },
-  { label: "监护人同意书", href: "/docs/account/guardian-consent" },
-  { label: "产品服务协议", href: "/docs/account/product-service" },
+  { label: "用户协议", href: "/wiki/account/user-agreement" },
+  { label: "隐私政策", href: "/wiki/account/privacy-policy" },
+  { label: "监护人同意书", href: "/wiki/account/guardian-consent" },
+  { label: "产品服务协议", href: "/wiki/account/product-service" },
 ];
 
 const PRODUCT_LINKS: FooterLink[] = [
-  { label: "多种学习模式", href: "/docs/learning-modes" },
-  { label: "课程与游戏", href: "/docs/courses-games" },
-  { label: "AI 智能学习", href: "/docs/ai" },
-  { label: "词汇管理", href: "/docs/vocabulary" },
-  { label: "成长与激励", href: "/docs/progress" },
+  { label: "多种学习模式", href: "/wiki/learning-modes" },
+  { label: "课程与游戏", href: "/wiki/courses-games" },
+  { label: "AI 智能学习", href: "/wiki/ai" },
+  { label: "词汇管理", href: "/wiki/vocabulary" },
+  { label: "成长与激励", href: "/wiki/progress" },
 ];
 
 const COMMUNITY_LINKS: FooterLink[] = [
-  { label: "斗学社与好友", href: "/docs/community" },
-  { label: "学习小组", href: "/docs/groups" },
-  { label: "会员与能量豆", href: "/docs/membership" },
-  { label: "邀请与兑换", href: "/docs/invites" },
-  { label: "提交反馈", href: "/docs/account/feedback" },
+  { label: "斗学社与好友", href: "/wiki/community" },
+  { label: "学习小组", href: "/wiki/groups" },
+  { label: "会员与能量豆", href: "/wiki/membership" },
+  { label: "邀请与兑换", href: "/wiki/invites" },
+  { label: "提交反馈", href: "/wiki/account/feedback" },
 ];
 
 const linkColumns: { title: string; links: FooterLink[] }[] = [

@@ -47,11 +47,11 @@ export function FinalCtaSection({ isLoggedIn }: FinalCtaSectionProps) {
             </span>
           </Link>
           <Link
-            href="/docs"
+            href="/wiki"
             className="flex items-center gap-2.5 rounded-[14px] border-[1.5px] border-slate-200 bg-white/70 px-8 py-[18px] transition-colors hover:bg-white"
           >
             <span className="text-[15px] font-medium text-slate-900">
-              查看使用文档
+              查看 Wiki
             </span>
             <ArrowRight className="h-[18px] w-[18px] text-slate-900" />
           </Link>

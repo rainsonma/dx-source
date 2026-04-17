@@ -12,7 +12,7 @@ export function DocsPrevNext({ prev, next }: Props) {
     <div className="flex items-stretch justify-between gap-4">
       {prev ? (
         <Link
-          href={`/docs/${prev.category.slug}/${prev.topic.slug}`}
+          href={`/wiki/${prev.category.slug}/${prev.topic.slug}`}
           className="flex flex-col items-start gap-1 rounded-lg border border-slate-200 px-4 py-3 hover:border-slate-300"
         >
           <span className="text-xs text-slate-400">上一页</span>
@@ -32,7 +32,7 @@ export function DocsPrevNext({ prev, next }: Props) {
 
       {next ? (
         <Link
-          href={`/docs/${next.category.slug}/${next.topic.slug}`}
+          href={`/wiki/${next.category.slug}/${next.topic.slug}`}
           className="flex flex-col items-end gap-1 rounded-lg border border-slate-200 px-4 py-3 hover:border-slate-300"
         >
           <span className="text-xs text-slate-400">下一页</span>

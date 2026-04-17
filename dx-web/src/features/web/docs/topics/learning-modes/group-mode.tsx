@@ -13,7 +13,7 @@ export default function GroupMode() {
         </p>
         <p>
           要玩小组模式，你必须先加入一个学习小组。如果你还没有小组，先去{" "}
-          <DocLink href="/docs/groups/create-join">创建或加入一个小组</DocLink>
+          <DocLink href="/wiki/groups/create-join">创建或加入一个小组</DocLink>
           。
         </p>
       </DocSection>

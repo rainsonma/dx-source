@@ -152,7 +152,7 @@ export function MembershipSection() {
             </p>
           </div>
           <Link
-            href="/docs/invites/referral-program"
+            href="/wiki/invites/referral-program"
             className="inline-flex items-center gap-2 rounded-lg bg-white/15 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/25"
           >
             查看规则

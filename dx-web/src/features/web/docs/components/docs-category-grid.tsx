@@ -13,7 +13,7 @@ export function DocsCategoryGrid() {
           return (
             <Link
               key={category.slug}
-              href={`/docs/${category.slug}`}
+              href={`/wiki/${category.slug}`}
               className="flex flex-col gap-2.5 rounded-[10px] border border-slate-200 bg-white p-5 hover:border-slate-300"
             >
               <div

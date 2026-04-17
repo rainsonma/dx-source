@@ -71,7 +71,7 @@ export default function SingleMode() {
       <DocSection id="combo" title="连击和评分">
         <p>
           连续答对题目会触发 combo 奖励，3 / 5 / 10 连击分别给额外分数。关卡结束后根据正确率评出四档成绩（优秀 / 良好 / 及格 / 继续加油），只有达到 60% 正确率才会发放经验奖励。完整规则见{" "}
-          <DocLink href="/docs/progress/combo-rating">连击与评分</DocLink>
+          <DocLink href="/wiki/progress/combo-rating">连击与评分</DocLink>
           。
         </p>
       </DocSection>

@@ -39,7 +39,7 @@ export default function GroupsOverview() {
       <DocSection id="two-formats" title="两种玩法">
         <p>
           小组可以以两种方式玩游戏：group_solo（组内所有人各自闯同一游戏，按个人排名结算）或 group_team（成员分成若干子分组，分队对战）。具体差异见{" "}
-          <DocLink href="/docs/learning-modes/group-mode">小组共学模式</DocLink>
+          <DocLink href="/wiki/learning-modes/group-mode">小组共学模式</DocLink>
           。
         </p>
       </DocSection>
