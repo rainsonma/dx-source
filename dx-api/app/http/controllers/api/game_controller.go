@@ -75,13 +75,16 @@ func (c *GameController) Played(ctx contractshttp.Context) contractshttp.Respons
 }
 
 // Detail returns full game detail with levels.
+// Ownership-aware: the authenticated user can view their own private published games.
 func (c *GameController) Detail(ctx contractshttp.Context) contractshttp.Response {
 	gameID := ctx.Request().Route("id")
 	if gameID == "" {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "game id is required")
 	}
 
-	detail, err := services.GetGameDetail(gameID)
+	userID, _ := facades.Auth(ctx).Guard("user").ID()
+
+	detail, err := services.GetGameDetail(gameID, userID)
 	if err != nil {
 		if errors.Is(err, services.ErrGameNotFound) {
 			return helpers.Error(ctx, http.StatusNotFound, consts.CodeGameNotFound, "游戏不存在")

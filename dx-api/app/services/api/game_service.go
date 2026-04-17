@@ -348,13 +348,14 @@ func GetPlayedGames(userID string) ([]PlayedGameData, error) {
 }
 
 // GetGameDetail returns full game detail with levels.
-func GetGameDetail(gameID string) (*GameDetailData, error) {
+// Private games are only returned when userID matches the owner.
+func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 	var game models.Game
 	if err := facades.Orm().Query().
 		Where("id", gameID).
 		Where("status", consts.GameStatusPublished).
 		Where("is_active", true).
-		Where("is_private", false).
+		Where("(is_private = ? OR user_id = ?)", false, userID).
 		First(&game); err != nil {
 		return nil, fmt.Errorf("failed to find game: %w", err)
 	}
