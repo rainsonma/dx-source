@@ -496,7 +496,7 @@ export function GameCardItem({ game, asDiv, onClick }: { game: GameCard; asDiv?:
   );
 
   const infoBlock = (
-    <div className="flex flex-1 flex-col gap-2 p-3 pb-2">
+    <div className="flex flex-1 flex-col justify-between gap-2 p-3">
       <div className="flex flex-col gap-1">
         <span className="text-sm font-bold text-foreground">{game.name}</span>
         {game.description && (
@@ -625,7 +625,7 @@ export function GameCardItem({ game, asDiv, onClick }: { game: GameCard; asDiv?:
   );
 
   const footer = (
-    <div className="flex items-center justify-between px-3 pb-3">
+    <div className="flex items-center justify-between px-3 pb-3 pt-0">
       {modeChip}
       <div className="flex items-center gap-2">
         {asDiv ? enterButtonGated : enterButtonVip}
