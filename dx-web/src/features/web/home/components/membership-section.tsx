@@ -28,7 +28,7 @@ interface TierConfig {
 const TIERS: TierConfig[] = [
   {
     grade: USER_GRADES.FREE,
-    features: ["部分关卡", "基础游戏", "加入少量学习群"],
+    features: ["部分关卡", "基础游戏"],
     cardClassName: "bg-white",
     ctaClassName: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
   },
