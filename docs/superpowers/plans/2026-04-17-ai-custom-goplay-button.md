@@ -88,15 +88,20 @@ with:
 
 ```go
 // GetGameDetail returns full game detail with levels.
-// Private games are only returned when userID matches the owner.
+// Pass an empty userID for anonymous callers (public games only); when
+// userID is populated, private games are also returned if it matches the owner.
 func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 	var game models.Game
-	if err := facades.Orm().Query().
+	q := facades.Orm().Query().
 		Where("id", gameID).
 		Where("status", consts.GameStatusPublished).
-		Where("is_active", true).
-		Where("(is_private = ? OR user_id = ?)", false, userID).
-		First(&game); err != nil {
+		Where("is_active", true)
+	if userID == "" {
+		q = q.Where("is_private", false)
+	} else {
+		q = q.Where("(is_private = ? OR user_id = ?)", false, userID)
+	}
+	if err := q.First(&game); err != nil {
 		return nil, fmt.Errorf("failed to find game: %w", err)
 	}
 ```
@@ -104,8 +109,9 @@ func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 Nothing else in the function changes. The rest of the function (levels, cover, category, press, author lookups) is unaffected.
 
 Notes on the filter:
-- When `userID == ""`, `user_id = ''` never matches real UUIDs and evaluates to NULL for rows where `user_id IS NULL`, so the `OR` reduces to `is_private = false` — i.e. the previous public-only behavior.
-- Non-owners of a private game continue to get `ErrGameNotFound` (the guard below the query already returns that when `game.ID == ""`).
+- The anonymous branch must avoid `user_id = ?` entirely. `user_id` is a Postgres `uuid` column, so a literal `''` fails the cast at parse time (`ERROR: invalid input syntax for type uuid: ""`) before any row is evaluated. Branching on empty `userID` keeps anonymous calls on a public-only predicate.
+- When `userID` is a real UUID, the parenthesized `OR` correctly matches either public games or the caller's own games.
+- Non-owners of a private game continue to get `ErrGameNotFound` (the guard below the query returns that when `game.ID == ""`).
 
 - [ ] **Step 4: Update `GameController.Detail` to read the authenticated user and pass it in**
 

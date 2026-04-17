@@ -74,19 +74,23 @@ Change signature:
 func GetGameDetail(gameID string, userID string) (*GameDetailData, error)
 ```
 
-Replace the filter
+Branch the filter on empty `userID`:
 
 ```go
-.Where("is_private", false)
+q := facades.Orm().Query().
+    Where("id", gameID).
+    Where("status", consts.GameStatusPublished).
+    Where("is_active", true)
+if userID == "" {
+    q = q.Where("is_private", false)
+} else {
+    q = q.Where("(is_private = ? OR user_id = ?)", false, userID)
+}
 ```
 
-with
+The anonymous branch must avoid binding `user_id = ?` because `user_id` is a Postgres `uuid` column — passing `""` fails the cast at parse time (`ERROR: invalid input syntax for type uuid: ""`) before any row is evaluated, returning 500 to every anonymous caller. Branching keeps anonymous callers on the public-only predicate. Authenticated callers (UUID populated) get the `OR` clause that surfaces public games plus their own games.
 
-```go
-.Where("(is_private = ? OR user_id = ?)", false, userID)
-```
-
-When `userID` is `""`, the `user_id = ?` clause never matches (user_id cannot be empty string in practice since it stores UUIDs), so anonymous effectively gets the old behavior. Non-owners of a private game still get `ErrGameNotFound` — no info leak.
+Non-owners of a private game still get `ErrGameNotFound` — no info leak.
 
 Other query paths (`ListPublishedGames`, `SearchGames`, `GetPlayedGames`) are unchanged.
 
