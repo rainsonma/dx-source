@@ -63,9 +63,12 @@ function useTypewriter(lines: string[], active: boolean): string[] {
         return;
       }
       charIndex += 1;
+      const curLine = lineIndex;
+      const curChar = charIndex;
+      const curText = lines[curLine].slice(0, curChar);
       setOut((prev) => {
         const copy = [...prev];
-        copy[lineIndex] = lines[lineIndex].slice(0, charIndex);
+        copy[curLine] = curText;
         return copy;
       });
       if (charIndex >= lines[lineIndex].length) {
