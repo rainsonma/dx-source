@@ -31,6 +31,10 @@ type DashboardData = {
     lastPlayedAt: Date;
   }[];
   todayAnswers: number;
+  greeting: {
+    title: string;
+    subtitle: string;
+  };
 };
 
 type HeatmapData = {
@@ -62,8 +66,14 @@ export default function HallDashboardPage() {
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <GreetingTopBar
-        title={`早上好，${displayName} 👋`}
-        subtitle="继续你的学习之旅，今天也要加油！"
+        title={
+          data?.greeting
+            ? `${data.greeting.title}，${displayName}`
+            : `早上好，${displayName}`
+        }
+        subtitle={
+          data?.greeting?.subtitle ?? "继续你的学习之旅，今天也要加油！"
+        }
       />
       <AdCardsRow />
       <NotificationBanner />
