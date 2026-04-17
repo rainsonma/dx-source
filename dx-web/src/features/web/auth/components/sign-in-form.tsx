@@ -5,7 +5,48 @@ import { Eye, EyeOff, MessageCircle, Loader2, CircleCheck, CircleAlert } from "l
 
 import { WechatQrCard } from "@/features/web/auth/components/wechat-qr-card";
 import { useSignIn } from "@/features/web/auth/hooks/use-signin";
-import { AgreementInlineList } from "@/features/com/legal/components/agreement-inline-list";
+import { AgreementLink } from "@/features/com/legal/components/agreement-link";
+
+function AgreementCheckbox({
+  agreed,
+  onChange,
+}: {
+  agreed: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2">
+      <input
+        name="agreed"
+        type="checkbox"
+        checked={agreed}
+        onChange={onChange}
+        className="sr-only"
+      />
+      <div
+        className={`h-4 w-4 flex-shrink-0 rounded border ${
+          agreed ? "border-teal-600 bg-teal-600" : "border-slate-300"
+        }`}
+      >
+        {agreed && (
+          <svg viewBox="0 0 16 16" className="h-4 w-4 text-white">
+            <path
+              fill="currentColor"
+              d="M6.5 11.5L3 8l1-1 2.5 2.5L11 5l1 1z"
+            />
+          </svg>
+        )}
+      </div>
+      <span className="text-xs text-slate-700">
+        同意{" "}
+        <AgreementLink slug="user-agreement" />、
+        <AgreementLink slug="privacy-policy" />、
+        <AgreementLink slug="guardian-consent" />、
+        <AgreementLink slug="cookie-policy" />
+      </span>
+    </label>
+  );
+}
 
 export function SignInForm() {
   const {
@@ -26,6 +67,8 @@ export function SignInForm() {
     accountPending,
     showPassword,
     togglePassword,
+    agreed,
+    toggleAgreed,
   } = useSignIn();
 
   const emailCodeError =
@@ -166,6 +209,9 @@ export function SignInForm() {
                   />
                 </div>
 
+                {/* Agreement */}
+                <AgreementCheckbox agreed={agreed} onChange={toggleAgreed} />
+
                 {/* Error */}
                 {emailLoginError && (
                   <p className="flex items-center gap-1.5 text-xs text-red-500">
@@ -177,7 +223,7 @@ export function SignInForm() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={emailPending}
+                  disabled={emailPending || !agreed}
                   className="flex h-12 w-full items-center justify-center rounded-[10px] bg-teal-600 text-base font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
                 >
                   {emailPending ? (
@@ -232,6 +278,9 @@ export function SignInForm() {
                 </button>
               </div>
 
+              {/* Agreement */}
+              <AgreementCheckbox agreed={agreed} onChange={toggleAgreed} />
+
               {/* Error */}
               {accountError && (
                 <p className="flex items-center gap-1.5 text-xs text-red-500">
@@ -243,7 +292,7 @@ export function SignInForm() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={accountPending}
+                disabled={accountPending || !agreed}
                 className="flex h-12 w-full items-center justify-center rounded-[10px] bg-teal-600 text-base font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
               >
                 {accountPending ? (
@@ -263,18 +312,6 @@ export function SignInForm() {
 
           {/* Separator */}
           <div className="h-px bg-slate-200" />
-
-          {/* Agreement hint */}
-          <AgreementInlineList
-            prefix="登录即代表同意 "
-            slugs={[
-              "user-agreement",
-              "privacy-policy",
-              "guardian-consent",
-              "cookie-policy",
-            ]}
-            className="text-xs text-slate-400"
-          />
 
           {/* Footer */}
           <div className="flex items-center justify-between">

@@ -201,7 +201,7 @@ export function SignUpForm({ hasInviteRef }: SignUpFormProps) {
                 )}
               </div>
               <span className="text-xs text-slate-700">
-                我已阅读并同意{" "}
+                同意{" "}
                 <AgreementLink slug="user-agreement" />、
                 <AgreementLink slug="privacy-policy" />、
                 <AgreementLink slug="guardian-consent" />、

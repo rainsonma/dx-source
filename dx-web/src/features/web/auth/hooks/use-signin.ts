@@ -41,6 +41,7 @@ export function useSignIn() {
   const [email, setEmail] = useState("");
   const [countdown, setCountdown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -171,6 +172,10 @@ export function useSignIn() {
     setShowPassword((prev) => !prev);
   }, []);
 
+  const toggleAgreed = useCallback(() => {
+    setAgreed((prev) => !prev);
+  }, []);
+
   return {
     activeTab,
     setActiveTab,
@@ -195,5 +200,7 @@ export function useSignIn() {
     // Shared
     showPassword,
     togglePassword,
+    agreed,
+    toggleAgreed,
   };
 }
