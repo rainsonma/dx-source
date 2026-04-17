@@ -1,6 +1,7 @@
 package consts
 
 import (
+	"slices"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -77,9 +78,9 @@ func TestPickGreetingSubtitleInBand(t *testing.T) {
 		pool := greetingBands[bandIdx].subtitles
 		for _, hour := range hours {
 			tt := time.Date(2026, 4, 17, hour, 0, 0, 0, shanghai)
-			for i := 0; i < 50; i++ {
+			for i := range 50 {
 				g := PickGreeting(tt)
-				if !containsString(pool, g.Subtitle) {
+				if !slices.Contains(pool, g.Subtitle) {
 					t.Errorf("hour %d iter %d: subtitle %q not in band %d pool",
 						hour, i, g.Subtitle, bandIdx)
 				}
@@ -109,13 +110,4 @@ func TestGreetingBandInvariants(t *testing.T) {
 			}
 		}
 	}
-}
-
-func containsString(ss []string, s string) bool {
-	for _, v := range ss {
-		if v == s {
-			return true
-		}
-	}
-	return false
 }
