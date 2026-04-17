@@ -3,6 +3,10 @@ package consts
 import (
 	"math/rand/v2"
 	"time"
+
+	// Embed the tzdata database into the binary so time.LoadLocation
+	// works without relying on the OS tz database.
+	_ "time/tzdata"
 )
 
 // Greeting is a time-banded greeting for the hall dashboard.
