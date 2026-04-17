@@ -8,6 +8,7 @@ import {
   staggerChildVariants,
   staggerContainerVariants,
 } from "@/features/web/home/helpers/motion-presets";
+import { usePrefersReducedMotion } from "@/features/web/home/hooks/use-in-view";
 
 const LEVELS = [
   { label: "Lv.01", done: true },
@@ -40,6 +41,8 @@ const VOCAB = [
 ];
 
 export function LearningLoopSection() {
+  const reduced = usePrefersReducedMotion();
+
   return (
     <section className="w-full bg-gradient-to-b from-teal-50 to-violet-50 py-[80px] md:py-[100px]">
       <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center gap-10 px-5 md:px-10 md:gap-[60px] lg:px-[120px]">
@@ -89,8 +92,8 @@ export function LearningLoopSection() {
                 ) : (
                   <motion.span
                     className="h-2 w-2 rounded-full bg-violet-500"
-                    animate={{ scale: [1, 1.4, 1] }}
-                    transition={{ duration: 1.6, repeat: Infinity }}
+                    animate={reduced ? undefined : { scale: [1, 1.4, 1] }}
+                    transition={reduced ? undefined : { duration: 1.6, repeat: Infinity }}
                   />
                 )}
               </div>
@@ -104,10 +107,10 @@ export function LearningLoopSection() {
             <div className="relative h-px w-full bg-gradient-to-r from-teal-300 via-teal-500 to-violet-500">
               <motion.span
                 className="absolute -top-1 h-3 w-3 rounded-full bg-teal-500 shadow-[0_0_12px_rgba(13,148,136,0.8)]"
-                initial={{ left: "0%" }}
+                initial={reduced ? { left: "100%" } : { left: "0%" }}
                 whileInView={{ left: "100%" }}
                 viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 1.4, ease: "easeInOut" }}
+                transition={reduced ? { duration: 0 } : { duration: 1.4, ease: "easeInOut" }}
               />
             </div>
             <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs text-slate-500">
