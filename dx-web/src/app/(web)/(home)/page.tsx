@@ -26,7 +26,7 @@ export default async function HomePage() {
       <SocialCommunitySection />
       <StatsSection />
       <TestimonialsSection />
-      <FinalCtaSection />
+      <FinalCtaSection isLoggedIn={isLoggedIn} />
       <Footer />
     </div>
   );
