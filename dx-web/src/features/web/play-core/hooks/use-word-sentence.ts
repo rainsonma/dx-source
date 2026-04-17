@@ -50,8 +50,8 @@ export function useWordSentence() {
   };
 
   const wordProgress = {
-    current: typedWords.length,
-    total: items.length,
+    current: typedWords.filter((w) => w.isAnswer).length,
+    total: items.filter((it) => it.answer).length,
   };
 
   // Auto-skip leading answer:false items starting from a given index
