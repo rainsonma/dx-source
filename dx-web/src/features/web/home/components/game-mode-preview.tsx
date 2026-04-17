@@ -101,33 +101,49 @@ function VocabMatchPreview({ animate }: { animate: boolean }) {
   );
 }
 
+// 2×4 tile grid with 4 matching pairs; tiles pulse when their pair activates.
+const ELIM_TILES: ReadonlyArray<{ text: string; pair: 0 | 1 | 2 | 3 }> = [
+  { text: "apple", pair: 0 },
+  { text: "微笑", pair: 1 },
+  { text: "学习", pair: 2 },
+  { text: "书", pair: 3 },
+  { text: "苹果", pair: 0 },
+  { text: "study", pair: 2 },
+  { text: "smile", pair: 1 },
+  { text: "book", pair: 3 },
+];
+
 function VocabElimPreview({ animate }: { animate: boolean }) {
-  const cells = Array.from({ length: 9 });
   return (
     <Strip>
-      <div className="grid flex-1 grid-cols-9 gap-1">
-        {cells.map((_, i) => (
+      <div className="grid h-full flex-1 grid-cols-4 grid-rows-2 gap-1 py-1">
+        {ELIM_TILES.map((tile, i) => (
           <motion.div
             key={i}
-            className="h-6 rounded-md bg-white shadow-sm"
+            className="flex items-center justify-center rounded-md bg-white text-[10px] font-semibold text-slate-700 shadow-sm"
             animate={
               animate
                 ? {
-                    backgroundColor: [
-                      "#ffffff",
-                      i % 2 === 0 ? "#fce7f3" : "#ccfbf1",
-                      "#ffffff",
-                    ],
-                    scale: [1, 0.9, 1],
+                    backgroundColor: ["#ffffff", "#fce7f3", "#f1f5f9", "#ffffff"],
+                    color: ["#334155", "#be185d", "#94a3b8", "#334155"],
+                    scale: [1, 1.06, 0.95, 1],
                   }
                 : undefined
             }
             transition={
               animate
-                ? { duration: 1.2, delay: 0.06 * i, repeat: Infinity, repeatDelay: 0.6 }
+                ? {
+                    duration: 2.4,
+                    times: [0, 0.35, 0.55, 1],
+                    delay: 0.3 * tile.pair,
+                    repeat: Infinity,
+                    repeatDelay: 0.6,
+                  }
                 : undefined
             }
-          />
+          >
+            {tile.text}
+          </motion.div>
         ))}
       </div>
     </Strip>
