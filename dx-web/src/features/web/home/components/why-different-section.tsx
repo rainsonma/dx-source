@@ -69,7 +69,7 @@ function Row({
       transition={reduced ? undefined : { type: "spring", stiffness: 260, damping: 22 }}
       className="group relative flex flex-col items-stretch gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-shadow hover:shadow-[0_8px_24px_rgba(13,148,136,0.08)] md:flex-row md:items-center md:gap-6 md:p-6"
     >
-      {/* Before cell — slides in from the left with the strike-through drawing across */}
+      {/* Before cell — slides in from the left */}
       <motion.div
         variants={{
           hidden: reduced
@@ -78,20 +78,9 @@ function Row({
           show: { opacity: 1, x: 0 },
         }}
         transition={reduced ? { duration: 0 } : { duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="relative flex-1 text-[15px] text-slate-400"
+        className="flex-1 text-[15px] text-slate-400"
       >
-        <span className="relative inline-block">
-          {row.before}
-          <motion.span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-0 top-1/2 h-[1.5px] bg-red-500"
-            initial={reduced ? { scaleX: 1, originX: 0 } : { scaleX: 0, originX: 0 }}
-            whileInView={{ scaleX: 1 }}
-            viewport={{ once: true, amount: 0.6 }}
-            transition={reduced ? { duration: 0 } : { duration: 0.5, delay: 0.25, ease: "easeOut" }}
-            style={{ width: "100%" }}
-          />
-        </span>
+        {row.before}
       </motion.div>
 
       {/* Arrow — travelling dot slides L→R when row reveals */}
