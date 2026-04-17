@@ -34,13 +34,13 @@ const TIERS: TierConfig[] = [
   },
   {
     grade: USER_GRADES.MONTH,
-    features: ["全部关卡畅玩", "AI 随心学", "月度能量豆"],
+    features: ["全部关卡畅玩", "AI 随心学", "PK + 群组"],
     cardClassName: "bg-white",
     ctaClassName: "bg-teal-600 text-white hover:bg-teal-700",
   },
   {
     grade: USER_GRADES.YEAR,
-    features: ["包含月度全部权益", "更多能量豆月度赠送", "优先客服支持"],
+    features: ["超值优惠套餐", "包含月度全部权益", "优先客服支持"],
     badge: { label: "推荐", className: "bg-teal-600 text-white" },
     cardClassName: "bg-white ring-2 ring-teal-500",
     ctaClassName: "bg-teal-600 text-white hover:bg-teal-700",
