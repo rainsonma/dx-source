@@ -47,6 +47,12 @@ const SCENES = [
     Scene: SceneWordSentence,
   },
   {
+    key: "vocab-battle",
+    label: "词汇对轰",
+    ariaLabel: "切换到词汇对轰演示",
+    Scene: SceneVocabBattle,
+  },
+  {
     key: "vocab-match",
     label: "词汇配对",
     ariaLabel: "切换到词汇配对演示",
@@ -57,12 +63,6 @@ const SCENES = [
     label: "词汇消消乐",
     ariaLabel: "切换到词汇消消乐演示",
     Scene: SceneVocabElim,
-  },
-  {
-    key: "vocab-battle",
-    label: "词汇对轰",
-    ariaLabel: "切换到词汇对轰演示",
-    Scene: SceneVocabBattle,
   },
 ] as const;
 
