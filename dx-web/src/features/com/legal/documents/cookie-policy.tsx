@@ -1,4 +1,5 @@
 import { DocSection } from "@/features/web/docs/primitives/doc-section";
+import { LegalPlaceholder } from "@/features/com/legal/components/legal-placeholder";
 import { LegalPlaceholderNotice } from "@/features/com/legal/components/legal-placeholder-notice";
 import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 import {
@@ -8,14 +9,6 @@ import {
   LAST_UPDATED,
   PLACEHOLDERS,
 } from "@/features/com/legal/constants";
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-amber-50 px-1 py-0.5 font-mono text-[13px] text-amber-700">
-      {children}
-    </span>
-  );
-}
 
 export function CookiePolicyDoc() {
   return (
@@ -28,7 +21,7 @@ export function CookiePolicyDoc() {
       {/* Preamble */}
       <p>
         本 Cookie 政策说明{BRAND}（域名：{DOMAIN}，运营主体{" "}
-        <P>{PLACEHOLDERS.companyName}</P>
+        <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>
         ）在其网站及相关服务中，如何使用 Cookie、LocalStorage
         及其他类似的浏览器存储技术（以下统称
         &ldquo;Cookie 及类似技术&rdquo;）。我们建议您在使用本平台前通读本政策，更多关于个人信息处理的说明详见{" "}
@@ -270,7 +263,7 @@ export function CookiePolicyDoc() {
       <DocSection id="clause-7" title="第7条 联系我们">
         <p>
           如您对本 Cookie 政策有疑问或建议，请通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
           联系我们，我们将在 10 个工作日内予以回复。
         </p>
         <p>

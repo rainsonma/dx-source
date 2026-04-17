@@ -1,5 +1,6 @@
 import { DocSection } from "@/features/web/docs/primitives/doc-section";
 import { DocCallout } from "@/features/web/docs/primitives/doc-callout";
+import { LegalPlaceholder } from "@/features/com/legal/components/legal-placeholder";
 import { LegalPlaceholderNotice } from "@/features/com/legal/components/legal-placeholder-notice";
 import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 import {
@@ -9,14 +10,6 @@ import {
   LAST_UPDATED,
   PLACEHOLDERS,
 } from "@/features/com/legal/constants";
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-amber-50 px-1 py-0.5 font-mono text-[13px] text-amber-700">
-      {children}
-    </span>
-  );
-}
 
 export function UserAgreementDoc() {
   return (
@@ -34,7 +27,7 @@ export function UserAgreementDoc() {
         ）提供的产品和服务。{BRAND}
         系专注于英语学习的在线服务平台，通过游戏化学习机制（任务、等级、排行榜、虚拟道具，包括能量豆等）、社区功能（发帖、评论、小组、关注）及
         AI 辅助能力，为用户提供有趣、高效的英语学习体验。{BRAND}运营主体为{" "}
-        <P>{PLACEHOLDERS.companyName}</P>（注册地址：<P>{PLACEHOLDERS.companyAddr}</P>，以下简称 &ldquo;本平台&rdquo; 或
+        <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>（注册地址：<LegalPlaceholder>{PLACEHOLDERS.companyAddr}</LegalPlaceholder>，以下简称 &ldquo;本平台&rdquo; 或
         &ldquo;运营方&rdquo;）。
       </p>
       <p>
@@ -65,7 +58,7 @@ export function UserAgreementDoc() {
           </li>
           <li>
             <strong>本平台</strong>
-            ：指由 <P>{PLACEHOLDERS.companyName}</P> 运营的{BRAND}
+            ：指由 <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder> 运营的{BRAND}
             产品及其相关服务的统称，涵盖网站（域名：{DOMAIN}
             ）、移动应用、小程序等所有形态的终端。
           </li>
@@ -119,7 +112,7 @@ export function UserAgreementDoc() {
         </p>
         <p>
           账号及密码由用户自行妥善保管。因用户保管不善导致账号被盗用或遭受损失，本平台不承担责任。用户发现账号异常时，应立即通过平台安全中心或联系
-          <P>{PLACEHOLDERS.supportEmail}</P> 申报。
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 申报。
           <strong>
             用户对其账号内的一切操作行为负责，包括但不限于已支付的费用和已使用的虚拟物品。
           </strong>
@@ -317,7 +310,7 @@ export function UserAgreementDoc() {
         <p>
           本平台所有内容及元素，包括但不限于商标、域名、界面设计、源代码、数据库结构、英语学习课程、AI
           算法模型、游戏化机制及题库，均属
-          <P>{PLACEHOLDERS.companyName}</P>
+          <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>
           或其授权方所有，受著作权法、商标法、专利法及其他知识产权法律保护。
         </p>
 
@@ -335,7 +328,7 @@ export function UserAgreementDoc() {
         </p>
         <p>
           若您认为本平台上的某项内容侵犯了您的知识产权，请向{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
           发送书面侵权通知，并提供权利证明、侵权内容链接及联系方式。本平台将在收到完整通知后
           3 个工作日内进行审查，并对经核实的侵权内容依法处理。
         </p>
@@ -497,7 +490,7 @@ export function UserAgreementDoc() {
         <p>
           用户可随时通过 &ldquo;个人主页 — 隐私设置&rdquo;
           管理个人信息授权范围，包括撤回对非必要数据收集的同意、关闭个性化推荐，以及申请查阅、更正或删除本人个人信息。如需进一步协助，请联系{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>
           ，本平台将在法定期限内予以响应。
         </p>
 
@@ -536,7 +529,7 @@ export function UserAgreementDoc() {
         </p>
         <p>
           如无法通过上述路径自主完成注销，可发送注销申请邮件至{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>
           ，提供账号信息及身份证明材料，本平台将在核实身份后 7
           个工作日内协助处理。
         </p>
@@ -558,7 +551,7 @@ export function UserAgreementDoc() {
         </p>
         <p>
           10.2 争议解决：因本协议产生的争议，双方应首先友好协商解决；协商不成的，任何一方均有权向本平台运营方所在地{" "}
-          <P>{PLACEHOLDERS.courtLocation}</P> 有管辖权的人民法院提起诉讼。
+          <LegalPlaceholder>{PLACEHOLDERS.courtLocation}</LegalPlaceholder> 有管辖权的人民法院提起诉讼。
         </p>
         <p>
           10.3 语言：本协议以中文版本为准。如本协议提供其他语言版本，在理解或适用上存在歧义时，以中文版本为准。
@@ -612,8 +605,8 @@ export function UserAgreementDoc() {
         </p>
         <p>
           在适用法律允许的范围内，本协议的最终解释权归{" "}
-          <P>{PLACEHOLDERS.companyName}</P> 所有。如对本协议有任何疑问，请联系{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>。
+          <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder> 所有。如对本协议有任何疑问，请联系{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>。
         </p>
       </DocSection>
     </>

@@ -1,5 +1,6 @@
 import { DocSection } from "@/features/web/docs/primitives/doc-section";
 import { DocCallout } from "@/features/web/docs/primitives/doc-callout";
+import { LegalPlaceholder } from "@/features/com/legal/components/legal-placeholder";
 import { LegalPlaceholderNotice } from "@/features/com/legal/components/legal-placeholder-notice";
 import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 import {
@@ -9,14 +10,6 @@ import {
   LAST_UPDATED,
   PLACEHOLDERS,
 } from "@/features/com/legal/constants";
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-amber-50 px-1 py-0.5 font-mono text-[13px] text-amber-700">
-      {children}
-    </span>
-  );
-}
 
 export function ProductServiceDoc() {
   return (
@@ -32,8 +25,8 @@ export function ProductServiceDoc() {
       <p>
         欢迎您订阅{BRAND}（域名：{DOMAIN}
         ）提供的会员服务。{BRAND}
-        运营主体为 <P>{PLACEHOLDERS.companyName}</P>（注册地址：
-        <P>{PLACEHOLDERS.companyAddr}</P>，以下简称 &ldquo;本平台&rdquo;
+        运营主体为 <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>（注册地址：
+        <LegalPlaceholder>{PLACEHOLDERS.companyAddr}</LegalPlaceholder>，以下简称 &ldquo;本平台&rdquo;
         或 &ldquo;运营方&rdquo;）。
       </p>
       <p>
@@ -66,7 +59,7 @@ export function ProductServiceDoc() {
           </li>
           <li>
             <strong>本平台</strong>
-            ：指由 <P>{PLACEHOLDERS.companyName}</P> 运营的{BRAND}产品及其相关服务的统称，涵盖网站（域名：{DOMAIN}）、移动应用、小程序等所有形态的终端。
+            ：指由 <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder> 运营的{BRAND}产品及其相关服务的统称，涵盖网站（域名：{DOMAIN}）、移动应用、小程序等所有形态的终端。
           </li>
           <li>
             <strong>会员服务</strong>
@@ -357,7 +350,7 @@ export function ProductServiceDoc() {
         <ol className="list-decimal space-y-3 pl-5">
           <li>
             <strong>申请路径：</strong>
-            通过 <P>{PLACEHOLDERS.supportEmail}</P> 提交退款申请，并按客服指引提供材料；
+            通过 <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 提交退款申请，并按客服指引提供材料；
           </li>
           <li>
             <strong>审核时效：</strong>
@@ -463,7 +456,7 @@ export function ProductServiceDoc() {
           </li>
           <li>
             <strong>（b）协助提交路径：</strong>
-            通过 <P>{PLACEHOLDERS.supportEmail}</P> 向客服提交注销申请。
+            通过 <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 向客服提交注销申请。
           </li>
         </ul>
 
@@ -498,7 +491,7 @@ export function ProductServiceDoc() {
       <DocSection id="clause-12" title="第12条 联系我们">
         <p>
           如您对会员服务、本协议条款、退款申请或其他事项有任何疑问，请通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
           与我们联系，本平台将在 5 个工作日内予以响应。
         </p>
       </DocSection>
@@ -510,7 +503,7 @@ export function ProductServiceDoc() {
         </p>
         <p>
           13.2 争议解决：因本协议产生的争议，双方应首先友好协商解决；协商不成的，任何一方有权向本平台运营方所在地{" "}
-          <P>{PLACEHOLDERS.courtLocation}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.courtLocation}</LegalPlaceholder>{" "}
           有管辖权的人民法院提起诉讼。
         </p>
       </DocSection>
@@ -521,7 +514,7 @@ export function ProductServiceDoc() {
           14.1 本协议以本平台相应页面展示的文本为准，本平台将对协议修改进行存档。
         </p>
         <p>
-          14.2 本协议的最终解释权归 <P>{PLACEHOLDERS.companyName}</P>。
+          14.2 本协议的最终解释权归 <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>。
         </p>
       </DocSection>
     </>

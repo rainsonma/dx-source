@@ -1,5 +1,6 @@
 import { DocSection } from "@/features/web/docs/primitives/doc-section";
 import { DocCallout } from "@/features/web/docs/primitives/doc-callout";
+import { LegalPlaceholder } from "@/features/com/legal/components/legal-placeholder";
 import { LegalPlaceholderNotice } from "@/features/com/legal/components/legal-placeholder-notice";
 import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 import {
@@ -9,14 +10,6 @@ import {
   LAST_UPDATED,
   PLACEHOLDERS,
 } from "@/features/com/legal/constants";
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-amber-50 px-1 py-0.5 font-mono text-[13px] text-amber-700">
-      {children}
-    </span>
-  );
-}
 
 export function GuardianConsentDoc() {
   return (
@@ -31,7 +24,7 @@ export function GuardianConsentDoc() {
       <p>
         感谢您对 {BRAND}（域名：{DOMAIN}
         ）的关注与支持。为保护未成年人的合法权益，根据《中华人民共和国未成年人保护法》《中华人民共和国个人信息保护法》《中华人民共和国未成年人网络保护条例》等相关法律法规的要求，我们特制定本《监护人同意书》。在您的孩子注册或使用本平台服务前，请您仔细阅读并理解以下内容。本平台运营主体为{" "}
-        <P>{PLACEHOLDERS.companyName}</P>。
+        <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>。
       </p>
 
       {/* clause-1 */}
@@ -104,7 +97,7 @@ export function GuardianConsentDoc() {
 
         <p>
           3.2 如需行使上述权利，请通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P> 联系我们。更多关于个人信息权利的说明，详见{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 联系我们。更多关于个人信息权利的说明，详见{" "}
           <AgreementLink slug="privacy-policy" />。
         </p>
       </DocSection>
@@ -123,7 +116,7 @@ export function GuardianConsentDoc() {
 
         <p>
           4.2 若您发现您的孩子在使用本平台时存在不当行为或遇到问题，请及时通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P> 与我们联系。
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 与我们联系。
         </p>
       </DocSection>
 
@@ -144,7 +137,7 @@ export function GuardianConsentDoc() {
         <DocCallout variant="info" title="内容举报渠道">
           <p>
             如发现平台内存在不适合未成年人的内容，请通过页面上的举报功能或发送邮件至{" "}
-            <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+            <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
             向我们反馈，我们将在收到举报后 24 小时内予以处理。
           </p>
         </DocCallout>
@@ -166,7 +159,7 @@ export function GuardianConsentDoc() {
 
         <p>
           6.2 本平台依据《中华人民共和国未成年人网络保护条例》对未成年用户实施使用时长管理，相关限制规则以平台公告为准。如监护人认为孩子的使用时长超出合理范围，可通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P> 联系我们申请协助管理。
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 联系我们申请协助管理。
         </p>
       </DocSection>
 
@@ -187,7 +180,7 @@ export function GuardianConsentDoc() {
 
         <p>
           7.3 我们建议监护人定期检查账户消费记录，如有疑问请及时通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P> 与我们联系。
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 与我们联系。
         </p>
 
         <p>
@@ -197,7 +190,7 @@ export function GuardianConsentDoc() {
         <DocCallout variant="warning" title="未成年人消费提示">
           <p>
             本平台不支持未成年人独立完成付费操作。若发现未成年人未经监护人同意擅自发起付费，请及时通过{" "}
-            <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+            <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
             联系我们，我们将按照相关法律法规的规定协助处理。
           </p>
         </DocCallout>
@@ -255,7 +248,7 @@ export function GuardianConsentDoc() {
       <DocSection id="clause-10" title="第10条 联系我们">
         <p>
           10.1 如果您对本同意书有任何疑问，或需要行使监护人权利，请通过{" "}
-          <P>{PLACEHOLDERS.supportEmail}</P> 联系我们。
+          <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder> 联系我们。
         </p>
         <p>我们将在收到您的请求后 15 个工作日内予以回复。</p>
 
@@ -291,7 +284,7 @@ export function GuardianConsentDoc() {
         </ul>
 
         <p>
-          本同意书的最终解释权归 <P>{PLACEHOLDERS.companyName}</P>。
+          本同意书的最终解释权归 <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>。
         </p>
       </DocSection>
     </>

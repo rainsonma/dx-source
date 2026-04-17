@@ -1,5 +1,6 @@
 import { DocSection } from "@/features/web/docs/primitives/doc-section";
 import { DocCallout } from "@/features/web/docs/primitives/doc-callout";
+import { LegalPlaceholder } from "@/features/com/legal/components/legal-placeholder";
 import { LegalPlaceholderNotice } from "@/features/com/legal/components/legal-placeholder-notice";
 import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 import {
@@ -9,14 +10,6 @@ import {
   LAST_UPDATED,
   PLACEHOLDERS,
 } from "@/features/com/legal/constants";
-
-function P({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded bg-amber-50 px-1 py-0.5 font-mono text-[13px] text-amber-700">
-      {children}
-    </span>
-  );
-}
 
 export function PrivacyPolicyDoc() {
   return (
@@ -35,7 +28,7 @@ export function PrivacyPolicyDoc() {
         是专注于英语学习的在线服务平台，通过游戏化学习机制、社区功能及
         AI
         辅助能力为用户提供有趣、高效的英语学习体验。{BRAND}运营主体为{" "}
-        <P>{PLACEHOLDERS.companyName}</P>（以下简称
+        <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>（以下简称
         &ldquo;本平台&rdquo;或&ldquo;运营方&rdquo;）。
       </p>
       <p>
@@ -336,7 +329,7 @@ export function PrivacyPolicyDoc() {
         </p>
         <p>
           您的个人信息存储于位于{" "}
-          <P>{PLACEHOLDERS.dataStorage}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.dataStorage}</LegalPlaceholder>{" "}
           的境内服务器，本平台不对您的个人信息进行跨境传输或存储，法律法规另有规定的除外。
         </p>
 
@@ -406,7 +399,7 @@ export function PrivacyPolicyDoc() {
         <DocCallout variant="warning" title="用户侧安全提示">
           <p>
             为保障您的账号安全，请妥善保管账号密码，避免在公共设备上登录本平台，定期更新密码，并为账号绑定安全的电子邮箱。如发现账号存在异常登录或未授权操作，请立即通过&ldquo;个人主页
-            — 账号安全&rdquo;冻结账号，并联系 <P>{PLACEHOLDERS.supportEmail}</P>。
+            — 账号安全&rdquo;冻结账号，并联系 <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>。
           </p>
         </DocCallout>
       </DocSection>
@@ -461,7 +454,7 @@ export function PrivacyPolicyDoc() {
               </td>
               <td className="border border-slate-200 px-3 py-2 align-top">
                 （a）自主更正：个人主页 → 编辑 → 个人资料 / 账号与安全；（b）客服协助更正：发送邮件至{" "}
-                <P>{PLACEHOLDERS.supportEmail}</P>
+                <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>
               </td>
               <td className="border border-slate-200 px-3 py-2 align-top">
                 自主即时 / 客服 10 个工作日内
@@ -476,7 +469,7 @@ export function PrivacyPolicyDoc() {
               </td>
               <td className="border border-slate-200 px-3 py-2 align-top">
                 （a）自主删除：个人主页 → 注销账号；（b）客服协助：发送邮件至{" "}
-                <P>{PLACEHOLDERS.supportEmail}</P>
+                <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>
               </td>
               <td className="border border-slate-200 px-3 py-2 align-top">
                 自主即时 / 客服 10 个工作日内
@@ -545,7 +538,7 @@ export function PrivacyPolicyDoc() {
           <li>
             <strong>8 周岁以下：</strong>
             不得注册本平台账号。若发现此类误注册账号，监护人可通过{" "}
-            <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+            <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
             反馈，本平台将在 5 个工作日内注销账号并删除相关信息。
           </li>
           <li>
@@ -565,7 +558,7 @@ export function PrivacyPolicyDoc() {
           <strong>7.2 监护人权利</strong>
         </p>
         <p>
-          监护人可通过 <P>{PLACEHOLDERS.supportEmail}</P>{" "}
+          监护人可通过 <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>{" "}
           客服渠道对未成年人的个人信息行使以下权利：
         </p>
         <ul className="list-disc space-y-2 pl-5">
@@ -635,7 +628,7 @@ export function PrivacyPolicyDoc() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong>电子邮箱：</strong>
-            <P>{PLACEHOLDERS.supportEmail}</P>
+            <LegalPlaceholder>{PLACEHOLDERS.supportEmail}</LegalPlaceholder>
           </li>
         </ul>
         <p>
@@ -661,7 +654,7 @@ export function PrivacyPolicyDoc() {
         </p>
         <p>
           在适用法律允许的范围内，本隐私政策的最终解释权归{" "}
-          <P>{PLACEHOLDERS.companyName}</P>{" "}
+          <LegalPlaceholder>{PLACEHOLDERS.companyName}</LegalPlaceholder>{" "}
           所有。如对本政策有任何疑问，请通过第9条所列联系方式与我们取得联系。
         </p>
       </DocSection>
