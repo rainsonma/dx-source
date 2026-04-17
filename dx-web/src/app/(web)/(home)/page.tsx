@@ -18,7 +18,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white bg-[length:100%_720px] bg-top bg-no-repeat">
       <StickyHeader isLoggedIn={isLoggedIn} transparent />
-      <HeroSection />
+      <HeroSection isLoggedIn={isLoggedIn} />
       <FeaturesSection />
       <AiFeaturesSection />
       <CoursePlatformSection />
