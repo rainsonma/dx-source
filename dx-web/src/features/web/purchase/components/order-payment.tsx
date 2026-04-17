@@ -13,6 +13,7 @@ import {
   type PaymentMethod,
 } from "@/consts/payment-method";
 import type { Order } from "@/features/web/purchase/types/order.types";
+import { AgreementLink } from "@/features/com/legal/components/agreement-link";
 
 function getProductLabel(order: Order): string {
   if (order.type === ORDER_TYPES.MEMBERSHIP) {
@@ -160,7 +161,9 @@ export function OrderPayment({ orderId }: { orderId: string }) {
             <span className="text-sm text-slate-700">
               我已阅读并同意以下协议
             </span>
-            <span className="text-xs text-teal-600">《斗学服务协议》</span>
+            <span className="text-xs">
+              <AgreementLink slug="product-service" />
+            </span>
           </div>
         </label>
       </div>
