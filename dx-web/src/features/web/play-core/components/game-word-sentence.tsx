@@ -178,6 +178,7 @@ export function GameWordSentence() {
           isRevealed={isRevealed}
           currentWord={currentWord}
           showAnswer={showAnswer}
+          wordProgress={wordProgress}
           onInputChange={setInputValue}
           onKeyDown={handleKeyDown}
         />

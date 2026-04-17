@@ -24,6 +24,7 @@ interface SpellingInputRowProps {
   isRevealed: boolean;
   currentWord: SpellingItem | null;
   showAnswer: boolean;
+  wordProgress: { current: number; total: number };
   onInputChange: (value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
@@ -35,6 +36,7 @@ export function SpellingInputRow({
   isRevealed,
   currentWord,
   showAnswer,
+  wordProgress,
   onInputChange,
   onKeyDown,
 }: SpellingInputRowProps) {
@@ -136,95 +138,121 @@ export function SpellingInputRow({
   );
 
   return (
-    <div
-      ref={containerRef}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={handleDragEnd}
-      onMouseLeave={handleDragEnd}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={handleDragEnd}
-      className="flex items-center gap-2 overflow-x-hidden rounded-[14px] border border-border bg-muted px-4 py-3.5 md:gap-3 md:px-6"
-      style={{
-        maskImage:
-          "linear-gradient(to right, transparent, black 40px, black)",
-        WebkitMaskImage:
-          "linear-gradient(to right, transparent, black 40px, black)",
-      }}
-    >
-      <div className="min-w-0 flex-1" />
-
-      {typedWords.map((word, i) => (
-        <span
-          key={`${i}-${word.text}`}
-          className={`shrink-0 text-base ${
-            word.isAnswer
-              ? "font-medium text-foreground"
-              : "font-medium text-muted-foreground"
-          }`}
-        >
-          {word.text}
-        </span>
-      ))}
-
+    <div className="flex flex-col gap-2">
+      {/* Dot indicators — one per answer word, right-aligned above the bar */}
       <div
-        className={`relative shrink-0 ${isRevealed ? "invisible" : ""} ${hasError ? "animate-[shake_0.4s_ease-in-out]" : ""}`}
-        style={{ width: `${inputWidthCh}ch` }}
+        className={`flex h-2 items-center justify-end gap-1.5 px-4 md:px-6 ${
+          isRevealed ? "invisible" : ""
+        }`}
+        aria-hidden="true"
       >
-        {/* Ghost text — answer hint */}
-        {showAnswer && currentWord && (
-          <span
-            className="pointer-events-none absolute inset-0 flex items-center justify-center text-base font-bold text-slate-300"
-            aria-hidden="true"
-          >
-            {currentWord.item}
-          </span>
-        )}
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputValue}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={handleKeyDownWithSound}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            if (!isRevealed && !overlay) {
-              requestAnimationFrame(() => inputRef.current?.focus());
-            } else {
-              setIsFocused(false);
-            }
-          }}
-          aria-label="输入单词"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          className={`relative z-10 w-full px-1 text-center text-base font-bold outline-none ${
-            showAnswer ? "bg-transparent" : "bg-border"
-          } ${
-            hasError || isWrongInput
-              ? "text-red-600"
-              : isCorrectPrefix
-                ? "text-teal-600"
-                : "text-foreground"
-          }`}
-        />
-        <div className="flex h-[3px] overflow-hidden rounded-full">
-          {isFocused && !(hasError || isWrongInput) && tealPercent > 0 && (
-            <div
-              className="bg-teal-600 transition-all duration-150"
-              style={{ width: `${tealPercent}%` }}
-            />
-          )}
-          <div
-            className={`flex-1 transition-colors ${
-              hasError || isWrongInput
+        {Array.from({ length: wordProgress.total }, (_, i) => {
+          const color =
+            i < wordProgress.current
+              ? "bg-teal-500"
+              : i === wordProgress.current && (hasError || isWrongInput)
                 ? "bg-red-500"
-                : isFocused
-                  ? "bg-slate-900"
-                  : "bg-slate-400"
+                : "bg-slate-300";
+          return (
+            <span
+              key={i}
+              className={`h-1.5 w-1.5 rounded-full transition-colors ${color}`}
+            />
+          );
+        })}
+      </div>
+
+      {/* Existing input bar — drag/scroll handlers and styling unchanged */}
+      <div
+        ref={containerRef}
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={handleDragEnd}
+        onMouseLeave={handleDragEnd}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={handleDragEnd}
+        className="flex items-center gap-2 overflow-x-hidden rounded-[14px] border border-border bg-muted px-4 py-3.5 md:gap-3 md:px-6"
+        style={{
+          maskImage:
+            "linear-gradient(to right, transparent, black 40px, black)",
+          WebkitMaskImage:
+            "linear-gradient(to right, transparent, black 40px, black)",
+        }}
+      >
+        <div className="min-w-0 flex-1" />
+
+        {typedWords.map((word, i) => (
+          <span
+            key={`${i}-${word.text}`}
+            className={`shrink-0 text-base ${
+              word.isAnswer
+                ? "font-medium text-foreground"
+                : "font-medium text-muted-foreground"
+            }`}
+          >
+            {word.text}
+          </span>
+        ))}
+
+        <div
+          className={`relative shrink-0 ${isRevealed ? "invisible" : ""} ${hasError ? "animate-[shake_0.4s_ease-in-out]" : ""}`}
+          style={{ width: `${inputWidthCh}ch` }}
+        >
+          {/* Ghost text — answer hint */}
+          {showAnswer && currentWord && (
+            <span
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-base font-bold text-slate-300"
+              aria-hidden="true"
+            >
+              {currentWord.item}
+            </span>
+          )}
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={handleKeyDownWithSound}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              if (!isRevealed && !overlay) {
+                requestAnimationFrame(() => inputRef.current?.focus());
+              } else {
+                setIsFocused(false);
+              }
+            }}
+            aria-label="输入单词"
+            autoComplete="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            className={`relative z-10 w-full px-1 text-center text-base font-bold outline-none ${
+              showAnswer ? "bg-transparent" : "bg-border"
+            } ${
+              hasError || isWrongInput
+                ? "text-red-600"
+                : isCorrectPrefix
+                  ? "text-teal-600"
+                  : "text-foreground"
             }`}
           />
+          <div className="flex h-[3px] overflow-hidden rounded-full">
+            {isFocused && !(hasError || isWrongInput) && tealPercent > 0 && (
+              <div
+                className="bg-teal-600 transition-all duration-150"
+                style={{ width: `${tealPercent}%` }}
+              />
+            )}
+            <div
+              className={`flex-1 transition-colors ${
+                hasError || isWrongInput
+                  ? "bg-red-500"
+                  : isFocused
+                    ? "bg-slate-900"
+                    : "bg-slate-400"
+              }`}
+            />
+          </div>
         </div>
       </div>
     </div>
