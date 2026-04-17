@@ -64,7 +64,7 @@ const FEATURES: Feature[] = [
     bgClassName: "bg-red-100",
     title: "词汇对轰",
     description:
-      "和 AI 对手拼炮弹。拼对拼快就发射，紧张刺激的单词对战。",
+      "和对手拼炮弹。拼对拼快就发射，紧张刺激的词汇对战。",
   },
 ];
 
