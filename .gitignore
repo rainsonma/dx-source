@@ -2,8 +2,4 @@
 .superpowers/
 .worktrees/
 
-# Reference-only legal source docs (not project code)
-docs/用户协议-登录|注册页.md
-docs/隐私政策 - 登录|注册页.md
-docs/监护人同意书-登录|注册页.md
-docs/产品服务协议 - 登录|注册|付费页.md
+temp
