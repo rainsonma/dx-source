@@ -2,28 +2,35 @@ import Link from "next/link";
 import { GraduationCap } from "lucide-react";
 import { PLACEHOLDERS } from "@/features/com/legal/constants";
 
-const LEGAL_LINKS: { label: string; href: string }[] = [
+type FooterLink = { label: string; href: string };
+
+const LEGAL_LINKS: FooterLink[] = [
   { label: "用户协议", href: "/docs/account/user-agreement" },
   { label: "隐私政策", href: "/docs/account/privacy-policy" },
   { label: "监护人同意书", href: "/docs/account/guardian-consent" },
   { label: "产品服务协议", href: "/docs/account/product-service" },
 ];
 
-const footerColumns = [
-  {
-    title: "斗学产品",
-    links: [
-      "渐进学习法",
-      "AI 智能定制",
-      "多重游戏模式",
-      "丰富课程体系",
-      "社群小组",
-    ],
-  },
-  {
-    title: "斗学团队",
-    links: ["关于我们", "建议反馈", "内容投稿", "商务合作"],
-  },
+const PRODUCT_LINKS: FooterLink[] = [
+  { label: "多种学习模式", href: "/docs/learning-modes" },
+  { label: "课程与游戏", href: "/docs/courses-games" },
+  { label: "AI 智能学习", href: "/docs/ai" },
+  { label: "词汇管理", href: "/docs/vocabulary" },
+  { label: "成长与激励", href: "/docs/progress" },
+];
+
+const COMMUNITY_LINKS: FooterLink[] = [
+  { label: "斗学社与好友", href: "/docs/community" },
+  { label: "学习小组", href: "/docs/groups" },
+  { label: "会员与能量豆", href: "/docs/membership" },
+  { label: "邀请与兑换", href: "/docs/invites" },
+  { label: "提交反馈", href: "/docs/account/feedback" },
+];
+
+const linkColumns: { title: string; links: FooterLink[] }[] = [
+  { title: "服务条款", links: LEGAL_LINKS },
+  { title: "斗学产品", links: PRODUCT_LINKS },
+  { title: "斗学社群", links: COMMUNITY_LINKS },
 ];
 
 export function Footer() {
@@ -33,7 +40,6 @@ export function Footer() {
       className="scroll-mt-20 w-full border-t border-slate-200 bg-slate-50"
     >
       <div className="mx-auto flex max-w-[1280px] flex-col gap-12 px-[120px] pb-10 pt-[60px]">
-        {/* Top section */}
         <div className="flex w-full flex-col gap-10 xl:flex-row xl:justify-between">
           {/* Brand */}
           <div className="flex flex-col gap-4">
@@ -48,35 +54,19 @@ export function Footer() {
 
           {/* Link columns */}
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:flex xl:gap-16">
-            {/* 服务条款 — real links */}
-            <div className="flex flex-col gap-4">
-              <h4 className="text-[13px] font-semibold tracking-[1px] text-slate-900">
-                服务条款
-              </h4>
-              {LEGAL_LINKS.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="text-sm text-slate-500 hover:text-slate-700"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-
-            {/* Other columns — mock spans, unchanged behavior */}
-            {footerColumns.map((col) => (
+            {linkColumns.map((col) => (
               <div key={col.title} className="flex flex-col gap-4">
                 <h4 className="text-[13px] font-semibold tracking-[1px] text-slate-900">
                   {col.title}
                 </h4>
-                {col.links.map((link) => (
-                  <span
-                    key={link}
-                    className="cursor-pointer text-sm text-slate-500 hover:text-slate-700"
+                {col.links.map((l) => (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className="text-sm text-slate-500 hover:text-slate-700"
                   >
-                    {link}
-                  </span>
+                    {l.label}
+                  </Link>
                 ))}
               </div>
             ))}
@@ -94,10 +84,8 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px w-full bg-slate-200" />
 
-        {/* Bottom copyright */}
         <div className="flex w-full flex-col items-center gap-2">
           <span className="text-[13px] text-slate-400">
             © 2026 douxue.fun 版权所有
