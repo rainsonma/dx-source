@@ -40,9 +40,9 @@ For **published** cards, restructure:
 
 - Outer wrapper becomes a `<div>` (no outer `<Link>`), same classes otherwise. Nested `<a>` elements would be invalid HTML once two Link buttons sit inside.
 - Cover + body block wrapped in an inner `<Link href="/hall/ai-custom/{id}">` so the "enter detail" area remains clickable the same way.
-- Footer row keeps the mode chip on the left and replaces the single `进入` span with two small real buttons on the right:
-  - `进入` — `<Link href="/hall/ai-custom/{id}">`, `bg-teal-50 text-teal-600 rounded-[10px] px-2 py-0.5 text-[11px] font-medium`.
-  - `去玩` — `<Link href="/hall/games/{id}">`, `bg-teal-600 text-white rounded-md px-3 py-1 text-[11px] font-semibold flex items-center gap-1`, `Play` icon (`h-3 w-3`) — i.e. keep the exact styling the current single-chip `进入` uses today, so "去玩" looks identical to the chip users already recognise.
+- Footer row keeps the mode chip on the left and replaces the single `进入` span with two small real buttons on the right, sharing the same footprint so they read as a paired pill set:
+  - `进入` — `<Link href="/hall/ai-custom/{id}">`, `flex items-center gap-1 rounded-md bg-teal-50 px-3 py-1 text-[11px] font-semibold text-teal-600`, `Play` icon (`h-3 w-3`).
+  - `去玩` — `<Link href="/hall/games/{id}">`, `flex items-center gap-1 rounded-md bg-teal-600 px-3 py-1 text-[11px] font-semibold text-white`, `Play` icon (`h-3 w-3`). Matches the current single-chip `进入` footprint so the CTA remains familiar.
 
 Non-VIP (`asDiv` mode): when rendered as a gated `<div onClick={openUpgrade}>`, render 进入 and 去玩 as `<button type="button">` elements without their own handlers so the parent `onClick` still fires. No direct navigation happens until the user upgrades.
 
