@@ -314,8 +314,7 @@ export function ProductServiceDoc() {
           <li>
             <strong>弹窗二次确认：</strong>
             支付前弹出独立窗口，要求您勾选 &ldquo;已阅读并同意{" "}
-            <AgreementLink slug="product-service" /> 及{" "}
-            <AgreementLink slug="guardian-consent" />，确认虚拟商品不支持无理由退款&rdquo;；
+            <AgreementLink slug="product-service" />，确认虚拟商品不支持无理由退款&rdquo;；
           </li>
           <li>
             <strong>协议条款加粗：</strong>
