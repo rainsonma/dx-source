@@ -156,18 +156,27 @@ export function AiFeaturesSection() {
             输入主题：<span className="font-semibold text-slate-900">职场面试高频词</span>
           </div>
           <div className="mb-4 flex flex-col gap-2">
-            {stream.map((line, i) => (
-              <div
-                key={i}
-                className="text-sm leading-relaxed text-slate-700"
-              >
-                <span className="mr-2 text-teal-600">›</span>
-                {line}
-                {i === stream.length - 1 && (stream[i]?.length ?? 0) < (STREAM_LINES[i]?.length ?? 0) && (
-                  <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-slate-400 align-middle" />
-                )}
-              </div>
-            ))}
+            {STREAM_LINES.map((full, i) => {
+              const current = stream[i] ?? "";
+              const isTyping = current.length < full.length;
+              const isCaretRow =
+                isTyping &&
+                STREAM_LINES.slice(0, i).every(
+                  (_, j) => (stream[j]?.length ?? 0) === STREAM_LINES[j].length,
+                );
+              return (
+                <div
+                  key={i}
+                  className="text-sm leading-relaxed text-slate-700"
+                >
+                  <span className="mr-2 text-teal-600">›</span>
+                  {current || "\u00A0"}
+                  {isCaretRow && (
+                    <span className="ml-0.5 inline-block h-4 w-[2px] animate-pulse bg-slate-400 align-middle" />
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
             <Coins className="h-3.5 w-3.5 text-amber-500" />
