@@ -6,7 +6,6 @@ import { motion } from "motion/react";
 import { Check, Sparkles, ArrowRight } from "lucide-react";
 import {
   USER_GRADES,
-  USER_GRADE_PRICES,
   USER_GRADE_LABELS,
   type UserGrade,
 } from "@/consts/user-grade";
@@ -19,7 +18,6 @@ import { usePrefersReducedMotion } from "@/features/web/home/hooks/use-in-view";
 
 interface TierConfig {
   grade: UserGrade;
-  period: string;
   features: string[];
   badge?: { label: string; className: string };
   cardClassName: string;
@@ -30,21 +28,18 @@ interface TierConfig {
 const TIERS: TierConfig[] = [
   {
     grade: USER_GRADES.FREE,
-    period: "",
     features: ["部分关卡", "基础游戏", "加入少量学习群"],
     cardClassName: "bg-white",
     ctaClassName: "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
   },
   {
     grade: USER_GRADES.MONTH,
-    period: "/月",
     features: ["全部关卡畅玩", "AI 随心学", "月度能量豆"],
     cardClassName: "bg-white",
     ctaClassName: "bg-teal-600 text-white hover:bg-teal-700",
   },
   {
     grade: USER_GRADES.YEAR,
-    period: "/年",
     features: ["包含月度全部权益", "更多能量豆月度赠送", "优先客服支持"],
     badge: { label: "推荐", className: "bg-teal-600 text-white" },
     cardClassName: "bg-white ring-2 ring-teal-500",
@@ -53,7 +48,6 @@ const TIERS: TierConfig[] = [
   },
   {
     grade: USER_GRADES.LIFETIME,
-    period: "",
     features: ["一次付费，终身生效", "最高能量豆赠送", "邀请好友首充享 30% 返佣"],
     badge: { label: "最超值", className: "bg-violet-600 text-white" },
     cardClassName:
@@ -63,7 +57,6 @@ const TIERS: TierConfig[] = [
 ];
 
 function TierCard({ tier, reduced }: { tier: TierConfig; reduced: boolean }) {
-  const price = USER_GRADE_PRICES[tier.grade];
   const name = USER_GRADE_LABELS[tier.grade];
   const isDark = tier.grade === USER_GRADES.LIFETIME;
   const shouldPulse = tier.pulse && !reduced;
@@ -89,16 +82,6 @@ function TierCard({ tier, reduced }: { tier: TierConfig; reduced: boolean }) {
       <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-slate-900"}`}>
         {name}
       </h3>
-      <div className="flex items-end gap-1">
-        <span className={`text-4xl font-extrabold ${isDark ? "text-white" : "text-slate-900"}`}>
-          ¥{price}
-        </span>
-        {tier.period && (
-          <span className={`mb-1 text-sm ${isDark ? "text-white/70" : "text-slate-500"}`}>
-            {tier.period}
-          </span>
-        )}
-      </div>
       <ul className="flex flex-1 flex-col gap-2">
         {tier.features.map((f) => (
           <li key={f} className={`flex items-start gap-2 text-sm ${isDark ? "text-white/90" : "text-slate-600"}`}>
