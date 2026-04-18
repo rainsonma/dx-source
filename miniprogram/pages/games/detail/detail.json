@@ -1,1 +1,11 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "课程详情",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-cell": "@vant/weapp/cell/index",
+    "van-image": "@vant/weapp/image/index",
+    "van-loading": "@vant/weapp/loading/index"
+  }
+}

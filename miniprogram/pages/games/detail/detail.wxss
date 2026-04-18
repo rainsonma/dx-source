@@ -1,0 +1,70 @@
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding-bottom: 100rpx;
+}
+.center-loader { display: flex; justify-content: center; padding: 40px; }
+.cover-wrap { position: relative; }
+.cover-placeholder-lg {
+  height: 200px;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cover-fav {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: rgba(0,0,0,0.4);
+  border-radius: 50%;
+  padding: 6px;
+}
+.info-section { padding: 16px; }
+.game-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 8px;
+}
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.tag {
+  font-size: 11px;
+  color: var(--primary);
+  background: var(--primary-light);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.game-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.section-header { padding: 0 16px 8px; }
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.levels-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.level-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 14px;
+}
+.level-left { display: flex; align-items: center; gap: 12px; }
+.level-num {
+  width: 28px;
+  height: 28px;
+  background: var(--primary-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.level-name { font-size: 14px; color: var(--text-primary); }
