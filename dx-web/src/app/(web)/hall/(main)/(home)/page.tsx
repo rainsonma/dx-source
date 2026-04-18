@@ -81,17 +81,17 @@ export default function HallDashboardPage() {
       {/* Main content row */}
       <div className="flex flex-col gap-5 lg:grid lg:grid-cols-3">
         {/* Right column - daily check-in (shows first on mobile) */}
-        <div className="order-first lg:order-last">
+        <div className="order-first lg:order-last lg:h-full">
           <DailyChallengeCard />
         </div>
 
         {/* Left column - game progress */}
-        <div className="order-2 lg:order-first">
+        <div className="order-2 lg:order-first lg:h-full">
           <GameProgressCard sessions={data?.sessions ?? []} />
         </div>
 
         {/* Center column - today's stars */}
-        <div className="order-3 lg:order-2">
+        <div className="order-3 lg:order-2 lg:h-full">
           <TodayStarsCard />
         </div>
       </div>
