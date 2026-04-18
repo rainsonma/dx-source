@@ -16,7 +16,11 @@ export default async function HomePage() {
   const isLoggedIn = !!cookieStore.get("dx_token")?.value;
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white bg-[length:100%_620px] bg-top bg-no-repeat">
+    <div className="relative isolate flex min-h-screen w-full flex-col items-center">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white"
+      />
       <StickyHeader isLoggedIn={isLoggedIn} transparent />
       <HeroSection isLoggedIn={isLoggedIn} />
       <WhyDifferentSection />
