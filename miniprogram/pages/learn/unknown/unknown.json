@@ -1,1 +1,12 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "不认识",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-checkbox": "@vant/weapp/checkbox/index",
+    "van-checkbox-group": "@vant/weapp/checkbox-group/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-loading": "@vant/weapp/loading/index"
+  }
+}

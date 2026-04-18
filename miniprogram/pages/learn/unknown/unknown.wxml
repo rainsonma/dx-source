@@ -1,1 +1,34 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <view class="action-bar">
+      <text class="ab-count">{{items.length}} 词</text>
+      <view class="ab-actions">
+        <view class="ab-btn" bind:tap="toggleSelectMode">
+          <text>{{selectMode ? '取消' : '批量删除'}}</text>
+        </view>
+        <view wx:if="{{selectMode && selectedIds.length > 0}}" class="ab-btn delete" bind:tap="bulkDelete">
+          <text>删除({{selectedIds.length}})</text>
+        </view>
+      </view>
+    </view>
+    <van-loading wx:if="{{loading && items.length === 0}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <van-empty wx:if="{{!loading && items.length === 0}}" description="暂无不认识的词" />
+    <van-checkbox-group value="{{selectedIds}}" bind:change="onSelectChange">
+      <view class="word-list">
+        <view wx:for="{{items}}" wx:key="id" class="word-item">
+          <van-checkbox wx:if="{{selectMode}}" name="{{item.id}}" />
+          <view class="word-body">
+            <block wx:if="{{item.contentItem}}">
+              <text class="word-content">{{item.contentItem.content}}</text>
+              <text wx:if="{{item.contentItem.translation}}" class="word-trans">{{item.contentItem.translation}}</text>
+            </block>
+            <text wx:if="{{item.gameName}}" class="word-game">来自：{{item.gameName}}</text>
+          </view>
+        </view>
+      </view>
+    </van-checkbox-group>
+    <view wx:if="{{loading && items.length > 0}}" class="load-more">
+      <van-loading size="20px" color="{{primaryColor}}" />
+    </view>
+  </view>
+</van-config-provider>
