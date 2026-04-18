@@ -5,7 +5,10 @@ export const createPostSchema = z.object({
     .string()
     .min(1, "请输入内容")
     .max(2000, "内容不能超过2000个字符"),
-  image_url: z.string().optional(),
+  image_url: z
+    .string()
+    .regex(/^\/api\/uploads\/images\/\d{4}\/\d{1,2}\/\d{1,2}\/[0-9a-f-]{36}\.(jpg|png)$/, "无效的图片 URL")
+    .optional(),
   tags: z
     .array(z.string().max(20, "标签不能超过20个字符"))
     .max(5, "标签不能超过5个")

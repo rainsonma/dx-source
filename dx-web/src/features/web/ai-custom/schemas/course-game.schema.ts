@@ -27,6 +27,7 @@ export const createCourseGameSchema = z.object({
     .or(z.literal("")),
   coverUrl: z
     .string()
+    .regex(/^\/api\/uploads\/images\/\d{4}\/\d{1,2}\/\d{1,2}\/[0-9a-f-]{36}\.(jpg|png)$/, "无效的封面 URL")
     .optional()
     .or(z.literal("")),
 });
