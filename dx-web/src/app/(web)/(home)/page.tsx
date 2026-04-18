@@ -16,7 +16,7 @@ export default async function HomePage() {
   const isLoggedIn = !!cookieStore.get("dx_token")?.value;
 
   return (
-    <div className="relative isolate flex min-h-screen w-full flex-col items-center">
+    <div className="relative z-0 flex min-h-screen w-full flex-col">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] bg-gradient-to-b from-teal-100 via-blue-100 via-violet-100 via-pink-100 to-white"
