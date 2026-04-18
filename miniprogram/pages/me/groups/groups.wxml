@@ -1,1 +1,43 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <view class="top-actions">
+      <van-button size="small" plain type="primary" bind:click="openCreateDialog">创建团队</van-button>
+      <van-button size="small" plain bind:click="openJoinDialog">加入团队</van-button>
+    </view>
+
+    <van-loading wx:if="{{loading && groups.length === 0}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <van-empty wx:if="{{!loading && groups.length === 0}}" description="暂无团队" />
+
+    <view class="group-list">
+      <view wx:for="{{groups}}" wx:key="id" class="group-item" data-id="{{item.id}}" bind:tap="goDetail">
+        <view class="group-info">
+          <text class="group-name">{{item.name}}</text>
+          <text class="group-meta">{{item.memberCount}}名成员 · {{item.isOwner ? '队长' : '成员'}}</text>
+        </view>
+        <van-icon name="arrow" size="14px" color="#9ca3af" />
+      </view>
+    </view>
+
+    <van-dialog
+      show="{{showCreateDialog}}"
+      title="创建团队"
+      show-cancel-button
+      bind:confirm="createGroup"
+      bind:cancel="closeCreateDialog"
+      confirm-loading="{{creating}}"
+    >
+      <van-field value="{{createName}}" placeholder="团队名称" bind:change="onCreateNameChange" />
+    </van-dialog>
+
+    <van-dialog
+      show="{{showJoinDialog}}"
+      title="加入团队"
+      show-cancel-button
+      bind:confirm="joinGroup"
+      bind:cancel="closeJoinDialog"
+      confirm-loading="{{joining}}"
+    >
+      <van-field value="{{joinCode}}" placeholder="输入邀请码" bind:change="onJoinCodeChange" />
+    </van-dialog>
+  </view>
+</van-config-provider>
