@@ -3,6 +3,6 @@
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-icon": "@vant/weapp/icon/index",
-    "van-skeleton": "@vant/weapp/skeleton/index",
+    "van-skeleton": "@vant/weapp/skeleton/index"
   }
 }
