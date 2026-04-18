@@ -1,1 +1,18 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <view class="login-body">
+      <view class="logo-wrap">
+        <text class="logo-text">斗学</text>
+        <text class="logo-sub">边玩边学，轻松记单词</text>
+      </view>
+      <van-button
+        type="primary"
+        block
+        round
+        loading="{{loading}}"
+        bind:click="handleLogin"
+        custom-style="height:48px;font-size:16px;"
+      >使用微信登录</van-button>
+    </view>
+  </view>
+</van-config-provider>
