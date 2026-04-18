@@ -1,4 +1,4 @@
-import { isLoggedIn, getToken, getUserId } from './utils/auth'
+import { isLoggedIn, getToken, getUserId, clearToken } from './utils/auth'
 import { ws } from './utils/ws'
 
 interface GlobalData {
@@ -32,8 +32,7 @@ App<{ globalData: GlobalData }>({
     ws.connect(token)
     ws.subscribe(`user::${this.globalData.userId}`)
     ws.on('session_replaced', () => {
-      wx.removeStorageSync('dx_token')
-      wx.removeStorageSync('dx_user_id')
+      clearToken()
       wx.reLaunch({ url: '/pages/login/login' })
     })
   },
