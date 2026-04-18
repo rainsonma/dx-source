@@ -23,7 +23,7 @@
       <view class="member-list">
         <view wx:for="{{members}}" wx:key="id" class="member-item">
           <view class="member-avatar">
-            <text>{{(item.nickname || item.username)[0]}}</text>
+            <text>{{item.avatarChar}}</text>
           </view>
           <text class="member-name">{{item.nickname || item.username}}</text>
           <text wx:if="{{item.role === 'owner'}}" class="owner-badge">队长</text>

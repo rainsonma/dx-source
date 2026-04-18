@@ -19,6 +19,7 @@ Page({
     arrowColor: '#9ca3af',
     loading: true,
     profile: null as ProfileData | null,
+    avatarChar: '',
     formatDate,
     gradeLabel,
   },
@@ -36,7 +37,8 @@ Page({
   async loadProfile() {
     try {
       const profile = await api.get<ProfileData>('/api/user/profile')
-      this.setData({ loading: false, profile })
+      const avatarChar = (profile.nickname || profile.username).charAt(0)
+      this.setData({ loading: false, profile, avatarChar })
     } catch {
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })

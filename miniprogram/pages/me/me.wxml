@@ -13,7 +13,7 @@
             fit="cover"
           />
           <view wx:else class="avatar-fallback">
-            <text>{{(profile.nickname || profile.username)[0]}}</text>
+            <text>{{avatarChar}}</text>
           </view>
         </view>
         <view class="profile-info">

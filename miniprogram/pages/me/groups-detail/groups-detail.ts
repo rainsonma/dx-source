@@ -1,6 +1,6 @@
 import { api } from '../../../utils/api'
 
-interface GroupMember { id: string; username: string; nickname: string | null; role: string }
+interface GroupMember { id: string; username: string; nickname: string | null; role: string; avatarChar: string }
 interface GroupDetail {
   id: string; name: string; description: string | null
   ownerName: string; memberCount: number; inviteCode: string; isOwner: boolean
@@ -30,7 +30,11 @@ Page({
         api.get<GroupDetail>(`/api/groups/${id}`),
         api.get<GroupMember[]>(`/api/groups/${id}/members`),
       ])
-      this.setData({ loading: false, group, members })
+      const membersWithChar = members.map(m => ({
+        ...m,
+        avatarChar: (m.nickname || m.username).charAt(0),
+      }))
+      this.setData({ loading: false, group, members: membersWithChar })
       wx.setNavigationBarTitle({ title: group.name })
     } catch {
       this.setData({ loading: false })
