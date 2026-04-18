@@ -1,5 +1,4 @@
 import { api } from '../../utils/api'
-import { formatNumber } from '../../utils/format'
 
 interface LeaderboardEntry {
   id: string; username: string; nickname: string | null
@@ -21,7 +20,6 @@ Page({
     entries: [] as LeaderboardEntry[],
     entries4Plus: [] as LeaderboardEntry[],
     myRank: null as LeaderboardEntry | null,
-    formatNumber,
   },
   onLoad() {
     this.setData({ theme: app.globalData.theme })
@@ -32,7 +30,7 @@ Page({
     (this.getTabBar() as any)?.setData({ active: 2, theme: app.globalData.theme })
   },
   async loadLeaderboard() {
-    this.setData({ loading: true })
+    this.setData({ loading: true, entries: [], entries4Plus: [], myRank: null })
     try {
       const res = await api.get<LeaderboardResult>(
         `/api/leaderboard?type=${this.data.lbType}&period=${this.data.period}`
