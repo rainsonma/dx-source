@@ -1,1 +1,10 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "公告通知",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-button": "@vant/weapp/button/index"
+  }
+}

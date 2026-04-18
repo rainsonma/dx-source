@@ -1,1 +1,21 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading && notices.length === 0}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <van-empty wx:if="{{!loading && notices.length === 0}}" description="暂无通知" />
+    <view class="notice-list">
+      <view wx:for="{{notices}}" wx:key="id" class="notice-item">
+        <view class="notice-icon">
+          <text>{{item.icon || '📢'}}</text>
+        </view>
+        <view class="notice-body">
+          <text class="notice-title">{{item.title}}</text>
+          <text wx:if="{{item.content}}" class="notice-content">{{item.content}}</text>
+          <text class="notice-time">{{formatRelativeDate(item.createdAt)}}</text>
+        </view>
+      </view>
+    </view>
+    <view wx:if="{{loading && notices.length > 0}}" class="load-more">
+      <van-loading size="20px" color="{{primaryColor}}" />
+    </view>
+  </view>
+</van-config-provider>
