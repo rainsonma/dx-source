@@ -1,0 +1,26 @@
+.page-container { min-height: 100vh; background: var(--bg-page); padding-bottom: 40px; }
+.center-loader { display: flex; justify-content: center; padding: 40px; }
+.invite-card {
+  margin: 16px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  text-align: center;
+}
+.ic-title { font-size: 13px; color: var(--text-secondary); display: block; margin-bottom: 12px; }
+.ic-code-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ic-code { font-size: 28px; font-weight: 700; color: var(--primary); letter-spacing: 4px; }
+.stats-row { display: flex; margin: 0 16px 16px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); }
+.si-stat { flex: 1; padding: 16px; text-align: center; }
+.si-v { font-size: 20px; font-weight: 700; color: var(--text-primary); display: block; }
+.si-l { font-size: 11px; color: var(--text-secondary); }
+.section-header { padding: 4px 16px 8px; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; }
+.referral-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.referral-item { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); border-radius: 10px; border: 1px solid var(--border-color); padding: 12px; }
+.ref-name { font-size: 14px; color: var(--text-primary); }
+.ref-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.ref-status { font-size: 11px; color: var(--primary); }
+.ref-status.rewarded { color: #10b981; }
+.ref-time { font-size: 11px; color: var(--text-secondary); }
