@@ -19,6 +19,7 @@ Page({
     period: 'month' as 'day' | 'week' | 'month',
     lbType: 'exp' as 'exp' | 'playtime',
     entries: [] as LeaderboardEntry[],
+    entries4Plus: [] as LeaderboardEntry[],
     myRank: null as LeaderboardEntry | null,
     formatNumber,
   },
@@ -36,7 +37,7 @@ Page({
       const res = await api.get<LeaderboardResult>(
         `/api/leaderboard?type=${this.data.lbType}&period=${this.data.period}`
       )
-      this.setData({ loading: false, entries: res.entries, myRank: res.myRank })
+      this.setData({ loading: false, entries: res.entries, entries4Plus: res.entries.slice(3), myRank: res.myRank })
     } catch {
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })

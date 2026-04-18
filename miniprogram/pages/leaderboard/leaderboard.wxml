@@ -50,9 +50,8 @@
       <!-- Ranked list (4+) -->
       <view class="rank-list">
         <view
-          wx:for="{{entries}}"
+          wx:for="{{entries4Plus}}"
           wx:key="id"
-          wx:if="{{index >= 3}}"
           class="rank-item"
         >
           <text class="rank-num">{{item.rank}}</text>

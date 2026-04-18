@@ -47,6 +47,9 @@
   text-align: center;
 }
 .podium-value { font-size: 11px; color: var(--text-secondary); }
+.podium-item.second { min-height: 80px; }
+.podium-item.first { min-height: 110px; }
+.podium-item.third { min-height: 70px; }
 .rank-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 80px; }
 .rank-item {
   display: flex;
@@ -62,7 +65,8 @@
 .rank-value { font-size: 13px; font-weight: 600; color: var(--primary); }
 .my-rank-bar {
   position: fixed;
-  bottom: 60px;
+  bottom: calc(60px + constant(safe-area-inset-bottom));
+  bottom: calc(60px + env(safe-area-inset-bottom));
   left: 0;
   right: 0;
   display: flex;
