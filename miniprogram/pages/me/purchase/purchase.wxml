@@ -1,1 +1,21 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <view class="coming-banner">
+      <text class="cb-title">即将开放</text>
+      <text class="cb-sub">微信支付正在接入中，敬请期待</text>
+    </view>
+
+    <view class="tier-list">
+      <view wx:for="{{tiers}}" wx:key="id" class="tier-card">
+        <view class="tier-info">
+          <text class="tier-name">{{item.name}}</text>
+          <text class="tier-desc">{{item.desc}}</text>
+        </view>
+        <view class="tier-right">
+          <text class="tier-price">{{item.price}}</text>
+          <van-button size="small" disabled custom-style="opacity:0.5;">购买</van-button>
+        </view>
+      </view>
+    </view>
+  </view>
+</van-config-provider>
