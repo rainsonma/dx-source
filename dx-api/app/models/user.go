@@ -28,6 +28,8 @@ type User struct {
 	LastPlayedAt      *carbon.DateTime `gorm:"column:last_played_at" json:"last_played_at"`
 	VipDueAt          *carbon.DateTime `gorm:"column:vip_due_at" json:"vip_due_at"`
 	LastReadNoticeAt  *carbon.DateTime `gorm:"column:last_read_notice_at" json:"last_read_notice_at"`
+	OpenID            *string          `gorm:"column:openid"  json:"-"`
+	UnionID           *string          `gorm:"column:unionid" json:"-"`
 }
 
 // TableName returns the database table name.

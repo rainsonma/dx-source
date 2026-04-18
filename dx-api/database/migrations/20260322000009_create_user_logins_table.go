@@ -20,6 +20,7 @@ func (r *M20260322000009CreateUserLoginsTable) Up() error {
 			table.Uuid("user_id")
 			table.Text("ip").Default("")
 			table.Text("agent").Nullable()
+			table.Text("platform").Nullable()
 			table.Text("country").Nullable()
 			table.Text("province").Nullable()
 			table.Text("city").Nullable()
