@@ -16,6 +16,12 @@ func JwtAuth() contractshttp.Middleware {
 	return func(ctx contractshttp.Context) {
 		token := ctx.Request().Cookie("dx_token")
 		if token == "" {
+			bearer := ctx.Request().Header("Authorization", "")
+			if len(bearer) > 7 && bearer[:7] == "Bearer " {
+				token = bearer[7:]
+			}
+		}
+		if token == "" {
 			abortUnauthorized(ctx)
 			return
 		}

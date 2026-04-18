@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
@@ -25,6 +26,7 @@ func (c *WechatAuthController) MiniSignIn(ctx contractshttp.Context) contractsht
 
 	token, user, err := services.WechatMiniSignIn(ctx, req.Code)
 	if err != nil {
+		facades.Log().Errorf("wechat mini sign in failed: %v", err)
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "微信登录失败")
 	}
 
