@@ -32,26 +32,26 @@ export function TodayStarsCard() {
         </Link>
       </div>
 
-      {/* Content */}
+      {/* Body */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-5 w-5 animate-spin text-teal-600" />
         </div>
       ) : data.entries.length === 0 ? (
-        <div className="flex items-center justify-center rounded-lg border border-border py-12 text-sm text-muted-foreground">
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-border text-sm text-muted-foreground">
           暂无排名数据
         </div>
       ) : (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
           {podiumEntries.length > 0 && (
             <TodayStarsPodium entries={podiumEntries} type="playtime" />
           )}
           {listEntries.length > 0 && (
-            <div className="overflow-hidden rounded-lg border border-border">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-border">
               <TodayStarsList entries={listEntries} type="playtime" />
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
