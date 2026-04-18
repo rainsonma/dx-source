@@ -16,7 +16,7 @@ export function TodayStarsList({ entries, type }: TodayStarsListProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="max-h-[280px] overflow-y-auto">
+    <div className="max-h-[280px] overflow-y-auto lg:max-h-none lg:h-full">
       {entries.map((entry) => {
         const displayName = entry.nickname ?? entry.username;
         const fallbackChar = displayName.charAt(0).toUpperCase();
