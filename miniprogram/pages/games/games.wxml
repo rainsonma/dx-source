@@ -1,1 +1,65 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <!-- Category tabs -->
+    <van-tabs
+      active="{{activeCategoryId}}"
+      bind:click="onCategoryChange"
+      color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+      background="{{theme === 'dark' ? '#1c1c1e' : '#ffffff'}}"
+      title-active-color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+      scrollable
+    >
+      <van-tab
+        wx:for="{{categories}}"
+        wx:key="id"
+        title="{{item.name}}"
+        name="{{item.id}}"
+      />
+    </van-tabs>
+
+    <!-- Favorites button -->
+    <view class="fav-bar" bind:tap="goFavorites">
+      <van-icon name="star-o" size="16px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
+      <text class="fav-text">收藏的课程</text>
+    </view>
+
+    <!-- Game grid -->
+    <view class="game-grid">
+      <view
+        wx:for="{{games}}"
+        wx:key="id"
+        class="game-card"
+        data-id="{{item.id}}"
+        bind:tap="goDetail"
+      >
+        <view class="game-cover">
+          <van-image
+            wx:if="{{item.coverUrl}}"
+            src="{{item.coverUrl}}"
+            width="100%"
+            height="120px"
+            fit="cover"
+            radius="8px 8px 0 0"
+          />
+          <view wx:else class="cover-placeholder">
+            <van-icon name="column" size="28px" color="#9ca3af" />
+          </view>
+        </view>
+        <view class="game-info">
+          <text class="game-name">{{item.name}}</text>
+          <view class="game-meta">
+            <text class="meta-text">{{item.levelCount}}关</text>
+            <text class="meta-dot">·</text>
+            <text class="meta-text">{{item.mode}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Loading / empty -->
+    <view wx:if="{{loading}}" class="load-more">
+      <van-loading size="20px" color="#0d9488" />
+    </view>
+    <van-empty wx:if="{{!loading && games.length === 0}}" description="暂无课程" />
+  </view>
+</van-config-provider>
