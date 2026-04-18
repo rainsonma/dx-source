@@ -59,6 +59,7 @@ func TestGenerateWxUsername(t *testing.T) {
 	}{
 		{"abcdefghijklmno", "wx_abcdefgh"},
 		{"12345678xyz", "wx_12345678"},
+		{"abc", "wx_abc"},
 	}
 	for _, tt := range tests {
 		got := generateWxUsername(tt.openID)
