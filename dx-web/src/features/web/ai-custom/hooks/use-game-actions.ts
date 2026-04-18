@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useCallback, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { swrMutate } from "@/lib/swr"
@@ -72,16 +72,20 @@ export function useWithdrawGame(gameId: string) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  function execute() {
+  function execute(onSuccess?: () => void) {
     startTransition(async () => {
+      setError(null)
       const result = await withdrawGameAction(gameId)
       if (result.error) {
         setError(result.error)
-      } else {
-        await swrMutate("/api/course-games")
+        return
       }
+      await swrMutate("/api/course-games")
+      onSuccess?.()
     })
   }
 
-  return { execute, isPending, error }
+  const clearError = useCallback(() => setError(null), [])
+
+  return { execute, isPending, error, clearError }
 }

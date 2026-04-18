@@ -306,7 +306,13 @@ export function GameHeroCard({
       </AlertDialog>
 
       {/* Withdraw confirmation */}
-      <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
+      <AlertDialog
+        open={withdrawOpen}
+        onOpenChange={(open) => {
+          if (!open) withdrawAction.clearError()
+          setWithdrawOpen(open)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确定撤回这个游戏？</AlertDialogTitle>
@@ -322,7 +328,10 @@ export function GameHeroCard({
               取消
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={withdrawAction.execute}
+              onClick={(e) => {
+                e.preventDefault()
+                withdrawAction.execute(() => setWithdrawOpen(false))
+              }}
               disabled={withdrawAction.isPending}
               className="!bg-amber-600 hover:!bg-amber-700"
             >
