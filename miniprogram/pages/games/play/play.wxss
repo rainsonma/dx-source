@@ -1,0 +1,66 @@
+.play-page {
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+.center-loader { display: flex; justify-content: center; padding: 40px; }
+.score-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top));
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+.score-text { font-size: 16px; font-weight: 700; color: var(--primary); }
+.combo-text { font-size: 14px; color: var(--text-secondary); }
+.question-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  gap: 12px;
+}
+.question-word { font-size: 32px; font-weight: 700; color: var(--text-primary); text-align: center; }
+.question-def { font-size: 14px; color: var(--text-secondary); text-align: center; }
+.choices {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.choice {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+.choice.correct { border-color: #10b981; background: rgba(16,185,129,0.1); }
+.choice.wrong { border-color: #ef4444; background: rgba(239,68,68,0.1); }
+.choice.reveal { border-color: #10b981; background: rgba(16,185,129,0.05); }
+.choice-text { font-size: 15px; color: var(--text-primary); }
+.mark-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 20px 20px;
+}
+.mark-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.result-body { display: flex; flex-direction: column; align-items: center; }
+.result-title { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; }
+.result-stats { display: flex; gap: 32px; }
+.result-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.rs-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+.rs-label { font-size: 12px; color: var(--text-secondary); }

@@ -1,1 +1,11 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "游戏",
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-popup": "@vant/weapp/popup/index",
+    "van-loading": "@vant/weapp/loading/index"
+  }
+}
