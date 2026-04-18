@@ -31,14 +31,14 @@ func (c *PostController) Create(ctx contractshttp.Context) contractshttp.Respons
 		return resp
 	}
 
-	result, err := services.CreatePost(userID, req.Content, req.ImageID, req.Tags)
+	if req.ImageURL != nil && *req.ImageURL != "" {
+		if !helpers.IsUploadedImageURL(*req.ImageURL) {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的图片URL")
+		}
+	}
+
+	result, err := services.CreatePost(userID, req.Content, req.ImageURL, req.Tags)
 	if err != nil {
-		if errors.Is(err, services.ErrImageNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
-		}
-		if errors.Is(err, services.ErrImageNotOwned) {
-			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "该图片不属于您")
-		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to create post")
 	}
 
@@ -91,15 +91,15 @@ func (c *PostController) Update(ctx contractshttp.Context) contractshttp.Respons
 		return resp
 	}
 
+	if req.ImageURL != nil && *req.ImageURL != "" {
+		if !helpers.IsUploadedImageURL(*req.ImageURL) {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的图片URL")
+		}
+	}
+
 	postID := ctx.Request().Route("id")
-	err = services.UpdatePost(userID, postID, req.Content, req.ImageID, req.Tags)
+	err = services.UpdatePost(userID, postID, req.Content, req.ImageURL, req.Tags)
 	if err != nil {
-		if errors.Is(err, services.ErrImageNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
-		}
-		if errors.Is(err, services.ErrImageNotOwned) {
-			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "该图片不属于您")
-		}
 		return c.mapPostError(ctx, err)
 	}
 

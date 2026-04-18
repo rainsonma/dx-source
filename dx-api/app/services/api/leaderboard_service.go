@@ -3,8 +3,6 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/helpers"
-
 	"github.com/goravel/framework/facades"
 )
 
@@ -26,12 +24,12 @@ type LeaderboardResult struct {
 
 // leaderboardRow is the raw scan target for leaderboard queries.
 type leaderboardRow struct {
-	ID       string  `gorm:"column:id"`
-	Username string  `gorm:"column:username"`
-	Nickname *string `gorm:"column:nickname"`
-	AvatarID *string `gorm:"column:avatar_id"`
-	Value    int     `gorm:"column:value"`
-	Rank     int     `gorm:"column:rank"`
+	ID        string  `gorm:"column:id"`
+	Username  string  `gorm:"column:username"`
+	Nickname  *string `gorm:"column:nickname"`
+	AvatarURL *string `gorm:"column:avatar_url"`
+	Value     int     `gorm:"column:value"`
+	Rank      int     `gorm:"column:rank"`
 }
 
 // GetLeaderboard returns a ranked list by type (exp|playtime) and period (day|week|month).
@@ -47,7 +45,7 @@ func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(fmt.Sprintf(`
 		WITH ranked AS (
-			SELECT u.id, u.username, u.nickname, u.avatar_id,
+			SELECT u.id, u.username, u.nickname, u.avatar_url,
 			       COALESCE(SUM(s.exp), 0)::int AS value,
 			       RANK() OVER (ORDER BY COALESCE(SUM(s.exp), 0) DESC)::int AS rank
 			FROM users u
@@ -55,7 +53,7 @@ func getWindowedExp(period, userID string) (*LeaderboardResult, error) {
 			  AND s.last_played_at >= %s
 			  AND s.last_played_at < NOW()
 			WHERE u.is_active = true
-			GROUP BY u.id, u.username, u.nickname, u.avatar_id
+			GROUP BY u.id, u.username, u.nickname, u.avatar_url
 			HAVING COALESCE(SUM(s.exp), 0) > 0
 		)
 		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
@@ -71,7 +69,7 @@ func getWindowedPlayTime(period, userID string) (*LeaderboardResult, error) {
 	var rows []leaderboardRow
 	if err := facades.Orm().Query().Raw(fmt.Sprintf(`
 		WITH ranked AS (
-			SELECT u.id, u.username, u.nickname, u.avatar_id,
+			SELECT u.id, u.username, u.nickname, u.avatar_url,
 			       COALESCE(SUM(s.play_time), 0)::int AS value,
 			       RANK() OVER (ORDER BY COALESCE(SUM(s.play_time), 0) DESC)::int AS rank
 			FROM users u
@@ -79,7 +77,7 @@ func getWindowedPlayTime(period, userID string) (*LeaderboardResult, error) {
 			  AND s.last_played_at >= %s
 			  AND s.last_played_at < NOW()
 			WHERE u.is_active = true
-			GROUP BY u.id, u.username, u.nickname, u.avatar_id
+			GROUP BY u.id, u.username, u.nickname, u.avatar_url
 			HAVING COALESCE(SUM(s.play_time), 0) > 0
 		)
 		SELECT * FROM ranked WHERE rank <= 100 ORDER BY rank
@@ -109,17 +107,11 @@ func buildLeaderboardResult(rows []leaderboardRow, userID string) *LeaderboardRe
 	entries := make([]LeaderboardEntry, 0, len(rows))
 
 	for _, r := range rows {
-		var avatarURL *string
-		if r.AvatarID != nil && *r.AvatarID != "" {
-			url := helpers.ImageServeURL(*r.AvatarID)
-			avatarURL = &url
-		}
-
 		entries = append(entries, LeaderboardEntry{
 			ID:        r.ID,
 			Username:  r.Username,
 			Nickname:  r.Nickname,
-			AvatarURL: avatarURL,
+			AvatarURL: r.AvatarURL,
 			Value:     r.Value,
 			Rank:      r.Rank,
 		})

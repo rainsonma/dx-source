@@ -35,7 +35,7 @@ export function CreateCourseForm({
 }: CreateCourseFormProps) {
   const [pressId, setPressId] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
-  const { state, formAction, isPending, coverId, setCoverId } =
+  const { state, formAction, isPending, coverUrl, setCoverUrl } =
     useCreateCourseGame(onClose);
 
   useEffect(() => {
@@ -184,9 +184,9 @@ export function CreateCourseForm({
           </span>
           <ImageUploader
             role={IMAGE_ROLES.GAME_COVER}
-            onImageChange={setCoverId}
+            onImageChange={setCoverUrl}
           />
-          <input type="hidden" name="coverId" value={coverId ?? ""} />
+          <input type="hidden" name="coverUrl" value={coverUrl ?? ""} />
         </div>
 
         {/* Private switch */}

@@ -29,7 +29,6 @@ export type ApiProfileData = {
   nickname: string | null;
   email: string | null;
   phone: string | null;
-  avatar_id: string | null;
   avatar_url: string | null;
   city: string | null;
   introduction: string | null;

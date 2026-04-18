@@ -26,9 +26,9 @@ func (r *CreateGroupRequest) Filters(ctx http.Context) map[string]string {
 }
 func (r *CreateGroupRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"name.required": "请输入学习群名称",
-		"name.min_len":  "学习群名称至少需要2个字符",
-		"name.max_len":  "学习群名称不能超过50个字符",
+		"name.required":       "请输入学习群名称",
+		"name.min_len":        "学习群名称至少需要2个字符",
+		"name.max_len":        "学习群名称不能超过50个字符",
 		"description.max_len": "学习群描述不能超过200个字符",
 	}
 }
@@ -55,9 +55,9 @@ func (r *UpdateGroupRequest) Filters(ctx http.Context) map[string]string {
 }
 func (r *UpdateGroupRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"name.required": "请输入学习群名称",
-		"name.min_len":  "学习群名称至少需要2个字符",
-		"name.max_len":  "学习群名称不能超过50个字符",
+		"name.required":       "请输入学习群名称",
+		"name.min_len":        "学习群名称至少需要2个字符",
+		"name.max_len":        "学习群名称不能超过50个字符",
 		"description.max_len": "学习群描述不能超过200个字符",
 	}
 }

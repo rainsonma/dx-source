@@ -248,4 +248,3 @@ func (r *EndSessionRequest) Messages(ctx http.Context) map[string]string {
 		"skip_count.min":    "跳过数不能为负数",
 	}
 }
-

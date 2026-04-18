@@ -36,14 +36,14 @@ func (r *GroupPlayStartSessionRequest) Filters(ctx http.Context) map[string]stri
 }
 func (r *GroupPlayStartSessionRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_id.required":        "请选择游戏",
-		"game_id.uuid":            "无效的游戏ID",
-		"game_level_id.required":  "请指定关卡",
-		"game_level_id.uuid":      "无效的关卡ID",
-		"degree.in":               "无效的难度级别",
-		"pattern.in":              "无效的练习模式",
-		"game_group_id.required":  "请指定群组",
-		"game_group_id.uuid":      "无效的群组ID",
+		"game_id.required":       "请选择游戏",
+		"game_id.uuid":           "无效的游戏ID",
+		"game_level_id.required": "请指定关卡",
+		"game_level_id.uuid":     "无效的关卡ID",
+		"degree.in":              "无效的难度级别",
+		"pattern.in":             "无效的练习模式",
+		"game_group_id.required": "请指定群组",
+		"game_group_id.uuid":     "无效的群组ID",
 	}
 }
 func (r *GroupPlayStartSessionRequest) PrepareForValidation(ctx http.Context, data validation.Data) error {

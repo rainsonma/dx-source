@@ -6,7 +6,7 @@ type GameCategory struct {
 	orm.Timestamps
 	ID          string  `gorm:"column:id;primaryKey" json:"id"`
 	ParentID    *string `gorm:"column:parent_id" json:"parent_id"`
-	CoverID     *string `gorm:"column:cover_id" json:"cover_id"`
+	CoverURL    *string `gorm:"column:cover_url" json:"cover_url"`
 	Name        string  `gorm:"column:name" json:"name"`
 	Alias       *string `gorm:"column:alias" json:"alias"`
 	Description *string `gorm:"column:description" json:"description"`

@@ -12,8 +12,8 @@ type ContentItem struct {
 	ContentMetaID *string        `gorm:"column:content_meta_id" json:"content_meta_id"`
 	Content       string         `gorm:"column:content" json:"content"`
 	ContentType   string         `gorm:"column:content_type" json:"content_type"`
-	UkAudioID     *string        `gorm:"column:uk_audio_id" json:"uk_audio_id"`
-	UsAudioID     *string        `gorm:"column:us_audio_id" json:"us_audio_id"`
+	UkAudioURL    *string        `gorm:"column:uk_audio_url" json:"uk_audio_url"`
+	UsAudioURL    *string        `gorm:"column:us_audio_url" json:"us_audio_url"`
 	Definition    *string        `gorm:"column:definition" json:"definition"`
 	Translation   *string        `gorm:"column:translation" json:"translation"`
 	Explanation   *string        `gorm:"column:explanation" json:"explanation"`

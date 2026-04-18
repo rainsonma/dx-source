@@ -7,9 +7,9 @@ import (
 
 // Level progression consts.
 const (
-	MaxLevel   = 100
+	MaxLevel = 100
 	// introExp is the flat EXP cost for Lv.0 → Lv.1, separate from the exponential curve.
-	introExp = 100
+	introExp   = 100
 	baseExp    = 100
 	multiplier = 1.05
 )

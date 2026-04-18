@@ -7,7 +7,7 @@ import { useImageUploader } from "@/features/com/images/hooks/use-image-uploader
 
 type ImageUploaderProps = {
   role: ImageRole;
-  onImageChange?: (imageId: string | null) => void;
+  onImageChange?: (url: string | null) => void;
   className?: string;
 };
 
@@ -27,7 +27,7 @@ export function ImageUploader({
     handleFileChange,
   } = useImageUploader({
     role,
-    onUploadComplete: (img) => onImageChange?.(img.id),
+    onUploadComplete: (img) => onImageChange?.(img.url),
   });
 
   return (
@@ -46,13 +46,10 @@ export function ImageUploader({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={image.url}
-            alt={image.name}
+            alt="已上传图片"
             className="h-16 w-16 rounded-lg object-cover"
           />
           <div className="flex flex-1 flex-col gap-0.5 overflow-hidden">
-            <span className="truncate text-sm font-medium text-foreground">
-              {image.name}
-            </span>
             <span className="text-xs text-emerald-600">上传成功</span>
           </div>
           <button

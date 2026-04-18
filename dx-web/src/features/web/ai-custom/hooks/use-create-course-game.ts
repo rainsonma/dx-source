@@ -11,7 +11,7 @@ import {
 const initialState: CreateCourseGameResult = {}
 
 export function useCreateCourseGame(onSuccess?: () => void) {
-  const [coverId, setCoverId] = useState<string | null>(null)
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const onSuccessRef = useRef(onSuccess)
   useEffect(() => { onSuccessRef.current = onSuccess })
 
@@ -31,7 +31,7 @@ export function useCreateCourseGame(onSuccess?: () => void) {
     state,
     formAction,
     isPending,
-    coverId,
-    setCoverId,
+    coverUrl,
+    setCoverUrl,
   }
 }

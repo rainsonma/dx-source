@@ -97,9 +97,9 @@ func CreateGroup(userID, name string, description *string) (*CreateGroupResult, 
 	}
 	inviteURL := fmt.Sprintf("%s/g/%s", strings.TrimRight(origin, "/"), inviteCode)
 
-	qrcodeID, err := helpers.GenerateGroupQRCode(userID, inviteURL)
-	if err == nil && qrcodeID != "" {
-		facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("invite_qrcode_id", qrcodeID)
+	qrcodeURL, err := helpers.GenerateGroupQRCode(userID, inviteURL)
+	if err == nil && qrcodeURL != "" {
+		facades.Orm().Query().Model(&models.GameGroup{}).Where("id", groupID).Update("invite_qrcode_url", qrcodeURL)
 	}
 
 	return &CreateGroupResult{ID: groupID, InviteCode: inviteCode}, nil
@@ -253,8 +253,8 @@ func GetGroupDetail(userID, groupID string) (*GroupDetail, error) {
 	}
 
 	var inviteQrcodeURL string
-	if group.InviteQrcodeID != nil && *group.InviteQrcodeID != "" {
-		inviteQrcodeURL = helpers.ImageServeURL(*group.InviteQrcodeID)
+	if group.InviteQrcodeURL != nil && *group.InviteQrcodeURL != "" {
+		inviteQrcodeURL = *group.InviteQrcodeURL
 	}
 
 	return &GroupDetail{

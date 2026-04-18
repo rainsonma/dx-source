@@ -34,19 +34,18 @@ func (r *UpdateProfileRequest) Messages(ctx http.Context) map[string]string {
 
 // UpdateAvatarRequest validates avatar update data.
 type UpdateAvatarRequest struct {
-	ImageID string `form:"image_id" json:"image_id"`
+	AvatarURL string `form:"avatar_url" json:"avatar_url"`
 }
 
 func (r *UpdateAvatarRequest) Authorize(ctx http.Context) error { return nil }
 func (r *UpdateAvatarRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"image_id": "required|uuid",
+		"avatar_url": "required",
 	}
 }
 func (r *UpdateAvatarRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"image_id.required": "请选择头像",
-		"image_id.uuid":     "无效的图片ID",
+		"avatar_url.required": "请选择头像",
 	}
 }
 

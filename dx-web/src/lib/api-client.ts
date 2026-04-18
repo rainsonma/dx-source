@@ -142,9 +142,9 @@ export const userApi = {
   async updateProfile(data: { nickname?: string; city?: string; introduction?: string }) {
     return apiClient.put<unknown>("/api/user/profile", data);
   },
-  /** Set avatar from an uploaded image ID */
-  async updateAvatar(imageId: string) {
-    return apiClient.put<unknown>("/api/user/avatar", { image_id: imageId });
+  /** Set avatar from an uploaded image URL */
+  async updateAvatar(avatarUrl: string) {
+    return apiClient.put<unknown>("/api/user/avatar", { avatar_url: avatarUrl });
   },
   /** Send verification code for email change */
   async sendEmailCode(email: string) {
@@ -556,7 +556,7 @@ export const uploadApi = {
       throw new Error("Unauthorized");
     }
 
-    const data: ApiResponse<{ id: string; url: string; name: string }> = await res.json();
+    const data: ApiResponse<{ url: string }> = await res.json();
     return data;
   },
 };
@@ -583,7 +583,7 @@ export const courseGameApi = {
     gameMode: string;
     gameCategoryId: string;
     gamePressId: string;
-    coverId?: string;
+    coverUrl?: string;
   }) {
     return apiClient.post<{ id: string }>("/api/course-games", data);
   },
@@ -594,7 +594,7 @@ export const courseGameApi = {
     gameMode: string;
     gameCategoryId: string;
     gamePressId: string;
-    coverId?: string;
+    coverUrl?: string;
   }) {
     return apiClient.put<null>(`/api/course-games/${id}`, data);
   },

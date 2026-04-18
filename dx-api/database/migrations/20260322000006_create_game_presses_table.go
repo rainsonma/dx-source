@@ -19,11 +19,10 @@ func (r *M20260322000006CreateGamePressesTable) Up() error {
 			table.Primary("id")
 			table.Text("name").Default("")
 			table.Text("alias").Nullable()
-			table.Uuid("cover_id").Nullable()
+			table.Text("cover_url").Nullable()
 			table.Double("order").Default(0)
 			table.TimestampsTz()
 			table.Unique("name")
-			table.Index("cover_id")
 			table.Index("order")
 		})
 	}

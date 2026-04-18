@@ -14,7 +14,7 @@ type User struct {
 	Email             *string          `gorm:"column:email" json:"email"`
 	Phone             *string          `gorm:"column:phone" json:"phone"`
 	Password          string           `gorm:"column:password" json:"-"`
-	AvatarID          *string          `gorm:"column:avatar_id" json:"avatar_id"`
+	AvatarURL         *string          `gorm:"column:avatar_url" json:"avatar_url"`
 	City              *string          `gorm:"column:city" json:"city"`
 	Introduction      *string          `gorm:"column:introduction" json:"introduction"`
 	IsActive          bool             `gorm:"column:is_active" json:"is_active"`

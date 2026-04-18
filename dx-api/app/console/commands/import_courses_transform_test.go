@@ -8,9 +8,9 @@ import (
 
 func TestCleanGameName(t *testing.T) {
 	tests := []struct {
-		name   string
-		input  string
-		want   string
+		name  string
+		input string
+		want  string
 	}{
 		{"strip numeric prefix", "01_日常英语对话100句", "日常英语对话100句"},
 		{"strip prefix and brackets", "07_【DK】基础3000词", "DK基础3000词"},
@@ -124,11 +124,11 @@ func TestTransformItems(t *testing.T) {
 	strPtr := func(s string) *string { return &s }
 
 	tests := []struct {
-		name        string
-		content     string
-		details     []WordDetail
-		wantCount   int
-		checkItems  func(t *testing.T, items []ItemEntry)
+		name       string
+		content    string
+		details    []WordDetail
+		wantCount  int
+		checkItems func(t *testing.T, items []ItemEntry)
 	}{
 		{
 			name:    "sentence with trailing period",

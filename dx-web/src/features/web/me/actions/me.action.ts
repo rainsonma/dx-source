@@ -39,12 +39,12 @@ export async function updateProfileAction(
 }
 
 /** Update avatar after upload */
-export async function updateAvatarAction(imageId: string): Promise<ActionResult> {
-  if (!imageId || imageId.length !== 36) {
-    return { error: "无效的图片ID" };
+export async function updateAvatarAction(avatarUrl: string): Promise<ActionResult> {
+  if (!avatarUrl) {
+    return { error: "无效的头像URL" };
   }
 
-  const res = await apiClient.put("/api/user/avatar", { image_id: imageId });
+  const res = await apiClient.put("/api/user/avatar", { avatar_url: avatarUrl });
 
   if (res.code !== 0) return { error: res.message };
 

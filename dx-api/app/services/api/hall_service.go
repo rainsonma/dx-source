@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"dx-api/app/consts"
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -85,13 +84,6 @@ func GetDashboard(userID string) (*DashboardData, error) {
 		return nil, ErrUserNotFound
 	}
 
-	// Resolve avatar URL
-	var avatarURL *string
-	if user.AvatarID != nil && *user.AvatarID != "" {
-		url := helpers.ImageServeURL(*user.AvatarID)
-		avatarURL = &url
-	}
-
 	profile := DashboardProfile{
 		ID:                user.ID,
 		Username:          user.Username,
@@ -99,7 +91,7 @@ func GetDashboard(userID string) (*DashboardData, error) {
 		Grade:             user.Grade,
 		Exp:               user.Exp,
 		Beans:             user.Beans,
-		AvatarURL:         avatarURL,
+		AvatarURL:         user.AvatarURL,
 		CurrentPlayStreak: user.CurrentPlayStreak,
 		InviteCode:        user.InviteCode,
 		LastReadNoticeAt:  user.LastReadNoticeAt,
