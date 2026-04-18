@@ -16,6 +16,7 @@ func Api() {
 	r := facades.Route()
 
 	authController := apicontrollers.NewAuthController()
+	wechatAuthController := apicontrollers.NewWechatAuthController()
 	emailController := apicontrollers.NewEmailController()
 	userReferralController := apicontrollers.NewUserReferralController()
 
@@ -62,6 +63,7 @@ func Api() {
 			auth.Post("/signup", authController.SignUp)
 			auth.Post("/signin", authController.SignIn)
 			auth.Post("/logout", authController.Logout)
+			auth.Post("/wechat-mini", wechatAuthController.MiniSignIn)
 		})
 
 		// Email verification code routes (public)
