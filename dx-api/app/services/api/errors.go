@@ -11,8 +11,6 @@ var (
 	ErrUserNotFound            = errors.New("用户不存在")
 	ErrInvalidPassword         = errors.New("密码错误")
 	ErrNicknameTaken           = errors.New("昵称已被使用")
-	ErrImageNotFound           = errors.New("图片不存在")
-	ErrImageNotOwned           = errors.New("该图片不属于您")
 	ErrGameNotFound            = errors.New("游戏不存在")
 	ErrSessionNotFound         = errors.New("会话不存在")
 	ErrLevelNotFound           = errors.New("关卡不存在")

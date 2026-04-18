@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/goravel/framework/facades"
 	qrcode "github.com/skip2/go-qrcode"
 )
 
@@ -26,7 +25,7 @@ func GenerateGroupQRCode(ownerID, inviteURL string) (string, error) {
 	datePath := fmt.Sprintf("uploads/images/%d/%02d/%02d", now.Year(), now.Month(), now.Day())
 	filename := fmt.Sprintf("%s.png", id)
 
-	storageRoot := facades.Config().Env("STORAGE_PATH", "storage/app").(string)
+	storageRoot := StoragePath()
 	absDir := filepath.Join(storageRoot, datePath)
 	if err := os.MkdirAll(absDir, 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)

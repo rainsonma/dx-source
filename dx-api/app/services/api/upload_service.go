@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -10,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/goravel/framework/contracts/filesystem"
-	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 )
 
 const (
@@ -105,7 +104,7 @@ func ResolveImagePath(year, month, day, filename string) (string, string, error)
 		return "", "", ErrInvalidImagePath
 	}
 
-	storageRoot := storagePathOrDefault()
+	storageRoot := helpers.StoragePath()
 	baseDir := filepath.Join(storageRoot, "uploads", "images")
 	abs := filepath.Clean(filepath.Join(baseDir, year, month, day, filename))
 	if !strings.HasPrefix(abs, filepath.Clean(baseDir)+string(filepath.Separator)) {
@@ -120,12 +119,4 @@ func ResolveImagePath(year, month, day, filename string) (string, string, error)
 		contentType = "image/png"
 	}
 	return abs, contentType, nil
-}
-
-// storagePathOrDefault returns the configured storage root, falling back to env then default.
-func storagePathOrDefault() string {
-	if v := os.Getenv("STORAGE_PATH"); v != "" {
-		return v
-	}
-	return facades.Config().Env("STORAGE_PATH", "storage/app").(string)
 }
