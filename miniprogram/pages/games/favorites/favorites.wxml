@@ -1,1 +1,28 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
+    <van-empty wx:if="{{!loading && games.length === 0}}" description="暂无收藏课程" />
+    <view wx:if="{{!loading && games.length > 0}}" class="list">
+      <van-swipe-cell
+        wx:for="{{games}}"
+        wx:key="id"
+        right-width="{{80}}"
+      >
+        <view class="fav-item" data-id="{{item.id}}" bind:tap="goDetail">
+          <view class="fav-info">
+            <text class="fav-name">{{item.name}}</text>
+            <view class="fav-meta">
+              <text wx:if="{{item.categoryName}}" class="meta-tag">{{item.categoryName}}</text>
+              <text class="meta-tag">{{item.levelCount}}关</text>
+              <text class="meta-tag">{{item.mode}}</text>
+            </view>
+          </view>
+          <van-icon name="arrow" size="14px" color="#9ca3af" />
+        </view>
+        <view slot="right" class="unfav-btn" data-id="{{item.id}}" bind:tap="unfavorite">
+          <van-icon name="star" size="20px" color="#ffffff" />
+        </view>
+      </van-swipe-cell>
+    </view>
+  </view>
+</van-config-provider>

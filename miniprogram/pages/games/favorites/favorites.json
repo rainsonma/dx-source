@@ -1,1 +1,12 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "收藏的课程",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-swipe-cell": "@vant/weapp/swipe-cell/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "van-loading": "@vant/weapp/loading/index"
+  }
+}
