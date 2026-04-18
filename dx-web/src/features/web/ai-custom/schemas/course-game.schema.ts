@@ -25,9 +25,8 @@ export const createCourseGameSchema = z.object({
     .max(500, "描述最长 500 个字符")
     .optional()
     .or(z.literal("")),
-  coverId: z
+  coverUrl: z
     .string()
-    .uuid()
     .optional()
     .or(z.literal("")),
 });

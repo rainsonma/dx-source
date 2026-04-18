@@ -40,7 +40,7 @@ export async function createCourseGameAction(
       gameMode: formData.get("gameMode") as string,
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,
-      coverId: (formData.get("coverId") as string) || undefined,
+      coverUrl: (formData.get("coverUrl") as string) || undefined,
       isPrivate: formData.get("isPrivate") === "true",
     };
 
@@ -170,7 +170,7 @@ export async function updateCourseGameAction(
       gameMode: formData.get("gameMode") as string,
       name: formData.get("name") as string,
       description: (formData.get("description") as string) || undefined,
-      coverId: (formData.get("coverId") as string) || undefined,
+      coverUrl: (formData.get("coverUrl") as string) || undefined,
       isPrivate: formData.get("isPrivate") === "true",
     };
 

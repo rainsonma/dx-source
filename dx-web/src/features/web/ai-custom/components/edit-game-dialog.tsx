@@ -42,7 +42,6 @@ type EditGameDialogProps = {
     mode: string;
     gameCategoryId: string | null;
     gamePressId: string | null;
-    coverId: string | null;
     coverUrl: string | null;
     isPrivate: boolean;
   };
@@ -58,7 +57,7 @@ export function EditGameDialog({
   open,
   onOpenChange,
 }: EditGameDialogProps) {
-  const { state, formAction, isPending, coverId, setCoverId } =
+  const { state, formAction, isPending, coverUrl, setCoverUrl } =
     useUpdateCourseGame(gameId, () => onOpenChange(false));
   const [isPrivate, setIsPrivate] = useState(defaultValues.isPrivate);
 
@@ -243,12 +242,12 @@ export function EditGameDialog({
               </span>
               <ImageUploader
                 role={IMAGE_ROLES.GAME_COVER}
-                onImageChange={setCoverId}
+                onImageChange={setCoverUrl}
               />
               <input
                 type="hidden"
-                name="coverId"
-                value={coverId ?? defaultValues.coverId ?? ""}
+                name="coverUrl"
+                value={coverUrl ?? defaultValues.coverUrl ?? ""}
               />
             </div>
 

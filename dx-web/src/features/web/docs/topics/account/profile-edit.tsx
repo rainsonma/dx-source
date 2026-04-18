@@ -26,7 +26,7 @@ export default function ProfileEdit() {
             {
               key: "头像",
               value: "上传图片",
-              note: "通过 imageId 绑定到你的账号",
+              note: "通过 imageUrl 绑定到你的账号",
             },
           ]}
         />

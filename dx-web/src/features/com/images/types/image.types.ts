@@ -1,9 +1,7 @@
 import type { ImageRole } from "@/consts/image-role";
 
 export type UploadedImage = {
-  id: string;
   url: string;
-  name: string;
 };
 
 export type ImageUploaderConfig = {

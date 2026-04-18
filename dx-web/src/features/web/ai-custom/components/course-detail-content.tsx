@@ -20,7 +20,6 @@ type RawGameDetail = {
   updatedAt: string;
   gameCategoryId: string | null;
   gamePressId: string | null;
-  coverId: string | null;
   isPrivate?: boolean;
   coverUrl?: string;
   levels?: { id: string; name: string; description: string | null; isActive: boolean; order: number; itemCount?: number }[];
@@ -54,7 +53,6 @@ function mapGameDetail(raw: RawGameDetail, categories: CategoryOption[], presses
     updatedAt: new Date(raw.updatedAt),
     gameCategoryId: raw.gameCategoryId ?? null,
     gamePressId: raw.gamePressId ?? null,
-    coverId: raw.coverId ?? null,
     isPrivate: raw.isPrivate ?? false,
     cover: raw.coverUrl ? { url: raw.coverUrl } : null,
     category,

@@ -50,7 +50,6 @@ type GameHeroCardProps = {
     press: { name: string } | null;
     gameCategoryId: string | null;
     gamePressId: string | null;
-    coverId: string | null;
     isPrivate: boolean;
     _count: { levels: number; stats: number };
   };
@@ -240,7 +239,6 @@ export function GameHeroCard({
           mode: game.mode,
           gameCategoryId: game.gameCategoryId,
           gamePressId: game.gamePressId,
-          coverId: game.coverId,
           coverUrl: game.cover?.url ?? null,
           isPrivate: game.isPrivate,
         }}

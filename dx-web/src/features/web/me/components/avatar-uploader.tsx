@@ -23,7 +23,7 @@ export function AvatarUploader({ userId, avatarUrl, displayName, onProfileChange
   const { upload, isUploading, inputRef, handleFileChange } = useImageUploader({
     role: IMAGE_ROLES.USER_AVATAR,
     onUploadComplete: async (image) => {
-      const result = await updateAvatarAction(image.id);
+      const result = await updateAvatarAction(image.url);
       if (result.success) {
         onProfileChanged?.();
       }

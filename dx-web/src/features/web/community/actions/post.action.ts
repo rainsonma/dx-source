@@ -15,11 +15,11 @@ export const postApi = {
     return apiClient.get<Post>(`/api/posts/${id}`);
   },
 
-  async create(data: { content: string; image_id?: string; tags?: string[] }) {
+  async create(data: { content: string; image_url?: string; tags?: string[] }) {
     return apiClient.post<Post>("/api/posts", data);
   },
 
-  async update(id: string, data: { content: string; image_id?: string; tags?: string[] }) {
+  async update(id: string, data: { content: string; image_url?: string; tags?: string[] }) {
     return apiClient.put<null>(`/api/posts/${id}`, data);
   },
 
