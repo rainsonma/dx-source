@@ -1,0 +1,38 @@
+.page-container { min-height: 100vh; background: var(--bg-page); padding-bottom: 40px; }
+.center-loader { display: flex; justify-content: center; padding: 40px; }
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+.ab-count { font-size: 13px; color: var(--text-secondary); }
+.ab-actions { display: flex; gap: 10px; }
+.ab-btn {
+  font-size: 13px;
+  color: var(--primary);
+  padding: 4px 10px;
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+}
+.ab-btn.delete {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+.word-list { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.word-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 12px;
+}
+.word-body { flex: 1; }
+.word-content { font-size: 16px; font-weight: 600; color: var(--text-primary); display: block; }
+.word-trans { font-size: 13px; color: var(--text-secondary); display: block; margin-top: 2px; }
+.word-game { font-size: 11px; color: var(--text-secondary); display: block; margin-top: 4px; }
+.load-more { display: flex; justify-content: center; padding: 16px; }
