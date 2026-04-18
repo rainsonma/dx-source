@@ -1,1 +1,11 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "兑换码",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-field": "@vant/weapp/field/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index"
+  }
+}

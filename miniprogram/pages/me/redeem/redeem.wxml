@@ -1,1 +1,23 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-cell-group inset custom-style="margin:16px;">
+      <van-field value="{{code}}" placeholder="输入兑换码" bind:change="onCodeChange" clearable />
+    </van-cell-group>
+    <view class="redeem-btn">
+      <van-button type="primary" block round loading="{{redeeming}}" bind:click="redeem">立即兑换</van-button>
+    </view>
+
+    <view class="section-header"><text class="section-title">兑换记录</text></view>
+    <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <van-empty wx:if="{{!loading && history.length === 0}}" description="暂无兑换记录" />
+    <view class="redeem-list">
+      <view wx:for="{{history}}" wx:key="id" class="redeem-item">
+        <text class="ri-code">{{item.code}}</text>
+        <view class="ri-right">
+          <text class="ri-grade">{{item.grade}}</text>
+          <text class="ri-date">{{formatDate(item.redeemedAt)}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</van-config-provider>
