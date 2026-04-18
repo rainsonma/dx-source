@@ -11,6 +11,7 @@ const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
 Page({
   data: {
     theme: 'light' as 'light' | 'dark',
+    primaryColor: '#0d9488',
     loading: true,
     items: [] as TrackingItemData[],
     nextCursor: '',
@@ -19,7 +20,8 @@ Page({
     selectMode: false,
   },
   onLoad() {
-    this.setData({ theme: app.globalData.theme })
+    const theme = app.globalData.theme
+    this.setData({ theme, primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488' })
     this.loadItems(true)
   },
   onPullDownRefresh() {

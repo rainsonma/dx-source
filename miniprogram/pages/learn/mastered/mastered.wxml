@@ -11,22 +11,24 @@
         </view>
       </view>
     </view>
-    <van-loading wx:if="{{loading && items.length === 0}}" size="30px" color="#0d9488" class="center-loader" />
+    <van-loading wx:if="{{loading && items.length === 0}}" size="30px" color="{{primaryColor}}" class="center-loader" />
     <van-empty wx:if="{{!loading && items.length === 0}}" description="暂无已掌握的词" />
     <van-checkbox-group value="{{selectedIds}}" bind:change="onSelectChange">
       <view class="word-list">
         <view wx:for="{{items}}" wx:key="id" class="word-item">
           <van-checkbox wx:if="{{selectMode}}" name="{{item.id}}" />
           <view class="word-body">
-            <text class="word-content">{{item.contentItem.content}}</text>
-            <text wx:if="{{item.contentItem.translation}}" class="word-trans">{{item.contentItem.translation}}</text>
+            <block wx:if="{{item.contentItem}}">
+              <text class="word-content">{{item.contentItem.content}}</text>
+              <text wx:if="{{item.contentItem.translation}}" class="word-trans">{{item.contentItem.translation}}</text>
+            </block>
             <text wx:if="{{item.gameName}}" class="word-game">来自：{{item.gameName}}</text>
           </view>
         </view>
       </view>
     </van-checkbox-group>
     <view wx:if="{{loading && items.length > 0}}" class="load-more">
-      <van-loading size="20px" color="#0d9488" />
+      <van-loading size="20px" color="{{primaryColor}}" />
     </view>
   </view>
 </van-config-provider>
