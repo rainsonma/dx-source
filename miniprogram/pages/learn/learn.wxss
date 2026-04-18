@@ -14,6 +14,9 @@
 .learn-stat-card.teal { background: rgba(13,148,136,0.12); }
 .learn-stat-card.amber { background: rgba(245,158,11,0.12); }
 .learn-stat-card.purple { background: rgba(99,102,241,0.12); }
+.dark .learn-stat-card.teal { background: rgba(20,184,166,0.12); }
+.dark .learn-stat-card.amber { background: rgba(245,158,11,0.10); }
+.dark .learn-stat-card.purple { background: rgba(99,102,241,0.10); }
 .lsc-value { font-size: 24px; font-weight: 700; color: var(--text-primary); }
 .lsc-label { font-size: 12px; color: var(--text-primary); font-weight: 500; }
 .lsc-sub { font-size: 11px; color: var(--text-secondary); }

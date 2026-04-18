@@ -8,16 +8,18 @@ const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
 Page({
   data: {
     theme: 'light' as 'light' | 'dark',
+    arrowColor: '#9ca3af',
+    accentColors: { teal: '#10b981', amber: '#f59e0b', purple: '#6366f1' } as { teal: string; amber: string; purple: string },
     loading: true,
     masterStats: null as Stats | null,
     unknownStats: null as Stats | null,
     reviewStats: null as ReviewStats | null,
   },
-  onLoad() {
-    this.setData({ theme: app.globalData.theme })
-  },
   onShow() {
-    this.setData({ theme: app.globalData.theme });
+    this.setData({
+      theme: app.globalData.theme,
+      arrowColor: app.globalData.theme === 'dark' ? '#6b7280' : '#9ca3af',
+    });
     (this.getTabBar() as any)?.setData({ active: 3, theme: app.globalData.theme })
     this.loadStats()
   },
