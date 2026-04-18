@@ -14,7 +14,7 @@ type CreateGameRequest struct {
 	GameMode       string  `form:"gameMode" json:"gameMode"`
 	GameCategoryID string  `form:"gameCategoryId" json:"gameCategoryId"`
 	GamePressID    string  `form:"gamePressId" json:"gamePressId"`
-	CoverID        *string `form:"coverId" json:"coverId"`
+	CoverURL       *string `form:"coverUrl" json:"coverUrl"`
 	IsPrivate      bool    `form:"isPrivate" json:"isPrivate"`
 }
 
@@ -26,7 +26,6 @@ func (r *CreateGameRequest) Rules(ctx http.Context) map[string]string {
 		"gameMode":       "required|" + helpers.InEnum("mode"),
 		"gameCategoryId": "required|uuid",
 		"gamePressId":    "uuid",
-		"coverId":        "uuid",
 	}
 }
 func (r *CreateGameRequest) Filters(ctx http.Context) map[string]string {
@@ -45,8 +44,7 @@ func (r *CreateGameRequest) Messages(ctx http.Context) map[string]string {
 		"gameMode.in":             "无效的游戏模式",
 		"gameCategoryId.required": "请选择游戏分类",
 		"gameCategoryId.uuid":     "无效的游戏分类",
-		"gamePressId.uuid": "无效的出版社",
-		"coverId.uuid":            "无效的封面图片",
+		"gamePressId.uuid":        "无效的出版社",
 	}
 }
 
@@ -58,7 +56,7 @@ type UpdateGameRequest struct {
 	GameMode       string  `form:"gameMode" json:"gameMode"`
 	GameCategoryID string  `form:"gameCategoryId" json:"gameCategoryId"`
 	GamePressID    string  `form:"gamePressId" json:"gamePressId"`
-	CoverID        *string `form:"coverId" json:"coverId"`
+	CoverURL       *string `form:"coverUrl" json:"coverUrl"`
 	IsPrivate      bool    `form:"isPrivate" json:"isPrivate"`
 }
 
@@ -70,7 +68,6 @@ func (r *UpdateGameRequest) Rules(ctx http.Context) map[string]string {
 		"gameMode":       "required|" + helpers.InEnum("mode"),
 		"gameCategoryId": "required|uuid",
 		"gamePressId":    "uuid",
-		"coverId":        "uuid",
 	}
 }
 func (r *UpdateGameRequest) Filters(ctx http.Context) map[string]string {
@@ -89,8 +86,7 @@ func (r *UpdateGameRequest) Messages(ctx http.Context) map[string]string {
 		"gameMode.in":             "无效的游戏模式",
 		"gameCategoryId.required": "请选择游戏分类",
 		"gameCategoryId.uuid":     "无效的游戏分类",
-		"gamePressId.uuid": "无效的出版社",
-		"coverId.uuid":            "无效的封面图片",
+		"gamePressId.uuid":        "无效的出版社",
 	}
 }
 

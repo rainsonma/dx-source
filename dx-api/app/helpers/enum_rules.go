@@ -7,14 +7,14 @@ import (
 )
 
 var enumValues = map[string][]string{
-	"degree":        {consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
-	"pattern":       {consts.GamePatternListen, consts.GamePatternSpeak, consts.GamePatternRead, consts.GamePatternWrite},
-	"mode":          {consts.GameModeWordSentence, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination},
-	"feedback_type": {consts.FeedbackTypeFeature, consts.FeedbackTypeContent, consts.FeedbackTypeUX, consts.FeedbackTypeBug, consts.FeedbackTypeOther},
-	"content_type":  {consts.ContentTypeWord, consts.ContentTypeBlock, consts.ContentTypePhrase, consts.ContentTypeSentence},
-	"image_role":    {consts.ImageRoleAdmUserAvatar, consts.ImageRoleUserAvatar, consts.ImageRoleCategoryCover, consts.ImageRoleTemplateCover, consts.ImageRoleGameCover, consts.ImageRolePressCover, consts.ImageRoleGameGroupCover, consts.ImageRolePostImage},
-	"source_from":   {consts.SourceFromManual, consts.SourceFromAI},
-	"source_type":   {consts.SourceTypeSentence, consts.SourceTypeVocab},
+	"degree":         {consts.GameDegreeBeginner, consts.GameDegreeIntermediate, consts.GameDegreeAdvanced},
+	"pattern":        {consts.GamePatternListen, consts.GamePatternSpeak, consts.GamePatternRead, consts.GamePatternWrite},
+	"mode":           {consts.GameModeWordSentence, consts.GameModeVocabBattle, consts.GameModeVocabMatch, consts.GameModeVocabElimination},
+	"feedback_type":  {consts.FeedbackTypeFeature, consts.FeedbackTypeContent, consts.FeedbackTypeUX, consts.FeedbackTypeBug, consts.FeedbackTypeOther},
+	"content_type":   {consts.ContentTypeWord, consts.ContentTypeBlock, consts.ContentTypePhrase, consts.ContentTypeSentence},
+	"image_role":     {consts.ImageRoleAdmUserAvatar, consts.ImageRoleUserAvatar, consts.ImageRoleCategoryCover, consts.ImageRoleTemplateCover, consts.ImageRoleGameCover, consts.ImageRolePressCover, consts.ImageRoleGameGroupCover, consts.ImageRolePostImage},
+	"source_from":    {consts.SourceFromManual, consts.SourceFromAI},
+	"source_type":    {consts.SourceTypeSentence, consts.SourceTypeVocab},
 	"grade":          {consts.UserGradeMonth, consts.UserGradeSeason, consts.UserGradeYear, consts.UserGradeLifetime},
 	"payment_method": {consts.PaymentMethodWechat, consts.PaymentMethodAlipay},
 	"bean_package":   consts.BeanPackageSlugs,

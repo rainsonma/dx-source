@@ -80,22 +80,6 @@ func ListFavorites(userID string) ([]FavoriteGameData, error) {
 		gameMap[g.ID] = g
 	}
 
-	// Batch load covers
-	coverIDs := make([]string, 0)
-	for _, g := range games {
-		if g.CoverID != nil && *g.CoverID != "" {
-			coverIDs = append(coverIDs, *g.CoverID)
-		}
-	}
-	coverMap := make(map[string]string)
-	if len(coverIDs) > 0 {
-		var images []models.Image
-		facades.Orm().Query().Where("id IN ?", coverIDs).Get(&images)
-		for _, img := range images {
-			coverMap[img.ID] = img.Url
-		}
-	}
-
 	// Batch load categories
 	catIDs := make([]string, 0)
 	for _, g := range games {
@@ -140,12 +124,8 @@ func ListFavorites(userID string) ([]FavoriteGameData, error) {
 			Name:        g.Name,
 			Description: g.Description,
 			Mode:        g.Mode,
+			CoverURL:    g.CoverURL,
 			FavoritedAt: f.CreatedAt,
-		}
-		if g.CoverID != nil {
-			if url, ok := coverMap[*g.CoverID]; ok {
-				item.CoverURL = &url
-			}
 		}
 		if g.GameCategoryID != nil {
 			if name, ok := catMap[*g.GameCategoryID]; ok {

@@ -3,9 +3,9 @@ package api
 import "github.com/goravel/framework/contracts/http"
 
 type CreatePostRequest struct {
-	Content string   `form:"content" json:"content"`
-	ImageID *string  `form:"image_id" json:"image_id"`
-	Tags    []string `form:"tags" json:"tags"`
+	Content  string   `form:"content" json:"content"`
+	ImageURL *string  `form:"image_url" json:"image_url"`
+	Tags     []string `form:"tags" json:"tags"`
 }
 
 func (r *CreatePostRequest) Authorize(ctx http.Context) error { return nil }
@@ -30,9 +30,9 @@ func (r *CreatePostRequest) Messages(ctx http.Context) map[string]string {
 }
 
 type UpdatePostRequest struct {
-	Content string   `form:"content" json:"content"`
-	ImageID *string  `form:"image_id" json:"image_id"`
-	Tags    []string `form:"tags" json:"tags"`
+	Content  string   `form:"content" json:"content"`
+	ImageURL *string  `form:"image_url" json:"image_url"`
+	Tags     []string `form:"tags" json:"tags"`
 }
 
 func (r *UpdatePostRequest) Authorize(ctx http.Context) error { return nil }

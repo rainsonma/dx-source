@@ -19,13 +19,13 @@ type CourseFile struct {
 }
 
 type CourseItem struct {
-	ID                 string               `json:"id"`
-	Content            string               `json:"content"`
-	Chinese            string               `json:"chinese"`
-	Type               string               `json:"type"`
-	SortOrder          int                  `json:"sortOrder"`
-	WordDetails        []WordDetail         `json:"wordDetails"`
-	SentenceStructure  []SentenceStructure  `json:"sentenceStructure"`
+	ID                string              `json:"id"`
+	Content           string              `json:"content"`
+	Chinese           string              `json:"chinese"`
+	Type              string              `json:"type"`
+	SortOrder         int                 `json:"sortOrder"`
+	WordDetails       []WordDetail        `json:"wordDetails"`
+	SentenceStructure []SentenceStructure `json:"sentenceStructure"`
 }
 
 type WordDetail struct {

@@ -504,13 +504,13 @@ func EndSession(userID, sessionID string, input EndSessionInput) error {
 	now := time.Now()
 	_, err := facades.Orm().Query().Model(&models.GameSession{}).Where("id", sessionID).
 		Update(map[string]any{
-			"score":        input.Score,
-			"exp":          input.Exp,
-			"max_combo":    input.MaxCombo,
+			"score":         input.Score,
+			"exp":           input.Exp,
+			"max_combo":     input.MaxCombo,
 			"correct_count": input.CorrectCount,
-			"wrong_count":  input.WrongCount,
-			"skip_count":   input.SkipCount,
-			"ended_at":     now,
+			"wrong_count":   input.WrongCount,
+			"skip_count":    input.SkipCount,
+			"ended_at":      now,
 		})
 	return err
 }

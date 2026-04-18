@@ -25,8 +25,6 @@ func Migrations() []schema.Migration {
 		&migrations.M20260322000014CreateUserReferralsTable{},
 		&migrations.M20260322000015CreateUserSettingsTable{},
 		&migrations.M20260322000016CreateGamesTable{},
-		&migrations.M20260322000017CreateImagesTable{},
-		&migrations.M20260322000018CreateAudiosTable{},
 		&migrations.M20260322000019CreateAdmUserRolesTable{},
 		&migrations.M20260322000020CreateAdmUserPermitsTable{},
 		&migrations.M20260322000021CreateAdmRolePermitsTable{},

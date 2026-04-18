@@ -24,7 +24,7 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Text("description").Nullable()
 			table.Text("mode").Default("")
 			table.Text("icon").Nullable()
-			table.Uuid("cover_id").Nullable()
+			table.Text("cover_url").Nullable()
 			table.Text("status").Default("")
 			table.Boolean("is_selective").Default(false)
 			table.Boolean("is_private").Default(false)
@@ -39,7 +39,6 @@ func (r *M20260322000016CreateGamesTable) Up() error {
 			table.Index("game_press_id")
 			table.Index("order")
 			table.Index("is_active")
-			table.Index("cover_id")
 			table.Index("is_private")
 		})
 	}

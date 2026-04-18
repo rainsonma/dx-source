@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -36,23 +35,13 @@ type PostItem struct {
 // postRow is used to scan raw SQL results for list queries.
 type postRow struct {
 	models.Post
-	AuthorNickname *string `gorm:"column:author_nickname"`
-	AuthorAvatarID *string `gorm:"column:author_avatar_id"`
-	BookmarkID     string  `gorm:"column:bookmark_id"`
+	AuthorNickname  *string `gorm:"column:author_nickname"`
+	AuthorAvatarURL *string `gorm:"column:author_avatar_url"`
+	BookmarkID      string  `gorm:"column:bookmark_id"`
 }
 
 // CreatePost creates a new post and returns the PostItem.
-func CreatePost(userID, content string, imageID *string, tags []string) (*PostItem, error) {
-	if imageID != nil && *imageID != "" {
-		var img models.Image
-		if err := facades.Orm().Query().Where("id", *imageID).First(&img); err != nil || img.ID == "" {
-			return nil, ErrImageNotFound
-		}
-		if img.UserID == nil || *img.UserID != userID {
-			return nil, ErrImageNotOwned
-		}
-	}
-
+func CreatePost(userID, content string, imageURL *string, tags []string) (*PostItem, error) {
 	if tags == nil {
 		tags = []string{}
 	}
@@ -61,7 +50,7 @@ func CreatePost(userID, content string, imageID *string, tags []string) (*PostIt
 		ID:       newID(),
 		UserID:   userID,
 		Content:  content,
-		ImageID:  imageID,
+		ImageURL: imageURL,
 		Tags:     pq.StringArray(tags),
 		IsActive: true,
 	}
@@ -97,7 +86,7 @@ func ListPosts(userID, tab, cursor string, limit int) ([]PostItem, string, bool,
 }
 
 // UpdatePost updates content, image, and tags of an owned post.
-func UpdatePost(userID, postID, content string, imageID *string, tags []string) error {
+func UpdatePost(userID, postID, content string, imageURL *string, tags []string) error {
 	var post models.Post
 	if err := facades.Orm().Query().Where("id", postID).Where("is_active", true).First(&post); err != nil || post.ID == "" {
 		return ErrPostNotFound
@@ -106,24 +95,14 @@ func UpdatePost(userID, postID, content string, imageID *string, tags []string) 
 		return ErrPostNotOwner
 	}
 
-	if imageID != nil && *imageID != "" {
-		var img models.Image
-		if err := facades.Orm().Query().Where("id", *imageID).First(&img); err != nil || img.ID == "" {
-			return ErrImageNotFound
-		}
-		if img.UserID == nil || *img.UserID != userID {
-			return ErrImageNotOwned
-		}
-	}
-
 	if tags == nil {
 		tags = []string{}
 	}
 
 	updates := map[string]any{
-		"content":  content,
-		"image_id": imageID,
-		"tags":     pq.StringArray(tags),
+		"content":   content,
+		"image_url": imageURL,
+		"tags":      pq.StringArray(tags),
 	}
 	if _, err := facades.Orm().Query().Model(&models.Post{}).Where("id", postID).Update(updates); err != nil {
 		return fmt.Errorf("failed to update post: %w", err)
@@ -151,7 +130,7 @@ func DeletePost(userID, postID string) error {
 
 func listLatestPosts(userID, cursor string, limit int) ([]PostItem, string, bool, error) {
 	sql := `
-		SELECT p.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id, '' AS bookmark_id
+		SELECT p.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url, '' AS bookmark_id
 		FROM posts p
 		JOIN users u ON u.id = p.user_id
 		WHERE p.is_active = true`
@@ -197,7 +176,7 @@ func listHotPosts(userID, cursor string, limit int) ([]PostItem, string, bool, e
 	}
 
 	sql := `
-		SELECT p.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id, '' AS bookmark_id
+		SELECT p.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url, '' AS bookmark_id
 		FROM posts p
 		JOIN users u ON u.id = p.user_id
 		WHERE p.is_active = true
@@ -229,7 +208,7 @@ func listHotPosts(userID, cursor string, limit int) ([]PostItem, string, bool, e
 
 func listFollowingPosts(userID, cursor string, limit int) ([]PostItem, string, bool, error) {
 	sql := `
-		SELECT p.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id, '' AS bookmark_id
+		SELECT p.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url, '' AS bookmark_id
 		FROM posts p
 		JOIN users u ON u.id = p.user_id
 		WHERE p.is_active = true
@@ -271,7 +250,7 @@ func listFollowingPosts(userID, cursor string, limit int) ([]PostItem, string, b
 
 func listBookmarkedPosts(userID, cursor string, limit int) ([]PostItem, string, bool, error) {
 	sql := `
-		SELECT p.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id, b.id AS bookmark_id
+		SELECT p.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url, b.id AS bookmark_id
 		FROM post_bookmarks b
 		JOIN posts p ON p.id = b.post_id
 		JOIN users u ON u.id = p.user_id
@@ -328,12 +307,6 @@ func buildPostItems(rows []postRow, userID string) ([]PostItem, error) {
 	for _, r := range rows {
 		p := &r.Post
 
-		var imageURL *string
-		if p.ImageID != nil && *p.ImageID != "" {
-			u := helpers.ImageServeURL(*p.ImageID)
-			imageURL = &u
-		}
-
 		tags := []string{}
 		if len(p.Tags) > 0 {
 			tags = []string(p.Tags)
@@ -344,12 +317,6 @@ func buildPostItems(rows []postRow, userID string) ([]PostItem, error) {
 			nickname = *r.AuthorNickname
 		}
 
-		var avatarURL *string
-		if r.AuthorAvatarID != nil && *r.AuthorAvatarID != "" {
-			u := helpers.ImageServeURL(*r.AuthorAvatarID)
-			avatarURL = &u
-		}
-
 		var createdAt time.Time
 		if p.CreatedAt != nil {
 			createdAt = p.CreatedAt.StdTime()
@@ -358,7 +325,7 @@ func buildPostItems(rows []postRow, userID string) ([]PostItem, error) {
 		items = append(items, PostItem{
 			ID:           p.ID,
 			Content:      p.Content,
-			ImageURL:     imageURL,
+			ImageURL:     p.ImageURL,
 			Tags:         tags,
 			LikeCount:    p.LikeCount,
 			CommentCount: p.CommentCount,
@@ -367,7 +334,7 @@ func buildPostItems(rows []postRow, userID string) ([]PostItem, error) {
 			Author: PostAuthor{
 				ID:        p.UserID,
 				Nickname:  nickname,
-				AvatarURL: avatarURL,
+				AvatarURL: r.AuthorAvatarURL,
 			},
 			CreatedAt: createdAt,
 		})
@@ -378,12 +345,6 @@ func buildPostItems(rows []postRow, userID string) ([]PostItem, error) {
 
 // buildPostItem builds a PostItem for a single post with individual queries.
 func buildPostItem(post *models.Post, userID string) (*PostItem, error) {
-	var imageURL *string
-	if post.ImageID != nil && *post.ImageID != "" {
-		u := helpers.ImageServeURL(*post.ImageID)
-		imageURL = &u
-	}
-
 	tags := []string{}
 	if len(post.Tags) > 0 {
 		tags = []string(post.Tags)
@@ -397,12 +358,6 @@ func buildPostItem(post *models.Post, userID string) (*PostItem, error) {
 	nickname := user.Username
 	if user.Nickname != nil && *user.Nickname != "" {
 		nickname = *user.Nickname
-	}
-
-	var avatarURL *string
-	if user.AvatarID != nil && *user.AvatarID != "" {
-		u := helpers.ImageServeURL(*user.AvatarID)
-		avatarURL = &u
 	}
 
 	var like models.PostLike
@@ -425,7 +380,7 @@ func buildPostItem(post *models.Post, userID string) (*PostItem, error) {
 	return &PostItem{
 		ID:           post.ID,
 		Content:      post.Content,
-		ImageURL:     imageURL,
+		ImageURL:     post.ImageURL,
 		Tags:         tags,
 		LikeCount:    post.LikeCount,
 		CommentCount: post.CommentCount,
@@ -434,7 +389,7 @@ func buildPostItem(post *models.Post, userID string) (*PostItem, error) {
 		Author: PostAuthor{
 			ID:        post.UserID,
 			Nickname:  nickname,
-			AvatarURL: avatarURL,
+			AvatarURL: user.AvatarURL,
 		},
 		CreatedAt: createdAt,
 	}, nil

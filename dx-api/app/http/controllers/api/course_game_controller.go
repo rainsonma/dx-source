@@ -74,7 +74,13 @@ func (c *CourseGameController) Create(ctx contractshttp.Context) contractshttp.R
 		pressID = &req.GamePressID
 	}
 
-	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID, req.IsPrivate)
+	if req.CoverURL != nil && *req.CoverURL != "" {
+		if !helpers.IsUploadedImageURL(*req.CoverURL) {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的封面URL")
+		}
+	}
+
+	gameID, err := services.CreateGame(userID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverURL, req.IsPrivate)
 	if err != nil {
 		return mapCourseGameError(ctx, err)
 	}
@@ -108,7 +114,13 @@ func (c *CourseGameController) Update(ctx contractshttp.Context) contractshttp.R
 		pressID = &req.GamePressID
 	}
 
-	err = services.UpdateGame(userID, gameID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverID, req.IsPrivate)
+	if req.CoverURL != nil && *req.CoverURL != "" {
+		if !helpers.IsUploadedImageURL(*req.CoverURL) {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的封面URL")
+		}
+	}
+
+	err = services.UpdateGame(userID, gameID, req.Name, req.Description, req.GameMode, categoryID, pressID, req.CoverURL, req.IsPrivate)
 	if err != nil {
 		return mapCourseGameError(ctx, err)
 	}

@@ -479,4 +479,3 @@ func matchPress(folderName string, pressMap map[string]string) *string {
 	}
 	return nil
 }
-

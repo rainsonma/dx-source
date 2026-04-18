@@ -49,7 +49,6 @@ type CourseGameDetailData struct {
 	IsPrivate      bool                  `json:"isPrivate"`
 	GameCategoryID *string               `json:"gameCategoryId"`
 	GamePressID    *string               `json:"gamePressId"`
-	CoverID        *string               `json:"coverId"`
 	CoverURL       *string               `json:"coverUrl"`
 	Levels         []CourseGameLevelData `json:"levels"`
 	User           *CourseGameOwnerData  `json:"user"`
@@ -105,27 +104,12 @@ func ListUserGames(userID string, status string, cursor string, limit int) ([]Co
 		nextCursor = games[len(games)-1].ID
 	}
 
-	// Batch load covers
-	coverIDs := make([]string, 0, len(games))
+	// Count levels per game
 	gameIDs := make([]string, 0, len(games))
 	for _, g := range games {
 		gameIDs = append(gameIDs, g.ID)
-		if g.CoverID != nil && *g.CoverID != "" {
-			coverIDs = append(coverIDs, *g.CoverID)
-		}
 	}
 
-	coverMap := make(map[string]string)
-	if len(coverIDs) > 0 {
-		var images []models.Image
-		if err := facades.Orm().Query().Where("id IN ?", coverIDs).Get(&images); err == nil {
-			for _, img := range images {
-				coverMap[img.ID] = img.Url
-			}
-		}
-	}
-
-	// Count levels per game
 	levelCountMap := make(map[string]int)
 	if len(gameIDs) > 0 {
 		var levels []models.GameLevel
@@ -144,13 +128,9 @@ func ListUserGames(userID string, status string, cursor string, limit int) ([]Co
 			Description: g.Description,
 			Mode:        g.Mode,
 			Status:      g.Status,
+			CoverURL:    g.CoverURL,
 			CreatedAt:   g.CreatedAt,
 			LevelCount:  levelCountMap[g.ID],
-		}
-		if g.CoverID != nil {
-			if url, ok := coverMap[*g.CoverID]; ok {
-				card.CoverURL = &url
-			}
 		}
 		result = append(result, card)
 	}
@@ -174,7 +154,7 @@ func getCourseGameOwned(userID, gameID string) (*models.Game, error) {
 }
 
 // CreateGame creates a new course game in draft status.
-func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverID *string, isPrivate bool) (string, error) {
+func CreateGame(userID, name string, description *string, mode string, categoryID, pressID, coverURL *string, isPrivate bool) (string, error) {
 	if err := requireVip(userID); err != nil {
 		return "", err
 	}
@@ -188,7 +168,7 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 		Mode:           mode,
 		GameCategoryID: categoryID,
 		GamePressID:    pressID,
-		CoverID:        coverID,
+		CoverURL:       coverURL,
 		Order:          1000,
 		IsActive:       true,
 		Status:         consts.GameStatusDraft,
@@ -206,7 +186,7 @@ func CreateGame(userID, name string, description *string, mode string, categoryI
 }
 
 // UpdateGame updates a course game's properties. Rejects edits to published games.
-func UpdateGame(userID, gameID, name string, description *string, mode string, categoryID, pressID, coverID *string, isPrivate bool) error {
+func UpdateGame(userID, gameID, name string, description *string, mode string, categoryID, pressID, coverURL *string, isPrivate bool) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -225,7 +205,7 @@ func UpdateGame(userID, gameID, name string, description *string, mode string, c
 		"mode":             mode,
 		"game_category_id": categoryID,
 		"game_press_id":    pressID,
-		"cover_id":         coverID,
+		"cover_url":        coverURL,
 		"is_private":       isPrivate,
 	}); err != nil {
 		return fmt.Errorf("failed to update game: %w", err)
@@ -633,15 +613,6 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		return nil, fmt.Errorf("failed to load levels: %w", err)
 	}
 
-	// Load cover URL
-	var coverURL *string
-	if game.CoverID != nil && *game.CoverID != "" {
-		var image models.Image
-		if err := facades.Orm().Query().Where("id", *game.CoverID).First(&image); err == nil && image.ID != "" {
-			coverURL = &image.Url
-		}
-	}
-
 	// Load owner (soft reference — code-level FK; graceful if missing)
 	var owner *CourseGameOwnerData
 	if game.UserID != nil && *game.UserID != "" {
@@ -674,8 +645,7 @@ func GetCourseGameDetail(userID, gameID string) (*CourseGameDetailData, error) {
 		IsPrivate:      game.IsPrivate,
 		GameCategoryID: game.GameCategoryID,
 		GamePressID:    game.GamePressID,
-		CoverID:        game.CoverID,
-		CoverURL:       coverURL,
+		CoverURL:       game.CoverURL,
 		Levels:         levelData,
 		User:           owner,
 		CreatedAt:      game.CreatedAt,

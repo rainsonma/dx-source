@@ -10,7 +10,7 @@ type Post struct {
 	ID           string         `gorm:"column:id;primaryKey" json:"id"`
 	UserID       string         `gorm:"column:user_id" json:"user_id"`
 	Content      string         `gorm:"column:content" json:"content"`
-	ImageID      *string        `gorm:"column:image_id" json:"image_id"`
+	ImageURL     *string        `gorm:"column:image_url" json:"image_url"`
 	Tags         pq.StringArray `gorm:"column:tags;type:text[]" json:"tags"`
 	LikeCount    int            `gorm:"column:like_count" json:"like_count"`
 	CommentCount int            `gorm:"column:comment_count" json:"comment_count"`

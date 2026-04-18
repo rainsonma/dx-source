@@ -33,13 +33,11 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 		return resp
 	}
 
-	// Get the uploaded file via Goravel's request
 	file, err := ctx.Request().File("file")
 	if err != nil || file == nil {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "file is required")
 	}
 
-	// Validate file
 	if err := services.ValidateUploadFile(file, req.Role); err != nil {
 		switch {
 		case errors.Is(err, services.ErrFileTooLarge):
@@ -53,7 +51,6 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 		}
 	}
 
-	// Upload
 	result, err := services.UploadImage(userID, file, req.Role)
 	if err != nil {
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to upload image")
@@ -62,27 +59,22 @@ func (c *UploadController) UploadImage(ctx contractshttp.Context) contractshttp.
 	return helpers.Success(ctx, result)
 }
 
-// ServeImage handles GET /api/uploads/images/:id — serve an uploaded image.
+// ServeImage handles GET /api/uploads/images/{year}/{month}/{day}/{filename}.
 func (c *UploadController) ServeImage(ctx contractshttp.Context) contractshttp.Response {
-	imageID := ctx.Request().Route("id")
-	if imageID == "" {
-		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "image id is required")
-	}
+	year := ctx.Request().Route("year")
+	month := ctx.Request().Route("month")
+	day := ctx.Request().Route("day")
+	filename := ctx.Request().Route("filename")
 
-	absPath, contentType, err := services.GetImagePath(imageID)
+	absPath, contentType, err := services.ResolveImagePath(year, month, day, filename)
 	if err != nil {
-		if errors.Is(err, services.ErrImageNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
-		}
-		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to get image")
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "invalid image path")
 	}
 
-	// Check file exists on disk
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
 		return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片文件不存在")
 	}
 
-	// Serve the file with caching headers (images are immutable — UUID names never change)
 	return ctx.Response().
 		Header("Content-Type", contentType).
 		Header("Cache-Control", "public, max-age=31536000, immutable").

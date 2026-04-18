@@ -56,7 +56,7 @@ func Api() {
 		router.Get("/game-presses", gamePressController.Presses)
 
 		// Public upload serving (no auth required)
-		router.Get("/uploads/images/{id}", uploadController.ServeImage)
+		router.Get("/uploads/images/{year}/{month}/{day}/{filename}", uploadController.ServeImage)
 
 		// Auth routes (public, no JWT required)
 		router.Prefix("/auth").Group(func(auth route.Router) {

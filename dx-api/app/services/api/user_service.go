@@ -18,7 +18,6 @@ type ProfileData struct {
 	Nickname          *string `json:"nickname"`
 	Email             *string `json:"email"`
 	Phone             *string `json:"phone"`
-	AvatarID          *string `json:"avatar_id"`
 	AvatarURL         *string `json:"avatar_url"`
 	City              *string `json:"city"`
 	Introduction      *string `json:"introduction"`
@@ -52,12 +51,6 @@ func GetProfile(userID string) (*ProfileData, error) {
 		return nil, fmt.Errorf("failed to compute level: %w", err)
 	}
 
-	var avatarURL *string
-	if user.AvatarID != nil && *user.AvatarID != "" {
-		url := helpers.ImageServeURL(*user.AvatarID)
-		avatarURL = &url
-	}
-
 	profile := &ProfileData{
 		ID:                user.ID,
 		Grade:             user.Grade,
@@ -65,8 +58,7 @@ func GetProfile(userID string) (*ProfileData, error) {
 		Nickname:          user.Nickname,
 		Email:             user.Email,
 		Phone:             user.Phone,
-		AvatarID:          user.AvatarID,
-		AvatarURL:         avatarURL,
+		AvatarURL:         user.AvatarURL,
 		City:              user.City,
 		Introduction:      user.Introduction,
 		IsActive:          user.IsActive,
@@ -133,21 +125,9 @@ func UpdateProfile(userID, nickname, city, introduction string) error {
 	return nil
 }
 
-// UpdateAvatar sets the user's avatar from an image ID.
-func UpdateAvatar(userID, imageID string) error {
-	var image models.Image
-	if err := facades.Orm().Query().Where("id", imageID).First(&image); err != nil {
-		return fmt.Errorf("failed to find image: %w", err)
-	}
-	if image.ID == "" {
-		return ErrImageNotFound
-	}
-
-	if image.UserID == nil || *image.UserID != userID {
-		return ErrImageNotOwned
-	}
-
-	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("avatar_id", imageID); err != nil {
+// UpdateAvatar sets the user's avatar URL directly.
+func UpdateAvatar(userID, avatarURL string) error {
+	if _, err := facades.Orm().Query().Model(&models.User{}).Where("id", userID).Update("avatar_url", avatarURL); err != nil {
 		return fmt.Errorf("failed to update avatar: %w", err)
 	}
 

@@ -5,13 +5,12 @@ import (
 	"net/http"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	requests "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"
-
-	"github.com/goravel/framework/facades"
 )
 
 type UserController struct{}
@@ -60,7 +59,7 @@ func (c *UserController) UpdateProfile(ctx contractshttp.Context) contractshttp.
 	return helpers.Success(ctx, nil)
 }
 
-// UpdateAvatar sets the authenticated user's avatar from an image ID.
+// UpdateAvatar sets the authenticated user's avatar URL.
 func (c *UserController) UpdateAvatar(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
 	if err != nil || userID == "" {
@@ -72,15 +71,12 @@ func (c *UserController) UpdateAvatar(ctx contractshttp.Context) contractshttp.R
 		return resp
 	}
 
-	if err := services.UpdateAvatar(userID, req.ImageID); err != nil {
-		switch {
-		case errors.Is(err, services.ErrImageNotFound):
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeImageNotFound, "图片不存在")
-		case errors.Is(err, services.ErrImageNotOwned):
-			return helpers.Error(ctx, http.StatusForbidden, consts.CodeForbidden, "该图片不属于您")
-		default:
-			return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to update avatar")
-		}
+	if !helpers.IsUploadedImageURL(req.AvatarURL) {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的头像URL")
+	}
+
+	if err := services.UpdateAvatar(userID, req.AvatarURL); err != nil {
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to update avatar")
 	}
 
 	return helpers.Success(ctx, nil)

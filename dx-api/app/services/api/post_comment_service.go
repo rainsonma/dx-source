@@ -7,7 +7,6 @@ import (
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
 
-	"dx-api/app/helpers"
 	"dx-api/app/models"
 )
 
@@ -29,8 +28,8 @@ type CommentWithReplies struct {
 // commentRow is used to scan raw SQL results for comment list queries.
 type commentRow struct {
 	models.PostComment
-	AuthorNickname *string `gorm:"column:author_nickname"`
-	AuthorAvatarID *string `gorm:"column:author_avatar_id"`
+	AuthorNickname  *string `gorm:"column:author_nickname"`
+	AuthorAvatarURL *string `gorm:"column:author_avatar_url"`
 }
 
 // CreateComment creates a comment (or reply) on a post.
@@ -79,11 +78,7 @@ func CreateComment(userID, postID string, parentID *string, content string) (*Co
 			nickname = *user.Nickname
 		}
 
-		var avatarURL *string
-		if user.AvatarID != nil && *user.AvatarID != "" {
-			u := helpers.ImageServeURL(*user.AvatarID)
-			avatarURL = &u
-		}
+		avatarURL := user.AvatarURL
 
 		var createdAt time.Time
 		if comment.CreatedAt != nil {
@@ -119,7 +114,7 @@ func ListComments(postID, cursor string, limit int) ([]CommentWithReplies, strin
 	}
 
 	sql := `
-		SELECT c.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id
+		SELECT c.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url
 		FROM post_comments c
 		JOIN users u ON u.id = c.user_id
 		WHERE c.post_id = ? AND c.parent_id IS NULL`
@@ -153,7 +148,7 @@ func ListComments(postID, cursor string, limit int) ([]CommentWithReplies, strin
 	}
 
 	replySql := `
-		SELECT c.*, u.nickname AS author_nickname, u.avatar_id AS author_avatar_id
+		SELECT c.*, u.nickname AS author_nickname, u.avatar_url AS author_avatar_url
 		FROM post_comments c
 		JOIN users u ON u.id = c.user_id
 		WHERE c.parent_id IN ?
@@ -259,11 +254,7 @@ func toCommentItem(r commentRow) CommentItem {
 		nickname = *r.AuthorNickname
 	}
 
-	var avatarURL *string
-	if r.AuthorAvatarID != nil && *r.AuthorAvatarID != "" {
-		u := helpers.ImageServeURL(*r.AuthorAvatarID)
-		avatarURL = &u
-	}
+	avatarURL := r.AuthorAvatarURL
 
 	var createdAt time.Time
 	if r.PostComment.CreatedAt != nil {

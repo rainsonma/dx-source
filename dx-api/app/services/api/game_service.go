@@ -109,32 +109,17 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 	}
 
 	// Collect IDs for batch lookups
-	coverIDs := make([]string, 0, len(games))
 	categoryIDs2 := make([]string, 0, len(games))
 	userIDs := make([]string, 0, len(games))
 	gameIDs := make([]string, 0, len(games))
 
 	for _, g := range games {
 		gameIDs = append(gameIDs, g.ID)
-		if g.CoverID != nil && *g.CoverID != "" {
-			coverIDs = append(coverIDs, *g.CoverID)
-		}
 		if g.GameCategoryID != nil && *g.GameCategoryID != "" {
 			categoryIDs2 = append(categoryIDs2, *g.GameCategoryID)
 		}
 		if g.UserID != nil && *g.UserID != "" {
 			userIDs = append(userIDs, *g.UserID)
-		}
-	}
-
-	// Batch load cover images
-	coverMap := make(map[string]string)
-	if len(coverIDs) > 0 {
-		var images []models.Image
-		if err := facades.Orm().Query().Where("id IN ?", coverIDs).Get(&images); err == nil {
-			for _, img := range images {
-				coverMap[img.ID] = img.Url
-			}
 		}
 	}
 
@@ -180,14 +165,10 @@ func ListPublishedGames(cursor string, limit int, categoryIDs []string, pressID 
 			Description: g.Description,
 			Mode:        g.Mode,
 			CreatedAt:   g.CreatedAt,
+			CoverURL:    g.CoverURL,
 			LevelCount:  levelCountMap[g.ID],
 		}
 
-		if g.CoverID != nil {
-			if url, ok := coverMap[*g.CoverID]; ok {
-				card.CoverURL = &url
-			}
-		}
 		if g.GameCategoryID != nil {
 			if name, ok := categoryMap[*g.GameCategoryID]; ok {
 				card.CategoryName = &name
@@ -378,15 +359,6 @@ func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 		return nil, fmt.Errorf("failed to load levels: %w", err)
 	}
 
-	// Load cover image
-	var coverURL *string
-	if game.CoverID != nil && *game.CoverID != "" {
-		var image models.Image
-		if err := facades.Orm().Query().Where("id", *game.CoverID).First(&image); err == nil && image.ID != "" {
-			coverURL = &image.Url
-		}
-	}
-
 	// Load category name
 	var categoryName *string
 	if game.GameCategoryID != nil && *game.GameCategoryID != "" {
@@ -430,7 +402,7 @@ func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 		Description:  game.Description,
 		Mode:         game.Mode,
 		CreatedAt:    game.CreatedAt,
-		CoverURL:     coverURL,
+		CoverURL:     game.CoverURL,
 		Author:       author,
 		CategoryName: categoryName,
 		PressName:    pressName,

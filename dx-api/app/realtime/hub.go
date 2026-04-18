@@ -11,8 +11,8 @@ import (
 
 	"dx-api/app/consts"
 
-	"github.com/gorilla/websocket"
 	"github.com/goravel/framework/facades"
+	"github.com/gorilla/websocket"
 )
 
 // Hub is the local client registry and topic router for one dx-api process.
@@ -131,7 +131,7 @@ func (h *Hub) Shutdown(ctx context.Context) error {
 		go func(client *Client) {
 			if client.conn != nil {
 				msg := websocket.FormatCloseMessage(4002, "server_shutdown")
-			_ = client.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
+				_ = client.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
 			}
 		}(c)
 	}
@@ -317,7 +317,7 @@ func (h *Hub) kickSlowConsumer(c *Client) {
 	go func() {
 		if c.conn != nil {
 			msg := websocket.FormatCloseMessage(4003, "slow_consumer")
-		_ = c.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
+			_ = c.conn.WriteControl(websocket.CloseMessage, msg, time.Now().Add(5*time.Second))
 		}
 	}()
 }
