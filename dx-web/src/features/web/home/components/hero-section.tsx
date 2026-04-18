@@ -1,13 +1,18 @@
 // dx-web/src/features/web/home/components/hero-section.tsx
+"use client";
+
 import Link from "next/link";
-import { Gamepad2, ArrowRight } from "lucide-react";
+import { Rocket, ArrowRight } from "lucide-react";
+import { motion } from "motion/react";
 import { HeroGameDemo } from "@/features/web/home/components/hero-game-demo";
+import { usePrefersReducedMotion } from "@/features/web/home/hooks/use-in-view";
 
 interface HeroSectionProps {
   isLoggedIn: boolean;
 }
 
 export function HeroSection({ isLoggedIn }: HeroSectionProps) {
+  const reduced = usePrefersReducedMotion();
   const primaryHref = isLoggedIn ? "/hall" : "/auth/signup";
 
   return (
@@ -39,7 +44,13 @@ export function HeroSection({ isLoggedIn }: HeroSectionProps) {
           href={primaryHref}
           className="flex items-center gap-2.5 rounded-xl bg-teal-600 px-9 py-4 shadow-[0_4px_30px_rgba(13,148,136,0.27)] transition-colors hover:bg-teal-700"
         >
-          <Gamepad2 className="h-5 w-5 text-white" />
+          <motion.span
+            animate={reduced ? undefined : { y: [0, -2, 0] }}
+            transition={reduced ? undefined : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="flex items-center"
+          >
+            <Rocket className="h-5 w-5 text-white" />
+          </motion.span>
           <span className="text-base font-semibold text-white">开启斗学之旅</span>
         </Link>
         <Link
