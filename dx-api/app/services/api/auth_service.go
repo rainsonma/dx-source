@@ -205,13 +205,15 @@ func GetCurrentUser(userID string) (*models.User, error) {
 }
 
 // RecordLogin creates a UserLogin record for audit purposes.
-func RecordLogin(userID, ip, userAgent string) {
+func RecordLogin(userID, ip, userAgent, platform string) {
 	agent := userAgent
+	p := platform
 	login := models.UserLogin{
-		ID:     uuid.Must(uuid.NewV7()).String(),
-		UserID: userID,
-		IP:     ip,
-		Agent:  &agent,
+		ID:       uuid.Must(uuid.NewV7()).String(),
+		UserID:   userID,
+		IP:       ip,
+		Agent:    &agent,
+		Platform: &p,
 	}
 	_ = facades.Orm().Query().Create(&login)
 }

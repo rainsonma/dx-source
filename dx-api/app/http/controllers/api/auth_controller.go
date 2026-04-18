@@ -83,7 +83,7 @@ func (c *AuthController) SignIn(ctx contractshttp.Context) contractshttp.Respons
 	// Record login asynchronously
 	ip := ctx.Request().Ip()
 	userAgent := ctx.Request().Header("User-Agent", "")
-	go services.RecordLogin(user.ID, ip, userAgent)
+	go services.RecordLogin(user.ID, ip, userAgent, consts.PlatformWebsite)
 
 	middleware.SetTokenCookie(ctx, "dx_token", token)
 	return helpers.Success(ctx, map[string]any{"user": user})
