@@ -1,1 +1,8 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "学习",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-loading": "@vant/weapp/loading/index"
+  }
+}

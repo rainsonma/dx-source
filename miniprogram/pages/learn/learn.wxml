@@ -1,1 +1,43 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
+    <view wx:if="{{!loading}}" class="content">
+      <!-- Stat cards -->
+      <view class="stat-card-row">
+        <view class="learn-stat-card teal" bind:tap="goMastered">
+          <text class="lsc-value">{{masterStats.total ?? 0}}</text>
+          <text class="lsc-label">已掌握</text>
+          <text class="lsc-sub">本周 +{{masterStats.thisWeek ?? 0}}</text>
+        </view>
+        <view class="learn-stat-card amber" bind:tap="goUnknown">
+          <text class="lsc-value">{{unknownStats.total ?? 0}}</text>
+          <text class="lsc-label">不认识</text>
+          <text class="lsc-sub">本周 +{{unknownStats.thisWeek ?? 0}}</text>
+        </view>
+        <view class="learn-stat-card purple" bind:tap="goReview">
+          <text class="lsc-value">{{reviewStats.pending ?? 0}}</text>
+          <text class="lsc-label">待复习</text>
+          <text class="lsc-sub">逾期 {{reviewStats.overdue ?? 0}}</text>
+        </view>
+      </view>
+      <!-- Quick links -->
+      <view class="quick-links">
+        <view class="quick-link" bind:tap="goMastered">
+          <van-icon name="success" size="20px" color="#10b981" />
+          <text class="ql-text">已掌握词库</text>
+          <van-icon name="arrow" size="14px" color="#9ca3af" />
+        </view>
+        <view class="quick-link" bind:tap="goUnknown">
+          <van-icon name="question-o" size="20px" color="#f59e0b" />
+          <text class="ql-text">不认识词库</text>
+          <van-icon name="arrow" size="14px" color="#9ca3af" />
+        </view>
+        <view class="quick-link" bind:tap="goReview">
+          <van-icon name="clock-o" size="20px" color="#6366f1" />
+          <text class="ql-text">待复习队列</text>
+          <van-icon name="arrow" size="14px" color="#9ca3af" />
+        </view>
+      </view>
+    </view>
+  </view>
+</van-config-provider>
