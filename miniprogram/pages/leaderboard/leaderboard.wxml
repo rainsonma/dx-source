@@ -1,1 +1,74 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <!-- Period tabs -->
+    <van-tabs
+      active="{{period}}"
+      bind:click="onPeriodChange"
+      color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+      background="{{theme === 'dark' ? '#1c1c1e' : '#ffffff'}}"
+    >
+      <van-tab title="今日" name="day" />
+      <van-tab title="本周" name="week" />
+      <van-tab title="本月" name="month" />
+    </van-tabs>
+    <!-- Type tabs -->
+    <van-tabs
+      active="{{lbType}}"
+      bind:click="onTypeChange"
+      color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+      background="{{theme === 'dark' ? '#0f0f0f' : '#f5f5f5'}}"
+    >
+      <van-tab title="经验值" name="exp" />
+      <van-tab title="游戏时长" name="playtime" />
+    </van-tabs>
+
+    <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
+
+    <block wx:if="{{!loading}}">
+      <!-- Top 3 podium -->
+      <view wx:if="{{entries.length >= 3}}" class="podium">
+        <!-- 2nd -->
+        <view class="podium-item second">
+          <view class="podium-rank">2</view>
+          <text class="podium-name">{{entries[1].nickname || entries[1].username}}</text>
+          <text class="podium-value">{{entries[1].value}}</text>
+        </view>
+        <!-- 1st -->
+        <view class="podium-item first">
+          <view class="podium-rank first-rank">1</view>
+          <text class="podium-name">{{entries[0].nickname || entries[0].username}}</text>
+          <text class="podium-value">{{entries[0].value}}</text>
+        </view>
+        <!-- 3rd -->
+        <view class="podium-item third">
+          <view class="podium-rank">3</view>
+          <text class="podium-name">{{entries[2].nickname || entries[2].username}}</text>
+          <text class="podium-value">{{entries[2].value}}</text>
+        </view>
+      </view>
+
+      <!-- Ranked list (4+) -->
+      <view class="rank-list">
+        <view
+          wx:for="{{entries}}"
+          wx:key="id"
+          wx:if="{{index >= 3}}"
+          class="rank-item"
+        >
+          <text class="rank-num">{{item.rank}}</text>
+          <text class="rank-name">{{item.nickname || item.username}}</text>
+          <text class="rank-value">{{item.value}}</text>
+        </view>
+      </view>
+
+      <!-- My rank (pinned) -->
+      <view wx:if="{{myRank}}" class="my-rank-bar">
+        <text class="rank-num">{{myRank.rank}}</text>
+        <text class="rank-name">我</text>
+        <text class="rank-value">{{myRank.value}}</text>
+      </view>
+
+      <van-empty wx:if="{{entries.length === 0}}" description="暂无数据" />
+    </block>
+  </view>
+</van-config-provider>
