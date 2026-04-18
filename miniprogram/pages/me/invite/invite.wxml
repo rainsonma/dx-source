@@ -12,15 +12,15 @@
 
       <view class="stats-row">
         <view class="si-stat">
-          <text class="si-v">{{stats.total ?? 0}}</text>
+          <text class="si-v">{{stats.total || 0}}</text>
           <text class="si-l">总邀请</text>
         </view>
         <view class="si-stat">
-          <text class="si-v">{{stats.paid ?? 0}}</text>
+          <text class="si-v">{{stats.paid || 0}}</text>
           <text class="si-l">已付费</text>
         </view>
         <view class="si-stat">
-          <text class="si-v">{{stats.rewarded ?? 0}}</text>
+          <text class="si-v">{{stats.rewarded || 0}}</text>
           <text class="si-l">已返利</text>
         </view>
       </view>

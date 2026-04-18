@@ -23,15 +23,15 @@
         <text class="greeting">{{greeting ? greeting.emoji + ' ' + greeting.text : '你好！'}}</text>
         <view class="stat-row">
           <view class="stat-card">
-            <text class="stat-value">{{profile.currentPlayStreak ?? 0}}</text>
+            <text class="stat-value">{{profile.currentPlayStreak || 0}}</text>
             <text class="stat-label">连续天数</text>
           </view>
           <view class="stat-card">
-            <text class="stat-value">{{masterStats.total ?? 0}}</text>
+            <text class="stat-value">{{masterStats.total || 0}}</text>
             <text class="stat-label">已掌握</text>
           </view>
           <view class="stat-card">
-            <text class="stat-value">{{todayAnswers ?? 0}}</text>
+            <text class="stat-value">{{todayAnswers || 0}}</text>
             <text class="stat-label">今日答题</text>
           </view>
         </view>

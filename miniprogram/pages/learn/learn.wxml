@@ -4,19 +4,19 @@
     <view wx:if="{{!loading}}" class="content">
       <view class="stat-card-row">
         <view class="learn-stat-card teal" bind:tap="goMastered">
-          <text class="lsc-value">{{masterStats.total ?? 0}}</text>
+          <text class="lsc-value">{{masterStats.total || 0}}</text>
           <text class="lsc-label">已掌握</text>
-          <text class="lsc-sub">本周 +{{masterStats.thisWeek ?? 0}}</text>
+          <text class="lsc-sub">本周 +{{masterStats.thisWeek || 0}}</text>
         </view>
         <view class="learn-stat-card amber" bind:tap="goUnknown">
-          <text class="lsc-value">{{unknownStats.total ?? 0}}</text>
+          <text class="lsc-value">{{unknownStats.total || 0}}</text>
           <text class="lsc-label">不认识</text>
-          <text class="lsc-sub">本周 +{{unknownStats.thisWeek ?? 0}}</text>
+          <text class="lsc-sub">本周 +{{unknownStats.thisWeek || 0}}</text>
         </view>
         <view class="learn-stat-card purple" bind:tap="goReview">
-          <text class="lsc-value">{{reviewStats.pending ?? 0}}</text>
+          <text class="lsc-value">{{reviewStats.pending || 0}}</text>
           <text class="lsc-label">待复习</text>
-          <text class="lsc-sub">逾期 {{reviewStats.overdue ?? 0}}</text>
+          <text class="lsc-sub">逾期 {{reviewStats.overdue || 0}}</text>
         </view>
       </view>
       <view class="quick-links">
