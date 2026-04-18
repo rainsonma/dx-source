@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/google/uuid"
 	contractshttp "github.com/goravel/framework/contracts/http"
@@ -18,6 +19,8 @@ import (
 // wechatSessionURL is the production jscode2session endpoint.
 // The single %s is replaced with the encoded query string.
 const wechatSessionURL = "https://api.weixin.qq.com/sns/jscode2session?%s"
+
+var wechatHTTPClient = &http.Client{Timeout: 5 * time.Second}
 
 type wechatSessionResponse struct {
 	OpenID     string `json:"openid"`
@@ -37,7 +40,7 @@ func fetchWechatSession(appID, secret, code, urlFmt string) (*wechatSessionRespo
 	q.Set("js_code", code)
 	q.Set("grant_type", "authorization_code")
 	endpoint := fmt.Sprintf(urlFmt, q.Encode())
-	resp, err := http.Get(endpoint) //nolint:noctx
+	resp, err := wechatHTTPClient.Get(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("wechat session request failed: %w", err)
 	}
