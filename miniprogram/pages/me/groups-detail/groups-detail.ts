@@ -42,7 +42,7 @@ Page({
     wx.showToast({ title: '邀请码已复制', icon: 'none' })
   },
   async startGroupGame() {
-    if (!this.data.group?.currentGameId || this.data.starting) return
+    if (!this.data.group || !this.data.group.currentGameId || this.data.starting) return
     this.setData({ starting: true })
     try {
       await api.post(`/api/groups/${this.data.group.id}/start-game`, {})

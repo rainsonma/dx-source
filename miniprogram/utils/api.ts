@@ -28,7 +28,7 @@ function request<T>(method: string, path: string, data?: object): Promise<T> {
         const body = res.data as ApiResponse<T>
         if (res.statusCode === 401) {
           clearToken()
-          if (body?.code === 40104) {
+          if (body && body.code === 40104) {
             wx.showModal({
               title: '提示',
               content: '账号已在其他设备登录',
@@ -42,8 +42,8 @@ function request<T>(method: string, path: string, data?: object): Promise<T> {
           }
           return reject(new Error('unauthorized'))
         }
-        if (body?.code !== 0) {
-          return reject(new Error(body?.message || '请求失败'))
+        if (!body || body.code !== 0) {
+          return reject(new Error((body && body.message) || '请求失败'))
         }
         resolve(body.data)
       },

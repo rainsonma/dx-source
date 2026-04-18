@@ -29,7 +29,8 @@ Page({
       primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488',
       arrowColor: theme === 'dark' ? '#6b7280' : '#9ca3af',
     });
-    (this.getTabBar() as any)?.setData({ active: 4, theme })
+    const tabBar = this.getTabBar() as any
+    if (tabBar) { tabBar.setData({ active: 4, theme }) }
     this.loadProfile()
   },
   async loadProfile() {

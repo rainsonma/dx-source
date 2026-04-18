@@ -49,7 +49,8 @@ Page({
   },
   onShow() {
     this.setData({ theme: app.globalData.theme });
-    (this.getTabBar() as any)?.setData({ active: 0, theme: app.globalData.theme })
+    const tabBar = this.getTabBar() as any
+    if (tabBar) { tabBar.setData({ active: 0, theme: app.globalData.theme }) }
     this.loadData()
   },
   async loadData() {
@@ -93,8 +94,9 @@ Page({
     const next: 'light' | 'dark' = this.data.theme === 'light' ? 'dark' : 'light'
     wx.setStorageSync('dx_theme', next)
     app.globalData.theme = next
-    this.setData({ theme: next });
-    (this.getTabBar() as any)?.setData({ theme: next })
+    this.setData({ theme: next })
+    const tabBar2 = this.getTabBar() as any
+    if (tabBar2) { tabBar2.setData({ theme: next }) }
   },
   goNotices() {
     wx.navigateTo({ url: '/pages/me/notices/notices' })

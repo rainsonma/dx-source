@@ -27,7 +27,8 @@ Page({
   },
   onShow() {
     this.setData({ theme: app.globalData.theme });
-    (this.getTabBar() as any)?.setData({ active: 2, theme: app.globalData.theme })
+    const tabBar = this.getTabBar() as any
+    if (tabBar) { tabBar.setData({ active: 2, theme: app.globalData.theme }) }
   },
   async loadLeaderboard() {
     this.setData({ loading: true, entries: [], entries4Plus: [], myRank: null })

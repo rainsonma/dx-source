@@ -138,7 +138,7 @@ Page({
       max_combo: maxCombo,
       play_time: Math.floor(duration / 1000),
       duration: Math.floor(duration / 1000),
-      next_content_item_id: nextItem?.id ?? null,
+      next_content_item_id: nextItem ? nextItem.id : null,
     }).catch(() => {})
     setTimeout(() => {
       this.setData({ currentIndex: nextIndex })

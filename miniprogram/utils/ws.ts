@@ -25,14 +25,18 @@ export const ws = {
     })
   },
   subscribe(topic: string): void {
-    socket?.send({ data: JSON.stringify({ type: 'subscribe', topic }) })
+    if (socket) {
+      socket.send({ data: JSON.stringify({ type: 'subscribe', topic }) })
+    }
   },
   on(event: string, cb: EventHandler): void {
     if (!handlers.has(event)) handlers.set(event, [])
     handlers.get(event)!.push(cb)
   },
   disconnect(): void {
-    socket?.close({})
+    if (socket) {
+      socket.close({})
+    }
     socket = null
     handlers.clear()
   },
