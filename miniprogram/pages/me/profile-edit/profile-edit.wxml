@@ -11,7 +11,8 @@
         <view wx:else class="avatar-fallback-lg">
           <text>📷</text>
         </view>
-        <text class="avatar-hint">{{uploadingAvatar ? '上传中...' : '点击更换头像'}}</text>
+        <van-loading wx:if="{{uploadingAvatar}}" size="24px" color="{{primaryColor}}" />
+        <text wx:else class="avatar-hint">点击更换头像</text>
       </view>
 
       <van-cell-group inset custom-style="margin:16px 16px 0;">

@@ -1,4 +1,6 @@
 import { api } from '../../../utils/api'
+import { config } from '../../../utils/config'
+import { getToken } from '../../../utils/auth'
 
 interface ProfileData {
   username: string; nickname: string | null; avatarUrl: string | null
@@ -57,10 +59,10 @@ Page({
         const tempPath = res.tempFiles[0].tempFilePath
         this.setData({ uploadingAvatar: true })
         wx.uploadFile({
-          url: require('../../../utils/config').config.apiBaseUrl + '/api/uploads/images',
+          url: config.apiBaseUrl + '/api/uploads/images',
           filePath: tempPath,
           name: 'file',
-          header: { Authorization: `Bearer ${require('../../../utils/auth').getToken()}` },
+          header: { Authorization: `Bearer ${getToken()}` },
           success: (uploadRes) => {
             const body = JSON.parse(uploadRes.data) as { code: number; data: { id: string; url: string } }
             if (body.code === 0) {
@@ -98,6 +100,7 @@ Page({
         city: this.data.city || null,
         introduction: this.data.introduction || null,
       })
+      this.setData({ saving: false })
       wx.showToast({ title: '保存成功', icon: 'none' })
       wx.navigateBack()
     } catch (err) {
