@@ -1,1 +1,53 @@
-<view></view>
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <!-- Top bar -->
+    <view class="top-bar">
+      <view class="search-box" bind:tap="goSearch">
+        <van-icon name="search" size="16px" color="#9ca3af" />
+        <text class="search-placeholder">搜索课程</text>
+      </view>
+      <view class="top-actions">
+        <van-icon
+          name="{{theme === 'dark' ? 'sunny-o' : 'moon-o'}}"
+          size="22px"
+          color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+          bind:tap="toggleTheme"
+        />
+        <van-icon name="bell" size="22px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" bind:tap="goNotices" />
+      </view>
+    </view>
+
+    <van-skeleton title row="5" loading="{{loading}}">
+      <!-- Greeting + stats -->
+      <view class="hero-section">
+        <text class="greeting">{{greeting ? greeting.emoji + ' ' + greeting.text : '你好！'}}</text>
+        <view class="stat-row">
+          <view class="stat-card">
+            <text class="stat-value">{{profile.currentPlayStreak ?? 0}}</text>
+            <text class="stat-label">连续天数</text>
+          </view>
+          <view class="stat-card">
+            <text class="stat-value">{{masterStats.total ?? 0}}</text>
+            <text class="stat-label">已掌握</text>
+          </view>
+          <view class="stat-card">
+            <text class="stat-value">{{todayAnswers ?? 0}}</text>
+            <text class="stat-label">今日答题</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Heatmap -->
+      <view class="section">
+        <text class="section-title">学习热力图</text>
+        <view class="heatmap">
+          <view
+            wx:for="{{heatmapCells}}"
+            wx:key="date"
+            class="heatmap-cell level-{{item.level}}"
+          ></view>
+        </view>
+      </view>
+    </van-skeleton>
+  </view>
+</van-config-provider>

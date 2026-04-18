@@ -1,1 +1,9 @@
-{ "navigationBarTitleText": "" }
+{
+  "navigationBarTitleText": "斗学",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-icon": "@vant/weapp/icon/index",
+    "van-skeleton": "@vant/weapp/skeleton/index",
+    "van-badge": "@vant/weapp/badge/index"
+  }
+}
