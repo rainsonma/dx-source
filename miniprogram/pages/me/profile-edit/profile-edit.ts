@@ -64,9 +64,9 @@ Page({
           name: 'file',
           header: { Authorization: `Bearer ${getToken()}` },
           success: (uploadRes) => {
-            const body = JSON.parse(uploadRes.data) as { code: number; data: { id: string; url: string } }
+            const body = JSON.parse(uploadRes.data) as { code: number; data: { url: string } }
             if (body.code === 0) {
-              api.put('/api/user/avatar', { image_id: body.data.id })
+              api.put('/api/user/avatar', { avatar_url: body.data.url })
                 .then(() => {
                   this.setData({
                     uploadingAvatar: false,
