@@ -249,7 +249,13 @@ export function GameHeroCard({
       />
 
       {/* Delete game confirmation */}
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          if (!open) deleteAction.clearError()
+          setDeleteOpen(open)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>确定删除这个游戏？</AlertDialogTitle>
@@ -265,7 +271,10 @@ export function GameHeroCard({
               取消
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={deleteAction.execute}
+              onClick={(e) => {
+                e.preventDefault()
+                deleteAction.execute(() => setDeleteOpen(false))
+              }}
               disabled={deleteAction.isPending}
               className="bg-red-600 hover:bg-red-700"
             >

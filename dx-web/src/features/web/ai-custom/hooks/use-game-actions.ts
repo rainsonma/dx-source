@@ -17,20 +17,23 @@ export function useDeleteGame(gameId: string) {
   const [isPending, setIsPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function execute() {
+  async function execute(onSuccess?: () => void) {
     setIsPending(true)
     setError(null)
     const result = await deleteGameAction(gameId)
     if (result.error) {
       setError(result.error)
       setIsPending(false)
-    } else {
-      await swrMutate("/api/course-games")
-      router.replace("/hall/ai-custom")
+      return
     }
+    await swrMutate("/api/course-games")
+    onSuccess?.()
+    router.replace("/hall/ai-custom")
   }
 
-  return { execute, isPending, error }
+  const clearError = useCallback(() => setError(null), [])
+
+  return { execute, isPending, error, clearError }
 }
 
 export function useDeleteGameLevel(gameId: string) {
