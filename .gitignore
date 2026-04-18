@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Node
+miniprogram/node_modules/
+
+# WeChat DevTools
+miniprogram/miniprogram_npm/

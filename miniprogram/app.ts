@@ -1,18 +1,40 @@
-// app.ts
-App<IAppOption>({
-  globalData: {},
-  onLaunch() {
-    // 展示本地存储能力
-    const logs = wx.getStorageSync('logs') || []
-    logs.unshift(Date.now())
-    wx.setStorageSync('logs', logs)
+import { isLoggedIn, getToken, getUserId } from './utils/auth'
+import { ws } from './utils/ws'
 
-    // 登录
-    wx.login({
-      success: res => {
-        console.log(res.code)
-        // 发送 res.code 到后台换取 openId, sessionKey, unionId
-      },
+interface GlobalData {
+  theme: 'light' | 'dark'
+  userId: string
+}
+
+App<{ globalData: GlobalData }>({
+  globalData: {
+    theme: 'light',
+    userId: '',
+  },
+  onLaunch() {
+    const stored = wx.getStorageSync('dx_theme') as 'light' | 'dark' | ''
+    const sys = wx.getSystemSetting()
+    this.globalData.theme = stored || ((sys.theme as 'light' | 'dark') ?? 'light')
+
+    wx.onThemeChange(({ theme }) => {
+      if (!wx.getStorageSync('dx_theme')) {
+        this.globalData.theme = theme as 'light' | 'dark'
+      }
+    })
+
+    if (!isLoggedIn()) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
+
+    this.globalData.userId = getUserId() ?? ''
+    const token = getToken()!
+    ws.connect(token)
+    ws.subscribe(`user::${this.globalData.userId}`)
+    ws.on('session_replaced', () => {
+      wx.removeStorageSync('dx_token')
+      wx.removeStorageSync('dx_user_id')
+      wx.reLaunch({ url: '/pages/login/login' })
     })
   },
 })
