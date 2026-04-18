@@ -1,0 +1,21 @@
+.page-container { min-height: 100vh; background: var(--bg-page); }
+.center-loader { display: flex; justify-content: center; padding: 40px; }
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px 16px;
+  gap: 10px;
+}
+.avatar-fallback-lg {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+.avatar-hint { font-size: 13px; color: var(--primary); }
+.save-btn { padding: 20px 16px; }
