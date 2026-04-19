@@ -23,6 +23,16 @@ var upgrader = gorillaWs.Upgrader{
 		if origin == "" {
 			return true
 		}
+		// Allow loopback on any port — covers local dev and the WeChat DevTools
+		// proxy, whose port rotates per session (e.g. http://127.0.0.1:21618).
+		if origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") ||
+			origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") {
+			return true
+		}
+		// Allow WeChat Mini Program real-device origins.
+		if origin == "https://servicewechat.com" || strings.HasPrefix(origin, "https://servicewechat.com/") {
+			return true
+		}
 		originsRaw, ok := facades.Config().Env("CORS_ALLOWED_ORIGINS", "http://localhost:3000").(string)
 		if !ok {
 			return false
