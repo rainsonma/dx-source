@@ -50,6 +50,15 @@ var upgrader = gorillaWs.Upgrader{
 	},
 }
 
+// Close codes for WebSocket auth outcomes. dx-web's provider already knows
+// about these (see websocket-provider.tsx onclose handler):
+//   4001 session replaced
+//   4401 auth expired / invalid
+const (
+	wsCloseSessionReplaced = 4001
+	wsCloseAuthFailed      = 4401
+)
+
 // wsAuthDeadline bounds how long an unauthenticated connection may live
 // before it must produce a valid auth envelope as its first frame.
 const wsAuthDeadline = 10 * time.Second
@@ -60,38 +69,61 @@ func NewWSController() *WSController {
 	return &WSController{}
 }
 
-// Handle accepts the WebSocket upgrade and runs an auth handshake on the
-// first frame. The route is registered publicly (no JWT middleware) because
-// WeChat Mini Program's wx.connectSocket cannot forward custom headers or
-// cookies on the upgrade request; the token therefore arrives inside the
-// first post-upgrade message as `{"type":"auth","token":"..."}`.
+// Handle accepts the WebSocket upgrade and authenticates the session via
+// one of two paths:
 //
-// Flow:
-//  1. Upgrade HTTP → WebSocket.
-//  2. Read first frame with a 10s deadline.
-//  3. Parse the JWT + run the same Redis single-device check the HTTP
-//     middleware uses. Emit auth_failed / session_replaced and close on
-//     failure.
-//  4. Emit auth_success and hand off to Hub.Attach for the normal session
-//     lifecycle.
+//  1. HTTP-level auth (dx-web): the dx_token cookie or Authorization: Bearer
+//     header is present on the upgrade request. Validated before calling
+//     Hub.Attach; on failure, the connection is closed with close code 4001
+//     or 4401 matching dx-web's existing onclose handler.
+//
+//  2. First-frame auth (WeChat Mini Program): no cookie, no header. The
+//     controller waits up to 10 s for the first frame, which MUST be
+//     {"op":"auth","token":"..."}. Server emits {"event":"auth_success"} on
+//     success or {"event":"auth_failed"} then closes on failure.
+//
+// The route is registered publicly (no JWT middleware) because WeChat
+// Mini Program's wx.connectSocket cannot forward custom headers or cookies
+// on the upgrade request.
 func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response {
 	hub := realtime.DefaultHub()
 	if hub == nil || hub.IsShuttingDown() {
 		return helpers.Error(ctx, http.StatusServiceUnavailable, consts.CodeInternalError, "realtime hub not available")
 	}
 
+	// Path 1: check for HTTP-level credentials (dx-web's cookie).
+	httpToken := ctx.Request().Cookie("dx_token")
+	if httpToken == "" {
+		if bearer := ctx.Request().Header("Authorization", ""); len(bearer) > 7 && bearer[:7] == "Bearer " {
+			httpToken = bearer[7:]
+		}
+	}
+
 	w := ctx.Response().Writer()
 	r := ctx.Request().Origin()
-
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return nil
 	}
 
-	userID, authErr := authenticateWebSocket(ctx, conn)
-	if authErr != nil {
-		_ = conn.Close()
-		return nil
+	var userID string
+	if httpToken != "" {
+		// Cookie / header present — validate now (before taking the connection over).
+		uid, closeCode, authErr := validateWSToken(ctx, httpToken)
+		if authErr != nil {
+			_ = conn.WriteMessage(gorillaWs.CloseMessage, gorillaWs.FormatCloseMessage(closeCode, authErr.Error()))
+			_ = conn.Close()
+			return nil
+		}
+		userID = uid
+	} else {
+		// No HTTP credentials — fall back to first-frame auth.
+		uid, authErr := authenticateWebSocketByFirstFrame(ctx, conn)
+		if authErr != nil {
+			_ = conn.Close()
+			return nil
+		}
+		userID = uid
 	}
 
 	wsCtx, cancel := context.WithCancel(context.Background())
@@ -102,22 +134,41 @@ func (c *WSController) Handle(ctx contractshttp.Context) contractshttp.Response 
 	return nil
 }
 
-// authEnvelope is the shape of the first frame a newly-connected client
-// MUST send. The server closes the connection if any other frame shape
-// arrives first.
+// validateWSToken runs the JWT parse + Redis single-device check used by the
+// HTTP JwtAuth middleware, but returns values instead of writing to ctx. The
+// second return value is the WebSocket close code the caller should use if
+// auth fails (4001 session_replaced, 4401 otherwise, 0 on success).
+func validateWSToken(ctx contractshttp.Context, token string) (string, int, error) {
+	payload, err := facades.Auth(ctx).Guard("user").Parse(token)
+	if err != nil || payload == nil || payload.Key == "" {
+		return "", wsCloseAuthFailed, errors.New("invalid token")
+	}
+	userID := payload.Key
+
+	loginTsStr, redisErr := helpers.RedisGet("user_auth:" + userID + ":user")
+	if redisErr != nil {
+		return "", wsCloseAuthFailed, errors.New("session lookup failed")
+	}
+	loginTs, _ := strconv.ParseInt(loginTsStr, 10, 64)
+	if payload.IssuedAt.Unix() < loginTs {
+		return "", wsCloseSessionReplaced, errors.New("session replaced")
+	}
+	return userID, 0, nil
+}
+
+// authEnvelope is the shape a newly-connected client MUST send as its first
+// frame when no HTTP-level credentials are present. Matches the main realtime
+// Envelope's `op` field name for protocol consistency.
 type authEnvelope struct {
-	Type  string `json:"type"`
+	Op    string `json:"op"`
 	Token string `json:"token"`
 }
 
-// authenticateWebSocket reads exactly one frame within wsAuthDeadline,
-// validates it as an auth envelope, runs the JWT + Redis checks, and
-// writes an auth_success / auth_failed / session_replaced event back to
-// the client. Returns the authenticated user ID on success.
-//
-// On any failure, the caller must close the connection. This function
-// does NOT close it directly so the caller can control the defer chain.
-func authenticateWebSocket(ctx contractshttp.Context, conn *gorillaWs.Conn) (string, error) {
+// authenticateWebSocketByFirstFrame reads exactly one frame within
+// wsAuthDeadline, validates it as {"op":"auth","token":"..."}, runs the JWT
+// + Redis check, and writes an auth_success / auth_failed / session_replaced
+// event back to the client. On failure the caller must close the connection.
+func authenticateWebSocketByFirstFrame(ctx contractshttp.Context, conn *gorillaWs.Conn) (string, error) {
 	if err := conn.SetReadDeadline(time.Now().Add(wsAuthDeadline)); err != nil {
 		return "", err
 	}
@@ -129,30 +180,23 @@ func authenticateWebSocket(ctx contractshttp.Context, conn *gorillaWs.Conn) (str
 	}
 
 	var msg authEnvelope
-	if err := json.Unmarshal(raw, &msg); err != nil || msg.Type != "auth" || msg.Token == "" {
-		_ = conn.WriteJSON(map[string]string{"event": "auth_failed", "message": "first message must be auth"})
+	if err := json.Unmarshal(raw, &msg); err != nil || msg.Op != "auth" || msg.Token == "" {
+		_ = conn.WriteJSON(map[string]any{"op": "event", "type": "auth_failed", "data": map[string]string{"message": "first message must be auth"}})
 		return "", errors.New("bad auth envelope")
 	}
 
-	payload, err := facades.Auth(ctx).Guard("user").Parse(msg.Token)
-	if err != nil || payload == nil || payload.Key == "" {
-		_ = conn.WriteJSON(map[string]string{"event": "auth_failed", "message": "invalid token"})
-		return "", errors.New("token parse failed")
-	}
-	userID := payload.Key
-
-	loginTsStr, redisErr := helpers.RedisGet("user_auth:" + userID + ":user")
-	if redisErr != nil {
-		_ = conn.WriteJSON(map[string]string{"event": "auth_failed", "message": "session lookup failed"})
-		return "", redisErr
-	}
-	loginTs, _ := strconv.ParseInt(loginTsStr, 10, 64)
-	if payload.IssuedAt.Unix() < loginTs {
-		_ = conn.WriteJSON(map[string]string{"event": "session_replaced", "code": strconv.Itoa(consts.CodeSessionReplaced)})
-		return "", errors.New("session replaced")
+	userID, closeCode, authErr := validateWSToken(ctx, msg.Token)
+	if authErr != nil {
+		if closeCode == wsCloseSessionReplaced {
+			_ = conn.WriteJSON(map[string]any{"op": "event", "type": "session_replaced"})
+		} else {
+			_ = conn.WriteJSON(map[string]any{"op": "event", "type": "auth_failed", "data": map[string]string{"message": authErr.Error()}})
+		}
+		_ = conn.WriteMessage(gorillaWs.CloseMessage, gorillaWs.FormatCloseMessage(closeCode, authErr.Error()))
+		return "", authErr
 	}
 
-	if err := conn.WriteJSON(map[string]string{"event": "auth_success"}); err != nil {
+	if err := conn.WriteJSON(map[string]any{"op": "event", "type": "auth_success"}); err != nil {
 		return "", err
 	}
 	return userID, nil
