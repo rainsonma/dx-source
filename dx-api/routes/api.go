@@ -84,6 +84,11 @@ func Api() {
 		router.Post("/payments/callback/wechat", paymentController.WechatCallback)
 		router.Post("/payments/callback/alipay", paymentController.AlipayCallback)
 
+		// WebSocket (authenticated by the first frame after upgrade, not by
+		// HTTP middleware — WeChat Mini Program can't forward cookies or
+		// headers on wx.connectSocket).
+		router.Get("/ws", apicontrollers.NewWSController().Handle)
+
 		// Auth routes (protected, JWT required)
 		router.Prefix("/auth").Middleware(middleware.JwtAuth()).Group(func(auth route.Router) {
 			auth.Get("/me", authController.Me)
@@ -272,10 +277,6 @@ func Api() {
 				gp.Get("/{id}/restore", playGroupController.Restore)
 				gp.Put("/{id}/content-item", playGroupController.UpdateContentItem)
 			})
-
-			// WebSocket
-			wsController := apicontrollers.NewWSController()
-			protected.Get("/ws", wsController.Handle)
 
 			// User verify
 			userVerifyController := apicontrollers.NewUserVerifyController()
