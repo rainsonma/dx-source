@@ -2,7 +2,9 @@
   "name": "miniprogram-ts-quickstart",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "scripts": {
+    "build:iconfont": "node scripts/build-iconfont.mjs"
   },
   "keywords": [],
   "author": "",
@@ -10,6 +12,8 @@
   "dependencies": {
   },
   "devDependencies": {
+    "fantasticon": "^3.0.0",
+    "lucide-static": "^0.460.0",
     "miniprogram-api-typings": "^2.8.3-1"
   }
 }
