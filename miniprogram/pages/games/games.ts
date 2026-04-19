@@ -45,9 +45,10 @@ Page({
     this.setData({ loading: true })
     const cursor = reset ? '' : this.data.nextCursor
     const catId = this.data.activeCategoryId
-    const qs = new URLSearchParams({ limit: '20' })
-    if (cursor) qs.set('cursor', cursor)
-    if (catId) qs.set('categoryIds', catId)
+    const parts: string[] = ['limit=20']
+    if (cursor) parts.push(`cursor=${encodeURIComponent(cursor)}`)
+    if (catId) parts.push(`categoryIds=${encodeURIComponent(catId)}`)
+    const qs = parts.join('&')
     try {
       const res = await api.get<PaginatedData<GameCardData>>(`/api/games?${qs}`)
       this.setData({
