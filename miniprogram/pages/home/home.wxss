@@ -32,10 +32,16 @@
 .hero-section {
   padding: 20px 16px 12px;
 }
-.greeting {
+.greeting-title {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+  display: block;
+  margin-bottom: 4px;
+}
+.greeting-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
   display: block;
   margin-bottom: 16px;
 }

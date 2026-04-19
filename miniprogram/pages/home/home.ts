@@ -15,7 +15,7 @@ interface DashboardProfile {
 
 interface MasterStats { total: number; thisWeek: number; thisMonth: number }
 interface ReviewStats { pending: number; overdue: number; reviewedToday: number }
-interface Greeting { text: string; emoji: string }
+interface Greeting { title: string; subtitle: string }
 
 interface DashboardData {
   profile: DashboardProfile

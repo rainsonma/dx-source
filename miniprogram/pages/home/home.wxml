@@ -20,7 +20,8 @@
     <van-skeleton title row="5" loading="{{loading}}">
       <!-- Greeting + stats -->
       <view class="hero-section">
-        <text class="greeting">{{greeting ? greeting.emoji + ' ' + greeting.text : '你好！'}}</text>
+        <text class="greeting-title">{{greeting ? greeting.title : '你好！'}}</text>
+        <text wx:if="{{greeting}}" class="greeting-subtitle">{{greeting.subtitle}}</text>
         <view class="stat-row">
           <view class="stat-card">
             <text class="stat-value">{{profile.currentPlayStreak || 0}}</text>
