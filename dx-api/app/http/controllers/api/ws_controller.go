@@ -37,7 +37,7 @@ var upgrader = gorillaWs.Upgrader{
 		if !ok {
 			return false
 		}
-		for _, allowed := range strings.Split(originsRaw, ",") {
+		for allowed := range strings.SplitSeq(originsRaw, ",") {
 			if strings.TrimSpace(allowed) == origin {
 				return true
 			}
