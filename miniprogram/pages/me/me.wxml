@@ -23,7 +23,7 @@
             <text class="exp-badge">Lv.{{profile.level}}</text>
           </view>
         </view>
-        <van-icon name="arrow" size="16px" color="{{arrowColor}}" />
+        <dx-icon name="chevron-right" size="16px" color="{{arrowColor}}" />
       </view>
 
       <view class="stats-bar">
@@ -44,16 +44,26 @@
       </view>
 
       <view wx:if="{{profile.vipDueAt}}" class="vip-bar">
-        <van-icon name="vip-card-o" size="16px" color="#d97706" />
+        <dx-icon name="crown" size="16px" color="#d97706" />
         <text class="vip-text">会员有效期至 {{formatDate(profile.vipDueAt)}}</text>
       </view>
 
       <van-cell-group inset custom-style="margin:16px;">
-        <van-cell title="公告通知" icon="bell" is-link bind:click="goNotices" />
-        <van-cell title="我的团队" icon="friends-o" is-link bind:click="goGroups" />
-        <van-cell title="推荐有礼" icon="gift-o" is-link bind:click="goInvite" />
-        <van-cell title="兑换码" icon="coupon-o" is-link bind:click="goRedeem" />
-        <van-cell title="购买会员" icon="vip-card-o" is-link bind:click="goPurchase" />
+        <van-cell title="公告通知" is-link bind:click="goNotices">
+          <dx-icon slot="icon" name="bell" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="我的团队" is-link bind:click="goGroups">
+          <dx-icon slot="icon" name="users" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="推荐有礼" is-link bind:click="goInvite">
+          <dx-icon slot="icon" name="gift" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="兑换码" is-link bind:click="goRedeem">
+          <dx-icon slot="icon" name="ticket" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="购买会员" is-link bind:click="goPurchase">
+          <dx-icon slot="icon" name="crown" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
       </van-cell-group>
 
       <van-cell-group inset custom-style="margin:0 16px 16px;">

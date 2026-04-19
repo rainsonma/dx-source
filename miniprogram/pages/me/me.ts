@@ -17,6 +17,7 @@ Page({
     theme: 'light' as 'light' | 'dark',
     primaryColor: '#0d9488',
     arrowColor: '#9ca3af',
+    cellIconColor: '#6b7280',
     loading: true,
     profile: null as ProfileData | null,
     avatarChar: '',
@@ -29,6 +30,7 @@ Page({
       theme,
       primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488',
       arrowColor: theme === 'dark' ? '#6b7280' : '#9ca3af',
+      cellIconColor: theme === 'dark' ? '#9ca3af' : '#6b7280',
     });
     const tabBar = this.getTabBar() as any
     if (tabBar) { tabBar.setData({ active: 4, theme }) }

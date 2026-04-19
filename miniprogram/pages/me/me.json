@@ -4,7 +4,7 @@
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",
-    "van-icon": "@vant/weapp/icon/index",
+    "dx-icon": "/components/dx-icon/index",
     "van-image": "@vant/weapp/image/index",
     "van-loading": "@vant/weapp/loading/index"
   }
