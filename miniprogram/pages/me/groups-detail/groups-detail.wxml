@@ -5,7 +5,7 @@
       <view class="invite-bar" bind:tap="copyInviteCode">
         <text class="invite-label">邀请码：</text>
         <text class="invite-code">{{group.inviteCode}}</text>
-        <van-icon name="copy-o" size="14px" color="{{primaryColor}}" />
+        <dx-icon name="copy" size="14px" color="{{primaryColor}}" />
       </view>
 
       <van-cell-group inset custom-style="margin:12px 16px;">

@@ -21,19 +21,19 @@
       </view>
       <view class="quick-links">
         <view class="quick-link" bind:tap="goMastered">
-          <van-icon name="success" size="20px" color="{{accentColors.teal}}" />
+          <dx-icon name="check" size="20px" color="{{accentColors.teal}}" />
           <text class="ql-text">已掌握词库</text>
-          <van-icon name="arrow" size="14px" color="{{arrowColor}}" />
+          <dx-icon name="chevron-right" size="14px" color="{{arrowColor}}" />
         </view>
         <view class="quick-link" bind:tap="goUnknown">
-          <van-icon name="question-o" size="20px" color="{{accentColors.amber}}" />
+          <dx-icon name="help-circle" size="20px" color="{{accentColors.amber}}" />
           <text class="ql-text">不认识词库</text>
-          <van-icon name="arrow" size="14px" color="{{arrowColor}}" />
+          <dx-icon name="chevron-right" size="14px" color="{{arrowColor}}" />
         </view>
         <view class="quick-link" bind:tap="goReview">
-          <van-icon name="clock-o" size="20px" color="{{accentColors.purple}}" />
+          <dx-icon name="clock" size="20px" color="{{accentColors.purple}}" />
           <text class="ql-text">待复习队列</text>
-          <van-icon name="arrow" size="14px" color="{{arrowColor}}" />
+          <dx-icon name="chevron-right" size="14px" color="{{arrowColor}}" />
         </view>
       </view>
     </view>

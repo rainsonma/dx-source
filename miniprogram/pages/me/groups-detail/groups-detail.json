@@ -6,6 +6,6 @@
     "van-cell": "@vant/weapp/cell/index",
     "van-cell-group": "@vant/weapp/cell-group/index",
     "van-loading": "@vant/weapp/loading/index",
-    "van-icon": "@vant/weapp/icon/index"
+    "dx-icon": "/components/dx-icon/index"
   }
 }

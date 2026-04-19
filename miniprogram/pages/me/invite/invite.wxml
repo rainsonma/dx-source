@@ -6,7 +6,7 @@
         <text class="ic-title">我的邀请码</text>
         <view class="ic-code-row" bind:tap="copyCode">
           <text class="ic-code">{{inviteCode}}</text>
-          <van-icon name="copy-o" size="18px" color="{{primaryColor}}" />
+          <dx-icon name="copy" size="18px" color="{{primaryColor}}" />
         </view>
       </view>
 

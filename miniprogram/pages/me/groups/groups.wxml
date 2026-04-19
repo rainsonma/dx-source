@@ -14,7 +14,7 @@
           <text class="group-name">{{item.name}}</text>
           <text class="group-meta">{{item.memberCount}}名成员 · {{item.isOwner ? '队长' : '成员'}}</text>
         </view>
-        <van-icon name="arrow" size="14px" color="#9ca3af" />
+        <dx-icon name="chevron-right" size="14px" color="#9ca3af" />
       </view>
     </view>
 
