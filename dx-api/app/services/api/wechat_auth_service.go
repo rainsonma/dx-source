@@ -98,10 +98,12 @@ func WechatMiniSignIn(ctx contractshttp.Context, code string) (string, *models.U
 		}
 
 		openID := session.OpenID
+		nickname := helpers.GenerateDefaultNickname()
 		user = models.User{
 			ID:         uuid.Must(uuid.NewV7()).String(),
 			Grade:      consts.UserGradeFree,
 			Username:   username,
+			Nickname:   &nickname,
 			Password:   hashedPw,
 			IsActive:   true,
 			InviteCode: helpers.GenerateInviteCode(8),
