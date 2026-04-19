@@ -10,11 +10,13 @@ interface AuthResponse {
 Page({
   data: {
     loading: false,
-    theme: 'light' as 'light' | 'dark',
+    statusBarHeight: 20,
   },
   onLoad() {
-    const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
-    this.setData({ theme: app.globalData.theme })
+    if (typeof wx.getWindowInfo === 'function') {
+      const info = wx.getWindowInfo()
+      this.setData({ statusBarHeight: info.statusBarHeight })
+    }
   },
   handleLogin() {
     if (this.data.loading) return

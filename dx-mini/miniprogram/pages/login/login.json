@@ -1,9 +1,8 @@
 {
-  "navigationBarTitleText": "斗学",
-  "navigationBarBackgroundColor": "#ffffff",
+  "navigationStyle": "custom",
+  "navigationBarTextStyle": "black",
   "usingComponents": {
     "van-button": "@vant/weapp/button/index",
-    "van-config-provider": "@vant/weapp/config-provider/index",
     "van-loading": "@vant/weapp/loading/index"
   }
 }

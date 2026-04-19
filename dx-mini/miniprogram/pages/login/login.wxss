@@ -1,31 +1,108 @@
-.page-container {
+/* Override the app-level page background so our gradient layer is the only
+   surface visible above the WeChat shell. */
+page {
+  background: transparent;
+}
+
+/* === Layout scaffolding === */
+
+.login-page {
+  position: relative;
   min-height: 100vh;
-  background: var(--bg-page);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: hidden;
 }
-.login-body {
-  width: 100%;
-  padding: 0 40px;
+
+.login-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #ccfbf1 0%,
+    #dbeafe 25%,
+    #ede9fe 50%,
+    #fce7f3 75%,
+    #ffffff 100%
+  );
+}
+
+.login-bg::after {
+  content: '';
+  position: absolute;
+  top: 36%;
+  left: 50%;
+  width: 600rpx;
+  height: 600rpx;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(94, 234, 212, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+.login-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 48px;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
 }
-.logo-wrap {
+
+.capsule-spacer {
+  height: 88rpx;
+  flex: 0 0 auto;
+}
+
+.spacer-top    { flex: 0.6 1 0; }
+.spacer-bottom { flex: 1 1 0; }
+
+/* === Brand === */
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32rpx;
+}
+
+.brand-logo {
+  font-size: 110rpx;
+  font-weight: 800;
+  letter-spacing: 12rpx;
+  color: #0d9488;
+  animation: hero-rise 480ms ease-out both;
+}
+
+.brand-tagline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  padding: 0 60rpx;
+  animation: hero-rise 480ms ease-out 120ms both;
+}
+
+.tagline-line {
+  font-size: 28rpx;
+  line-height: 1.6;
+  color: #475569;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
-.logo-text {
-  font-size: 48px;
-  font-weight: 700;
-  color: var(--primary);
-  letter-spacing: 4px;
+
+/* === CTA === */
+
+.cta-wrap {
+  width: 100%;
+  padding: 0 60rpx 80rpx;
+  box-sizing: border-box;
+  animation: hero-rise 480ms ease-out 240ms both;
 }
-.logo-sub {
-  font-size: 14px;
-  color: var(--text-secondary);
+
+/* === First-paint reveal === */
+
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(16rpx); }
+  to   { opacity: 1; transform: translateY(0);     }
 }

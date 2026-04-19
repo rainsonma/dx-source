@@ -1,18 +1,26 @@
-<van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}">
-    <view class="login-body">
-      <view class="logo-wrap">
-        <text class="logo-text">斗学</text>
-        <text class="logo-sub">边玩边学，轻松记单词</text>
+<view class="login-page">
+  <view class="login-bg" />
+  <view class="login-content" style="padding-top: {{statusBarHeight}}px;">
+    <view class="capsule-spacer" />
+    <view class="spacer-top" />
+    <view class="brand">
+      <text class="brand-logo">斗学</text>
+      <view class="brand-tagline">
+        <text class="tagline-line">多种学习模式 · AI 定制内容 · 和朋友一起闯关</text>
+        <text class="tagline-line">每天 10 分钟，英语悄悄流利了</text>
       </view>
+    </view>
+    <view class="spacer-bottom" />
+    <view class="cta-wrap">
       <van-button
         type="primary"
+        color="#0d9488"
         block
         round
         loading="{{loading}}"
         bind:click="handleLogin"
-        custom-style="height:48px;font-size:16px;"
-      >使用微信登录</van-button>
+        custom-style="height:96rpx;font-size:32rpx;font-weight:600;"
+      >微信一键登录</van-button>
     </view>
   </view>
-</van-config-provider>
+</view>
