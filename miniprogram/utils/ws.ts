@@ -19,7 +19,8 @@ export const ws = {
   connect(token: string): void {
     isOpen = false
     pendingSends.length = 0
-    const wsUrl = config.apiBaseUrl.replace(/^http/, 'ws') + '/api/ws'
+    const base = config.apiBaseUrl.replace(/^http/, 'ws')
+    const wsUrl = `${base}/api/ws?token=${encodeURIComponent(token)}`
     socket = wx.connectSocket({
       url: wsUrl,
       header: { Authorization: `Bearer ${token}` },
