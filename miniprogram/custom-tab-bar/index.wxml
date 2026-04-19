@@ -6,7 +6,7 @@
     data-path="{{item.path}}"
     bind:tap="switchTab"
   >
-    <van-icon
+    <dx-icon
       name="{{item.icon}}"
       size="22px"
       color="{{active === index ? (theme === 'dark' ? '#14b8a6' : '#0d9488') : '#9ca3af'}}"

@@ -1,6 +1,5 @@
 interface TabItem {
   icon: string
-  activeIcon: string
   text: string
   path: string
 }
@@ -10,11 +9,11 @@ Component({
     active: 0,
     theme: 'light' as 'light' | 'dark',
     tabs: [
-      { icon: 'wap-home-o', activeIcon: 'wap-home', text: '首页', path: '/pages/home/home' },
-      { icon: 'column', activeIcon: 'column', text: '课程', path: '/pages/games/games' },
-      { icon: 'chart-trending-o', activeIcon: 'chart-trending-o', text: '排行榜', path: '/pages/leaderboard/leaderboard' },
-      { icon: 'records', activeIcon: 'records', text: '学习', path: '/pages/learn/learn' },
-      { icon: 'contact', activeIcon: 'contact', text: '我的', path: '/pages/me/me' },
+      { icon: 'home',          text: '首页',   path: '/pages/home/home' },
+      { icon: 'book-open',     text: '课程',   path: '/pages/games/games' },
+      { icon: 'trending-up',   text: '排行榜', path: '/pages/leaderboard/leaderboard' },
+      { icon: 'notebook-text', text: '学习',   path: '/pages/learn/learn' },
+      { icon: 'user',          text: '我的',   path: '/pages/me/me' },
     ] as TabItem[],
   },
   lifetimes: {
