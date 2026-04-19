@@ -17,10 +17,10 @@
               <text class="meta-tag">{{item.mode}}</text>
             </view>
           </view>
-          <van-icon name="arrow" size="14px" color="#9ca3af" />
+          <dx-icon name="chevron-right" size="14px" color="#9ca3af" />
         </view>
         <view slot="right" class="unfav-btn" data-id="{{item.id}}" bind:tap="unfavorite">
-          <van-icon name="star" size="20px" color="#ffffff" />
+          <dx-icon name="star" size="20px" color="#ffffff" />
         </view>
       </van-swipe-cell>
     </view>

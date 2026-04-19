@@ -5,7 +5,7 @@
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-tabs": "@vant/weapp/tabs/index",
     "van-tab": "@vant/weapp/tab/index",
-    "van-icon": "@vant/weapp/icon/index",
+    "dx-icon": "/components/dx-icon/index",
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
     "van-image": "@vant/weapp/image/index"

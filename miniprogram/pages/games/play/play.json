@@ -4,7 +4,7 @@
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-button": "@vant/weapp/button/index",
-    "van-icon": "@vant/weapp/icon/index",
+    "dx-icon": "/components/dx-icon/index",
     "van-popup": "@vant/weapp/popup/index",
     "van-loading": "@vant/weapp/loading/index"
   }

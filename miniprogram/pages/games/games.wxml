@@ -19,7 +19,7 @@
 
     <!-- Favorites button -->
     <view class="fav-bar" bind:tap="goFavorites">
-      <van-icon name="star-o" size="16px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
+      <dx-icon name="star" size="16px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
       <text class="fav-text">收藏的课程</text>
     </view>
 
@@ -42,7 +42,7 @@
             radius="8px 8px 0 0"
           />
           <view wx:else class="cover-placeholder">
-            <van-icon name="column" size="28px" color="#9ca3af" />
+            <dx-icon name="book-open" size="28px" color="#9ca3af" />
           </view>
         </view>
         <view class="game-info">

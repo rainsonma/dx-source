@@ -6,7 +6,7 @@
     <block wx:if="{{!loading && !showResult && currentItem}}">
       <!-- Score bar -->
       <view class="score-bar">
-        <view bind:tap="goBack"><van-icon name="arrow-left" size="20px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" /></view>
+        <view bind:tap="goBack"><dx-icon name="chevron-left" size="20px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" /></view>
         <text class="score-text">{{score}} 分</text>
         <text class="combo-text">x{{combo}}</text>
       </view>
@@ -30,15 +30,15 @@
       <!-- Mark word actions -->
       <view wx:if="{{answered}}" class="mark-actions">
         <view class="mark-btn" data-type="master" bind:tap="markWord">
-          <van-icon name="success" size="16px" color="#10b981" />
+          <dx-icon name="check" size="16px" color="#10b981" />
           <text>已掌握</text>
         </view>
         <view class="mark-btn" data-type="unknown" bind:tap="markWord">
-          <van-icon name="question-o" size="16px" color="#f59e0b" />
+          <dx-icon name="help-circle" size="16px" color="#f59e0b" />
           <text>不认识</text>
         </view>
         <view class="mark-btn" data-type="review" bind:tap="markWord">
-          <van-icon name="clock-o" size="16px" color="#6366f1" />
+          <dx-icon name="clock" size="16px" color="#6366f1" />
           <text>待复习</text>
         </view>
       </view>
