@@ -6,7 +6,7 @@
     "urlCheck": false,
     "coverView": false,
     "lazyloadPlaceholderEnable": false,
-    "skylineRenderEnable": true,
+    "skylineRenderEnable": false,
     "preloadBackgroundData": false,
     "autoAudits": false,
     "showShadowRootInWxmlPanel": false,
@@ -18,5 +18,5 @@
     "useLanDebug": false,
     "ignoreDevUnusedFiles": true
   },
-  "libVersion": "3.15.2"
+  "libVersion": "3.15.1"
 }

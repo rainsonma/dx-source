@@ -14,7 +14,7 @@ App<{ globalData: GlobalData }>({
   onLaunch() {
     const stored = wx.getStorageSync('dx_theme') as 'light' | 'dark' | ''
     const sys = wx.getSystemSetting()
-    this.globalData.theme = stored || ((sys.theme as 'light' | 'dark') ?? 'light')
+    this.globalData.theme = stored || ((sys.theme as 'light' | 'dark') || 'light')
 
     wx.onThemeChange(({ theme }) => {
       if (!wx.getStorageSync('dx_theme')) {
@@ -27,7 +27,7 @@ App<{ globalData: GlobalData }>({
       return
     }
 
-    this.globalData.userId = getUserId() ?? ''
+    this.globalData.userId = getUserId() || ''
     const token = getToken()!
     ws.connect(token)
     ws.subscribe(`user::${this.globalData.userId}`)

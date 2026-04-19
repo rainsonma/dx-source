@@ -41,7 +41,7 @@ Page({
   onLoad(options: { gameId?: string; levelId?: string; degree?: string }) {
     this.setData({ theme: app.globalData.theme })
     if (options.gameId && options.levelId) {
-      this.initSession(options.gameId, options.levelId, options.degree ?? 'normal')
+      this.initSession(options.gameId, options.levelId, options.degree || 'normal')
     }
   },
   async initSession(gameId: string, levelId: string, degree: string) {
@@ -97,7 +97,7 @@ Page({
         return parsed.map((c: unknown) => {
           if (typeof c === 'string') return { text: c, correct: c === item.content }
           const obj = c as { text?: string; correct?: boolean }
-          return { text: obj.text ?? '', correct: obj.correct ?? false }
+          return { text: obj.text || '', correct: obj.correct || false }
         })
       }
     } catch {}
@@ -115,7 +115,7 @@ Page({
     const score = this.data.score + baseScore + comboScore
     const maxCombo = Math.max(this.data.maxCombo, newCombo)
     const nextIndex = this.data.currentIndex + 1
-    const nextItem = this.data.contentItems[nextIndex] ?? null
+    const nextItem = this.data.contentItems[nextIndex] || null
     this.setData({
       answered: true,
       selectedChoice: idx,

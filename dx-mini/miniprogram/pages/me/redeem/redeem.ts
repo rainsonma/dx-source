@@ -23,7 +23,7 @@ Page({
   async loadHistory() {
     try {
       const res = await api.get<{ items: RedeemItem[] }>('/api/redeems')
-      const items = Array.isArray(res) ? (res as unknown as RedeemItem[]) : res.items ?? []
+      const items = Array.isArray(res) ? (res as unknown as RedeemItem[]) : res.items || []
       this.setData({ loading: false, history: items })
     } catch {
       this.setData({ loading: false })

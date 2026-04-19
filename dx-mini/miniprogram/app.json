@@ -36,6 +36,5 @@
     "backgroundTextStyle": "light"
   },
   "style": "v2",
-  "componentFramework": "glass-easel",
-  "lazyCodeLoading": "requiredComponents"
+  "componentFramework": "glass-easel"
 }

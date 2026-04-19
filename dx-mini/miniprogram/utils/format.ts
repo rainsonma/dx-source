@@ -28,5 +28,5 @@ export function gradeLabel(grade: string): string {
     quarterly: '季度会员',
     yearly: '年度会员',
   }
-  return map[grade] ?? grade
+  return map[grade] || grade
 }

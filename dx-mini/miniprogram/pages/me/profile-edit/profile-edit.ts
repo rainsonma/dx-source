@@ -32,9 +32,9 @@ Page({
       this.setData({
         loading: false,
         profile,
-        nickname: profile.nickname ?? '',
-        city: profile.city ?? '',
-        introduction: profile.introduction ?? '',
+        nickname: profile.nickname || '',
+        city: profile.city || '',
+        introduction: profile.introduction || '',
       })
     } catch {
       this.setData({ loading: false })

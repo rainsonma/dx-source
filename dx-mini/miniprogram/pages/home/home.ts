@@ -84,7 +84,7 @@ Page({
       const d = new Date(today)
       d.setDate(d.getDate() - i)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const count = map.get(key) ?? 0
+      const count = map.get(key) || 0
       const level = count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 10 ? 3 : 4
       cells.push({ date: key, level })
     }

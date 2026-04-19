@@ -77,8 +77,8 @@ export const ws = {
             isAuthed = false
             // fall through so any registered handler fires too
           }
-          const key = msg.type ?? ''
-          const cbs = handlers.get(key) ?? []
+          const key = msg.type || ''
+          const cbs = handlers.get(key) || []
           cbs.forEach(cb => cb(msg.data))
         }
         // Ignore op:ack / op:error for now — the mini program doesn't use
