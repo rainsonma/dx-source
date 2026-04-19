@@ -10,8 +10,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
 import os from 'node:os'
 import { generateFonts } from 'fantasticon'
+
+const require = createRequire(import.meta.url)
+const SVGFixer = require('oslllo-svg-fixer')
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
@@ -65,6 +69,9 @@ fs.writeFileSync(
   path.join(fontOutDir, 'dx-iconfont.codepoints.json'),
   JSON.stringify(codepoints, null, 2) + '\n',
 )
+
+// Stage: expand strokes to filled paths so glyphs render as outlines in font engines
+await SVGFixer(tmpDir, tmpDir).fix()
 
 // Stage: run fantasticon
 await generateFonts({
