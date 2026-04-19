@@ -5,12 +5,15 @@
     <view class="spacer-top" />
     <view class="brand">
       <text class="brand-logo">斗学</text>
+    </view>
+    <view class="spacer-bottom" />
+    <view class="greeting">
+      <text class="greeting-title">欢迎来到斗学</text>
       <view class="brand-tagline">
         <text class="tagline-line">多种学习模式 · AI 定制内容 · 和朋友一起闯关</text>
         <text class="tagline-line">每天 10 分钟，英语悄悄流利了</text>
       </view>
     </view>
-    <view class="spacer-bottom" />
     <view class="cta-wrap">
       <van-button
         type="primary"
