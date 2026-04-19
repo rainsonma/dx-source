@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "购买会员",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-button": "@vant/weapp/button/index"
+  }
+}

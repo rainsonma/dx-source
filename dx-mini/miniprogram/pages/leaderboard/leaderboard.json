@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "排行榜",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-tabs": "@vant/weapp/tabs/index",
+    "van-tab": "@vant/weapp/tab/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index"
+  }
+}

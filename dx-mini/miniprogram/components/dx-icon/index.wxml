@@ -1,0 +1,9 @@
+<van-icon
+  class-prefix="dx-icon"
+  name="{{name}}"
+  size="{{size}}"
+  color="{{color}}"
+  custom-style="{{customStyle}}"
+  custom-class="{{customClass}}"
+  bind:click="onClick"
+/>

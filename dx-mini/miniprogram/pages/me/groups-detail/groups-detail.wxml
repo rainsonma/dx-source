@@ -1,0 +1,34 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <block wx:if="{{!loading && group}}">
+      <view class="invite-bar" bind:tap="copyInviteCode">
+        <text class="invite-label">邀请码：</text>
+        <text class="invite-code">{{group.inviteCode}}</text>
+        <dx-icon name="copy" size="14px" color="{{primaryColor}}" />
+      </view>
+
+      <van-cell-group inset custom-style="margin:12px 16px;">
+        <van-cell wx:if="{{group.currentGameName}}" title="当前课程" value="{{group.currentGameName}}" />
+        <van-cell wx:else title="当前课程" value="未设置" />
+      </van-cell-group>
+
+      <view wx:if="{{group.isOwner && group.currentGameId}}" class="start-btn">
+        <van-button type="primary" block round loading="{{starting}}" bind:click="startGroupGame">
+          {{group.isPlaying ? '游戏进行中' : '开始团队游戏'}}
+        </van-button>
+      </view>
+
+      <view class="section-header"><text class="section-title">成员 ({{group.memberCount}})</text></view>
+      <view class="member-list">
+        <view wx:for="{{members}}" wx:key="id" class="member-item">
+          <view class="member-avatar">
+            <text>{{item.avatarChar}}</text>
+          </view>
+          <text class="member-name">{{item.nickname || item.username}}</text>
+          <text wx:if="{{item.role === 'owner'}}" class="owner-badge">队长</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</van-config-provider>

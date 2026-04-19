@@ -1,0 +1,41 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <block wx:if="{{!loading}}">
+      <view class="invite-card">
+        <text class="ic-title">我的邀请码</text>
+        <view class="ic-code-row" bind:tap="copyCode">
+          <text class="ic-code">{{inviteCode}}</text>
+          <dx-icon name="copy" size="18px" color="{{primaryColor}}" />
+        </view>
+      </view>
+
+      <view class="stats-row">
+        <view class="si-stat">
+          <text class="si-v">{{stats.total || 0}}</text>
+          <text class="si-l">总邀请</text>
+        </view>
+        <view class="si-stat">
+          <text class="si-v">{{stats.paid || 0}}</text>
+          <text class="si-l">已付费</text>
+        </view>
+        <view class="si-stat">
+          <text class="si-v">{{stats.rewarded || 0}}</text>
+          <text class="si-l">已返利</text>
+        </view>
+      </view>
+
+      <view class="section-header"><text class="section-title">邀请记录</text></view>
+      <van-empty wx:if="{{referrals.length === 0}}" description="暂无邀请记录" />
+      <view class="referral-list">
+        <view wx:for="{{referrals}}" wx:key="id" class="referral-item">
+          <text class="ref-name">{{item.invitee ? (item.invitee.nickname || item.invitee.username) : '未知用户'}}</text>
+          <view class="ref-right">
+            <text class="ref-status {{item.status}}">{{item.status === 'rewarded' ? '已返利' : item.status === 'paid' ? '已付费' : '注册'}}</text>
+            <text class="ref-time">{{formatRelativeDate(item.createdAt)}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+</van-config-provider>

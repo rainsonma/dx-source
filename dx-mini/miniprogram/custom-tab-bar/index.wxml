@@ -1,0 +1,16 @@
+<view class="tab-bar {{theme === 'dark' ? 'dark' : ''}}">
+  <view
+    wx:for="{{tabs}}"
+    wx:key="path"
+    class="tab-item {{active === index ? 'active' : ''}}"
+    data-path="{{item.path}}"
+    bind:tap="switchTab"
+  >
+    <dx-icon
+      name="{{item.icon}}"
+      size="22px"
+      color="{{active === index ? (theme === 'dark' ? '#14b8a6' : '#0d9488') : '#9ca3af'}}"
+    />
+    <text class="tab-label {{active === index ? 'active-label' : ''}}">{{item.text}}</text>
+  </view>
+</view>

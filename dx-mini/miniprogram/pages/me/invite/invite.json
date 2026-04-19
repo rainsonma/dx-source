@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "推荐有礼",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-empty": "@vant/weapp/empty/index",
+    "dx-icon": "/components/dx-icon/index"
+  }
+}

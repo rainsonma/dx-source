@@ -1,0 +1,31 @@
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-body {
+  width: 100%;
+  padding: 0 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
+}
+.logo-wrap {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.logo-text {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 4px;
+}
+.logo-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+}

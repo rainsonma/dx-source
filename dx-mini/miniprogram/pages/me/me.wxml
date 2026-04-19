@@ -1,0 +1,74 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+    <block wx:if="{{!loading && profile}}">
+      <view class="profile-header" bind:tap="goProfileEdit">
+        <view class="avatar-wrap">
+          <van-image
+            wx:if="{{profile.avatarUrl}}"
+            src="{{profile.avatarUrl}}"
+            width="64px"
+            height="64px"
+            radius="50%"
+            fit="cover"
+          />
+          <view wx:else class="avatar-fallback">
+            <text>{{avatarChar}}</text>
+          </view>
+        </view>
+        <view class="profile-info">
+          <text class="profile-name">{{profile.nickname || profile.username}}</text>
+          <view class="profile-badges">
+            <text class="grade-badge">{{gradeLabel(profile.grade)}}</text>
+            <text class="exp-badge">Lv.{{profile.level}}</text>
+          </view>
+        </view>
+        <dx-icon name="chevron-right" size="16px" color="{{arrowColor}}" />
+      </view>
+
+      <view class="stats-bar">
+        <view class="stat-item">
+          <text class="stat-v">{{profile.beans}}</text>
+          <text class="stat-l">金豆</text>
+        </view>
+        <view class="stat-divider" />
+        <view class="stat-item">
+          <text class="stat-v">{{profile.exp}}</text>
+          <text class="stat-l">经验值</text>
+        </view>
+        <view class="stat-divider" />
+        <view class="stat-item">
+          <text class="stat-v">{{profile.currentPlayStreak}}</text>
+          <text class="stat-l">连续天数</text>
+        </view>
+      </view>
+
+      <view wx:if="{{profile.vipDueAt}}" class="vip-bar">
+        <dx-icon name="crown" size="16px" color="#d97706" />
+        <text class="vip-text">会员有效期至 {{formatDate(profile.vipDueAt)}}</text>
+      </view>
+
+      <van-cell-group inset custom-style="margin:16px;">
+        <van-cell title="公告通知" is-link bind:click="goNotices">
+          <dx-icon slot="icon" name="bell" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="我的团队" is-link bind:click="goGroups">
+          <dx-icon slot="icon" name="users" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="推荐有礼" is-link bind:click="goInvite">
+          <dx-icon slot="icon" name="gift" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="兑换码" is-link bind:click="goRedeem">
+          <dx-icon slot="icon" name="ticket" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="购买会员" is-link bind:click="goPurchase">
+          <dx-icon slot="icon" name="crown" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+      </van-cell-group>
+
+      <van-cell-group inset custom-style="margin:0 16px 16px;">
+        <van-cell title="退出登录" title-style="color:var(--van-danger-color);" bind:click="logout" />
+      </van-cell-group>
+    </block>
+  </view>
+</van-config-provider>

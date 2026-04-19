@@ -1,0 +1,69 @@
+<van-config-provider theme="{{theme}}">
+  <view class="play-page {{theme}}">
+    <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
+
+    <!-- Active game view -->
+    <block wx:if="{{!loading && !showResult && currentItem}}">
+      <!-- Score bar -->
+      <view class="score-bar">
+        <view bind:tap="goBack"><dx-icon name="chevron-left" size="20px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" /></view>
+        <text class="score-text">{{score}} 分</text>
+        <text class="combo-text">x{{combo}}</text>
+      </view>
+      <!-- Question -->
+      <view class="question-wrap">
+        <text class="question-word">{{currentItem.content}}</text>
+        <text wx:if="{{currentItem.definition}}" class="question-def">{{currentItem.definition}}</text>
+      </view>
+      <!-- Choices -->
+      <view class="choices">
+        <view
+          wx:for="{{choices}}"
+          wx:key="text"
+          class="choice {{answered && index === selectedChoice ? (item.correct ? 'correct' : 'wrong') : ''}} {{answered && item.correct && index !== selectedChoice ? 'reveal' : ''}}"
+          data-idx="{{index}}"
+          bind:tap="selectChoice"
+        >
+          <text class="choice-text">{{item.text}}</text>
+        </view>
+      </view>
+      <!-- Mark word actions -->
+      <view wx:if="{{answered}}" class="mark-actions">
+        <view class="mark-btn" data-type="master" bind:tap="markWord">
+          <dx-icon name="check" size="16px" color="#10b981" />
+          <text>已掌握</text>
+        </view>
+        <view class="mark-btn" data-type="unknown" bind:tap="markWord">
+          <dx-icon name="help-circle" size="16px" color="#f59e0b" />
+          <text>不认识</text>
+        </view>
+        <view class="mark-btn" data-type="review" bind:tap="markWord">
+          <dx-icon name="clock" size="16px" color="#6366f1" />
+          <text>待复习</text>
+        </view>
+      </view>
+    </block>
+
+    <!-- Results popup -->
+    <van-popup show="{{showResult}}" position="bottom" round custom-style="padding:32px 24px;">
+      <view class="result-body">
+        <text class="result-title">本关完成！</text>
+        <view class="result-stats">
+          <view class="result-stat">
+            <text class="rs-value">{{score}}</text>
+            <text class="rs-label">得分</text>
+          </view>
+          <view class="result-stat">
+            <text class="rs-value">{{maxCombo}}</text>
+            <text class="rs-label">最大连击</text>
+          </view>
+          <view class="result-stat">
+            <text class="rs-value">{{correctCount}}</text>
+            <text class="rs-label">答对</text>
+          </view>
+        </view>
+        <van-button type="primary" block round bind:click="goBack" custom-style="margin-top:24px;">返回</van-button>
+      </view>
+    </van-popup>
+  </view>
+</van-config-provider>

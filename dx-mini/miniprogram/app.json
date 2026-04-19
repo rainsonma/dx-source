@@ -1,0 +1,41 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/home/home",
+    "pages/games/games",
+    "pages/games/detail/detail",
+    "pages/games/play/play",
+    "pages/games/favorites/favorites",
+    "pages/leaderboard/leaderboard",
+    "pages/learn/learn",
+    "pages/learn/mastered/mastered",
+    "pages/learn/unknown/unknown",
+    "pages/learn/review/review",
+    "pages/me/me",
+    "pages/me/profile-edit/profile-edit",
+    "pages/me/notices/notices",
+    "pages/me/groups/groups",
+    "pages/me/groups-detail/groups-detail",
+    "pages/me/invite/invite",
+    "pages/me/redeem/redeem",
+    "pages/me/purchase/purchase"
+  ],
+  "tabBar": {
+    "custom": true,
+    "list": [
+      { "pagePath": "pages/home/home" },
+      { "pagePath": "pages/games/games" },
+      { "pagePath": "pages/leaderboard/leaderboard" },
+      { "pagePath": "pages/learn/learn" },
+      { "pagePath": "pages/me/me" }
+    ]
+  },
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#ffffff",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents"
+}

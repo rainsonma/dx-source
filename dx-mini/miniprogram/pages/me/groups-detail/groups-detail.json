@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "团队详情",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-button": "@vant/weapp/button/index",
+    "van-cell": "@vant/weapp/cell/index",
+    "van-cell-group": "@vant/weapp/cell-group/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "dx-icon": "/components/dx-icon/index"
+  }
+}
