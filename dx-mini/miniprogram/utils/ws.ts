@@ -46,7 +46,9 @@ export const ws = {
       isOpen = true
       // First frame MUST be the auth envelope. Server rejects anything else
       // and closes. pendingSends stays buffered until auth_success arrives.
-      socket?.send({ data: JSON.stringify({ op: 'auth', token }) })
+      if (socket) {
+        socket.send({ data: JSON.stringify({ op: 'auth', token }) })
+      }
     })
     socket.onClose(() => {
       isOpen = false
