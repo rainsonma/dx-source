@@ -2,12 +2,17 @@
 
 ## Project Overview
 
-Douxue — English learning through games. Monorepo with two projects:
+Douxue — English learning through games. Monorepo with three projects:
 
 - **dx-web** (Next.js 16) — Pure frontend client, no server-side DB access
 - **dx-api** (Go/Goravel) — Sole API backend, all business logic and DB operations
+- **dx-mini** (WeChat Mini Program, native + TypeScript) — Mobile client, consumes dx-api over HTTP/JWT + WebSocket
 
-Both share one PostgreSQL database and Redis instance.
+dx-web and dx-api share one PostgreSQL database and Redis instance and deploy
+together via `deploy/docker-compose.*.yml`. dx-mini talks to the same dx-api
+but **does NOT deploy with the container stack** — it ships via WeChat
+Developer Tools (manual upload) or `miniprogram-ci` (automated) to Tencent's
+WeChat servers, and is only pinned to dx-api by URL.
 
 ## Commands
 
@@ -31,15 +36,34 @@ go test -race ./...   # Run all tests with race detector
 go build ./...    # Verify compilation
 ```
 
+### dx-mini (WeChat Mini Program)
+
+```bash
+cd dx-mini
+# npm install         # Only needed for dev tools (lucide-static, fantasticon, oslllo-svg-fixer) at repo root
+# npm run build:iconfont   # Regenerate Lucide iconfont into miniprogram/app.wxss (one-shot)
+# Actual development happens in WeChat Developer Tools:
+#   - Open project root: /Users/rainsen/Programs/Projects/douxue/dx-source/dx-mini
+#   - miniprogram/ is the source tree (miniprogramRoot in project.config.json)
+#   - 详情 → 本地设置 → 勾选「不校验合法域名...」(dev only)
+#   - In DevTools console: require('./utils/config').setDevApiBaseUrl('http://<lan-ip>')
+#     to point at a LAN dx-api instance; clearDevApiBaseUrl() to reset.
+```
+
 ## Architecture
 
 ```
-dx-web (Next.js)  ──── HTTP/JWT ────►  dx-api (Goravel)
-  port 3000                              port 3001
-  pure frontend                          /api/*  client APIs (user JWT)
-  apiServerFetch (SSR)                   /adm/*  admin APIs (admin JWT)
-  apiClient (CSR)                        /api/admin/*  user-facing admin (user JWT + admin guard)
-                                         PostgreSQL + Redis
+dx-web (Next.js) ──┐
+  port 3000        │
+                   ├─── HTTP/JWT + WebSocket ───►  dx-api (Goravel)
+dx-mini (WeChat)   │                                 port 3001
+  WeChat DevTools  │                                 /api/*   client APIs (user JWT)
+                   │                                 /adm/*   admin APIs (admin JWT)
+                   │                                 /api/admin/*  user-facing admin (user JWT + admin guard)
+                   │                                 /api/ws  WebSocket (auth via cookie for dx-web,
+                   │                                          first-frame {op:"auth",token} for dx-mini)
+                   │                                 PostgreSQL + Redis
+                   ▼
 ```
 
 **Response envelope:** `{ "code": 0, "message": "ok", "data": {...} }`
@@ -148,6 +172,43 @@ dx-api/
 - `app:update-play-streaks` — daily 02:00, continues/resets play streaks
 - `app:reset-energy-beans` — daily 01:00, monthly bean grants for paid members
 
+## dx-mini Directory Structure
+
+```
+dx-mini/
+├── miniprogram/                # miniprogramRoot (the source tree WeChat DevTools sees)
+│   ├── app.ts / app.json / app.wxss   # App shell + inline Lucide iconfont @font-face in app.wxss
+│   ├── pages/                  # Native pages: home, games, learn, leaderboard, me, login, etc.
+│   ├── components/dx-icon/     # Thin wrapper around van-icon with class-prefix="dx-icon"
+│   ├── custom-tab-bar/         # Color-only active state, outline icons
+│   ├── assets/fonts/           # dx-iconfont.woff2 (generated) + codepoints.json
+│   ├── utils/                  # api.ts, auth.ts, config.ts, format.ts, ws.ts
+│   └── typings/                # WeChat API type shims
+├── scripts/build-iconfont.mjs  # Regenerates Lucide font + app.wxss block (one-shot)
+├── docs/superpowers/           # Design specs + implementation plans
+├── package.json                # Dev-only deps (lucide-static, fantasticon, oslllo-svg-fixer)
+├── project.config.json         # WeChat Developer Tools config
+└── tsconfig.json               # Strict TS across miniprogram/
+```
+
+### dx-mini Conventions
+
+- **UI lib** — Vant Weapp 1.11.x, pinned. Glass-easel + Skyline rendering enabled.
+- **Icons** — Lucide via the `<dx-icon>` wrapper. NEVER import `<van-icon>` directly in pages; add glyphs to `scripts/build-iconfont.mjs` ICONS array and re-run `npm run build:iconfont`.
+- **API** — every call goes through `utils/api.ts` → dx-api. Base URL resolved at read time from `wx.getStorageSync('dx_dev_api_base_url')` in dev, hardcoded prod domain in release/trial.
+- **WebSocket** — auth via first-frame `{op:"auth",token}` envelope (not URL, not cookie). `ws.ts` buffers subscribes until `auth_success` lands.
+- **Request shape** — mirrors dx-web/dx-api: `{code, message, data}` envelope; cursor pagination via `{items, nextCursor, hasMore}`.
+- **Typing** — strict mode enabled but `miniprogram-api-typings` v2.8.3 can't type `this` inside `Component({methods})` — existing codebase already ignores these specific errors; don't introduce NEW tsc errors beyond that pattern.
+
+### Deployment
+
+dx-mini does NOT ship with `deploy/docker-compose.*.yml`. Two paths:
+
+1. **Manual** — WeChat Developer Tools "上传" → 体验版 → promote to 正式版 in the 微信公众平台 admin console.
+2. **CLI (future)** — `miniprogram-ci` npm package automates upload from `dx-mini/scripts/deploy.mjs`. Not wired yet.
+
+Prod requires: filed public domain (ICP 备案), SSL cert, `wss://` for WebSocket, and the domain added to `socket合法域名` in the WeChat 公众平台 (5 edits/month cap).
+
 ## Environment Variables
 
 ### dx-web (.env)
@@ -173,6 +234,12 @@ MAIL_HOST=    MAIL_PORT=    MAIL_USERNAME=    MAIL_PASSWORD=
 DEEPSEEK_API_KEY=
 ```
 
+### dx-mini (no .env file — URL is runtime-configurable)
+
+- Dev API URL — stored in WeChat storage under key `dx_dev_api_base_url`; set once per DevTools install via the console helper `require('./utils/config').setDevApiBaseUrl('http://<lan>')`. Falls back to `http://localhost`.
+- Release/trial API URL — hardcoded at `https://api.douxue.com` in `miniprogram/utils/config.ts` (change here, not via env).
+- WeChat AppID — in `project.private.config.json` (git-ignored by dx-mini's own `.gitignore`).
+
 ## Code Style
 
 - **Neat, short, and clean** — no bloat, no unnecessary verbosity
@@ -185,4 +252,5 @@ DEEPSEEK_API_KEY=
 - **No console.log** in production code
 - **Security** — validate input, check ownership, use error sentinels
 - **Never modify** `dx-web/src/components/ui/` (shadcn/ui managed)
-- **Commit style** — `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`
+- **Never modify** `dx-mini/miniprogram/miniprogram_npm/` (generated by WeChat DevTools `构建 npm`)
+- **Commit style** — `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`; tag mini-only changes with `(mini)`, api-only with `(api)`, web-only with `(web)`
