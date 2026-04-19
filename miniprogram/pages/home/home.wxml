@@ -3,17 +3,17 @@
     <!-- Top bar -->
     <view class="top-bar">
       <view class="search-box" bind:tap="goSearch">
-        <van-icon name="search" size="16px" color="#9ca3af" />
+        <dx-icon name="search" size="16px" color="#9ca3af" />
         <text class="search-placeholder">搜索课程</text>
       </view>
       <view class="top-actions">
-        <van-icon
-          name="{{theme === 'dark' ? 'sunny-o' : 'moon-o'}}"
+        <dx-icon
+          name="{{theme === 'dark' ? 'sun' : 'moon'}}"
           size="22px"
           color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
-          bind:tap="toggleTheme"
+          bind:click="toggleTheme"
         />
-        <van-icon name="bell" size="22px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" bind:tap="goNotices" />
+        <dx-icon name="bell" size="22px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" bind:click="goNotices" />
       </view>
     </view>
 
