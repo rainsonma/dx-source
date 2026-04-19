@@ -4,11 +4,12 @@ type EventHandler = (payload: unknown) => void
 
 let socket: WechatMiniprogram.SocketTask | null = null
 let isOpen = false
+let isAuthed = false
 const pendingSends: string[] = []
 const handlers = new Map<string, EventHandler[]>()
 
 function flushPending(): void {
-  if (!socket || !isOpen) return
+  if (!socket || !isAuthed) return
   while (pendingSends.length > 0) {
     const data = pendingSends.shift() as string
     socket.send({ data })
@@ -18,29 +19,42 @@ function flushPending(): void {
 export const ws = {
   connect(token: string): void {
     isOpen = false
+    isAuthed = false
     pendingSends.length = 0
-    const base = config.apiBaseUrl.replace(/^http/, 'ws')
-    const wsUrl = `${base}/api/ws?token=${encodeURIComponent(token)}`
+    const wsUrl = config.apiBaseUrl.replace(/^http/, 'ws') + '/api/ws'
     socket = wx.connectSocket({
       url: wsUrl,
-      header: { Authorization: `Bearer ${token}` },
       success() {},
       fail() {},
     })
     socket.onOpen(() => {
       isOpen = true
-      flushPending()
+      // First frame MUST be the auth envelope — the server rejects anything
+      // else and closes. pendingSends stays buffered until auth_success.
+      socket?.send({ data: JSON.stringify({ type: 'auth', token }) })
     })
     socket.onClose(() => {
       isOpen = false
+      isAuthed = false
     })
     socket.onError(() => {
       isOpen = false
+      isAuthed = false
     })
     socket.onMessage(({ data }) => {
       try {
-        const msg = JSON.parse(data as string) as { event: string; payload: unknown }
-        const cbs = handlers.get(msg.event) ?? []
+        const msg = JSON.parse(data as string) as { event?: string; payload?: unknown }
+        if (msg.event === 'auth_success') {
+          isAuthed = true
+          flushPending()
+          return
+        }
+        if (msg.event === 'auth_failed' || msg.event === 'session_replaced') {
+          isAuthed = false
+          // Fall through so registered handlers still get session_replaced.
+        }
+        const key = msg.event ?? ''
+        const cbs = handlers.get(key) ?? []
         cbs.forEach(cb => cb(msg.payload))
       } catch {
         // ignore malformed messages
@@ -49,7 +63,7 @@ export const ws = {
   },
   subscribe(topic: string): void {
     const data = JSON.stringify({ type: 'subscribe', topic })
-    if (socket && isOpen) {
+    if (socket && isAuthed) {
       socket.send({ data })
     } else {
       pendingSends.push(data)
@@ -65,6 +79,7 @@ export const ws = {
     }
     socket = null
     isOpen = false
+    isAuthed = false
     pendingSends.length = 0
     handlers.clear()
   },
