@@ -1,4 +1,4 @@
-const DEFAULT_DEV_API_BASE_URL = 'http://192.168.1.19'
+const DEFAULT_DEV_API_BASE_URL = 'http://localhost'
 const DEV_URL_STORAGE_KEY = 'dx_dev_api_base_url'
 
 const { envVersion } = wx.getAccountInfoSync().miniProgram
