@@ -21,6 +21,14 @@ func GenerateInviteCode(length int) string {
 	return randomString(length, alphanumeric)
 }
 
+// GenerateDefaultNickname returns a default user nickname of the form
+// "斗友_XXXXXX" where XXXXXX is 6 crypto-random digits. Uniqueness is not
+// guaranteed by design: the users.nickname column has no unique constraint,
+// and downstream display code accepts duplicate nicknames.
+func GenerateDefaultNickname() string {
+	return "斗友_" + GenerateCode(6)
+}
+
 // randomString generates a cryptographically random string from the given charset
 func randomString(length int, charset string) string {
 	var sb strings.Builder
