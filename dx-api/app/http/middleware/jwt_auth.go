@@ -21,6 +21,12 @@ func JwtAuth() contractshttp.Middleware {
 				token = bearer[7:]
 			}
 		}
+		// WeChat Mini Program's wx.connectSocket cannot reliably forward the
+		// Authorization header and does not send cookies. Accept the token via
+		// ?token= query parameter for the WebSocket endpoint only.
+		if token == "" && ctx.Request().Path() == "/api/ws" {
+			token = ctx.Request().Query("token", "")
+		}
 		if token == "" {
 			abortUnauthorized(ctx)
 			return
