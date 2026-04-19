@@ -96,7 +96,7 @@ page {
   flex-direction: column;
   align-items: center;
   gap: 16rpx;
-  padding: 0 60rpx 40rpx;
+  padding: 0 60rpx 80rpx;
   box-sizing: border-box;
   animation: hero-rise 480ms ease-out 120ms both;
 }
