@@ -46,7 +46,10 @@
   flex-direction: column;
   align-items: stretch;
   gap: 10rpx;
-  margin-bottom: 20rpx;
+  border: 1rpx solid var(--border-color);
+  border-radius: 14rpx;
+  padding: 20rpx 22rpx;
+  margin-bottom: 14rpx;
 }
 
 .row:last-child {
