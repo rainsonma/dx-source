@@ -21,7 +21,7 @@
 
       <view class="search-row">
         <view class="search-box" bind:tap="goSearch">
-          <dx-icon name="search" size="16px" color="#9ca3af" />
+          <dx-icon name="search" size="16px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
           <text class="search-placeholder">搜索课程</text>
         </view>
       </view>
