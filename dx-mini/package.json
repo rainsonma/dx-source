@@ -4,15 +4,13 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "build:iconfont": "node scripts/build-iconfont.mjs"
+    "build:icons": "node scripts/build-icons.mjs"
   },
   "keywords": [],
   "author": "",
   "license": "",
   "devDependencies": {
-    "fantasticon": "^3.0.0",
     "lucide-static": "^0.460.0",
-    "miniprogram-api-typings": "^2.8.3-1",
-    "oslllo-svg-fixer": "^6.0.1"
+    "miniprogram-api-typings": "^2.8.3-1"
   }
 }

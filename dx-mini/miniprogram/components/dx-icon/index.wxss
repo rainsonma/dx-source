@@ -1,1 +1,5 @@
-/* Glyphs are defined globally in app.wxss via @font-face + .dx-icon-*::before rules. */
+.dx-icon-host {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}

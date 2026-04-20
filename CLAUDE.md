@@ -40,8 +40,8 @@ go build ./...    # Verify compilation
 
 ```bash
 cd dx-mini
-# npm install         # Only needed for dev tools (lucide-static, fantasticon, oslllo-svg-fixer) at repo root
-# npm run build:iconfont   # Regenerate Lucide iconfont into miniprogram/app.wxss (one-shot)
+# npm install         # Only needed for dev tools (lucide-static) at repo root
+# npm run build:icons  # Regenerate Lucide SVG map into miniprogram/components/dx-icon/icons.ts (one-shot)
 # Actual development happens in WeChat Developer Tools:
 #   - Open project root: /Users/rainsen/Programs/Projects/douxue/dx-source/dx-mini
 #   - miniprogram/ is the source tree (miniprogramRoot in project.config.json)
@@ -177,16 +177,15 @@ dx-api/
 ```
 dx-mini/
 ├── miniprogram/                # miniprogramRoot (the source tree WeChat DevTools sees)
-│   ├── app.ts / app.json / app.wxss   # App shell + inline Lucide iconfont @font-face in app.wxss
+│   ├── app.ts / app.json / app.wxss   # App shell
 │   ├── pages/                  # Native pages: home, games, learn, leaderboard, me, login, etc.
-│   ├── components/dx-icon/     # Thin wrapper around van-icon with class-prefix="dx-icon"
+│   ├── components/dx-icon/     # Lucide SVG renderer; icons.ts is auto-generated
 │   ├── custom-tab-bar/         # Color-only active state, outline icons
-│   ├── assets/fonts/           # dx-iconfont.woff2 (generated) + codepoints.json
 │   ├── utils/                  # api.ts, auth.ts, config.ts, format.ts, ws.ts
 │   └── typings/                # WeChat API type shims
-├── scripts/build-iconfont.mjs  # Regenerates Lucide font + app.wxss block (one-shot)
+├── scripts/build-icons.mjs     # Regenerates Lucide SVG map into components/dx-icon/icons.ts (one-shot)
 ├── docs/superpowers/           # Design specs + implementation plans
-├── package.json                # Dev-only deps (lucide-static, fantasticon, oslllo-svg-fixer)
+├── package.json                # Dev-only deps (lucide-static)
 ├── project.config.json         # WeChat Developer Tools config
 └── tsconfig.json               # Strict TS across miniprogram/
 ```
@@ -194,7 +193,7 @@ dx-mini/
 ### dx-mini Conventions
 
 - **UI lib** — Vant Weapp 1.11.x, pinned. Glass-easel + Skyline rendering enabled.
-- **Icons** — Lucide via the `<dx-icon>` wrapper. NEVER import `<van-icon>` directly in pages; add glyphs to `scripts/build-iconfont.mjs` ICONS array and re-run `npm run build:iconfont`.
+- **Icons** — Lucide SVG via the `<dx-icon>` component. Add glyphs to `scripts/build-icons.mjs` ICONS array and re-run `npm run build:icons`. Color via the `color` prop, default stroke width 1.25.
 - **API** — every call goes through `utils/api.ts` → dx-api. Base URL resolved at read time from `wx.getStorageSync('dx_dev_api_base_url')` in dev, hardcoded prod domain in release/trial.
 - **WebSocket** — auth via first-frame `{op:"auth",token}` envelope (not URL, not cookie). `ws.ts` buffers subscribes until `auth_success` lands.
 - **Request shape** — mirrors dx-web/dx-api: `{code, message, data}` envelope; cursor pagination via `{items, nextCursor, hasMore}`.
