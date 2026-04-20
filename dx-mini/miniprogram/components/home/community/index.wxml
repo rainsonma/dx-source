@@ -2,14 +2,14 @@
   <view class="hero-card">
     <view class="accent-dash"></view>
     <text class="tag">一起玩才好玩</text>
-    <text class="headline">和朋友开黑,<text class="hl">排行榜上见</text></text>
+    <text class="headline">和朋友开黑，<text class="hl">排行榜上见</text></text>
 
     <view class="feat-item" bind:tap="goLeaderboard">
       <view class="card-head">
         <view class="ico ico-amber"><dx-icon name="trophy" size="18px" color="#f59e0b" /></view>
         <view class="card-text">
           <text class="name">排行榜</text>
-          <text class="desc">经验值与在线时长,按日、周、月六种榜单,登上领奖台。</text>
+          <text class="desc">经验值与在线时长，按日、周、月六种榜单，登上领奖台。</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
@@ -20,7 +20,7 @@
         <view class="ico ico-orange"><dx-icon name="message-square" size="18px" color="#ea580c" /></view>
         <view class="card-text">
           <text class="name">斗学社</text>
-          <text class="desc">发帖、评论、点赞、关注,把学习心得变成社交动态。</text>
+          <text class="desc">发帖、评论、点赞、关注，把学习心得变成社交动态。</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
@@ -31,7 +31,7 @@
         <view class="ico ico-blue"><dx-icon name="users" size="18px" color="#3b82f6" /></view>
         <view class="card-text">
           <text class="name">学习群</text>
-          <text class="desc">组建小组一起闯关,群内可直接发起课程对战。</text>
+          <text class="desc">组建小组一起闯关，群内可直接发起课程对战。</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
@@ -46,7 +46,7 @@
       <view class="heatmap">
         <view class="cell {{item ? 'filled' : ''}}" wx:for="{{heatCells}}" wx:key="index"></view>
       </view>
-      <text class="desc">每天玩至少一次,保持连胜;错过一天从 1 重来。</text>
+      <text class="desc">每天玩至少一次，保持连胜;错过一天从 1 重来。</text>
     </view>
   </view>
 </view>

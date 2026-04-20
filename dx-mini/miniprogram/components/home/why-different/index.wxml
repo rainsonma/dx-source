@@ -2,14 +2,14 @@
   <view class="hero-card">
     <view class="accent-dash"></view>
     <text class="tag">为什么是斗学</text>
-    <text class="headline">不再死记硬背,<text class="hl">让大脑爱上英语</text></text>
+    <text class="headline">不再死记硬背，<text class="hl">让大脑爱上英语</text></text>
 
     <view class="row">
       <view class="before-line">
-        <text class="before">背了就忘,靠意志力硬撑</text>
+        <text class="before">背了就忘，靠意志力硬撑</text>
         <dx-icon name="arrow-right" size="14px" color="#0d9488" customStyle="transform: rotate(90deg);" />
       </view>
-      <text class="after">游戏化循环,大脑自发想再玩一局</text>
+      <text class="after">游戏化循环，大脑自发想再玩一局</text>
     </view>
 
     <view class="row">

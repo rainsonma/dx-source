@@ -2,7 +2,7 @@
   <view class="hero-card">
     <view class="accent-dash"></view>
     <text class="tag">学习闭环 · 从陌生到掌握</text>
-    <text class="headline">一套系统,<text class="hl">追踪你每一个学习单元的命运</text></text>
+    <text class="headline">一套系统，<text class="hl">追踪你每一个学习单元的命运</text></text>
 
     <view class="book-item" bind:tap="goUnknown">
       <view class="card-head">
@@ -25,7 +25,7 @@
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <text class="desc">[1, 3, 7, 14, 30, 90] 天节奏智能推送</text>
+      <text class="desc">[1， 3， 7， 14， 30， 90] 天节奏智能推送</text>
     </view>
 
     <view class="book-item" bind:tap="goMastered">
@@ -40,6 +40,6 @@
       <text class="desc">看得见的词汇量增长</text>
     </view>
 
-    <text class="footnote">艾宾浩斯遗忘曲线智能推送复习,你只需要玩。</text>
+    <text class="footnote">艾宾浩斯遗忘曲线智能推送复习，你只需要玩。</text>
   </view>
 </view>
