@@ -1,0 +1,5 @@
+<view class="stub">
+  <dx-icon name="clock" size="48px" color="#9ca3af" />
+  <text class="stub-title">敬请期待</text>
+  <text class="stub-desc">此功能正在开发中</text>
+</view>

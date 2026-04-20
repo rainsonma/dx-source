@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "打卡",
+  "usingComponents": {
+    "dx-icon": "/components/dx-icon/index"
+  }
+}

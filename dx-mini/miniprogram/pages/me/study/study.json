@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "学习",
+  "usingComponents": {
+    "dx-icon": "/components/dx-icon/index"
+  }
+}

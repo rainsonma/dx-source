@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "建议",
+  "usingComponents": {
+    "dx-icon": "/components/dx-icon/index"
+  }
+}
