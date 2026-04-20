@@ -5,25 +5,25 @@
     <text class="headline">不再死记硬背,<text class="hl">让大脑爱上英语</text></text>
 
     <view class="row">
-      <text class="before">背了就忘,靠意志力硬撑</text>
-      <view class="arrow">
-        <dx-icon name="arrow-right" size="14px" color="#0d9488" customStyle="transform: rotate(90deg);" />
+      <view class="before-line">
+        <text class="before">背了就忘,靠意志力硬撑</text>
+        <dx-icon name="arrow-right" size="14px" color="#0d9488" />
       </view>
       <text class="after">游戏化循环,大脑自发想再玩一局</text>
     </view>
 
     <view class="row">
-      <text class="before">学的和用的两张皮</text>
-      <view class="arrow">
-        <dx-icon name="arrow-right" size="14px" color="#0d9488" customStyle="transform: rotate(90deg);" />
+      <view class="before-line">
+        <text class="before">学的和用的两张皮</text>
+        <dx-icon name="arrow-right" size="14px" color="#0d9488" />
       </view>
       <text class="after">连词成句、对话、对战都是真实语料</text>
     </view>
 
     <view class="row">
-      <text class="before">一个人孤独地学</text>
-      <view class="arrow">
-        <dx-icon name="arrow-right" size="14px" color="#0d9488" customStyle="transform: rotate(90deg);" />
+      <view class="before-line">
+        <text class="before">一个人孤独地学</text>
+        <dx-icon name="arrow-right" size="14px" color="#0d9488" />
       </view>
       <text class="after">好友开黑 · 学习群 · 排行榜 · 每日连胜</text>
     </view>
