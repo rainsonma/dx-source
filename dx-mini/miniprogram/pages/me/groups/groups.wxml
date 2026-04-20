@@ -1,5 +1,15 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <view class="custom-nav">
+      <view class="status-bar-spacer"></view>
+      <view class="nav-row">
+        <view class="back-btn" bind:tap="goBack">
+          <dx-icon name="chevron-left" size="22px" color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}" />
+        </view>
+        <text class="nav-title">我的团队</text>
+      </view>
+    </view>
+
     <view class="top-actions">
       <van-button size="small" plain type="primary" bind:click="openCreateDialog">创建团队</van-button>
       <van-button size="small" plain bind:click="openJoinDialog">加入团队</van-button>

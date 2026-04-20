@@ -26,6 +26,7 @@ type DashboardProfile struct {
 	Username          string  `json:"username"`
 	Nickname          *string `json:"nickname"`
 	Grade             string  `json:"grade"`
+	Level             int     `json:"level"`
 	Exp               int     `json:"exp"`
 	Beans             int     `json:"beans"`
 	AvatarURL         *string `json:"avatarUrl"`
@@ -84,11 +85,17 @@ func GetDashboard(userID string) (*DashboardData, error) {
 		return nil, ErrUserNotFound
 	}
 
+	level, err := consts.GetLevel(user.Exp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute user level: %w", err)
+	}
+
 	profile := DashboardProfile{
 		ID:                user.ID,
 		Username:          user.Username,
 		Nickname:          user.Nickname,
 		Grade:             user.Grade,
+		Level:             level,
 		Exp:               user.Exp,
 		Beans:             user.Beans,
 		AvatarURL:         user.AvatarURL,

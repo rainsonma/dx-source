@@ -10,10 +10,14 @@ Page({
   data: {
     theme: 'light' as 'light' | 'dark',
     tiers: TIERS,
+    statusBarHeight: 20,
   },
   onLoad() {
-    this.setData({ theme: app.globalData.theme })
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
+    this.setData({ theme: app.globalData.theme, statusBarHeight })
   },
+  goBack() { wx.navigateBack() },
   onBuy() {
     wx.showToast({ title: '即将开放', icon: 'none' })
   },
