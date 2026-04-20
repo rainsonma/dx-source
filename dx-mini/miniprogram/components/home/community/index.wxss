@@ -3,6 +3,13 @@
   background: var(--bg-page);
 }
 
+.hero-card {
+  background: var(--bg-card);
+  border: 1rpx solid var(--border-color);
+  border-radius: 20rpx;
+  padding: 32rpx 28rpx;
+}
+
 .accent-dash {
   width: 48rpx; height: 6rpx; border-radius: 3rpx;
   background: #f59e0b; margin-bottom: 20rpx;
@@ -20,9 +27,15 @@
 
 .headline .hl { color: #f59e0b; }
 
-.feat-card, .streak-card {
-  background: var(--bg-card); border: 1rpx solid var(--border-color);
-  border-radius: 20rpx; padding: 24rpx; margin-bottom: 16rpx;
+.feat-item, .streak-item {
+  border: 1rpx solid var(--border-color);
+  border-radius: 14rpx;
+  padding: 20rpx 22rpx;
+  margin-bottom: 14rpx;
+}
+
+.streak-item:last-child {
+  margin-bottom: 0;
 }
 
 .card-head { display: flex; align-items: center; gap: 16rpx; }
@@ -50,7 +63,7 @@
   line-height: 1.5;
 }
 
-/* Streak card extras */
+/* Streak item extras */
 
 .streak-number {
   display: block; font-size: 26rpx; color: var(--text-primary);

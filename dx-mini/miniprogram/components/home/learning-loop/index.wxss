@@ -7,6 +7,13 @@
   background: linear-gradient(180deg, rgba(13, 148, 136, 0.14), rgba(124, 58, 237, 0.14));
 }
 
+.hero-card {
+  background: var(--bg-card);
+  border: 1rpx solid var(--border-color);
+  border-radius: 20rpx;
+  padding: 32rpx 28rpx;
+}
+
 .accent-dash {
   width: 48rpx; height: 6rpx; border-radius: 3rpx;
   background: #0d9488; margin-bottom: 20rpx;
@@ -24,9 +31,15 @@
 
 .headline .hl { color: #7c3aed; }
 
-.book-card {
-  background: var(--bg-card); border: 1rpx solid var(--border-color);
-  border-radius: 20rpx; padding: 24rpx; margin-bottom: 16rpx;
+.book-item {
+  border: 1rpx solid var(--border-color);
+  border-radius: 14rpx;
+  padding: 20rpx 22rpx;
+  margin-bottom: 14rpx;
+}
+
+.book-item:last-of-type {
+  margin-bottom: 0;
 }
 
 .card-head { display: flex; align-items: center; gap: 16rpx; }

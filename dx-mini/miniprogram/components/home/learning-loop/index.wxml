@@ -1,43 +1,45 @@
 <view class="section-root">
-  <view class="accent-dash"></view>
-  <text class="tag">学习闭环 · 从陌生到掌握</text>
-  <text class="headline">一套系统,<text class="hl">追踪你每一个学习单元的命运</text></text>
+  <view class="hero-card">
+    <view class="accent-dash"></view>
+    <text class="tag">学习闭环 · 从陌生到掌握</text>
+    <text class="headline">一套系统,<text class="hl">追踪你每一个学习单元的命运</text></text>
 
-  <view class="book-card" bind:tap="goUnknown">
-    <view class="card-head">
-      <view class="ico ico-pink"><dx-icon name="book-open" size="18px" color="#ec4899" /></view>
-      <view class="card-text">
-        <text class="name">生词本</text>
-        <text class="count">{{unknownTotal !== null ? unknownTotal : '—'}} 条</text>
+    <view class="book-item" bind:tap="goUnknown">
+      <view class="card-head">
+        <view class="ico ico-pink"><dx-icon name="book-open" size="18px" color="#ec4899" /></view>
+        <view class="card-text">
+          <text class="name">生词本</text>
+          <text class="count">{{unknownTotal !== null ? unknownTotal : '—'}} 条</text>
+        </view>
+        <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
+      <text class="desc">持续沉淀你不会的词汇</text>
     </view>
-    <text class="desc">持续沉淀你不会的词汇</text>
-  </view>
 
-  <view class="book-card" bind:tap="goReview">
-    <view class="card-head">
-      <view class="ico ico-violet"><dx-icon name="refresh-cw" size="18px" color="#7c3aed" /></view>
-      <view class="card-text">
-        <text class="name">复习本</text>
-        <text class="count">{{reviewPending !== null ? reviewPending : '—'}} 待复习</text>
+    <view class="book-item" bind:tap="goReview">
+      <view class="card-head">
+        <view class="ico ico-violet"><dx-icon name="refresh-cw" size="18px" color="#7c3aed" /></view>
+        <view class="card-text">
+          <text class="name">复习本</text>
+          <text class="count">{{reviewPending !== null ? reviewPending : '—'}} 待复习</text>
+        </view>
+        <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
+      <text class="desc">[1, 3, 7, 14, 30, 90] 天节奏智能推送</text>
     </view>
-    <text class="desc">[1, 3, 7, 14, 30, 90] 天节奏智能推送</text>
-  </view>
 
-  <view class="book-card" bind:tap="goMastered">
-    <view class="card-head">
-      <view class="ico ico-teal"><dx-icon name="circle-check" size="18px" color="#0d9488" /></view>
-      <view class="card-text">
-        <text class="name">已掌握</text>
-        <text class="count">{{masterTotal !== null ? masterTotal : '—'}} 条</text>
+    <view class="book-item" bind:tap="goMastered">
+      <view class="card-head">
+        <view class="ico ico-teal"><dx-icon name="circle-check" size="18px" color="#0d9488" /></view>
+        <view class="card-text">
+          <text class="name">已掌握</text>
+          <text class="count">{{masterTotal !== null ? masterTotal : '—'}} 条</text>
+        </view>
+        <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
+      <text class="desc">看得见的词汇量增长</text>
     </view>
-    <text class="desc">看得见的词汇量增长</text>
-  </view>
 
-  <text class="footnote">艾宾浩斯遗忘曲线智能推送复习,你只需要玩。</text>
+    <text class="footnote">艾宾浩斯遗忘曲线智能推送复习,你只需要玩。</text>
+  </view>
 </view>
