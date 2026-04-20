@@ -35,6 +35,10 @@ const ICONS = [
   ['user',          'user'],
   ['book-text',     'book-text'],
   ['trophy',        'trophy'],
+  ['chart-pie',      'chart-pie'],
+  ['calendar-check', 'calendar-check'],
+  ['sticker',        'sticker'],
+  ['flag',           'flag'],
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')
