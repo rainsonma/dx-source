@@ -39,6 +39,17 @@ const ICONS = [
   ['calendar-check', 'calendar-check'],
   ['sticker',        'sticker'],
   ['flag',           'flag'],
+  ['keyboard',       'keyboard'],
+  ['swords',         'swords'],
+  ['shuffle',        'shuffle'],
+  ['crosshair',      'crosshair'],
+  ['sparkles',       'sparkles'],
+  ['coins',          'coins'],
+  ['refresh-cw',     'refresh-cw'],
+  ['circle-check',   'circle-check'],
+  ['message-square', 'message-square'],
+  ['flame',          'flame'],
+  ['arrow-right',    'arrow-right'],
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')

@@ -1,0 +1,63 @@
+.section-root {
+  padding: 56rpx 32rpx 48rpx;
+  background: linear-gradient(180deg, rgba(13, 148, 136, 0.08), rgba(124, 58, 237, 0.08));
+}
+
+.page-container.dark .section-root {
+  background: linear-gradient(180deg, rgba(13, 148, 136, 0.14), rgba(124, 58, 237, 0.14));
+}
+
+.accent-dash {
+  width: 48rpx; height: 6rpx; border-radius: 3rpx;
+  background: #0d9488; margin-bottom: 20rpx;
+}
+
+.tag {
+  display: block; font-size: 22rpx; color: #0d9488;
+  font-weight: 700; letter-spacing: 2rpx; margin-bottom: 12rpx;
+}
+
+.headline {
+  display: block; font-size: 34rpx; font-weight: 800;
+  color: var(--text-primary); line-height: 1.35; margin-bottom: 24rpx;
+}
+
+.headline .hl { color: #7c3aed; }
+
+.book-card {
+  background: var(--bg-card); border: 1rpx solid var(--border-color);
+  border-radius: 20rpx; padding: 24rpx; margin-bottom: 16rpx;
+}
+
+.card-head { display: flex; align-items: center; gap: 16rpx; }
+
+.ico {
+  width: 56rpx; height: 56rpx; border-radius: 14rpx;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.ico-pink   { background: rgba(236, 72, 153, 0.12); }
+.ico-violet { background: rgba(124, 58, 237, 0.12); }
+.ico-teal   { background: rgba(13, 148, 136, 0.12); }
+
+.card-text { flex: 1; min-width: 0; }
+
+.name {
+  display: block; font-size: 28rpx; font-weight: 700;
+  color: var(--text-primary);
+}
+
+.count {
+  display: block; font-size: 24rpx; color: #0d9488; font-weight: 600; margin-top: 2rpx;
+}
+
+.desc {
+  display: block; font-size: 22rpx; color: var(--text-secondary);
+  line-height: 1.5; margin-top: 10rpx;
+}
+
+.footnote {
+  display: block; font-size: 22rpx; color: var(--text-secondary);
+  text-align: center; margin-top: 20rpx; line-height: 1.6;
+}

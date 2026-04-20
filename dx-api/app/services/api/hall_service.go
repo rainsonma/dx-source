@@ -8,6 +8,7 @@ import (
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
+	"github.com/goravel/framework/support/carbon"
 )
 
 // DashboardData aggregates user stats for the hall dashboard.
@@ -22,18 +23,19 @@ type DashboardData struct {
 
 // DashboardProfile is the user profile subset shown on the dashboard.
 type DashboardProfile struct {
-	ID                string  `json:"id"`
-	Username          string  `json:"username"`
-	Nickname          *string `json:"nickname"`
-	Grade             string  `json:"grade"`
-	Level             int     `json:"level"`
-	Exp               int     `json:"exp"`
-	Beans             int     `json:"beans"`
-	AvatarURL         *string `json:"avatarUrl"`
-	CurrentPlayStreak int     `json:"currentPlayStreak"`
-	InviteCode        string  `json:"inviteCode"`
-	LastReadNoticeAt  any     `json:"lastReadNoticeAt"`
-	CreatedAt         any     `json:"createdAt"`
+	ID                string           `json:"id"`
+	Username          string           `json:"username"`
+	Nickname          *string          `json:"nickname"`
+	Grade             string           `json:"grade"`
+	Level             int              `json:"level"`
+	Exp               int              `json:"exp"`
+	Beans             int              `json:"beans"`
+	AvatarURL         *string          `json:"avatarUrl"`
+	CurrentPlayStreak int              `json:"currentPlayStreak"`
+	InviteCode        string           `json:"inviteCode"`
+	LastReadNoticeAt  any              `json:"lastReadNoticeAt"`
+	CreatedAt         any              `json:"createdAt"`
+	VipDueAt          *carbon.DateTime `json:"vipDueAt"`
 }
 
 // MasterStats holds mastered content statistics.
@@ -103,6 +105,7 @@ func GetDashboard(userID string) (*DashboardData, error) {
 		InviteCode:        user.InviteCode,
 		LastReadNoticeAt:  user.LastReadNoticeAt,
 		CreatedAt:         user.CreatedAt,
+		VipDueAt:          user.VipDueAt,
 	}
 
 	// Master stats

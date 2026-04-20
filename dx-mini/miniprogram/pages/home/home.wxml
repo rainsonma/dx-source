@@ -79,5 +79,20 @@
         <text class="circle-label">建议</text>
       </view>
     </view>
+
+    <!-- ===== Marketing sections (scroll-revealed below the hub) ===== -->
+    <home-why-different />
+    <home-features recent-session="{{recentSession}}" />
+    <home-ai-features beans="{{profile ? profile.beans : 0}}" />
+    <home-learning-loop
+      unknown-total="{{unknownTotal}}"
+      review-pending="{{reviewPending}}"
+      master-total="{{masterTotal}}"
+    />
+    <home-community streak="{{profile ? profile.currentPlayStreak : 0}}" />
+    <home-membership
+      grade="{{profile ? profile.grade : 'free'}}"
+      vip-due-at="{{vipDueAt}}"
+    />
   </view>
 </van-config-provider>

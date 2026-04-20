@@ -24,9 +24,20 @@ export function formatNumber(n: number): string {
 export function gradeLabel(grade: string): string {
   const map: Record<string, string> = {
     free: '免费',
-    monthly: '月度会员',
-    quarterly: '季度会员',
-    yearly: '年度会员',
+    month: '月度会员',
+    season: '季度会员',
+    year: '年度会员',
+    lifetime: '终身会员',
   }
   return map[grade] || grade
+}
+
+// Days between `now` and the ISO date string. Returns 0 for null/expired.
+// Used by the membership section to render "续费 · 还剩 N 天" on the
+// user's current tier button.
+export function daysUntil(isoDate: string | null | undefined): number {
+  if (!isoDate) return 0
+  const target = new Date(isoDate).getTime()
+  const now = Date.now()
+  return Math.max(0, Math.ceil((target - now) / 86400000))
 }

@@ -1,0 +1,76 @@
+<view class="section-root">
+  <view class="accent-dash"></view>
+  <text class="tag">会员计划</text>
+  <text class="headline">选一个你最舒服的节奏,<text class="hl">越早开始越划算</text></text>
+  <text class="desc">还有季度会员等更多选项,在会员页查看完整对比。</text>
+  <text class="expiry-line" wx:if="{{states.showExpiryLine}}">你的会员还剩 {{states.currentExpiresIn}} 天</text>
+
+  <!-- FREE -->
+  <view class="tier-card tier-free">
+    <view class="tier-head">
+      <text class="tier-name">免费会员</text>
+      <text class="tier-price">¥0</text>
+    </view>
+    <view class="features">
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>部分关卡</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>基础游戏</text></view>
+    </view>
+    <view class="cta cta-info">{{states.free.label}}</view>
+  </view>
+
+  <!-- MONTH -->
+  <view class="tier-card">
+    <view class="tier-head">
+      <text class="tier-name">月度会员</text>
+      <text class="tier-price">¥39<text class="unit">/月</text></text>
+    </view>
+    <view class="features">
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>全部关卡畅玩</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>AI 随心学</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>PK + 群组</text></view>
+    </view>
+    <view class="cta {{states.month.disabled ? 'cta-off' : 'cta-primary'}}"
+          data-disabled="{{states.month.disabled}}"
+          bind:tap="goPurchase">
+      {{states.month.label}}
+    </view>
+  </view>
+
+  <!-- YEAR (recommended) -->
+  <view class="tier-card tier-year">
+    <view class="badge-rec">推荐</view>
+    <view class="tier-head">
+      <text class="tier-name">年度会员</text>
+      <text class="tier-price">¥309<text class="unit">/年</text></text>
+    </view>
+    <view class="features">
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>超值优惠套餐</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>包含月度全部权益</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#0d9488" /><text>优先客服支持</text></view>
+    </view>
+    <view class="cta {{states.year.disabled ? 'cta-off' : 'cta-primary'}}"
+          data-disabled="{{states.year.disabled}}"
+          bind:tap="goPurchase">
+      {{states.year.label}}
+    </view>
+  </view>
+
+  <!-- LIFETIME -->
+  <view class="tier-card tier-lifetime">
+    <view class="badge-life">最超值</view>
+    <view class="tier-head">
+      <text class="tier-name">终身会员</text>
+      <text class="tier-price">¥1999<text class="unit">一次性</text></text>
+    </view>
+    <view class="features">
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#ffffff" /><text>一次付费,终身生效</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#ffffff" /><text>最高能量豆赠送</text></view>
+      <view class="feat"><dx-icon name="circle-check" size="12px" color="#ffffff" /><text>邀请好友首充享 30% 返佣</text></view>
+    </view>
+    <view class="cta {{states.lifetime.disabled ? (states.lifetime.celebratory ? 'cta-done' : 'cta-off-dark') : 'cta-on-dark'}}"
+          data-disabled="{{states.lifetime.disabled}}"
+          bind:tap="goPurchase">
+      {{states.lifetime.label}}
+    </view>
+  </view>
+</view>
