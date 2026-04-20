@@ -35,7 +35,7 @@
             <text class="card-title">升级 VIP</text>
             <text class="card-arrow">▸</text>
           </view>
-          <text class="card-desc">选择适合您的会员方案，或通过兑换码升级会员，解锁更多学习功能</text>
+          <text class="card-desc">选择适合的会员方案，或兑换码升级会员，解锁更多学习功能！</text>
         </view>
         <view class="illo illo-vip">
           <dx-icon name="crown" size="20px" color="#ffffff" />
@@ -48,7 +48,7 @@
             <text class="card-title">奖励计划</text>
             <text class="card-arrow">▸</text>
           </view>
-          <text class="card-desc">如果喜欢斗学就推荐给好朋友一起来快乐学习吧！</text>
+          <text class="card-desc">如果你也喜欢斗学就把斗学推荐给好朋友一起来快乐学习吧！</text>
         </view>
         <view class="illo illo-gift">
           <dx-icon name="gift" size="20px" color="#ffffff" />
