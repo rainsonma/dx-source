@@ -31,9 +31,10 @@ const ICONS = [
   ['ticket',        'ticket'],
   ['copy',          'copy'],
   ['home',          'house'],         // lucide-static renamed home -> house
-  ['trending-up',   'trending-up'],
   ['notebook-text', 'notebook-text'],
   ['user',          'user'],
+  ['book-text',     'book-text'],
+  ['trophy',        'trophy'],
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')

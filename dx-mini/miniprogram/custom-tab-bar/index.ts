@@ -10,8 +10,8 @@ Component({
     theme: 'light' as 'light' | 'dark',
     tabs: [
       { icon: 'home',          text: '首页',   path: '/pages/home/home' },
-      { icon: 'book-open',     text: '课程',   path: '/pages/games/games' },
-      { icon: 'trending-up',   text: '排行榜', path: '/pages/leaderboard/leaderboard' },
+      { icon: 'book-text',     text: '课程',   path: '/pages/games/games' },
+      { icon: 'trophy',        text: '排行榜', path: '/pages/leaderboard/leaderboard' },
       { icon: 'notebook-text', text: '学习',   path: '/pages/learn/learn' },
       { icon: 'user',          text: '我的',   path: '/pages/me/me' },
     ] as TabItem[],
