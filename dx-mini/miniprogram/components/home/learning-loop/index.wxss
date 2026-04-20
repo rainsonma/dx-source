@@ -58,7 +58,7 @@
 
 .name {
   display: block; font-size: 28rpx; font-weight: 700;
-  color: var(--text-primary); margin-bottom: 4rpx;
+  color: var(--text-primary);
 }
 
 .desc {
