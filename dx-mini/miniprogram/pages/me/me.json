@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "我的",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-cell": "@vant/weapp/cell/index",

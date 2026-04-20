@@ -1,5 +1,5 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
     <!-- Period tabs -->
     <van-tabs
       active="{{period}}"

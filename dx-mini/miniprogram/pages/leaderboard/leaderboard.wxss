@@ -1,6 +1,7 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
+  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
   padding-bottom: 100rpx;
 }
 .center-loader { display: flex; justify-content: center; padding: 40px; }

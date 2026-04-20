@@ -1,6 +1,7 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
+  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
   padding-bottom: 100rpx;
 }
 .top-bar {
@@ -23,11 +24,6 @@
 .search-placeholder {
   font-size: 13px;
   color: var(--text-secondary);
-}
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 .hero-section {
   padding: 20px 16px 12px;
