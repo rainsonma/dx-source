@@ -1,84 +1,86 @@
 <view class="section-root">
-  <view class="accent-dash"></view>
-  <text class="tag">核心玩法 · 4 种模式,覆盖听说读写</text>
-  <text class="headline">挑一个就能上手,<text class="hl">全都玩转就起飞</text></text>
+  <view class="hero-card">
+    <view class="accent-dash"></view>
+    <text class="tag">核心玩法 · 4 种模式,覆盖听说读写</text>
+    <text class="headline">挑一个就能上手,<text class="hl">全都玩转就起飞</text></text>
 
-  <view class="resume-chip" wx:if="{{recentSession}}" bind:tap="goResume">
-    <text class="resume-label">继续 · {{recentSession.gameName}} Lv.{{recentSession.completedLevels + 1}}</text>
-    <dx-icon name="chevron-right" size="14px" color="#0d9488" />
-  </view>
+    <view class="resume-chip" wx:if="{{recentSession}}" bind:tap="goResume">
+      <text class="resume-label">继续 · {{recentSession.gameName}} Lv.{{recentSession.completedLevels + 1}}</text>
+      <dx-icon name="chevron-right" size="14px" color="#0d9488" />
+    </view>
 
-  <!-- Card 1: 连词成句 -->
-  <view class="game-card">
-    <view class="card-head">
-      <view class="ico ico-violet"><dx-icon name="keyboard" size="18px" color="#7c3aed" /></view>
-      <view class="card-text">
-        <text class="name">连词成句</text>
-        <text class="desc">看到中文秒拼出英文句子,越快越高分。真实语料替你练习语序和搭配。</text>
+    <!-- Card 1: 连词成句 -->
+    <view class="game-item">
+      <view class="card-head">
+        <view class="ico ico-violet"><dx-icon name="keyboard" size="18px" color="#7c3aed" /></view>
+        <view class="card-text">
+          <text class="name">连词成句</text>
+          <text class="desc">看到中文秒拼出英文句子,越快越高分。真实语料替你练习语序和搭配。</text>
+        </view>
+      </view>
+      <view class="illus illus-tiles">
+        <text class="tile">I</text>
+        <text class="tile">love</text>
+        <text class="tile">learning</text>
+        <text class="tile">English</text>
+        <text class="tile tile-accent">→</text>
       </view>
     </view>
-    <view class="illus illus-tiles">
-      <text class="tile">I</text>
-      <text class="tile">love</text>
-      <text class="tile">learning</text>
-      <text class="tile">English</text>
-      <text class="tile tile-accent">→</text>
-    </view>
-  </view>
 
-  <!-- Card 2: 词汇配对 -->
-  <view class="game-card">
-    <view class="card-head">
-      <view class="ico ico-blue"><dx-icon name="swords" size="18px" color="#0d9488" /></view>
-      <view class="card-text">
-        <text class="name">词汇配对</text>
-        <text class="desc">英文与中文快速配对,限时给分。巩固词汇量和中译英反应速度。</text>
+    <!-- Card 2: 词汇配对 -->
+    <view class="game-item">
+      <view class="card-head">
+        <view class="ico ico-blue"><dx-icon name="swords" size="18px" color="#0d9488" /></view>
+        <view class="card-text">
+          <text class="name">词汇配对</text>
+          <text class="desc">英文与中文快速配对,限时给分。巩固词汇量和中译英反应速度。</text>
+        </view>
+      </view>
+      <view class="illus illus-match">
+        <text class="tile tile-fill">negotiate</text>
+        <view class="line"></view>
+        <text class="tile">谈判</text>
       </view>
     </view>
-    <view class="illus illus-match">
-      <text class="tile tile-fill">negotiate</text>
-      <view class="line"></view>
-      <text class="tile">谈判</text>
-    </view>
-  </view>
 
-  <!-- Card 3: 词汇消消乐 -->
-  <view class="game-card">
-    <view class="card-head">
-      <view class="ico ico-pink"><dx-icon name="shuffle" size="18px" color="#059669" /></view>
-      <view class="card-text">
-        <text class="name">词汇消消乐</text>
-        <text class="desc">记忆配对消除,越快消除越高分。玩着玩着就把生词牢牢记住。</text>
+    <!-- Card 3: 词汇消消乐 -->
+    <view class="game-item">
+      <view class="card-head">
+        <view class="ico ico-pink"><dx-icon name="shuffle" size="18px" color="#059669" /></view>
+        <view class="card-text">
+          <text class="name">词汇消消乐</text>
+          <text class="desc">记忆配对消除,越快消除越高分。玩着玩着就把生词牢牢记住。</text>
+        </view>
+      </view>
+      <view class="illus illus-grid">
+        <view class="cell c-pink"></view>
+        <view class="cell c-teal-light"></view>
+        <view class="cell c-violet"></view>
+        <view class="cell c-teal-light"></view>
+        <view class="cell c-teal"></view>
+        <view class="cell c-pink"></view>
+        <view class="cell c-violet"></view>
+        <view class="cell c-pink"></view>
+        <view class="cell c-teal-light"></view>
       </view>
     </view>
-    <view class="illus illus-grid">
-      <view class="cell c-pink"></view>
-      <view class="cell c-teal-light"></view>
-      <view class="cell c-violet"></view>
-      <view class="cell c-teal-light"></view>
-      <view class="cell c-teal"></view>
-      <view class="cell c-pink"></view>
-      <view class="cell c-violet"></view>
-      <view class="cell c-pink"></view>
-      <view class="cell c-teal-light"></view>
-    </view>
-  </view>
 
-  <!-- Card 4: 词汇对轰 -->
-  <view class="game-card">
-    <view class="card-head">
-      <view class="ico ico-red"><dx-icon name="crosshair" size="18px" color="#dc2626" /></view>
-      <view class="card-text">
-        <text class="name">词汇对轰</text>
-        <text class="desc">和对手拼炮弹。拼对拼快就发射,紧张刺激的词汇对战。</text>
+    <!-- Card 4: 词汇对轰 -->
+    <view class="game-item">
+      <view class="card-head">
+        <view class="ico ico-red"><dx-icon name="crosshair" size="18px" color="#dc2626" /></view>
+        <view class="card-text">
+          <text class="name">词汇对轰</text>
+          <text class="desc">和对手拼炮弹。拼对拼快就发射,紧张刺激的词汇对战。</text>
+        </view>
       </view>
-    </view>
-    <view class="illus illus-bars">
-      <view class="bar" style="height: 60%;"></view>
-      <view class="bar bar-teal" style="height: 40%;"></view>
-      <view class="bar" style="height: 80%;"></view>
-      <view class="bar bar-teal" style="height: 50%;"></view>
-      <view class="bar" style="height: 70%;"></view>
+      <view class="illus illus-bars">
+        <view class="bar" style="height: 60%;"></view>
+        <view class="bar bar-teal" style="height: 40%;"></view>
+        <view class="bar" style="height: 80%;"></view>
+        <view class="bar bar-teal" style="height: 50%;"></view>
+        <view class="bar" style="height: 70%;"></view>
+      </view>
     </view>
   </view>
 </view>
