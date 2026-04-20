@@ -58,16 +58,12 @@
 
 .name {
   display: block; font-size: 28rpx; font-weight: 700;
-  color: var(--text-primary);
-}
-
-.count {
-  display: block; font-size: 24rpx; color: #0d9488; font-weight: 600; margin-top: 2rpx;
+  color: var(--text-primary); margin-bottom: 4rpx;
 }
 
 .desc {
   display: block; font-size: 22rpx; color: var(--text-secondary);
-  line-height: 1.5; margin-top: 10rpx;
+  line-height: 1.5;
 }
 
 .footnote {

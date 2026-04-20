@@ -84,11 +84,7 @@
     <home-why-different />
     <home-features recent-session="{{recentSession}}" />
     <home-ai-features beans="{{profile ? profile.beans : 0}}" />
-    <home-learning-loop
-      unknown-total="{{unknownTotal}}"
-      review-pending="{{reviewPending}}"
-      master-total="{{masterTotal}}"
-    />
+    <home-learning-loop />
     <home-community streak="{{profile ? profile.currentPlayStreak : 0}}" />
     <home-membership
       grade="{{profile ? profile.grade : 'free'}}"

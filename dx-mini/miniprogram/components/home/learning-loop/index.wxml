@@ -9,11 +9,10 @@
         <view class="ico ico-pink"><dx-icon name="book-open" size="18px" color="#ec4899" /></view>
         <view class="card-text">
           <text class="name">生词本</text>
-          <text class="count">{{unknownTotal !== null ? unknownTotal : '—'}} 条</text>
+          <text class="desc">持续沉淀你不会的词汇</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <text class="desc">持续沉淀你不会的词汇</text>
     </view>
 
     <view class="book-item" bind:tap="goReview">
@@ -21,11 +20,10 @@
         <view class="ico ico-violet"><dx-icon name="refresh-cw" size="18px" color="#7c3aed" /></view>
         <view class="card-text">
           <text class="name">复习本</text>
-          <text class="count">{{reviewPending !== null ? reviewPending : '—'}} 待复习</text>
+          <text class="desc">[1， 3， 7， 14， 30， 90] 天节奏智能推送</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <text class="desc">[1， 3， 7， 14， 30， 90] 天节奏智能推送</text>
     </view>
 
     <view class="book-item" bind:tap="goMastered">
@@ -33,11 +31,10 @@
         <view class="ico ico-teal"><dx-icon name="circle-check" size="18px" color="#0d9488" /></view>
         <view class="card-text">
           <text class="name">已掌握</text>
-          <text class="count">{{masterTotal !== null ? masterTotal : '—'}} 条</text>
+          <text class="desc">看得见的词汇量增长</text>
         </view>
         <dx-icon name="chevron-right" size="14px" color="#94a3b8" />
       </view>
-      <text class="desc">看得见的词汇量增长</text>
     </view>
 
     <text class="footnote">艾宾浩斯遗忘曲线智能推送复习，你只需要玩。</text>

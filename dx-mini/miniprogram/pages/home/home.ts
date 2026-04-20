@@ -29,19 +29,12 @@ interface SessionProgress {
   lastPlayedAt: string
 }
 
-interface MasterStats { total: number; thisWeek: number; thisMonth: number }
-interface ReviewStats { pending: number; overdue: number; reviewedToday: number }
-
 interface DashboardData {
   profile: DashboardProfile
-  masterStats: MasterStats
-  reviewStats: ReviewStats
   sessions: SessionProgress[]
   todayAnswers: number
   greeting: Greeting
 }
-
-interface UnknownStats { total: number; thisWeek: number; thisMonth: number }
 
 interface RecentSession {
   gameId: string
@@ -60,9 +53,6 @@ Page({
     gradeLabelText: '',
     statusBarHeight: 20,
     // marketing sections
-    masterTotal: null as number | null,
-    reviewPending: null as number | null,
-    unknownTotal: null as number | null,
     recentSession: null as RecentSession | null,
     vipDueAt: '' as string,
   },
@@ -79,42 +69,30 @@ Page({
   },
   async loadData() {
     this.setData({ loading: true })
-    const [dashResult, unknownResult] = await Promise.allSettled([
-      api.get<DashboardData>('/api/hall/dashboard'),
-      api.get<UnknownStats>('/api/tracking/unknown/stats'),
-    ])
+    try {
+      const dash = await api.get<DashboardData>('/api/hall/dashboard')
 
-    if (dashResult.status === 'rejected') {
+      const sessions = dash.sessions || []
+      const recentSession: RecentSession | null = sessions.length > 0
+        ? {
+            gameId: sessions[0].gameId,
+            gameName: sessions[0].gameName,
+            completedLevels: sessions[0].completedLevels,
+          }
+        : null
+
+      this.setData({
+        loading: false,
+        profile: dash.profile,
+        greeting: dash.greeting,
+        gradeLabelText: gradeLabel(dash.profile.grade),
+        recentSession,
+        vipDueAt: dash.profile.vipDueAt || '',
+      })
+    } catch {
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })
-      return
     }
-
-    const dash = dashResult.value
-    const unknownTotal = unknownResult.status === 'fulfilled'
-      ? unknownResult.value.total
-      : null
-
-    const sessions = dash.sessions || []
-    const recentSession: RecentSession | null = sessions.length > 0
-      ? {
-          gameId: sessions[0].gameId,
-          gameName: sessions[0].gameName,
-          completedLevels: sessions[0].completedLevels,
-        }
-      : null
-
-    this.setData({
-      loading: false,
-      profile: dash.profile,
-      greeting: dash.greeting,
-      gradeLabelText: gradeLabel(dash.profile.grade),
-      masterTotal: dash.masterStats.total,
-      reviewPending: dash.reviewStats.pending,
-      unknownTotal,
-      recentSession,
-      vipDueAt: dash.profile.vipDueAt || '',
-    })
   },
   goSearch() { wx.navigateTo({ url: '/pages/games/games' }) },
   goPurchase() { wx.navigateTo({ url: '/pages/me/purchase/purchase' }) },
