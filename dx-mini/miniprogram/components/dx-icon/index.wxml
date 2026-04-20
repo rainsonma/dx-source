@@ -1,9 +1,3 @@
-<van-icon
-  class-prefix="dx-icon"
-  name="{{name}}"
-  size="{{size}}"
-  color="{{color}}"
-  custom-style="{{customStyle}}"
-  custom-class="{{customClass}}"
-  bind:click="onClick"
-/>
+<view class="dx-icon-host {{customClass}}" style="{{hostStyle}}" bind:tap="onClick">
+  <image src="{{src}}" style="width:100%;height:100%" mode="aspectFit" />
+</view>
