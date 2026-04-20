@@ -14,3 +14,36 @@
 .group-info { flex: 1; }
 .group-name { font-size: 15px; font-weight: 600; color: var(--text-primary); display: block; }
 .group-meta { font-size: 12px; color: var(--text-secondary); margin-top: 3px; display: block; }
+.custom-nav {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+.status-bar-spacer {
+  height: var(--status-bar-height, 20px);
+}
+.nav-row {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.back-btn {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  pointer-events: none;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,7 +1,9 @@
 {
+  "navigationStyle": "custom",
   "navigationBarTitleText": "购买会员",
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
-    "van-button": "@vant/weapp/button/index"
+    "van-button": "@vant/weapp/button/index",
+    "dx-icon": "/components/dx-icon/index"
   }
 }

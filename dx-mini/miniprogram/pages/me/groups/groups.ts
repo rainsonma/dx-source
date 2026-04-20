@@ -22,12 +22,16 @@ Page({
     joinCode: '',
     creating: false,
     joining: false,
+    statusBarHeight: 20,
   },
   onLoad() {
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
     const theme = app.globalData.theme
-    this.setData({ theme, primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488' })
+    this.setData({ theme, primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488', statusBarHeight })
     this.loadGroups(true)
   },
+  goBack() { wx.navigateBack() },
   onPullDownRefresh() {
     this.loadGroups(true).then(() => wx.stopPullDownRefresh())
   },
