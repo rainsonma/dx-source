@@ -1,4 +1,16 @@
-.page-container { min-height: 100vh; background: var(--bg-page); padding-bottom: 100rpx; }
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
+  padding-bottom: 100rpx;
+}
+.top-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 20rpx;
+  padding: 12rpx 32rpx;
+}
 .center-loader { display: flex; justify-content: center; padding: 40px; }
 .profile-header {
   display: flex;

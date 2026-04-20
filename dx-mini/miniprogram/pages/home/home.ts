@@ -43,9 +43,12 @@ Page({
     greeting: null as Greeting | null,
     heatmapCells: [] as HeatmapCell[],
     unreadNotices: false,
+    statusBarHeight: 20,
   },
   onLoad() {
-    this.setData({ theme: app.globalData.theme })
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
+    this.setData({ theme: app.globalData.theme, statusBarHeight })
   },
   onShow() {
     this.setData({ theme: app.globalData.theme });
@@ -89,17 +92,6 @@ Page({
       cells.push({ date: key, level })
     }
     return cells
-  },
-  toggleTheme() {
-    const next: 'light' | 'dark' = this.data.theme === 'light' ? 'dark' : 'light'
-    wx.setStorageSync('dx_theme', next)
-    app.globalData.theme = next
-    this.setData({ theme: next })
-    const tabBar2 = this.getTabBar() as any
-    if (tabBar2) { tabBar2.setData({ theme: next }) }
-  },
-  goNotices() {
-    wx.navigateTo({ url: '/pages/me/notices/notices' })
   },
   goSearch() {
     wx.navigateTo({ url: '/pages/games/games' })

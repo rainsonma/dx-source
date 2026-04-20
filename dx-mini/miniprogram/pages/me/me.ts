@@ -21,8 +21,14 @@ Page({
     loading: true,
     profile: null as ProfileData | null,
     avatarChar: '',
+    statusBarHeight: 20,
     formatDate,
     gradeLabel,
+  },
+  onLoad() {
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
+    this.setData({ statusBarHeight })
   },
   onShow() {
     const theme = app.globalData.theme
@@ -45,6 +51,19 @@ Page({
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
+  },
+  toggleTheme() {
+    const next: 'light' | 'dark' = this.data.theme === 'light' ? 'dark' : 'light'
+    wx.setStorageSync('dx_theme', next)
+    app.globalData.theme = next
+    this.setData({
+      theme: next,
+      primaryColor: next === 'dark' ? '#14b8a6' : '#0d9488',
+      arrowColor: next === 'dark' ? '#6b7280' : '#9ca3af',
+      cellIconColor: next === 'dark' ? '#9ca3af' : '#6b7280',
+    })
+    const tabBar = this.getTabBar() as any
+    if (tabBar) { tabBar.setData({ theme: next }) }
   },
   goProfileEdit() { wx.navigateTo({ url: '/pages/me/profile-edit/profile-edit' }) },
   goNotices() { wx.navigateTo({ url: '/pages/me/notices/notices' }) },

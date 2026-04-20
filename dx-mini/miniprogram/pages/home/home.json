@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "斗学",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-skeleton": "@vant/weapp/skeleton/index",

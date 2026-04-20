@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "课程",
+  "navigationStyle": "custom",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",

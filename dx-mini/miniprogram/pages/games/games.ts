@@ -17,9 +17,12 @@ Page({
     games: [] as GameCardData[],
     nextCursor: '',
     hasMore: false,
+    statusBarHeight: 20,
   },
   onLoad() {
-    this.setData({ theme: app.globalData.theme })
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
+    this.setData({ theme: app.globalData.theme, statusBarHeight })
     this.loadCategories()
     this.loadGames(true)
   },

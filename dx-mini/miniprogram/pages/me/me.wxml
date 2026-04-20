@@ -1,5 +1,20 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <view class="top-bar">
+      <dx-icon
+        name="{{theme === 'dark' ? 'sun' : 'moon'}}"
+        size="22px"
+        color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+        bind:click="toggleTheme"
+      />
+      <dx-icon
+        name="bell"
+        size="22px"
+        color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}"
+        bind:click="goNotices"
+      />
+    </view>
+
     <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
     <block wx:if="{{!loading && profile}}">
       <view class="profile-header" bind:tap="goProfileEdit">
@@ -49,9 +64,6 @@
       </view>
 
       <van-cell-group inset custom-style="margin:16px;">
-        <van-cell title="公告通知" is-link bind:click="goNotices">
-          <dx-icon slot="icon" name="bell" size="20px" color="{{cellIconColor}}" />
-        </van-cell>
         <van-cell title="我的团队" is-link bind:click="goGroups">
           <dx-icon slot="icon" name="users" size="20px" color="{{cellIconColor}}" />
         </van-cell>

@@ -20,9 +20,12 @@ Page({
     entries: [] as LeaderboardEntry[],
     entries4Plus: [] as LeaderboardEntry[],
     myRank: null as LeaderboardEntry | null,
+    statusBarHeight: 20,
   },
   onLoad() {
-    this.setData({ theme: app.globalData.theme })
+    const sys = wx.getSystemInfoSync()
+    const statusBarHeight = sys.statusBarHeight || 20
+    this.setData({ theme: app.globalData.theme, statusBarHeight })
     this.loadLeaderboard()
   },
   onShow() {
