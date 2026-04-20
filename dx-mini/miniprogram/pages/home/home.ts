@@ -1,10 +1,12 @@
 import { api } from '../../utils/api'
+import { gradeLabel } from '../../utils/format'
 
 interface DashboardProfile {
   id: string
   username: string
   nickname: string | null
   grade: string
+  level: number
   exp: number
   beans: number
   avatarUrl: string | null
@@ -13,22 +15,12 @@ interface DashboardProfile {
   lastReadNoticeAt: string | null
 }
 
-interface MasterStats { total: number; thisWeek: number; thisMonth: number }
-interface ReviewStats { pending: number; overdue: number; reviewedToday: number }
 interface Greeting { title: string; subtitle: string }
 
 interface DashboardData {
   profile: DashboardProfile
-  masterStats: MasterStats
-  reviewStats: ReviewStats
-  todayAnswers: number
   greeting: Greeting
 }
-
-interface HeatmapDay { date: string; count: number }
-interface HeatmapData { year: number; days: HeatmapDay[]; accountYear: number }
-
-interface HeatmapCell { date: string; level: number }
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark'; userId: string } }>()
 
@@ -37,12 +29,8 @@ Page({
     theme: 'light' as 'light' | 'dark',
     loading: true,
     profile: null as DashboardProfile | null,
-    masterStats: null as MasterStats | null,
-    reviewStats: null as ReviewStats | null,
-    todayAnswers: 0,
     greeting: null as Greeting | null,
-    heatmapCells: [] as HeatmapCell[],
-    unreadNotices: false,
+    gradeLabelText: '',
     statusBarHeight: 20,
   },
   onLoad() {
@@ -51,7 +39,7 @@ Page({
     this.setData({ theme: app.globalData.theme, statusBarHeight })
   },
   onShow() {
-    this.setData({ theme: app.globalData.theme });
+    this.setData({ theme: app.globalData.theme })
     const tabBar = this.getTabBar() as any
     if (tabBar) { tabBar.setData({ active: 0, theme: app.globalData.theme }) }
     this.loadData()
@@ -59,41 +47,24 @@ Page({
   async loadData() {
     this.setData({ loading: true })
     try {
-      const [dash, heatmap] = await Promise.all([
-        api.get<DashboardData>('/api/hall/dashboard'),
-        api.get<HeatmapData>('/api/hall/heatmap'),
-      ])
-      const cells = this.buildHeatmapCells(heatmap.days)
+      const dash = await api.get<DashboardData>('/api/hall/dashboard')
       this.setData({
         loading: false,
         profile: dash.profile,
-        masterStats: dash.masterStats,
-        reviewStats: dash.reviewStats,
-        todayAnswers: dash.todayAnswers,
         greeting: dash.greeting,
-        heatmapCells: cells,
-        unreadNotices: false,
+        gradeLabelText: gradeLabel(dash.profile.grade),
       })
     } catch {
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
-  buildHeatmapCells(days: HeatmapDay[]): HeatmapCell[] {
-    const map = new Map(days.map(d => [d.date, d.count]))
-    const cells: HeatmapCell[] = []
-    const today = new Date()
-    for (let i = 48; i >= 0; i--) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const count = map.get(key) || 0
-      const level = count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 10 ? 3 : 4
-      cells.push({ date: key, level })
-    }
-    return cells
-  },
-  goSearch() {
-    wx.navigateTo({ url: '/pages/games/games' })
-  },
+  goSearch() { wx.navigateTo({ url: '/pages/games/games' }) },
+  goPurchase() { wx.navigateTo({ url: '/pages/me/purchase/purchase' }) },
+  goInvite() { wx.navigateTo({ url: '/pages/me/invite/invite' }) },
+  goStudy() { wx.navigateTo({ url: '/pages/me/study/study' }) },
+  goGroups() { wx.navigateTo({ url: '/pages/me/groups/groups' }) },
+  goTasks() { wx.navigateTo({ url: '/pages/me/tasks/tasks' }) },
+  goCommunity() { wx.navigateTo({ url: '/pages/me/community/community' }) },
+  goFeedback() { wx.navigateTo({ url: '/pages/me/feedback/feedback' }) },
 })

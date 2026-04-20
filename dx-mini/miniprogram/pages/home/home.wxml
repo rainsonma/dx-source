@@ -1,45 +1,77 @@
 <van-config-provider theme="{{theme}}">
   <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
-    <!-- Top bar -->
-    <view class="top-bar">
-      <view class="search-box" bind:tap="goSearch">
-        <dx-icon name="search" size="16px" color="#9ca3af" />
-        <text class="search-placeholder">搜索课程</text>
+    <!-- Teal header band -->
+    <view class="teal-wrap">
+      <view class="status-bar-spacer"></view>
+
+      <view class="nav-row">
+        <text class="nav-greet" wx:if="{{profile}}">{{greeting ? greeting.title : '你好'}} {{profile.nickname || profile.username}}</text>
+        <text class="nav-greet" wx:else>你好</text>
+      </view>
+
+      <van-skeleton title row="2" loading="{{loading}}">
+        <view class="greet-body">
+          <text class="greet-sub">{{greeting ? greeting.subtitle : ''}}</text>
+          <view class="badge-row" wx:if="{{profile}}">
+            <text class="badge lvl">Lv.{{profile.level}}</text>
+            <text class="badge">{{gradeLabelText}}</text>
+          </view>
+        </view>
+      </van-skeleton>
+
+      <view class="search-row">
+        <view class="search-box" bind:tap="goSearch">
+          <dx-icon name="search" size="16px" color="#9ca3af" />
+          <text class="search-placeholder">搜索课程</text>
+        </view>
       </view>
     </view>
 
-    <van-skeleton title row="5" loading="{{loading}}">
-      <!-- Greeting + stats -->
-      <view class="hero-section">
-        <text class="greeting-title">{{greeting ? greeting.title : '你好！'}}</text>
-        <text wx:if="{{greeting}}" class="greeting-subtitle">{{greeting.subtitle}}</text>
-        <view class="stat-row">
-          <view class="stat-card">
-            <text class="stat-value">{{profile.currentPlayStreak || 0}}</text>
-            <text class="stat-label">连续天数</text>
-          </view>
-          <view class="stat-card">
-            <text class="stat-value">{{masterStats.total || 0}}</text>
-            <text class="stat-label">已掌握</text>
-          </view>
-          <view class="stat-card">
-            <text class="stat-value">{{todayAnswers || 0}}</text>
-            <text class="stat-label">今日答题</text>
-          </view>
+    <!-- Combined VIP / 奖励 card -->
+    <view class="combined-card">
+      <view class="card-half" bind:tap="goPurchase">
+        <view class="card-text">
+          <text class="card-title">升级 VIP</text>
+          <text class="card-desc">选择适合您的会员方案，或通过兑换码升级会员，解锁更多学习功能</text>
+        </view>
+        <view class="illo illo-vip">
+          <dx-icon name="crown" size="20px" color="#ffffff" />
         </view>
       </view>
+      <view class="divider"></view>
+      <view class="card-half" bind:tap="goInvite">
+        <view class="card-text">
+          <text class="card-title">奖励计划</text>
+          <text class="card-desc">如果喜欢斗学就推荐给好朋友一起来快乐学习吧！</text>
+        </view>
+        <view class="illo illo-gift">
+          <dx-icon name="gift" size="20px" color="#ffffff" />
+        </view>
+      </view>
+    </view>
 
-      <!-- Heatmap -->
-      <view class="section">
-        <text class="section-title">学习热力图</text>
-        <view class="heatmap">
-          <view
-            wx:for="{{heatmapCells}}"
-            wx:key="date"
-            class="heatmap-cell level-{{item.level}}"
-          ></view>
-        </view>
+    <!-- Five gradient circles -->
+    <view class="circle-row">
+      <view class="circle-item" bind:tap="goStudy">
+        <view class="circle c1"><dx-icon name="chart-pie" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">学习</text>
       </view>
-    </van-skeleton>
+      <view class="circle-item" bind:tap="goGroups">
+        <view class="circle c2"><dx-icon name="users" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">群组</text>
+      </view>
+      <view class="circle-item" bind:tap="goTasks">
+        <view class="circle c3"><dx-icon name="calendar-check" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">打卡</text>
+      </view>
+      <view class="circle-item" bind:tap="goCommunity">
+        <view class="circle c4"><dx-icon name="sticker" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">留言</text>
+      </view>
+      <view class="circle-item" bind:tap="goFeedback">
+        <view class="circle c5"><dx-icon name="flag" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">建议</text>
+      </view>
+    </view>
   </view>
 </van-config-provider>
