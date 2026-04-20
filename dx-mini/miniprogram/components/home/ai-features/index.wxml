@@ -1,27 +1,29 @@
 <view class="section-root">
-  <view class="accent-dash"></view>
-  <view class="tag-row">
-    <dx-icon name="sparkles" size="14px" color="#0d9488" />
-    <text class="tag">AI 驱动 · 专属于你的学习</text>
-  </view>
-  <text class="headline">AI 帮你定制课程,<text class="hl">你想学什么都可以</text></text>
-
-  <view class="bullet">输入任意主题或场景,AI 按你的水平生成课程</view>
-  <view class="bullet">CEFR A1–C2 全覆盖,难度智能匹配</view>
-  <view class="bullet">内容沉淀进你的词汇系统,复习自动推送</view>
-
-  <view class="demo-card">
-    <text class="input-label">输入主题:<text class="hl">职场面试高频词</text></text>
-    <view class="stream">
-      <text class="line">› negotiate · 谈判 — Let's negotiate the salary.</text>
-      <text class="line">› résumé · 简历 — Please send me your résumé.</text>
-      <text class="line">› confident · 自信 — Stay confident during the interview.</text>
-      <text class="line">› leverage · 优势 — Leverage your strengths.</text>
-      <text class="line">› follow up · 跟进 — I'll follow up next week.</text>
+  <view class="hero-card">
+    <view class="accent-dash"></view>
+    <view class="tag-row">
+      <dx-icon name="sparkles" size="14px" color="#0d9488" />
+      <text class="tag">AI 驱动 · 专属于你的学习</text>
     </view>
-    <view class="footer">
-      <dx-icon name="coins" size="13px" color="#d97706" />
-      <text class="footer-text">你当前有 <text class="hl">{{beans}}</text> 能量豆 · 每次消耗 5 颗,失败全额退还</text>
+    <text class="headline">AI 帮你定制课程,<text class="hl">你想学什么都可以</text></text>
+
+    <view class="bullet">输入任意主题或场景,AI 按你的水平生成课程</view>
+    <view class="bullet">CEFR A1–C2 全覆盖,难度智能匹配</view>
+    <view class="bullet">内容沉淀进你的词汇系统,复习自动推送</view>
+
+    <view class="demo-card">
+      <text class="input-label">输入主题:<text class="hl">职场面试高频词</text></text>
+      <view class="stream">
+        <text class="line">› negotiate · 谈判 — Let's negotiate the salary.</text>
+        <text class="line">› résumé · 简历 — Please send me your résumé.</text>
+        <text class="line">› confident · 自信 — Stay confident during the interview.</text>
+        <text class="line">› leverage · 优势 — Leverage your strengths.</text>
+        <text class="line">› follow up · 跟进 — I'll follow up next week.</text>
+      </view>
+      <view class="footer">
+        <dx-icon name="coins" size="13px" color="#d97706" />
+        <text class="footer-text">你当前有 <text class="hl">{{beans}}</text> 能量豆 · 每次消耗 5 颗,失败全额退还</text>
+      </view>
     </view>
   </view>
 </view>

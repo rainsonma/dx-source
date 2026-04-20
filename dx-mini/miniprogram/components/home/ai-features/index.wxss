@@ -7,6 +7,13 @@
   background: linear-gradient(180deg, var(--bg-page), rgba(13, 148, 136, 0.12), var(--bg-page));
 }
 
+.hero-card {
+  background: var(--bg-card);
+  border: 1rpx solid var(--border-color);
+  border-radius: 20rpx;
+  padding: 32rpx 28rpx;
+}
+
 .accent-dash {
   width: 48rpx; height: 6rpx; border-radius: 3rpx;
   background: #0d9488; margin-bottom: 20rpx;
