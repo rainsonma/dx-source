@@ -79,48 +79,101 @@
   line-height: 1.5;
 }
 
-/* ----- Illustration ----- */
+/* ----- Illustration container ----- */
 
 .illus {
-  margin-top: 18rpx; height: 96rpx; background: rgba(241, 245, 249, 0.6);
-  border-radius: 12rpx; padding: 0 16rpx; display: flex; align-items: center;
-  gap: 8rpx; overflow: hidden;
+  margin-top: 18rpx; background: rgba(241, 245, 249, 0.6);
+  border-radius: 12rpx; overflow: hidden;
 }
 
 .page-container.dark .illus { background: rgba(255, 255, 255, 0.04); }
 
-/* Tiles (sentence + match) */
+/* --- 连词成句: 4 word pills in a row --- */
 
-.tile {
+.illus-tiles {
+  height: 72rpx;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8rpx; padding: 0 16rpx;
+}
+
+.illus-tiles .tile {
   background: var(--bg-card); border: 1rpx solid rgba(148, 163, 184, 0.35);
-  border-radius: 8rpx; padding: 6rpx 12rpx;
-  font-size: 20rpx; font-weight: 600; color: var(--text-primary);
+  border-radius: 8rpx; padding: 6rpx 14rpx;
+  font-size: 20rpx; font-weight: 600; color: #5b21b6;
+  box-shadow: 0 1rpx 2rpx rgba(15, 23, 42, 0.04);
 }
 
-.tile-accent { background: rgba(13, 148, 136, 0.15); border-color: #0d9488; color: #0d9488; }
-.tile-fill   { background: rgba(13, 148, 136, 0.15); border-color: #0d9488; color: #0d9488; }
+/* --- 词汇配对: 2-column grid with 3 EN ↔ ZH pairs --- */
 
-/* Match line */
-
-.illus-match .line {
-  width: 48rpx; height: 4rpx; background: #0d9488; border-radius: 2rpx;
+.illus-match {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rpx 8rpx;
+  padding: 8rpx 16rpx;
+  align-content: center;
+  min-height: 96rpx;
 }
 
-/* Grid (eliminate) */
+.illus-match .tile {
+  background: var(--bg-card); border: 1rpx solid rgba(148, 163, 184, 0.35);
+  border-radius: 6rpx; padding: 3rpx 8rpx;
+  font-size: 18rpx; font-weight: 600;
+  text-align: center;
+  box-shadow: 0 1rpx 2rpx rgba(15, 23, 42, 0.04);
+}
 
-.illus-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6rpx; padding: 8rpx 16rpx; }
+.illus-match .tile.en { color: #0f766e; }
+.illus-match .tile.zh { color: #475569; }
 
-.cell { width: 100%; height: 20rpx; border-radius: 4rpx; }
+/* --- 词汇消消乐: 4×2 grid, 8 shuffled word/translation tiles --- */
 
-.c-pink       { background: #ec4899; }
-.c-teal-light { background: rgba(13, 148, 136, 0.25); }
-.c-violet     { background: #7c3aed; }
-.c-teal       { background: #0d9488; }
+.illus-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr 1fr;
+  gap: 4rpx 6rpx;
+  padding: 8rpx 12rpx;
+  min-height: 96rpx;
+  align-content: center;
+}
 
-/* Bars (battle) */
+.illus-grid .cell {
+  background: var(--bg-card); border: 1rpx solid rgba(148, 163, 184, 0.35);
+  border-radius: 6rpx; padding: 3rpx 4rpx;
+  font-size: 16rpx; font-weight: 600; color: #334155;
+  text-align: center;
+  box-shadow: 0 1rpx 2rpx rgba(15, 23, 42, 0.04);
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
 
-.illus-bars { height: 96rpx; align-items: flex-end; padding: 8rpx 0; gap: 10rpx; justify-content: center; }
+/* --- 词汇对轰: two facing bars with labels and a spark --- */
 
-.bar { width: 10rpx; background: #ef4444; border-radius: 3rpx; }
+.illus-battle {
+  height: 72rpx;
+  display: flex; align-items: center; gap: 10rpx;
+  padding: 0 16rpx;
+}
 
-.bar.bar-teal { background: #0d9488; }
+.battle-label {
+  font-size: 20rpx; font-weight: 700;
+  flex-shrink: 0;
+}
+
+.battle-label.teal { color: #0d9488; }
+.battle-label.red  { color: #e11d48; }
+
+.illus-battle .bar {
+  flex: 1; height: 6rpx; border-radius: 3rpx;
+}
+
+.illus-battle .bar-teal {
+  background: linear-gradient(90deg, #2dd4bf, #0d9488);
+}
+
+.illus-battle .bar-red {
+  background: linear-gradient(90deg, #fb7185, #e11d48);
+}
+
+.battle-star {
+  font-size: 22rpx; color: #f59e0b; flex-shrink: 0;
+}

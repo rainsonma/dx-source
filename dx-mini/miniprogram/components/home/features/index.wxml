@@ -9,7 +9,7 @@
       <dx-icon name="chevron-right" size="14px" color="#0d9488" />
     </view>
 
-    <!-- Card 1: 连词成句 -->
+    <!-- Card 1: 连词成句 — type English words in sequence -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-violet"><dx-icon name="keyboard" size="18px" color="#7c3aed" /></view>
@@ -21,13 +21,12 @@
       <view class="illus illus-tiles">
         <text class="tile">I</text>
         <text class="tile">love</text>
-        <text class="tile">learning</text>
-        <text class="tile">English</text>
-        <text class="tile tile-accent">→</text>
+        <text class="tile">this</text>
+        <text class="tile">game</text>
       </view>
     </view>
 
-    <!-- Card 2: 词汇配对 -->
+    <!-- Card 2: 词汇配对 — match EN ↔ ZH in a 2-column grid -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-blue"><dx-icon name="swords" size="18px" color="#0d9488" /></view>
@@ -37,13 +36,16 @@
         </view>
       </view>
       <view class="illus illus-match">
-        <text class="tile tile-fill">negotiate</text>
-        <view class="line"></view>
-        <text class="tile">谈判</text>
+        <text class="tile en">apple</text>
+        <text class="tile zh">苹果</text>
+        <text class="tile en">study</text>
+        <text class="tile zh">学习</text>
+        <text class="tile en">smile</text>
+        <text class="tile zh">微笑</text>
       </view>
     </view>
 
-    <!-- Card 3: 词汇消消乐 -->
+    <!-- Card 3: 词汇消消乐 — 4×2 grid of 8 scrambled pair tiles -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-pink"><dx-icon name="shuffle" size="18px" color="#059669" /></view>
@@ -53,19 +55,18 @@
         </view>
       </view>
       <view class="illus illus-grid">
-        <view class="cell c-pink"></view>
-        <view class="cell c-teal-light"></view>
-        <view class="cell c-violet"></view>
-        <view class="cell c-teal-light"></view>
-        <view class="cell c-teal"></view>
-        <view class="cell c-pink"></view>
-        <view class="cell c-violet"></view>
-        <view class="cell c-pink"></view>
-        <view class="cell c-teal-light"></view>
+        <text class="cell">apple</text>
+        <text class="cell">微笑</text>
+        <text class="cell">学习</text>
+        <text class="cell">书</text>
+        <text class="cell">苹果</text>
+        <text class="cell">study</text>
+        <text class="cell">smile</text>
+        <text class="cell">book</text>
       </view>
     </view>
 
-    <!-- Card 4: 词汇对轰 -->
+    <!-- Card 4: 词汇对轰 — two facing progress bars (you vs opponent) -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-red"><dx-icon name="crosshair" size="18px" color="#dc2626" /></view>
@@ -74,12 +75,12 @@
           <text class="desc">和对手拼炮弹。拼对拼快就发射，紧张刺激的词汇对战。</text>
         </view>
       </view>
-      <view class="illus illus-bars">
-        <view class="bar" style="height: 60%;"></view>
-        <view class="bar bar-teal" style="height: 40%;"></view>
-        <view class="bar" style="height: 80%;"></view>
-        <view class="bar bar-teal" style="height: 50%;"></view>
-        <view class="bar" style="height: 70%;"></view>
+      <view class="illus illus-battle">
+        <text class="battle-label teal">你</text>
+        <view class="bar bar-teal"></view>
+        <text class="battle-star">✦</text>
+        <view class="bar bar-red"></view>
+        <text class="battle-label red">对</text>
       </view>
     </view>
   </view>
