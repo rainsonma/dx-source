@@ -42,9 +42,14 @@
         <view class="ico ico-teal"><dx-icon name="flame" size="18px" color="#0d9488" /></view>
         <text class="name">连续打卡</text>
       </view>
-      <text class="streak-number">你已连胜 <text class="hl">{{streak}}</text> 天</text>
       <view class="heatmap">
-        <view class="cell {{item ? 'filled' : ''}}" wx:for="{{heatCells}}" wx:key="index"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
+        <view class="cell"></view>
       </view>
       <text class="desc">每天玩至少一次，保持连胜;错过一天从 1 重来。</text>
     </view>

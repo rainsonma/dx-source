@@ -85,7 +85,7 @@
     <home-features recent-session="{{recentSession}}" />
     <home-ai-features beans="{{profile ? profile.beans : 0}}" />
     <home-learning-loop />
-    <home-community streak="{{profile ? profile.currentPlayStreak : 0}}" />
+    <home-community />
     <home-membership
       grade="{{profile ? profile.grade : 'free'}}"
       vip-due-at="{{vipDueAt}}"

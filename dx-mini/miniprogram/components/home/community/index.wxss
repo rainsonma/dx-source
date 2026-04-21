@@ -65,25 +65,19 @@
 
 /* Streak item extras */
 
-.streak-number {
-  display: block; font-size: 26rpx; color: var(--text-primary);
-  margin: 16rpx 0 14rpx; font-weight: 600;
-}
-
-.streak-number .hl {
-  font-size: 48rpx; color: #0d9488; font-weight: 800;
-  padding: 0 6rpx;
-}
-
 .heatmap {
-  display: flex; gap: 8rpx; margin-bottom: 16rpx;
+  display: flex; gap: 8rpx; margin: 16rpx 0;
 }
 
 .cell {
   flex: 1; height: 32rpx; border-radius: 6rpx;
-  background: var(--border-color);
 }
 
-.cell.filled {
-  background: #0d9488;
-}
+/* Gradient from teal → light teal across the 7 days. */
+.heatmap .cell:nth-child(1) { background: #0d9488; }
+.heatmap .cell:nth-child(2) { background: #14b8a6; }
+.heatmap .cell:nth-child(3) { background: #2dd4bf; }
+.heatmap .cell:nth-child(4) { background: #5eead4; }
+.heatmap .cell:nth-child(5) { background: #99f6e4; }
+.heatmap .cell:nth-child(6) { background: #a7f3d0; }
+.heatmap .cell:nth-child(7) { background: #ccfbf1; }
