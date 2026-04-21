@@ -22,13 +22,16 @@ Component({
     shakeArrow() {
       const self = this as any
       if (self._stopped) return
+      // WeChat animate keyframes take individual transform properties
+      // (translateY, scale, etc.) — NOT a `transform:` string. translateY
+      // values are in px.
       self.animate(
         '.arrow',
         [
-          { offset: 0,   transform: 'translateY(0)' },
-          { offset: 0.4, transform: 'translateY(-5rpx)' },
-          { offset: 0.6, transform: 'translateY(-5rpx)' },
-          { offset: 1,   transform: 'translateY(0)' },
+          { offset: 0,   translateY: 0 },
+          { offset: 0.4, translateY: -8 },
+          { offset: 0.6, translateY: -8 },
+          { offset: 1,   translateY: 0 },
         ],
         1200,
         () => {
