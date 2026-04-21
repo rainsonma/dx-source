@@ -26,7 +26,8 @@
       </view>
     </view>
 
-    <!-- Card 2: 词汇配对 — 3 pairs pulse in teal, staggered -->
+    <!-- Card 2: 词汇配对 — 3 pairs pulse in teal, staggered. Unique
+         class per tile so this.animate hits each individually. -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-blue"><dx-icon name="swords" size="18px" color="#0d9488" /></view>
@@ -36,16 +37,17 @@
         </view>
       </view>
       <view class="illus illus-match">
-        <text class="tile en pair-1">apple</text>
-        <text class="tile zh pair-1">苹果</text>
-        <text class="tile en pair-2">study</text>
-        <text class="tile zh pair-2">学习</text>
-        <text class="tile en pair-3">smile</text>
-        <text class="tile zh pair-3">微笑</text>
+        <text class="tile en m1">apple</text>
+        <text class="tile zh m2">苹果</text>
+        <text class="tile en m3">study</text>
+        <text class="tile zh m4">学习</text>
+        <text class="tile en m5">smile</text>
+        <text class="tile zh m6">微笑</text>
       </view>
     </view>
 
-    <!-- Card 3: 词汇消消乐 — 4 pairs bg+scale pulse, staggered -->
+    <!-- Card 3: 词汇消消乐 — 4 pairs bg+scale pulse, staggered. Unique
+         class per cell. Pair map: (e1,e5), (e2,e7), (e3,e6), (e4,e8). -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-pink"><dx-icon name="shuffle" size="18px" color="#059669" /></view>
@@ -55,14 +57,14 @@
         </view>
       </view>
       <view class="illus illus-grid">
-        <text class="cell cell-p0">apple</text>
-        <text class="cell cell-p1">微笑</text>
-        <text class="cell cell-p2">学习</text>
-        <text class="cell cell-p3">书</text>
-        <text class="cell cell-p0">苹果</text>
-        <text class="cell cell-p2">study</text>
-        <text class="cell cell-p1">smile</text>
-        <text class="cell cell-p3">book</text>
+        <text class="cell e1">apple</text>
+        <text class="cell e2">微笑</text>
+        <text class="cell e3">学习</text>
+        <text class="cell e4">书</text>
+        <text class="cell e5">苹果</text>
+        <text class="cell e6">study</text>
+        <text class="cell e7">smile</text>
+        <text class="cell e8">book</text>
       </view>
     </view>
 
