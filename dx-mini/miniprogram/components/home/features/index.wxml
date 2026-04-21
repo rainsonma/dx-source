@@ -9,7 +9,7 @@
       <dx-icon name="chevron-right" size="14px" color="#0d9488" />
     </view>
 
-    <!-- Card 1: 连词成句 — type English words in sequence -->
+    <!-- Card 1: 连词成句 — 4 pills bounce staggered -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-violet"><dx-icon name="keyboard" size="18px" color="#7c3aed" /></view>
@@ -19,14 +19,14 @@
         </view>
       </view>
       <view class="illus illus-tiles">
-        <text class="tile">I</text>
-        <text class="tile">love</text>
-        <text class="tile">this</text>
-        <text class="tile">game</text>
+        <text class="tile tile-1">I</text>
+        <text class="tile tile-2">love</text>
+        <text class="tile tile-3">this</text>
+        <text class="tile tile-4">game</text>
       </view>
     </view>
 
-    <!-- Card 2: 词汇配对 — match EN ↔ ZH in a 2-column grid -->
+    <!-- Card 2: 词汇配对 — 3 pairs pulse in teal, staggered -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-blue"><dx-icon name="swords" size="18px" color="#0d9488" /></view>
@@ -36,16 +36,16 @@
         </view>
       </view>
       <view class="illus illus-match">
-        <text class="tile en">apple</text>
-        <text class="tile zh">苹果</text>
-        <text class="tile en">study</text>
-        <text class="tile zh">学习</text>
-        <text class="tile en">smile</text>
-        <text class="tile zh">微笑</text>
+        <text class="tile en pair-1">apple</text>
+        <text class="tile zh pair-1">苹果</text>
+        <text class="tile en pair-2">study</text>
+        <text class="tile zh pair-2">学习</text>
+        <text class="tile en pair-3">smile</text>
+        <text class="tile zh pair-3">微笑</text>
       </view>
     </view>
 
-    <!-- Card 3: 词汇消消乐 — 4×2 grid of 8 scrambled pair tiles -->
+    <!-- Card 3: 词汇消消乐 — 4 pairs bg+scale pulse, staggered -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-pink"><dx-icon name="shuffle" size="18px" color="#059669" /></view>
@@ -55,18 +55,18 @@
         </view>
       </view>
       <view class="illus illus-grid">
-        <text class="cell">apple</text>
-        <text class="cell">微笑</text>
-        <text class="cell">学习</text>
-        <text class="cell">书</text>
-        <text class="cell">苹果</text>
-        <text class="cell">study</text>
-        <text class="cell">smile</text>
-        <text class="cell">book</text>
+        <text class="cell cell-p0">apple</text>
+        <text class="cell cell-p1">微笑</text>
+        <text class="cell cell-p2">学习</text>
+        <text class="cell cell-p3">书</text>
+        <text class="cell cell-p0">苹果</text>
+        <text class="cell cell-p2">study</text>
+        <text class="cell cell-p1">smile</text>
+        <text class="cell cell-p3">book</text>
       </view>
     </view>
 
-    <!-- Card 4: 词汇对轰 — two facing progress bars (you vs opponent) -->
+    <!-- Card 4: 词汇对轰 — teal bar pulses gently, red bar dents harder, star flies right -->
     <view class="game-item">
       <view class="card-head">
         <view class="ico ico-red"><dx-icon name="crosshair" size="18px" color="#dc2626" /></view>

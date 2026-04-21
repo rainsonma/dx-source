@@ -168,10 +168,12 @@
 
 .illus-battle .bar-teal {
   background: linear-gradient(90deg, #2dd4bf, #0d9488);
+  transform-origin: left center;
 }
 
 .illus-battle .bar-red {
   background: linear-gradient(90deg, #fb7185, #e11d48);
+  transform-origin: right center;
 }
 
 .battle-star {
