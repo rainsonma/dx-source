@@ -76,10 +76,12 @@ Component({
     loopMatchPair(n: number) {
       const self = this as any
       if (self._stopped) return
+      // translateY + opacity pulse (both verified working on <text> in this
+      // WeChat version). Pair tiles animate in sync to visually connect them.
       const frames = [
-        { offset: 0,   backgroundColor: '#ffffff', scale: 1 },
-        { offset: 0.5, backgroundColor: '#ccfbf1', scale: 1.06 },
-        { offset: 1,   backgroundColor: '#ffffff', scale: 1 },
+        { offset: 0,   translateY: 0,  opacity: 1 },
+        { offset: 0.5, translateY: -5, opacity: 0.65 },
+        { offset: 1,   translateY: 0,  opacity: 1 },
       ]
       // Pair n ↔ tiles m(2n-1) and m(2n): p1=[m1,m2], p2=[m3,m4], p3=[m5,m6]
       const a = 2 * n - 1
@@ -96,18 +98,18 @@ Component({
       const self = this as any
       if (self._stopped) return
       const frames = [
-        { offset: 0,    backgroundColor: '#ffffff', scale: 1 },
-        { offset: 0.35, backgroundColor: '#fce7f3', scale: 1.08 },
-        { offset: 0.55, backgroundColor: '#f1f5f9', scale: 0.95 },
-        { offset: 1,    backgroundColor: '#ffffff', scale: 1 },
+        { offset: 0,    translateY: 0,  opacity: 1 },
+        { offset: 0.35, translateY: -6, opacity: 0.55 },
+        { offset: 0.55, translateY: 2,  opacity: 0.85 },
+        { offset: 1,    translateY: 0,  opacity: 1 },
       ]
       // Pair map (see WXML comment): p0=[e1,e5], p1=[e2,e7], p2=[e3,e6], p3=[e4,e8]
       const pairs: Record<number, [number, number]> = {
         0: [1, 5], 1: [2, 7], 2: [3, 6], 3: [4, 8],
       }
       const [a, b] = pairs[p]
-      self.animate(`.illus-grid .e${a}`, frames, 2400)
-      self.animate(`.illus-grid .e${b}`, frames, 2400, () => {
+      self.animate(`.illus-grid .e${a}`, frames, 2200)
+      self.animate(`.illus-grid .e${b}`, frames, 2200, () => {
         setTimeout(() => {
           if (!self._stopped) self.loopElimPair(p)
         }, 600)
