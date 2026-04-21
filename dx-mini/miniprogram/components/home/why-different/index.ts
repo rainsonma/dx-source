@@ -29,8 +29,8 @@ Component({
         '.arrow',
         [
           { offset: 0,   translateY: 0 },
-          { offset: 0.4, translateY: -8 },
-          { offset: 0.6, translateY: -8 },
+          { offset: 0.4, translateY: -4 },
+          { offset: 0.6, translateY: -4 },
           { offset: 1,   translateY: 0 },
         ],
         3200,
