@@ -12,7 +12,7 @@
     <view class="bullet">内容沉淀进你的词汇系统，复习自动推送</view>
 
     <view class="demo-card">
-      <text class="input-label">输入主题：<text class="hl">negotiate confident leverate</text></text>
+      <text class="input-label">输入主题：<text class="hl">negotiate confident leverage</text></text>
       <view class="stream">
         <text class="line">› negotiate · 谈判 — Let's negotiate the salary.</text>
         <text class="line">› résumé · 简历 — Please send me your résumé.</text>
