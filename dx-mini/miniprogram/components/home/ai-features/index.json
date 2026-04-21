@@ -1,7 +1,6 @@
 {
   "component": true,
   "usingComponents": {
-    "dx-icon": "/components/dx-icon/index",
-    "typewriter": "./typewriter/index"
+    "dx-icon": "/components/dx-icon/index"
   }
 }
