@@ -13,13 +13,7 @@
 
     <view class="demo-card">
       <text class="input-label">输入主题：<text class="hl">negotiate confident leverate</text></text>
-      <view class="stream">
-        <text class="line">› negotiate · 谈判 — Let's negotiate the salary.</text>
-        <text class="line">› résumé · 简历 — Please send me your résumé.</text>
-        <text class="line">› confident · 自信 — Stay confident during the interview.</text>
-        <text class="line">› leverage · 优势 — Leverage your strengths.</text>
-        <text class="line">› follow up · 跟进 — I'll follow up next week.</text>
-      </view>
+      <typewriter />
       <view class="footer">
         <dx-icon name="coins" size="13px" color="#d97706" />
         <text class="footer-text">你当前有 <text class="hl">{{beans}}</text> 能量豆 · 每次消耗 5 颗，失败全额退还</text>

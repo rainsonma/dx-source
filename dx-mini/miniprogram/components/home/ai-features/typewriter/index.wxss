@@ -1,0 +1,29 @@
+.typewriter {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  height: 197rpx;
+}
+
+.line {
+  display: block;
+  height: 33rpx;
+  line-height: 33rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 22rpx;
+  color: #e2e8f0;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+
+/* Each character fades 0 → 1 via pure CSS opacity with its own
+ * animation-delay (inline from data). Opacity is GPU-composited, so
+ * bullets / headline / tag stay painted once and don't re-rasterize. */
+.char {
+  opacity: 0;
+  animation: char-reveal 260ms linear forwards;
+}
+
+@keyframes char-reveal {
+  to { opacity: 1; }
+}
