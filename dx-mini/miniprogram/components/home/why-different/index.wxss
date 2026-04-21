@@ -67,6 +67,12 @@
   color: var(--text-secondary);
 }
 
+.arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .after {
   font-size: 28rpx;
   font-weight: 600;
