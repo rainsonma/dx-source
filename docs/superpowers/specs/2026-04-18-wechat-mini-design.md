@@ -98,7 +98,7 @@ All existing callers (website signin) pass `consts.PlatformWebsite`. The new WeC
 
 **New env vars (dx-api `.env`):**
 ```
-WECHAT_MINI_APP_ID=wx6ffd2fe38aaf0c96
+WECHAT_MINI_APP_ID=
 WECHAT_MINI_APP_SECRET=
 ```
 
