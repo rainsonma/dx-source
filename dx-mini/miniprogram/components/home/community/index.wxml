@@ -51,7 +51,7 @@
         <view class="cell"></view>
         <view class="cell"></view>
       </view>
-      <text class="desc">每天玩至少一次，保持连胜;错过一天从 1 重来。</text>
+      <text class="desc">每天玩至少一次，保持连胜；错过一天从 1 重来。</text>
     </view>
   </view>
 </view>
