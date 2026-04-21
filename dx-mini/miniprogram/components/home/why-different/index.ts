@@ -33,7 +33,7 @@ Component({
           { offset: 0.6, translateY: -8 },
           { offset: 1,   translateY: 0 },
         ],
-        1200,
+        2000,
         () => {
           if (!self._stopped) self.shakeArrow()
         },
