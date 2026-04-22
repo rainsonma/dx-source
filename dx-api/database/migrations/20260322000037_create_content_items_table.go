@@ -25,6 +25,7 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Text("definition").Nullable()
 			table.Text("translation").Nullable()
 			table.Text("explanation").Nullable()
+			table.Text("speaker").Nullable()
 			table.Json("items").Nullable()
 			table.Json("structure").Nullable()
 			table.Column("tags", "text[]").Nullable()

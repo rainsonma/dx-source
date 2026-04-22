@@ -21,6 +21,7 @@ func (r *M20260322000036CreateContentMetasTable) Up() error {
 			table.Text("source_type").Default("")
 			table.Text("source_data").Default("")
 			table.Text("translation").Nullable()
+			table.Text("speaker").Nullable()
 			table.Boolean("is_break_done").Default(false)
 			table.SoftDeletesTz()
 			table.TimestampsTz()
