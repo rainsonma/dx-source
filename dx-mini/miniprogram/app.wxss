@@ -18,6 +18,7 @@ page {
   --van-text-color: #1a1a1a;
   --van-text-color-2: #888888;
   --van-border-color: #f0f0f0;
+  --van-icon-font-family: -apple-system, sans-serif;
 
   background: var(--bg-page);
   font-family: -apple-system, "PingFang SC", sans-serif;
