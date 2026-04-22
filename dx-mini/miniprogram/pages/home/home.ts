@@ -97,9 +97,9 @@ Page({
   goSearch() { wx.navigateTo({ url: '/pages/games/games' }) },
   goPurchase() { wx.navigateTo({ url: '/pages/me/purchase/purchase' }) },
   goInvite() { wx.navigateTo({ url: '/pages/me/invite/invite' }) },
-  goStudy() { wx.navigateTo({ url: '/pages/me/study/study' }) },
+  goStudy() { wx.navigateTo({ url: '/pages/learn/learn' }) },
   goGroups() { wx.navigateTo({ url: '/pages/me/groups/groups' }) },
   goTasks() { wx.navigateTo({ url: '/pages/me/tasks/tasks' }) },
-  goCommunity() { wx.navigateTo({ url: '/pages/me/community/community' }) },
+  goNotices() { wx.navigateTo({ url: '/pages/me/notices/notices' }) },
   goFeedback() { wx.navigateTo({ url: '/pages/me/feedback/feedback' }) },
 })

@@ -30,7 +30,7 @@
       { "pagePath": "pages/home/home" },
       { "pagePath": "pages/games/games" },
       { "pagePath": "pages/leaderboard/leaderboard" },
-      { "pagePath": "pages/learn/learn" },
+      { "pagePath": "pages/me/community/community" },
       { "pagePath": "pages/me/me" }
     ]
   },

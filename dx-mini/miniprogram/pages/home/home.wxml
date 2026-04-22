@@ -70,9 +70,9 @@
         <view class="circle c3"><dx-icon name="calendar-check" size="22px" color="#ffffff" /></view>
         <text class="circle-label">打卡</text>
       </view>
-      <view class="circle-item" bind:tap="goCommunity">
-        <view class="circle c4"><dx-icon name="sticker" size="22px" color="#ffffff" /></view>
-        <text class="circle-label">留言</text>
+      <view class="circle-item" bind:tap="goNotices">
+        <view class="circle c4"><dx-icon name="bell" size="22px" color="#ffffff" /></view>
+        <text class="circle-label">消息</text>
       </view>
       <view class="circle-item" bind:tap="goFeedback">
         <view class="circle c5"><dx-icon name="flag" size="22px" color="#ffffff" /></view>
