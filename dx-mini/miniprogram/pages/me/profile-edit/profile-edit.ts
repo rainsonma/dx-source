@@ -62,6 +62,7 @@ Page({
           url: config.apiBaseUrl + '/api/uploads/images',
           filePath: tempPath,
           name: 'file',
+          formData: { role: 'user-avatar' },
           header: { Authorization: `Bearer ${getToken()}` },
           success: (uploadRes) => {
             const body = JSON.parse(uploadRes.data) as { code: number; data: { url: string } }
