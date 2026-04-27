@@ -6,6 +6,7 @@
     "van-empty": "@vant/weapp/empty/index",
     "van-image": "@vant/weapp/image/index",
     "dx-icon": "/components/dx-icon/index",
-    "post-block": "../components/post-block/index"
+    "post-block": "../components/post-block/index",
+    "comment-item": "../components/comment-item/index"
   }
 }

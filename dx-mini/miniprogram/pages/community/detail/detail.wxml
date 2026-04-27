@@ -22,6 +22,21 @@
       />
     </block>
 
+    <view class="comments-header" wx:if="{{post}}">
+      <text>评论 {{post.comment_count}}</text>
+    </view>
+
+    <block wx:if="{{post}}">
+      <comment-item
+        wx:for="{{comments}}"
+        wx:key="comment.id"
+        item="{{item}}"
+        theme="{{theme}}"
+      />
+      <van-loading wx:if="{{commentsLoading}}" size="20px" color="#0d9488" class="center-loader" />
+      <van-empty wx:if="{{!commentsLoading && comments.length === 0}}" description="暂无评论，来抢沙发" />
+    </block>
+
     <van-empty wx:if="{{!loading && !post}}" description="帖子不存在" />
   </view>
 </van-config-provider>

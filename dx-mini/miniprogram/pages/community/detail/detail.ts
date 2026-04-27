@@ -1,5 +1,6 @@
 import { api } from '../../../utils/api'
-import type { Post } from '../types'
+import { PaginatedData } from '../../../utils/api'
+import type { Post, CommentWithReplies } from '../types'
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
 
@@ -11,6 +12,10 @@ Page({
     post: null as Post | null,
     loading: false,
     followed: false,
+    comments: [] as CommentWithReplies[],
+    commentsCursor: '',
+    commentsHasMore: false,
+    commentsLoading: false,
   },
   onLoad(query: Record<string, string>) {
     const sys = wx.getSystemInfoSync()
@@ -20,6 +25,12 @@ Page({
       postId: query.id || '',
     })
     if (query.id) this.loadPost()
+    if (query.id) this.loadComments(true)
+  },
+  onReachBottom() {
+    if (this.data.commentsHasMore && !this.data.commentsLoading) {
+      this.loadComments(false)
+    }
   },
   onShow() {
     this.setData({ theme: app.globalData.theme })
@@ -35,6 +46,27 @@ Page({
     } catch (err) {
       this.setData({ loading: false })
       wx.showToast({ title: (err as Error).message || '加载失败', icon: 'none' })
+    }
+  },
+  async loadComments(reset: boolean) {
+    if (this.data.commentsLoading) return
+    this.setData({ commentsLoading: true })
+    const cursor = reset ? '' : this.data.commentsCursor
+    const parts = ['limit=20']
+    if (cursor) parts.push(`cursor=${encodeURIComponent(cursor)}`)
+    try {
+      const res = await api.get<PaginatedData<CommentWithReplies>>(
+        `/api/posts/${this.data.postId}/comments?${parts.join('&')}`
+      )
+      this.setData({
+        comments: reset ? res.items : [...this.data.comments, ...res.items],
+        commentsCursor: res.nextCursor,
+        commentsHasMore: res.hasMore,
+        commentsLoading: false,
+      })
+    } catch (err) {
+      this.setData({ commentsLoading: false })
+      wx.showToast({ title: (err as Error).message || '加载评论失败', icon: 'none' })
     }
   },
   emitUpdate(patch: Partial<Post>) {

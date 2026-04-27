@@ -26,3 +26,9 @@
   color: var(--text-primary);
 }
 .center-loader { display: flex; justify-content: center; padding: 32px; }
+.comments-header {
+  margin: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
