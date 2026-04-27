@@ -27,3 +27,7 @@
   justify-content: center;
   padding: 24px;
 }
+.tabs-row {
+  background: var(--bg-page);
+  --tabs-nav-background-color: transparent;
+}

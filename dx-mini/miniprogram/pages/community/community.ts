@@ -1,6 +1,7 @@
 import { api, PaginatedData } from '../../utils/api'
 import { isLoggedIn } from '../../utils/auth'
-import type { Post, FeedTab } from './types'
+import { FEED_TABS, type FeedTab } from './types'
+import type { Post } from './types'
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
 
@@ -8,6 +9,7 @@ Page({
   data: {
     theme: 'light' as 'light' | 'dark',
     statusBarHeight: 20,
+    feedTabs: FEED_TABS,
     tab: 'latest' as FeedTab,
     posts: [] as Post[],
     nextCursor: '',
@@ -59,6 +61,16 @@ Page({
       this.setData({ loading: false })
       wx.showToast({ title: (err as Error).message || '加载失败', icon: 'none' })
     }
+  },
+  onTabChange(e: WechatMiniprogram.TouchEvent) {
+    const name = (e.detail as { name: string }).name
+    this.setData({
+      tab: name as FeedTab,
+      posts: [],
+      nextCursor: '',
+      hasMore: false,
+    })
+    this.loadFeed(true)
   },
   onOpenDetail(e: WechatMiniprogram.CustomEvent) {
     const id = (e.detail as { id: string }).id

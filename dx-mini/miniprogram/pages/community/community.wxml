@@ -5,6 +5,22 @@
       <text class="nav-title">社区</text>
     </view>
 
+    <view class="tabs-row">
+      <van-tabs
+        active="{{tab}}"
+        bind:click="onTabChange"
+        color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+        swipeable
+      >
+        <van-tab
+          wx:for="{{feedTabs}}"
+          wx:key="name"
+          title="{{item.title}}"
+          name="{{item.name}}"
+        />
+      </van-tabs>
+    </view>
+
     <view class="post-list">
       <post-card
         wx:for="{{posts}}"
