@@ -1,0 +1,9 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <view class="status-bar-spacer"></view>
+    <view class="nav-band">
+      <text class="nav-title">社区</text>
+    </view>
+    <view class="placeholder">scaffolded — feed coming in Task 5</view>
+  </view>
+</van-config-provider>

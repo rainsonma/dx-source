@@ -22,7 +22,8 @@
     "pages/me/purchase/purchase",
     "pages/me/study/study",
     "pages/me/tasks/tasks",
-    "pages/me/community/community",
+    "pages/community/community",
+    "pages/community/detail/detail",
     "pages/me/feedback/feedback"
   ],
   "tabBar": {
@@ -31,7 +32,7 @@
       { "pagePath": "pages/home/home" },
       { "pagePath": "pages/games/games" },
       { "pagePath": "pages/leaderboard/leaderboard" },
-      { "pagePath": "pages/me/community/community" },
+      { "pagePath": "pages/community/community" },
       { "pagePath": "pages/me/me" }
     ]
   },

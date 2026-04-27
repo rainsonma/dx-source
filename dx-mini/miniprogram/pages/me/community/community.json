@@ -1,7 +1,0 @@
-{
-  "navigationStyle": "custom",
-  "navigationBarTitleText": "留言",
-  "usingComponents": {
-    "dx-icon": "/components/dx-icon/index"
-  }
-}

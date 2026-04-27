@@ -1,0 +1,25 @@
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding-bottom: calc(56px + env(safe-area-inset-bottom) + 32rpx);
+}
+.status-bar-spacer {
+  height: var(--status-bar-height, 20px);
+}
+.nav-band {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.placeholder {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
