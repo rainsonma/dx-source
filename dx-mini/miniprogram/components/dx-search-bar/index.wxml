@@ -1,0 +1,18 @@
+<view
+  class="bar-host {{theme}} {{pinned ? 'pinned' : ''}} {{revealed ? 'revealed' : 'hidden'}}"
+  style="--sb-h: {{statusBarHeight}}px; --row-h: {{rowHeight}}px; --pill-right: {{pillRight}}px;"
+>
+  <view class="bar-spacer"></view>
+  <view class="bar-row">
+    <view wx:if="{{showCancel}}" class="bar-cancel" bind:tap="onCancel">取消</view>
+
+    <view wx:if="{{mode === 'launcher'}}" class="bar-pill" bind:tap="onTap">
+      <dx-icon name="search" size="16px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
+      <text class="bar-placeholder">{{placeholder}}</text>
+    </view>
+
+    <view wx:else class="bar-pill bar-pill-input">
+      <slot></slot>
+    </view>
+  </view>
+</view>
