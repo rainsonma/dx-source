@@ -445,7 +445,7 @@ func GetSearchSuggestions() ([]string, error) {
 		SELECT g.name AS name
 		FROM games g
 		LEFT JOIN game_sessions gs ON gs.game_id = g.id
-		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE
+		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE AND g.deleted_at IS NULL
 		GROUP BY g.id, g.name, g.created_at
 		ORDER BY COUNT(gs.id) DESC, g.created_at DESC
 		LIMIT ?
@@ -458,7 +458,7 @@ func GetSearchSuggestions() ([]string, error) {
 		SELECT gc.name AS name
 		FROM game_categories gc
 		INNER JOIN games g ON g.game_category_id = gc.id
-		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE
+		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE AND g.deleted_at IS NULL
 		GROUP BY gc.id, gc.name
 		ORDER BY COUNT(g.id) DESC
 		LIMIT ?
