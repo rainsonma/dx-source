@@ -19,6 +19,7 @@
 }
 .capsule-tabs {
   padding-right: var(--pill-right, 102px);
+  --tabs-nav-background-color: transparent;
 }
 
 .center-loader { display: flex; justify-content: center; padding: 40px; }
