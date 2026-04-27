@@ -1,0 +1,48 @@
+<view class="comment">
+  <view class="parent-row">
+    <view class="avatar" wx:if="{{!item.comment.author.avatar_url}}" style="background: {{parentColor}};">{{parentLetter}}</view>
+    <van-image
+      wx:if="{{item.comment.author.avatar_url}}"
+      src="{{item.comment.author.avatar_url}}"
+      width="32px"
+      height="32px"
+      round
+      fit="cover"
+    />
+    <view class="comment-body">
+      <view class="comment-meta">
+        <text class="nickname">{{item.comment.author.nickname}}</text>
+        <text class="time">{{parentTime}}</text>
+      </view>
+      <text class="content">{{item.comment.content}}</text>
+      <view class="reply-link" bind:tap="onReply">回复</view>
+    </view>
+  </view>
+
+  <view class="replies" wx:if="{{item.replies.length > 0}}">
+    <view
+      wx:for="{{item.replies}}"
+      wx:for-item="reply"
+      wx:for-index="i"
+      wx:key="id"
+      class="reply-row"
+    >
+      <view class="avatar small" wx:if="{{!reply.author.avatar_url}}" style="background: {{replyDecor[i].color}};">{{replyDecor[i].letter}}</view>
+      <van-image
+        wx:if="{{reply.author.avatar_url}}"
+        src="{{reply.author.avatar_url}}"
+        width="28px"
+        height="28px"
+        round
+        fit="cover"
+      />
+      <view class="reply-body">
+        <view class="comment-meta">
+          <text class="nickname">{{reply.author.nickname}}</text>
+          <text class="time">{{replyDecor[i].time}}</text>
+        </view>
+        <text class="content">{{reply.content}}</text>
+      </view>
+    </view>
+  </view>
+</view>
