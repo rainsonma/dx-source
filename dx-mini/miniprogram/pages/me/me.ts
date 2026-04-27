@@ -71,6 +71,7 @@ Page({
   goInvite() { wx.navigateTo({ url: '/pages/me/invite/invite' }) },
   goRedeem() { wx.navigateTo({ url: '/pages/me/redeem/redeem' }) },
   goPurchase() { wx.navigateTo({ url: '/pages/me/purchase/purchase' }) },
+  goFavorites() { wx.navigateTo({ url: '/pages/games/favorites/favorites' }) },
   logout() {
     wx.showModal({
       title: '退出登录',

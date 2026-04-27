@@ -19,19 +19,6 @@
   z-index: 80;
   background: var(--bg-page);
 }
-.fav-bar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: var(--primary-light);
-  border-bottom: 1px solid var(--border-color);
-}
-.fav-text {
-  font-size: 13px;
-  color: var(--primary);
-  font-weight: 500;
-}
 .game-grid {
   display: flex;
   flex-wrap: wrap;

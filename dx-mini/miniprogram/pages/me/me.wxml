@@ -76,6 +76,9 @@
         <van-cell title="购买会员" is-link bind:click="goPurchase">
           <dx-icon slot="icon" name="crown" size="20px" color="{{cellIconColor}}" />
         </van-cell>
+        <van-cell title="收藏的课程" is-link bind:click="goFavorites">
+          <dx-icon slot="icon" name="star" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
       </van-cell-group>
 
       <van-cell-group inset custom-style="margin:0 16px 16px;">

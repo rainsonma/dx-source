@@ -43,12 +43,6 @@
       </van-tabs>
     </view>
 
-    <!-- Favorites button -->
-    <view class="fav-bar" bind:tap="goFavorites">
-      <dx-icon name="star" size="16px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
-      <text class="fav-text">收藏的课程</text>
-    </view>
-
     <!-- Game grid -->
     <view class="game-grid">
       <view

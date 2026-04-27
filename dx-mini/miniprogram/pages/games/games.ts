@@ -141,9 +141,6 @@ Page({
     const id = e.currentTarget.dataset['id'] as string
     wx.navigateTo({ url: `/pages/games/detail/detail?id=${id}` })
   },
-  goFavorites() {
-    wx.navigateTo({ url: '/pages/games/favorites/favorites' })
-  },
   goSearch() {
     wx.navigateTo({ url: '/pages/games/search/search' })
   },
