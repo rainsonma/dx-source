@@ -1,3 +1,6 @@
+import { config } from '../../../../utils/config'
+import { getToken } from '../../../../utils/auth'
+
 Component({
   options: { addGlobalClass: true },
   properties: {
@@ -48,7 +51,51 @@ Component({
       // wired in Task 13
     },
     onPickImage() {
-      // wired in Task 12
+      const self = this
+      wx.chooseMedia({
+        count: 1,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed'],
+        success(res) {
+          const file = res.tempFiles[0]
+          if (file.size > 2 * 1024 * 1024) {
+            wx.showToast({ title: '图片不超过 2MB', icon: 'none' })
+            return
+          }
+          const lower = file.tempFilePath.toLowerCase()
+          if (!/\.(jpg|jpeg|png)$/.test(lower)) {
+            wx.showToast({ title: '仅支持 JPG/PNG', icon: 'none' })
+            return
+          }
+          self.setData({ uploading: true, imageUrl: file.tempFilePath })
+          wx.uploadFile({
+            url: config.apiBaseUrl + '/api/uploads/images',
+            filePath: file.tempFilePath,
+            name: 'file',
+            formData: { role: 'post-image' },
+            header: { Authorization: 'Bearer ' + getToken() },
+            success(uploadRes) {
+              try {
+                const body = JSON.parse(uploadRes.data) as { code: number; message: string; data: { url: string } }
+                if (body.code === 0) {
+                  self.setData({ imageUrl: body.data.url, uploading: false })
+                } else {
+                  self.setData({ imageUrl: '', uploading: false })
+                  wx.showToast({ title: body.message || '上传失败', icon: 'none' })
+                }
+              } catch {
+                self.setData({ imageUrl: '', uploading: false })
+                wx.showToast({ title: '上传失败', icon: 'none' })
+              }
+            },
+            fail() {
+              self.setData({ imageUrl: '', uploading: false })
+              wx.showToast({ title: '上传失败', icon: 'none' })
+            },
+          })
+        },
+      })
     },
     onRemoveImage() {
       this.setData({ imageUrl: '' })
