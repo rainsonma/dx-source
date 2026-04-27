@@ -16,6 +16,7 @@ Page({
     hasMore: false,
     loading: false,
     followedUserIds: {} as Record<string, boolean>,
+    composerOpen: false,
   },
   onLoad() {
     const sys = wx.getSystemInfoSync()
@@ -128,6 +129,16 @@ Page({
       })
       wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
     }
+  },
+  openComposer() {
+    if (!isLoggedIn()) {
+      wx.reLaunch({ url: '/pages/login/login' })
+      return
+    }
+    this.setData({ composerOpen: true })
+  },
+  onComposerClose() {
+    this.setData({ composerOpen: false })
   },
   patchPost(index: number, patch: Post) {
     const next = this.data.posts.slice()

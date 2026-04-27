@@ -8,6 +8,7 @@
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
     "dx-icon": "/components/dx-icon/index",
-    "post-card": "./components/post-card/index"
+    "post-card": "./components/post-card/index",
+    "composer-popup": "./components/composer-popup/index"
   }
 }

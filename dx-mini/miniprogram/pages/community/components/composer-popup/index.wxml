@@ -1,0 +1,66 @@
+<van-popup
+  show="{{show}}"
+  position="bottom"
+  round
+  custom-style="max-height: 85vh;"
+  safe-area-inset-bottom
+  bind:close="onClose"
+  close-on-click-overlay="{{false}}"
+>
+  <view class="composer">
+    <view class="composer-header">
+      <view class="header-btn cancel" bind:tap="onClose">取消</view>
+      <view
+        class="header-btn submit {{(content.length === 0 || uploading) ? 'disabled' : ''}}"
+        bind:tap="onSubmit"
+      >发布</view>
+    </view>
+
+    <view class="composer-body">
+      <textarea
+        class="textarea"
+        value="{{content}}"
+        placeholder="分享你的想法…"
+        maxlength="2000"
+        auto-height
+        adjust-position="{{true}}"
+        cursor-spacing="20"
+        bind:input="onContentInput"
+      />
+      <view class="counter">{{content.length}}/2000</view>
+
+      <view class="image-row" wx:if="{{imageUrl}}">
+        <image src="{{imageUrl}}" class="thumb" mode="aspectFill" />
+        <view class="thumb-x" catch:tap="onRemoveImage">
+          <dx-icon name="x" size="14px" color="#ffffff" />
+        </view>
+      </view>
+
+      <view class="tag-row">
+        <view wx:for="{{tags}}" wx:key="*this" class="tag-chip">
+          <text>#{{item}}</text>
+          <view class="tag-x" catch:tap="onTagRemove" data-tag="{{item}}">
+            <dx-icon name="x" size="12px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
+          </view>
+        </view>
+        <input
+          wx:if="{{tags.length < 5}}"
+          class="tag-input"
+          value="{{tagInput}}"
+          placeholder="+ 添加标签"
+          confirm-type="done"
+          bind:input="onTagInput"
+          bind:confirm="onTagConfirm"
+          bind:blur="onTagConfirm"
+        />
+      </view>
+    </view>
+
+    <view class="composer-action">
+      <view class="image-pick" bind:tap="onPickImage">
+        <dx-icon name="image" size="20px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
+        <text>添加图片</text>
+      </view>
+    </view>
+  </view>
+</van-popup>

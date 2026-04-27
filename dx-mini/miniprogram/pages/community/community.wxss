@@ -31,3 +31,17 @@
   background: var(--bg-page);
   --tabs-nav-background-color: transparent;
 }
+.fab {
+  position: fixed;
+  right: 24rpx;
+  bottom: calc(56px + env(safe-area-inset-bottom) + 32rpx);
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(13, 148, 136, 0.32);
+  z-index: 10;
+}

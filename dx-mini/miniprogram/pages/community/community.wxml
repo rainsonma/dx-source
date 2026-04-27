@@ -37,5 +37,15 @@
 
     <van-loading wx:if="{{loading}}" size="24px" color="#0d9488" class="center-loader" />
     <van-empty wx:if="{{!loading && posts.length === 0}}" description="暂无帖子" />
+
+    <view class="fab" bind:tap="openComposer">
+      <dx-icon name="plus" size="22px" color="#ffffff" />
+    </view>
+
+    <composer-popup
+      show="{{composerOpen}}"
+      theme="{{theme}}"
+      bind:close="onComposerClose"
+    />
   </view>
 </van-config-provider>
