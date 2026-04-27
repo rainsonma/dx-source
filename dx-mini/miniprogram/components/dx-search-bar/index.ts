@@ -10,6 +10,7 @@ Component({
     placeholder: { type: String, value: '搜索课程' },
     mode: { type: String, value: 'launcher' },
     showCancel: { type: Boolean, value: false },
+    brand: { type: String, value: '' },
   },
   data: {
     statusBarHeight: 20,
