@@ -86,6 +86,9 @@ Page({
           next[idx] = { ...next[idx], ...payload.patch }
           this.setData({ posts: next })
         },
+        'post-deleted': (payload: { id: string }) => {
+          this.setData({ posts: this.data.posts.filter((p) => p.id !== payload.id) })
+        },
       },
     })
   },

@@ -53,7 +53,11 @@
     />
 
     <view class="input-bar">
-      <view wx:if="{{replyingTo}}" class="reply-chip" bind:tap="onCancelReply">
+      <view wx:if="{{editingCommentId}}" class="reply-chip" bind:tap="onCancelEdit">
+        <text>编辑评论</text>
+        <dx-icon name="x" size="12px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+      </view>
+      <view wx:elif="{{replyingTo}}" class="reply-chip" bind:tap="onCancelReply">
         <text>回复 {{replyingTo.nickname}}</text>
         <dx-icon name="x" size="12px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
       </view>

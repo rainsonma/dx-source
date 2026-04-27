@@ -1,6 +1,6 @@
 import { api } from '../../../utils/api'
 import { PaginatedData } from '../../../utils/api'
-import { getUserId } from '../../../utils/auth'
+import { getUserId, isLoggedIn } from '../../../utils/auth'
 import type { Post, CommentWithReplies, Comment } from '../types'
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
@@ -45,6 +45,10 @@ Page({
   },
   onShow() {
     this.setData({ theme: app.globalData.theme })
+    if (!isLoggedIn()) {
+      wx.redirectTo({ url: '/pages/login/login' })
+      return
+    }
   },
   goBack() {
     wx.navigateBack()
@@ -93,6 +97,9 @@ Page({
   },
   onCancelReply() {
     this.setData({ replyingTo: null, inputPlaceholder: '说点什么…' })
+  },
+  onCancelEdit() {
+    this.setData({ editingCommentId: '', inputValue: '', inputPlaceholder: '说点什么…' })
   },
   async onSend() {
     const v = this.data.inputValue.trim()
