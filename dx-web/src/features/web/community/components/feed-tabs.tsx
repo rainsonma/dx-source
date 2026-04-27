@@ -7,7 +7,7 @@ const TABS: { key: FeedTab; label: string }[] = [
   { key: "latest", label: "最新" },
   { key: "hot", label: "热门" },
   { key: "following", label: "关注" },
-  { key: "bookmarks", label: "书签" },
+  { key: "bookmarked", label: "书签" },
 ]
 
 interface FeedTabsProps {

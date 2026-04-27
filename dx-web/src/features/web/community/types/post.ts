@@ -30,4 +30,4 @@ export type CommentWithReplies = {
   replies: Comment[];
 };
 
-export type FeedTab = "latest" | "hot" | "following" | "bookmarks";
+export type FeedTab = "latest" | "hot" | "following" | "bookmarked";
