@@ -154,8 +154,8 @@ func TestTransformItems(t *testing.T) {
 				if items[3].Item != "." || items[3].Answer {
 					t.Errorf("item[3] = %+v", items[3])
 				}
-				if items[3].Translation != "句号" {
-					t.Errorf("item[3].Translation = %q", items[3].Translation)
+				if items[3].Definition != "句号" {
+					t.Errorf("item[3].Definition = %q", items[3].Definition)
 				}
 				if items[3].Phonetic != nil {
 					t.Errorf("punct should have nil phonetic")
@@ -186,8 +186,8 @@ func TestTransformItems(t *testing.T) {
 				if items[1].Item != "," || items[1].Answer {
 					t.Errorf("item[1] = %+v", items[1])
 				}
-				if items[1].Translation != "逗号" {
-					t.Errorf("item[1].Translation = %q", items[1].Translation)
+				if items[1].Definition != "逗号" {
+					t.Errorf("item[1].Definition = %q", items[1].Definition)
 				}
 				if items[2].Item != "world" || !items[2].Answer {
 					t.Errorf("item[2] = %+v", items[2])

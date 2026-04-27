@@ -803,7 +803,7 @@ For each unit, produce an "items" array where each element represents one word o
 - item: the word or punctuation character
 - phonetic: {"uk": "IPA notation", "us": "IPA notation"} — set to null for punctuation marks
 - pos: Chinese part-of-speech label like "名词", "动词", "形容词", "副词", "代词", "介词", "连词", "冠词", "感叹词", "助动词" etc — set to null for punctuation marks
-- translation: Chinese translation of the word — set to empty string for punctuation marks
+- definition: Chinese definition of the word — set to empty string for punctuation marks
 - answer: false for punctuation marks, proper names, place names, and abbreviations; true for all other words
 
 Return a JSON array where each element has:
@@ -821,14 +821,14 @@ Example output:
   {
     "content": "I",
     "items": [
-      {"position": 1, "item": "I", "phonetic": {"uk": "/aɪ/", "us": "/aɪ/"}, "pos": "代词", "translation": "我", "answer": true}
+      {"position": 1, "item": "I", "phonetic": {"uk": "/aɪ/", "us": "/aɪ/"}, "pos": "代词", "definition": "我", "answer": true}
     ]
   },
   {
     "content": "I like",
     "items": [
-      {"position": 1, "item": "I", "phonetic": {"uk": "/aɪ/", "us": "/aɪ/"}, "pos": "代词", "translation": "我", "answer": true},
-      {"position": 2, "item": "like", "phonetic": {"uk": "/laɪk/", "us": "/laɪk/"}, "pos": "动词", "translation": "喜欢", "answer": true}
+      {"position": 1, "item": "I", "phonetic": {"uk": "/aɪ/", "us": "/aɪ/"}, "pos": "代词", "definition": "我", "answer": true},
+      {"position": 2, "item": "like", "phonetic": {"uk": "/laɪk/", "us": "/laɪk/"}, "pos": "动词", "definition": "喜欢", "answer": true}
     ]
   }
 ]`

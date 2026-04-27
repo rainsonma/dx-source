@@ -84,12 +84,12 @@ func rawToStringPtr(raw json.RawMessage) *string {
 // ---------------------------------------------------------------------------
 
 type ItemEntry struct {
-	Position    int            `json:"position"`
-	Item        string         `json:"item"`
-	Phonetic    *PhoneticEntry `json:"phonetic"`
-	Pos         *string        `json:"pos"`
-	Translation string         `json:"translation"`
-	Answer      bool           `json:"answer"`
+	Position   int            `json:"position"`
+	Item       string         `json:"item"`
+	Phonetic   *PhoneticEntry `json:"phonetic"`
+	Pos        *string        `json:"pos"`
+	Definition string         `json:"definition"`
+	Answer     bool           `json:"answer"`
 }
 
 type PhoneticEntry struct {
@@ -199,10 +199,10 @@ func transformItems(content string, details []WordDetail) (string, error) {
 		// add leading punct items
 		for _, r := range leading {
 			items = append(items, ItemEntry{
-				Position:    pos,
-				Item:        string(r),
-				Translation: punctTranslations[r],
-				Answer:      false,
+				Position:   pos,
+				Item:       string(r),
+				Definition: punctTranslations[r],
+				Answer:     false,
 			})
 			pos++
 		}
@@ -219,9 +219,9 @@ func transformItems(content string, details []WordDetail) (string, error) {
 					UK: wrapPhonetic(d.Phonetic.UK),
 					US: wrapPhonetic(d.Phonetic.US),
 				},
-				Pos:         d.Pos,
-				Translation: d.Definition,
-				Answer:      true,
+				Pos:        d.Pos,
+				Definition: d.Definition,
+				Answer:     true,
 			})
 			pos++
 		}
@@ -229,10 +229,10 @@ func transformItems(content string, details []WordDetail) (string, error) {
 		// add trailing punct items
 		for _, r := range trailing {
 			items = append(items, ItemEntry{
-				Position:    pos,
-				Item:        string(r),
-				Translation: punctTranslations[r],
-				Answer:      false,
+				Position:   pos,
+				Item:       string(r),
+				Definition: punctTranslations[r],
+				Answer:     false,
 			})
 			pos++
 		}
