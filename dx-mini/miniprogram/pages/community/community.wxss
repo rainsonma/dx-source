@@ -17,9 +17,37 @@
   font-weight: 600;
   color: var(--text-primary);
 }
-.placeholder {
-  padding: 32px;
-  text-align: center;
-  color: var(--text-secondary);
+.post-list {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.post-row {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.post-author {
   font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.post-content {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.center-loader {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
 }
