@@ -47,7 +47,26 @@ Component({
       this.setData({ tags })
     },
     onClose() {
-      this.triggerEvent('close')
+      const d = this.data as { content: string; tags: string[]; imageUrl: string }
+      const dirty = d.content.trim().length > 0 || d.tags.length > 0 || d.imageUrl.length > 0
+      if (!dirty) {
+        this.triggerEvent('close')
+        return
+      }
+      const self = this
+      wx.showModal({
+        title: '放弃编辑？',
+        content: '已输入的内容将丢失',
+        confirmText: '放弃',
+        cancelText: '继续编辑',
+        confirmColor: '#ef4444',
+        success(res) {
+          if (res.confirm) {
+            self.setData({ content: '', tagInput: '', tags: [], imageUrl: '', uploading: false })
+            self.triggerEvent('close')
+          }
+        },
+      })
     },
     async onSubmit() {
       const d = this.data as { content: string; imageUrl: string; tags: string[]; uploading: boolean }
