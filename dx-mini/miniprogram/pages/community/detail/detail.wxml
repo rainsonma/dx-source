@@ -32,6 +32,7 @@
         wx:key="comment.id"
         item="{{item}}"
         theme="{{theme}}"
+        bind:reply="onReplyTo"
       />
       <van-loading wx:if="{{commentsLoading}}" size="20px" color="#0d9488" class="center-loader" />
       <van-empty wx:if="{{!commentsLoading && comments.length === 0}}" description="暂无评论，来抢沙发" />
@@ -40,10 +41,14 @@
     <van-empty wx:if="{{!loading && !post}}" description="帖子不存在" />
 
     <view class="input-bar">
+      <view wx:if="{{replyingTo}}" class="reply-chip" bind:tap="onCancelReply">
+        <text>回复 {{replyingTo.nickname}}</text>
+        <dx-icon name="x" size="12px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+      </view>
       <input
         class="input"
         value="{{inputValue}}"
-        placeholder="说点什么…"
+        placeholder="{{inputPlaceholder}}"
         maxlength="500"
         confirm-type="send"
         cursor-spacing="20"

@@ -18,6 +18,8 @@ Page({
     commentsLoading: false,
     inputValue: '',
     sending: false,
+    replyingTo: null as { commentId: string; nickname: string } | null,
+    inputPlaceholder: '说点什么…',
   },
   onLoad(query: Record<string, string>) {
     const sys = wx.getSystemInfoSync()
@@ -74,19 +76,41 @@ Page({
   onInput(e: WechatMiniprogram.Input) {
     this.setData({ inputValue: (e.detail as { value: string }).value })
   },
+  onReplyTo(e: WechatMiniprogram.CustomEvent) {
+    const detail = e.detail as { commentId: string; nickname: string }
+    this.setData({
+      replyingTo: detail,
+      inputPlaceholder: `回复 @${detail.nickname}：`,
+    })
+  },
+  onCancelReply() {
+    this.setData({ replyingTo: null, inputPlaceholder: '说点什么…' })
+  },
   async onSend() {
     const v = this.data.inputValue.trim()
     if (!v || this.data.sending) return
     this.setData({ sending: true })
+    const parentId = this.data.replyingTo ? this.data.replyingTo.commentId : null
     try {
       const created = await api.post<Comment>(`/api/posts/${this.data.postId}/comments`, {
         content: v,
-        parent_id: null,
+        parent_id: parentId,
       })
+      if (parentId) {
+        const idx = this.data.comments.findIndex((c) => c.comment.id === parentId)
+        if (idx >= 0) {
+          const next = this.data.comments.slice()
+          next[idx] = { ...next[idx], replies: [...next[idx].replies, created] }
+          this.setData({ comments: next })
+        }
+      } else {
+        this.setData({ comments: [{ comment: created, replies: [] }, ...this.data.comments] })
+      }
       this.setData({
         sending: false,
         inputValue: '',
-        comments: [{ comment: created, replies: [] }, ...this.data.comments],
+        replyingTo: null,
+        inputPlaceholder: '说点什么…',
         post: this.data.post
           ? { ...this.data.post, comment_count: this.data.post.comment_count + 1 }
           : this.data.post,

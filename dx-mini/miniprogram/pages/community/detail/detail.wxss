@@ -64,3 +64,13 @@
   justify-content: center;
 }
 .send-btn.disabled { opacity: 0.4; }
+.reply-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
