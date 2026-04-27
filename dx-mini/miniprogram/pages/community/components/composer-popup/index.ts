@@ -1,5 +1,7 @@
 import { config } from '../../../../utils/config'
 import { getToken } from '../../../../utils/auth'
+import { api } from '../../../../utils/api'
+import type { Post } from '../../types'
 
 Component({
   options: { addGlobalClass: true },
@@ -47,8 +49,36 @@ Component({
     onClose() {
       this.triggerEvent('close')
     },
-    onSubmit() {
-      // wired in Task 13
+    async onSubmit() {
+      const d = this.data as { content: string; imageUrl: string; tags: string[]; uploading: boolean }
+      const content = d.content.trim()
+      if (!content) {
+        wx.showToast({ title: '请输入内容', icon: 'none' })
+        return
+      }
+      if (content.length > 2000) {
+        wx.showToast({ title: '内容不超过 2000 字', icon: 'none' })
+        return
+      }
+      if (d.uploading) {
+        wx.showToast({ title: '图片上传中…', icon: 'none' })
+        return
+      }
+      wx.showLoading({ title: '发布中…', mask: true })
+      try {
+        const post = await api.post<Post>('/api/posts', {
+          content,
+          image_url: d.imageUrl || null,
+          tags: d.tags.length > 0 ? d.tags : null,
+        })
+        wx.hideLoading()
+        wx.showToast({ title: '已发布', icon: 'success' })
+        this.triggerEvent('postcreated', { post })
+        this.setData({ content: '', tagInput: '', tags: [], imageUrl: '', uploading: false })
+      } catch (err) {
+        wx.hideLoading()
+        wx.showToast({ title: (err as Error).message || '发布失败', icon: 'none' })
+      }
     },
     onPickImage() {
       const self = this

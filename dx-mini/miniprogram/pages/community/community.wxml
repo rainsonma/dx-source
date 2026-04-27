@@ -46,6 +46,7 @@
       show="{{composerOpen}}"
       theme="{{theme}}"
       bind:close="onComposerClose"
+      bind:postcreated="onPostCreated"
     />
   </view>
 </van-config-provider>

@@ -140,6 +140,13 @@ Page({
   onComposerClose() {
     this.setData({ composerOpen: false })
   },
+  onPostCreated(e: WechatMiniprogram.CustomEvent) {
+    const post = (e.detail as { post: Post }).post
+    this.setData({
+      composerOpen: false,
+      posts: [post, ...this.data.posts],
+    })
+  },
   patchPost(index: number, patch: Post) {
     const next = this.data.posts.slice()
     next[index] = patch
