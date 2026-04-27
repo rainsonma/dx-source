@@ -6,6 +6,7 @@
     "pages/games/detail/detail",
     "pages/games/play/play",
     "pages/games/favorites/favorites",
+    "pages/games/search/search",
     "pages/leaderboard/leaderboard",
     "pages/learn/learn",
     "pages/learn/mastered/mastered",

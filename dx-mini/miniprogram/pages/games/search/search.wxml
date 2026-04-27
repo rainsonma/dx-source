@@ -1,0 +1,128 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <dx-search-bar
+      theme="{{theme}}"
+      pinned="{{true}}"
+      revealed="{{true}}"
+      mode="input"
+      show-cancel="{{true}}"
+      bind:cancel="onCancel"
+    >
+      <view class="input-wrap">
+        <dx-icon name="search" size="16px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
+        <input
+          class="search-input"
+          type="text"
+          confirm-type="search"
+          focus="{{autoFocus}}"
+          value="{{query}}"
+          placeholder="搜索课程"
+          placeholder-class="search-input-placeholder"
+          bindinput="onInput"
+          bindconfirm="onSubmit"
+        />
+        <view wx:if="{{query.length > 0}}" class="clear-btn" bind:tap="onClear">
+          <dx-icon name="circle-x" size="16px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
+        </view>
+      </view>
+    </dx-search-bar>
+
+    <view class="body" style="padding-top: calc({{statusBarHeight}}px + 40px);">
+
+      <block wx:if="{{mode === 'idle'}}">
+
+        <view wx:if="{{recents.length > 0}}" class="section">
+          <view class="section-head">
+            <text class="section-title">最近搜索</text>
+            <view class="section-action" bind:tap="onClearHistoryTap">
+              <dx-icon name="trash-2" size="16px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+            </view>
+          </view>
+          <view class="chip-row">
+            <view
+              wx:for="{{recents}}"
+              wx:key="*this"
+              class="chip"
+              data-term="{{item}}"
+              bind:tap="onChipTap"
+            >
+              <text class="chip-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{suggestions.length > 0}}" class="section">
+          <view class="section-head">
+            <text class="section-title">搜索发现</text>
+          </view>
+          <view class="chip-row">
+            <view
+              wx:for="{{suggestions}}"
+              wx:key="*this"
+              class="chip chip-discover"
+              data-term="{{item}}"
+              bind:tap="onChipTap"
+            >
+              <text class="chip-text">{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view wx:if="{{recents.length === 0 && suggestions.length === 0 && !suggestionsLoading}}" class="hint">
+          <text>搜一搜你感兴趣的课程</text>
+        </view>
+        <view wx:if="{{suggestionsLoading}}" class="hint">
+          <van-loading size="20px" color="#0d9488" />
+        </view>
+      </block>
+
+      <view wx:if="{{mode === 'loading'}}" class="hint">
+        <van-loading size="20px" color="#0d9488" />
+      </view>
+
+      <block wx:if="{{mode === 'results'}}">
+        <view class="game-grid">
+          <view
+            wx:for="{{games}}"
+            wx:key="id"
+            class="game-card"
+            data-id="{{item.id}}"
+            bind:tap="goDetail"
+          >
+            <view class="game-cover">
+              <van-image
+                wx:if="{{item.coverUrl}}"
+                src="{{item.coverUrl}}"
+                width="100%"
+                height="120px"
+                fit="cover"
+                radius="8px 8px 0 0"
+              />
+              <view wx:else class="cover-placeholder">
+                <dx-icon name="book-open" size="28px" color="#9ca3af" />
+              </view>
+            </view>
+            <view class="game-info">
+              <text class="game-name">{{item.name}}</text>
+              <view class="game-meta">
+                <text class="meta-text">{{item.levelCount}}关</text>
+                <text class="meta-dot">·</text>
+                <text class="meta-text">{{item.mode}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view wx:if="{{loadingMore}}" class="hint">
+          <van-loading size="20px" color="#0d9488" />
+        </view>
+      </block>
+
+      <view wx:if="{{mode === 'empty'}}" class="empty-state">
+        <dx-icon name="search-x" size="48px" color="{{theme === 'dark' ? '#374151' : '#d1d5db'}}" />
+        <text class="empty-title">没找到相关课程</text>
+        <text class="empty-sub">换个关键词试试</text>
+      </view>
+
+    </view>
+  </view>
+</van-config-provider>

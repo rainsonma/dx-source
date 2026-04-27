@@ -1,0 +1,211 @@
+.page-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  padding-bottom: 100rpx;
+}
+
+/* Body sits below the fixed search bar.
+   The exact px value is set via inline style by the page using statusBarHeight. */
+.body {
+  /* fallback if inline style does not load */
+  padding-top: calc(var(--status-bar-height, 20px) + 40px);
+}
+
+/* Slot content (wraps icon + input + clear-X inside the bar pill) */
+.input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--text-primary, #1a1a1a);
+  background: transparent;
+  border: none;
+  outline: none;
+  height: 24px;
+  line-height: 24px;
+}
+
+.search-input-placeholder {
+  color: #9ca3af;
+}
+
+.page-container.dark .search-input {
+  color: #f5f5f5;
+}
+
+.clear-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Section: 最近搜索 / 搜索发现 */
+
+.section {
+  padding: 16px 16px 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.page-container.dark .section-title {
+  color: #f5f5f5;
+}
+
+.section-action {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  padding: 6px 12px;
+  border-radius: 14px;
+  background: var(--bg-card, #f3f4f6);
+  border: 1px solid var(--border-color, transparent);
+}
+
+.page-container.dark .chip {
+  background: #2c2c2e;
+}
+
+.chip-text {
+  font-size: 13px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.page-container.dark .chip-text {
+  color: #f5f5f5;
+}
+
+.chip-discover {
+  background: rgba(13, 148, 136, 0.08);
+}
+
+.page-container.dark .chip-discover {
+  background: rgba(20, 184, 166, 0.16);
+}
+
+/* Idle hint */
+
+.hint {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-secondary, #6b7280);
+  font-size: 13px;
+}
+
+/* Empty-results state */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 64px 24px 0;
+}
+
+.empty-title {
+  font-size: 14px;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.page-container.dark .empty-title {
+  color: #f5f5f5;
+}
+
+.empty-sub {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* Game grid (mirrors pages/games/games.wxss to keep result cards consistent
+   with the courses page). Keep these in lockstep manually if courses is restyled. */
+
+.game-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+}
+
+.game-card {
+  width: calc(50% - 6px);
+  background: var(--bg-card);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.game-cover {
+  height: 120px;
+  background: var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+}
+
+.game-info {
+  padding: 10px;
+}
+
+.game-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.meta-text,
+.meta-dot {
+  font-size: 11px;
+  color: var(--text-secondary);
+}

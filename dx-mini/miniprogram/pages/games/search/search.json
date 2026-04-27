@@ -1,0 +1,10 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "van-config-provider": "@vant/weapp/config-provider/index",
+    "van-loading": "@vant/weapp/loading/index",
+    "van-image": "@vant/weapp/image/index",
+    "dx-icon": "/components/dx-icon/index",
+    "dx-search-bar": "/components/dx-search-bar/index"
+  }
+}
