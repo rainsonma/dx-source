@@ -76,4 +76,43 @@ Page({
     const id = (e.detail as { id: string }).id
     wx.navigateTo({ url: `/pages/community/detail/detail?id=${id}` })
   },
+  async onToggleLike(e: WechatMiniprogram.CustomEvent) {
+    const id = (e.detail as { id: string }).id
+    const idx = this.data.posts.findIndex((p) => p.id === id)
+    if (idx < 0) return
+    const before = this.data.posts[idx]
+    const optimistic: Post = {
+      ...before,
+      is_liked: !before.is_liked,
+      like_count: before.is_liked ? Math.max(before.like_count - 1, 0) : before.like_count + 1,
+    }
+    this.patchPost(idx, optimistic)
+    try {
+      const res = await api.post<{ liked: boolean; like_count: number }>(`/api/posts/${id}/like`, {})
+      this.patchPost(idx, { ...optimistic, is_liked: res.liked, like_count: res.like_count })
+    } catch (err) {
+      this.patchPost(idx, before)
+      wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
+    }
+  },
+  async onToggleBookmark(e: WechatMiniprogram.CustomEvent) {
+    const id = (e.detail as { id: string }).id
+    const idx = this.data.posts.findIndex((p) => p.id === id)
+    if (idx < 0) return
+    const before = this.data.posts[idx]
+    const optimistic: Post = { ...before, is_bookmarked: !before.is_bookmarked }
+    this.patchPost(idx, optimistic)
+    try {
+      const res = await api.post<{ bookmarked: boolean }>(`/api/posts/${id}/bookmark`, {})
+      this.patchPost(idx, { ...optimistic, is_bookmarked: res.bookmarked })
+    } catch (err) {
+      this.patchPost(idx, before)
+      wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
+    }
+  },
+  patchPost(index: number, patch: Post) {
+    const next = this.data.posts.slice()
+    next[index] = patch
+    this.setData({ posts: next })
+  },
 })

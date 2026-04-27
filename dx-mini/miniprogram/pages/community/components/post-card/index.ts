@@ -34,14 +34,14 @@ Component({
     onCardTap() {
       this.triggerEvent('opendetail', { id: (this.data as { post: Post }).post.id })
     },
-    onLikeTap(e: WechatMiniprogram.TouchEvent) {
-      void e
+    onLikeTap() {
+      this.triggerEvent('toggle-like', { id: (this.data as { post: Post }).post.id })
     },
     onCommentTap() {
       this.triggerEvent('opendetail', { id: (this.data as { post: Post }).post.id })
     },
-    onBookmarkTap(e: WechatMiniprogram.TouchEvent) {
-      void e
+    onBookmarkTap() {
+      this.triggerEvent('toggle-bookmark', { id: (this.data as { post: Post }).post.id })
     },
     onFollowTap(e: WechatMiniprogram.TouchEvent) {
       void e

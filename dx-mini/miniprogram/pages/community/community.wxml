@@ -28,6 +28,8 @@
         post="{{item}}"
         theme="{{theme}}"
         bind:opendetail="onOpenDetail"
+        bind:toggle-like="onToggleLike"
+        bind:toggle-bookmark="onToggleBookmark"
       />
     </view>
 
