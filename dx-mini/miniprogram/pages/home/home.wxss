@@ -233,3 +233,13 @@
 .page-container.dark .circle-label {
   color: #f5f5f5;
 }
+
+/* ----- Floating search bar — match teal hero band ----- */
+
+.page-container .bar-host.pinned {
+  background: linear-gradient(180deg, #0d9488 0%, #0f766e 100%);
+}
+
+.page-container.dark .bar-host.pinned {
+  background: linear-gradient(180deg, #14b8a6 0%, #0d9488 100%);
+}

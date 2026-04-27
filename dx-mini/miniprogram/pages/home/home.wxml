@@ -4,6 +4,7 @@
       theme="{{theme}}"
       pinned="{{true}}"
       revealed="{{compactRevealed}}"
+      brand="斗学"
       bind:tap="goSearch"
     />
 
