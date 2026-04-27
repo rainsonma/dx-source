@@ -412,3 +412,8 @@ func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 
 	return detail, nil
 }
+
+// GetSearchSuggestions is a stub. Real implementation lands in the next task.
+func GetSearchSuggestions() ([]string, error) {
+	return []string{}, nil
+}
