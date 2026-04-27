@@ -1,9 +1,26 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-top: calc(var(--status-bar-height, 20px) + 40px);
+  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
   padding-bottom: 100rpx;
 }
+
+/* Period tabs pinned alongside the WeChat capsule */
+.capsule-row {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  background: var(--bg-page);
+}
+.capsule-spacer {
+  height: var(--status-bar-height, 20px);
+}
+.capsule-tabs {
+  padding-right: var(--pill-right, 102px);
+}
+
 .center-loader { display: flex; justify-content: center; padding: 40px; }
 .podium {
   display: flex;

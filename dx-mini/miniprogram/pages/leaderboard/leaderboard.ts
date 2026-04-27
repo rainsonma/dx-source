@@ -21,11 +21,14 @@ Page({
     entries4Plus: [] as LeaderboardEntry[],
     myRank: null as LeaderboardEntry | null,
     statusBarHeight: 20,
+    pillRight: 102,
   },
   onLoad() {
     const sys = wx.getSystemInfoSync()
+    const cap = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = sys.statusBarHeight || 20
-    this.setData({ theme: app.globalData.theme, statusBarHeight })
+    const pillRight = Math.max(102, sys.windowWidth - cap.left + 8)
+    this.setData({ theme: app.globalData.theme, statusBarHeight, pillRight })
     this.loadLeaderboard()
   },
   onShow() {

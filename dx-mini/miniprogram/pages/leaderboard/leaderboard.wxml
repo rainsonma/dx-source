@@ -1,16 +1,21 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
-    <!-- Period tabs -->
-    <van-tabs
-      active="{{period}}"
-      bind:click="onPeriodChange"
-      color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
-      background="{{theme === 'dark' ? '#1c1c1e' : '#ffffff'}}"
-    >
-      <van-tab title="今日" name="day" />
-      <van-tab title="本周" name="week" />
-      <van-tab title="本月" name="month" />
-    </van-tabs>
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px; --pill-right: {{pillRight}}px">
+    <!-- Period tabs pinned alongside the WeChat capsule -->
+    <view class="capsule-row">
+      <view class="capsule-spacer"></view>
+      <view class="capsule-tabs">
+        <van-tabs
+          active="{{period}}"
+          bind:click="onPeriodChange"
+          color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+          background="{{theme === 'dark' ? '#1c1c1e' : '#ffffff'}}"
+        >
+          <van-tab title="今日" name="day" />
+          <van-tab title="本周" name="week" />
+          <van-tab title="本月" name="month" />
+        </van-tabs>
+      </view>
+    </view>
 
     <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
 
