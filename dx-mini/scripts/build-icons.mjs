@@ -50,6 +50,11 @@ const ICONS = [
   ['message-square', 'message-square'],
   ['flame',          'flame'],
   ['arrow-right',    'arrow-right'],
+  ['arrow-left',     'arrow-left'],
+  ['x',              'x'],
+  ['circle-x',       'circle-x'],
+  ['trash-2',        'trash-2'],
+  ['search-x',       'search-x'],
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')
