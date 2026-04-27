@@ -59,6 +59,16 @@ func (c *GameController) Search(ctx contractshttp.Context) contractshttp.Respons
 	return helpers.Success(ctx, games)
 }
 
+// SearchSuggestions returns popular search-term chips for the dx-mini
+// search page. Public endpoint, no parameters, no validator needed.
+func (c *GameController) SearchSuggestions(ctx contractshttp.Context) contractshttp.Response {
+	suggestions, err := services.GetSearchSuggestions()
+	if err != nil {
+		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to load search suggestions")
+	}
+	return helpers.Success(ctx, suggestions)
+}
+
 // Played returns all games the authenticated user has played.
 func (c *GameController) Played(ctx contractshttp.Context) contractshttp.Response {
 	userID, err := facades.Auth(ctx).Guard("user").ID()
