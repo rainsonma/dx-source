@@ -16,7 +16,7 @@ Page({
     theme: 'light' as 'light' | 'dark',
     loading: false,
     period: 'month' as 'day' | 'week' | 'month',
-    lbType: 'exp' as 'exp' | 'playtime',
+    lbType: 'playtime' as 'playtime',
     entries: [] as LeaderboardEntry[],
     entries4Plus: [] as LeaderboardEntry[],
     myRank: null as LeaderboardEntry | null,
@@ -47,10 +47,6 @@ Page({
   },
   onPeriodChange(e: WechatMiniprogram.TouchEvent) {
     this.setData({ period: (e.detail as { name: string }).name as 'day' | 'week' | 'month' })
-    this.loadLeaderboard()
-  },
-  onTypeChange(e: WechatMiniprogram.TouchEvent) {
-    this.setData({ lbType: (e.detail as { name: string }).name as 'exp' | 'playtime' })
     this.loadLeaderboard()
   },
 })

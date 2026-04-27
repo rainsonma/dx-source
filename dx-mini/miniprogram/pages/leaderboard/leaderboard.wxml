@@ -11,16 +11,6 @@
       <van-tab title="本周" name="week" />
       <van-tab title="本月" name="month" />
     </van-tabs>
-    <!-- Type tabs -->
-    <van-tabs
-      active="{{lbType}}"
-      bind:click="onTypeChange"
-      color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
-      background="{{theme === 'dark' ? '#0f0f0f' : '#f5f5f5'}}"
-    >
-      <van-tab title="经验值" name="exp" />
-      <van-tab title="游戏时长" name="playtime" />
-    </van-tabs>
 
     <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
 
