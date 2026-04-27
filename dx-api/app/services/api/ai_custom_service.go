@@ -564,7 +564,7 @@ Example for "He is reading a book in the library.":
 7. "He is reading a book in the library." (sentence)
 
 If NOT a sentence:
-Generate a single unit with contentType "word" (single word) or "phrase" (multi-word expression).
+Generate a single unit with contentType "word" (single word) or "phrase" (multi-word expression) or "block" (neither a valid word nor a valid phrase).
 
 Each unit needs:
 - content: the text of this unit

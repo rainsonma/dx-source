@@ -28,7 +28,6 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Text("speaker").Nullable()
 			table.Json("items").Nullable()
 			table.Json("structure").Nullable()
-			table.Column("tags", "text[]").Nullable()
 			table.SoftDeletesTz()
 			table.TimestampsTz()
 			table.Index("content_meta_id")
