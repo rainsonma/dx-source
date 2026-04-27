@@ -49,6 +49,7 @@ func Api() {
 		router.Prefix("/games").Group(func(games route.Router) {
 			games.Get("/", gameController.List)
 			games.Get("/search", gameController.Search)
+			games.Get("/search-suggestions", gameController.SearchSuggestions)
 		})
 		gameCategoryController := apicontrollers.NewGameCategoryController()
 		router.Get("/game-categories", gameCategoryController.Categories)
