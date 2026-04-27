@@ -1,11 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
 	"dx-api/app/consts"
+	"dx-api/app/helpers"
 	"dx-api/app/models"
 
 	"github.com/goravel/framework/facades"
@@ -413,7 +415,75 @@ func GetGameDetail(gameID string, userID string) (*GameDetailData, error) {
 	return detail, nil
 }
 
-// GetSearchSuggestions is a stub. Real implementation lands in the next task.
+const (
+	searchSuggestionsCacheKey = "dx:search:suggestions"
+	searchSuggestionsCacheTTL = time.Hour
+	searchSuggestionsMaxItems = 12
+	searchSuggestionsTopGames = 8
+	searchSuggestionsTopCats  = 4
+)
+
+// GetSearchSuggestions returns up to 12 search-term chips for the dx-mini
+// search page. Cached in Redis for 1h. On cache miss: top published-game
+// names by aggregated game_sessions count, plus top game-category names by
+// number of published games. Strings deduped; total capped at 12.
 func GetSearchSuggestions() ([]string, error) {
-	return []string{}, nil
+	if cached, err := helpers.RedisGet(searchSuggestionsCacheKey); err == nil && cached != "" {
+		var out []string
+		if jerr := json.Unmarshal([]byte(cached), &out); jerr == nil {
+			return out, nil
+		}
+		// fall through and recompute on bad payload
+	}
+
+	type nameRow struct {
+		Name string `gorm:"column:name"`
+	}
+
+	var topGames []nameRow
+	if err := facades.Orm().Query().Raw(`
+		SELECT g.name AS name
+		FROM games g
+		LEFT JOIN game_sessions gs ON gs.game_id = g.id
+		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE
+		GROUP BY g.id, g.name, g.created_at
+		ORDER BY COUNT(gs.id) DESC, g.created_at DESC
+		LIMIT ?
+	`, consts.GameStatusPublished, searchSuggestionsTopGames).Scan(&topGames); err != nil {
+		return nil, fmt.Errorf("failed to load top game names: %w", err)
+	}
+
+	var topCats []nameRow
+	if err := facades.Orm().Query().Raw(`
+		SELECT gc.name AS name
+		FROM game_categories gc
+		INNER JOIN games g ON g.game_category_id = gc.id
+		WHERE g.status = ? AND g.is_active = TRUE AND g.is_private = FALSE
+		GROUP BY gc.id, gc.name
+		ORDER BY COUNT(g.id) DESC
+		LIMIT ?
+	`, consts.GameStatusPublished, searchSuggestionsTopCats).Scan(&topCats); err != nil {
+		return nil, fmt.Errorf("failed to load top categories: %w", err)
+	}
+
+	seen := make(map[string]bool, searchSuggestionsMaxItems)
+	out := make([]string, 0, searchSuggestionsMaxItems)
+	push := func(s string) {
+		if s == "" || seen[s] || len(out) >= searchSuggestionsMaxItems {
+			return
+		}
+		seen[s] = true
+		out = append(out, s)
+	}
+	for _, r := range topGames {
+		push(r.Name)
+	}
+	for _, r := range topCats {
+		push(r.Name)
+	}
+
+	if buf, jerr := json.Marshal(out); jerr == nil {
+		_ = helpers.RedisSet(searchSuggestionsCacheKey, string(buf), searchSuggestionsCacheTTL)
+	}
+	return out, nil
 }
