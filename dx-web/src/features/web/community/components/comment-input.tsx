@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2, Send } from "lucide-react"
 import { toast } from "sonner"
 import { postApi } from "../actions/post.action"
@@ -9,6 +9,8 @@ import { createCommentSchema } from "../schemas/post.schema"
 interface CommentInputProps {
   postId: string
   parentId?: string
+  commentId?: string
+  initialContent?: string
   placeholder?: string
   onSuccess?: () => void
   onCancel?: () => void
@@ -17,14 +19,44 @@ interface CommentInputProps {
 export function CommentInput({
   postId,
   parentId,
+  commentId,
+  initialContent,
   placeholder = "写下你的评论...",
   onSuccess,
   onCancel,
 }: CommentInputProps) {
-  const [content, setContent] = useState("")
+  const [content, setContent] = useState(initialContent ?? "")
   const [pending, setPending] = useState(false)
 
+  useEffect(() => {
+    if (commentId !== undefined) {
+      setContent(initialContent ?? "")
+    }
+  }, [commentId])
+
   async function handleSubmit() {
+    if (commentId !== undefined) {
+      if (!content.trim()) {
+        toast.error("内容不能为空")
+        return
+      }
+      setPending(true)
+      try {
+        const res = await postApi.updateComment(postId, commentId, content)
+        if (res.code !== 0) {
+          toast.error(res.message)
+          return
+        }
+        toast.success("已保存")
+        onSuccess?.()
+      } catch {
+        toast.error("保存失败")
+      } finally {
+        setPending(false)
+      }
+      return
+    }
+
     const result = createCommentSchema.safeParse({ content, parent_id: parentId })
     if (!result.success) {
       toast.error(result.error.issues[0]?.message ?? "内容不能为空")

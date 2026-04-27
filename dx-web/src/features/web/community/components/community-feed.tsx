@@ -14,8 +14,7 @@ interface CommunityFeedProps {
   currentUserId?: string
 }
 
-export function CommunityFeed(props: CommunityFeedProps) {
-  void props // currentUserId reserved for future use (e.g. hiding own follow button)
+export function CommunityFeed({ currentUserId }: CommunityFeedProps) {
   const [tab, setTab] = useState<FeedTab>("latest")
   const [createOpen, setCreateOpen] = useState(false)
   const { posts, isLoading, hasMore, sentinelRef, mutate } = usePostFeed(tab)
@@ -53,6 +52,7 @@ export function CommunityFeed(props: CommunityFeedProps) {
           <PostCard
             key={post.id}
             post={post}
+            currentUserId={currentUserId}
             onMutate={() => mutate()}
           />
         ))}

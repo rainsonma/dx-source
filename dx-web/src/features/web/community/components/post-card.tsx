@@ -9,6 +9,8 @@ import { postApi } from "../actions/post.action"
 import type { Post } from "../types/post"
 import { PostActions } from "./post-actions"
 import { CommentSection } from "./comment-section"
+import { PostActionsMenu } from "./post-actions-menu"
+import { CreatePostDialog } from "./create-post-dialog"
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -24,16 +26,31 @@ function timeAgo(dateStr: string): string {
 
 interface PostCardProps {
   post: Post
+  currentUserId?: string
   onMutate?: () => void
 }
 
-export function PostCard({ post, onMutate }: PostCardProps) {
+export function PostCard({ post, currentUserId, onMutate }: PostCardProps) {
   const [showComments, setShowComments] = useState(false)
   const [followed, setFollowed] = useState(false)
   const [followPending, setFollowPending] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const isOwner = currentUserId !== undefined && currentUserId === post.author.id
 
   const color = getAvatarColor(post.author.id)
   const letter = post.author.nickname.charAt(0)
+
+  async function handleDelete() {
+    if (!confirm("确认删除？")) return
+    try {
+      const res = await postApi.delete(post.id)
+      if (res.code !== 0) { toast.error(res.message); return }
+      toast.success("已删除")
+      onMutate?.()
+    } catch {
+      toast.error("删除失败")
+    }
+  }
 
   async function handleFollow() {
     if (followPending) return
@@ -76,7 +93,12 @@ export function PostCard({ post, onMutate }: PostCardProps) {
             </span>
           </div>
         </div>
-        {followed ? (
+        {isOwner ? (
+          <PostActionsMenu
+            onEdit={() => setEditOpen(true)}
+            onDelete={handleDelete}
+          />
+        ) : followed ? (
           <span className="rounded-full bg-muted px-4 py-1.5 text-[13px] font-medium text-muted-foreground">
             已关注
           </span>
@@ -136,7 +158,16 @@ export function PostCard({ post, onMutate }: PostCardProps) {
       />
 
       {/* Comments */}
-      {showComments && <CommentSection postId={post.id} />}
+      {showComments && <CommentSection postId={post.id} currentUserId={currentUserId} />}
+
+      {editOpen && (
+        <CreatePostDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          onCreated={() => onMutate?.()}
+          editPost={post}
+        />
+      )}
     </div>
   )
 }

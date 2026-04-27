@@ -1,9 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { getAvatarColor } from "@/lib/avatar"
 import type { Comment } from "../types/post"
+import { postApi } from "../actions/post.action"
 import { CommentInput } from "./comment-input"
+import { PostActionsMenu } from "./post-actions-menu"
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -21,13 +24,28 @@ interface CommentItemProps {
   postId: string
   comment: Comment
   showReply?: boolean
+  currentUserId?: string
   onMutate?: () => void
 }
 
-export function CommentItem({ postId, comment, showReply = true, onMutate }: CommentItemProps) {
+export function CommentItem({ postId, comment, showReply = true, currentUserId, onMutate }: CommentItemProps) {
   const [replying, setReplying] = useState(false)
+  const [editing, setEditing] = useState(false)
   const color = getAvatarColor(comment.author.id)
   const letter = comment.author.nickname.charAt(0)
+  const isOwner = currentUserId !== undefined && currentUserId === comment.author.id
+
+  async function handleDelete() {
+    if (!confirm("确认删除？")) return
+    try {
+      const res = await postApi.deleteComment(postId, comment.id)
+      if (res.code !== 0) { toast.error(res.message); return }
+      toast.success("已删除")
+      onMutate?.()
+    } catch {
+      toast.error("删除失败")
+    }
+  }
 
   return (
     <div className="flex gap-2.5">
@@ -43,9 +61,33 @@ export function CommentItem({ postId, comment, showReply = true, onMutate }: Com
             {comment.author.nickname}
           </span>
           <span className="text-xs text-muted-foreground">{timeAgo(comment.created_at)}</span>
+          {isOwner && (
+            <div className="ml-auto">
+              <PostActionsMenu
+                size="sm"
+                onEdit={() => { setEditing(true); setReplying(false) }}
+                onDelete={handleDelete}
+              />
+            </div>
+          )}
         </div>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">{comment.content}</p>
-        {showReply && (
+        {editing ? (
+          <div className="mt-1">
+            <CommentInput
+              postId={postId}
+              commentId={comment.id}
+              initialContent={comment.content}
+              onSuccess={() => {
+                setEditing(false)
+                onMutate?.()
+              }}
+              onCancel={() => setEditing(false)}
+            />
+          </div>
+        ) : (
+          <p className="text-[13px] leading-relaxed text-muted-foreground">{comment.content}</p>
+        )}
+        {!editing && showReply && (
           <div className="flex items-center gap-3">
             <button
               type="button"

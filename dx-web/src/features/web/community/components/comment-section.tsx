@@ -7,9 +7,10 @@ import { CommentInput } from "./comment-input"
 
 interface CommentSectionProps {
   postId: string
+  currentUserId?: string
 }
 
-export function CommentSection({ postId }: CommentSectionProps) {
+export function CommentSection({ postId, currentUserId }: CommentSectionProps) {
   const { comments, isLoading, hasMore, sentinelRef, mutate } = useComments(postId)
 
   return (
@@ -26,7 +27,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
       {comments.map(({ comment, replies }) => (
         <div key={comment.id} className="flex flex-col gap-2.5">
-          <CommentItem postId={postId} comment={comment} onMutate={mutate} />
+          <CommentItem postId={postId} comment={comment} currentUserId={currentUserId} onMutate={mutate} />
           {replies.length > 0 && (
             <div className="ml-10 flex flex-col gap-2.5 border-l-2 border-border pl-3">
               {replies.map((reply) => (
@@ -35,6 +36,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
                   postId={postId}
                   comment={reply}
                   showReply={false}
+                  currentUserId={currentUserId}
                   onMutate={mutate}
                 />
               ))}

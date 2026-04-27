@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2, X } from "lucide-react"
 import { toast } from "sonner"
 import {
@@ -13,19 +13,30 @@ import {
 import { Button } from "@/components/ui/button"
 import { postApi } from "../actions/post.action"
 import { createPostSchema } from "../schemas/post.schema"
+import type { Post } from "../types/post"
 
 interface CreatePostDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onCreated: () => void
+  editPost?: Post
 }
 
-export function CreatePostDialog({ open, onOpenChange, onCreated }: CreatePostDialogProps) {
+export function CreatePostDialog({ open, onOpenChange, onCreated, editPost }: CreatePostDialogProps) {
   const [content, setContent] = useState("")
   const [tagInput, setTagInput] = useState("")
   const [tags, setTags] = useState<string[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [pending, setPending] = useState(false)
+
+  useEffect(() => {
+    if (editPost) {
+      setContent(editPost.content)
+      setTags(editPost.tags)
+      setTagInput("")
+      setErrors({})
+    }
+  }, [editPost?.id])
 
   function resetForm() {
     setContent("")
@@ -79,27 +90,38 @@ export function CreatePostDialog({ open, onOpenChange, onCreated }: CreatePostDi
 
     setPending(true)
     try {
-      const res = await postApi.create({ content, tags: tags.length > 0 ? tags : undefined })
-      if (res.code !== 0) {
-        toast.error(res.message)
-        return
+      if (editPost) {
+        const res = await postApi.update(editPost.id, { content, tags: tags.length > 0 ? tags : undefined })
+        if (res.code !== 0) {
+          toast.error(res.message)
+          return
+        }
+        toast.success("已保存")
+        onOpenChange(false)
+        onCreated()
+      } else {
+        const res = await postApi.create({ content, tags: tags.length > 0 ? tags : undefined })
+        if (res.code !== 0) {
+          toast.error(res.message)
+          return
+        }
+        toast.success("发布成功")
+        resetForm()
+        onOpenChange(false)
+        onCreated()
       }
-      toast.success("发布成功")
-      resetForm()
-      onOpenChange(false)
-      onCreated()
     } catch {
-      toast.error("发布失败")
+      toast.error(editPost ? "保存失败" : "发布失败")
     } finally {
       setPending(false)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v) }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v && !editPost) resetForm(); onOpenChange(v) }}>
       <DialogContent className="sm:max-w-lg" aria-describedby={undefined}>
         <DialogHeader>
-          <DialogTitle>发布帖子</DialogTitle>
+          <DialogTitle>{editPost ? "编辑帖子" : "发布帖子"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -162,7 +184,7 @@ export function CreatePostDialog({ open, onOpenChange, onCreated }: CreatePostDi
             <Button
               type="button"
               variant="outline"
-              onClick={() => { resetForm(); onOpenChange(false) }}
+              onClick={() => { if (!editPost) resetForm(); onOpenChange(false) }}
             >
               取消
             </Button>
@@ -172,7 +194,7 @@ export function CreatePostDialog({ open, onOpenChange, onCreated }: CreatePostDi
               className="bg-teal-600 hover:bg-teal-700"
             >
               {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              发布
+              {editPost ? "保存" : "发布"}
             </Button>
           </DialogFooter>
         </form>
