@@ -6,14 +6,13 @@
     </view>
 
     <view class="post-list">
-      <view
+      <post-card
         wx:for="{{posts}}"
         wx:key="id"
-        class="post-row"
-      >
-        <text class="post-author">{{item.author.nickname}}</text>
-        <text class="post-content">{{item.content}}</text>
-      </view>
+        post="{{item}}"
+        theme="{{theme}}"
+        bind:opendetail="onOpenDetail"
+      />
     </view>
 
     <van-loading wx:if="{{loading}}" size="24px" color="#0d9488" class="center-loader" />

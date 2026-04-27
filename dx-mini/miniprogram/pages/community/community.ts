@@ -60,4 +60,8 @@ Page({
       wx.showToast({ title: (err as Error).message || '加载失败', icon: 'none' })
     }
   },
+  onOpenDetail(e: WechatMiniprogram.CustomEvent) {
+    const id = (e.detail as { id: string }).id
+    wx.navigateTo({ url: `/pages/community/detail/detail?id=${id}` })
+  },
 })
