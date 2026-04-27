@@ -49,6 +49,18 @@
   flex-shrink: 0;
 }
 
+.search-btn {
+  font-size: 14px;
+  font-weight: 500;
+  color: #0d9488;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.page-container.dark .search-btn {
+  color: #14b8a6;
+}
+
 /* Section: 最近搜索 / 搜索发现 */
 
 .section {

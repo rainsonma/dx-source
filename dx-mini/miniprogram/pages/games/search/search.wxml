@@ -24,6 +24,7 @@
         <view wx:if="{{query.length > 0}}" class="clear-btn" bind:tap="onClear">
           <dx-icon name="circle-x" size="16px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
         </view>
+        <view class="search-btn" bind:tap="onSearchTap">搜索</view>
       </view>
     </dx-search-bar>
 

@@ -91,6 +91,12 @@ Page({
     this.runSearch(term)
   },
 
+  onSearchTap() {
+    const term = (this.data.query || '').trim()
+    if (!term) return
+    this.runSearch(term)
+  },
+
   onChipTap(e: WechatMiniprogram.TouchEvent) {
     const term = String(e.currentTarget.dataset['term'] || '').trim()
     if (!term) return
