@@ -1,8 +1,18 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
+  /* status-bar + 40px launcher + 88rpx tabs row */
+  padding-top: calc(var(--status-bar-height, 20px) + 40px + 88rpx);
   padding-bottom: 100rpx;
+}
+
+.sticky-tabs {
+  position: fixed;
+  /* `top` is set inline by games.wxml: calc(<statusBarHeight>px + 40px) */
+  left: 0;
+  right: 0;
+  z-index: 80;
+  background: var(--bg-page);
 }
 .fav-bar {
   display: flex;

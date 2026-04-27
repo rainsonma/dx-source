@@ -77,4 +77,7 @@ Page({
   goFavorites() {
     wx.navigateTo({ url: '/pages/games/favorites/favorites' })
   },
+  goSearch() {
+    wx.navigateTo({ url: '/pages/games/search/search' })
+  },
 })
