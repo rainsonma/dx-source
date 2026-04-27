@@ -6,6 +6,11 @@
   padding-bottom: 100rpx;
 }
 
+.page-container.with-sub-tabs {
+  /* status-bar + 40px launcher + 2 × 88rpx tabs rows */
+  padding-top: calc(var(--status-bar-height, 20px) + 40px + 176rpx);
+}
+
 .sticky-tabs {
   position: fixed;
   /* `top` is set inline by games.wxml: calc(<statusBarHeight>px + 40px) */

@@ -1,5 +1,5 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+  <view class="page-container {{theme}} {{showSubTabs ? 'with-sub-tabs' : ''}}" style="--status-bar-height: {{statusBarHeight}}px">
 
     <dx-search-bar
       theme="{{theme}}"
@@ -10,15 +10,32 @@
 
     <view class="sticky-tabs" style="top: calc({{statusBarHeight}}px + 40px);">
       <van-tabs
-        active="{{activeCategoryId}}"
-        bind:click="onCategoryChange"
+        active="{{activeTopId}}"
+        bind:click="onTopChange"
         color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
         background="{{theme === 'dark' ? '#1c1c1e' : '#ffffff'}}"
         title-active-color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
         scrollable
       >
         <van-tab
-          wx:for="{{categories}}"
+          wx:for="{{topTabs}}"
+          wx:key="id"
+          title="{{item.name}}"
+          name="{{item.id}}"
+        />
+      </van-tabs>
+
+      <van-tabs
+        wx:if="{{showSubTabs}}"
+        active="{{activeSubId}}"
+        bind:click="onSubChange"
+        color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+        background="{{theme === 'dark' ? '#0f172a' : '#f9fafb'}}"
+        title-active-color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
+        scrollable
+      >
+        <van-tab
+          wx:for="{{subTabs}}"
           wx:key="id"
           title="{{item.name}}"
           name="{{item.id}}"
