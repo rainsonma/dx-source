@@ -76,7 +76,18 @@ Page({
   },
   onOpenDetail(e: WechatMiniprogram.CustomEvent) {
     const id = (e.detail as { id: string }).id
-    wx.navigateTo({ url: `/pages/community/detail/detail?id=${id}` })
+    wx.navigateTo({
+      url: `/pages/community/detail/detail?id=${id}`,
+      events: {
+        'post-updated': (payload: { id: string; patch: Partial<Post> }) => {
+          const idx = this.data.posts.findIndex((p) => p.id === payload.id)
+          if (idx < 0) return
+          const next = this.data.posts.slice()
+          next[idx] = { ...next[idx], ...payload.patch }
+          this.setData({ posts: next })
+        },
+      },
+    })
   },
   async onToggleLike(e: WechatMiniprogram.CustomEvent) {
     const id = (e.detail as { id: string }).id
