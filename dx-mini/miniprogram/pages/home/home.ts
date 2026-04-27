@@ -55,11 +55,32 @@ Page({
     // marketing sections
     recentSession: null as RecentSession | null,
     vipDueAt: '' as string,
+    compactRevealed: false,
+    heroBottomPx: 0,
   },
   onLoad() {
     const sys = wx.getSystemInfoSync()
     const statusBarHeight = sys.statusBarHeight || 20
     this.setData({ theme: app.globalData.theme, statusBarHeight })
+  },
+  onReady() {
+    wx.createSelectorQuery()
+      .in(this)
+      .select('.search-row')
+      .boundingClientRect((rect) => {
+        if (rect && typeof rect.bottom === 'number') {
+          this.setData({ heroBottomPx: rect.bottom })
+        }
+      })
+      .exec()
+  },
+  onPageScroll(e: WechatMiniprogram.Page.IPageScrollOption) {
+    const threshold = this.data.heroBottomPx
+    if (threshold <= 0) return
+    const shouldReveal = e.scrollTop >= threshold
+    if (shouldReveal !== this.data.compactRevealed) {
+      this.setData({ compactRevealed: shouldReveal })
+    }
   },
   onShow() {
     this.setData({ theme: app.globalData.theme })
@@ -94,7 +115,7 @@ Page({
       wx.showToast({ title: '加载失败', icon: 'none' })
     }
   },
-  goSearch() { wx.navigateTo({ url: '/pages/games/games' }) },
+  goSearch() { wx.navigateTo({ url: '/pages/games/search/search' }) },
   goPurchase() { wx.navigateTo({ url: '/pages/me/purchase/purchase' }) },
   goInvite() { wx.navigateTo({ url: '/pages/me/invite/invite' }) },
   goStudy() { wx.navigateTo({ url: '/pages/learn/learn' }) },

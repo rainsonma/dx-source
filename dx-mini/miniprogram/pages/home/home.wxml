@@ -1,5 +1,12 @@
 <van-config-provider theme="{{theme}}">
   <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <dx-search-bar
+      theme="{{theme}}"
+      pinned="{{true}}"
+      revealed="{{compactRevealed}}"
+      bind:tap="goSearch"
+    />
+
     <!-- Teal header band -->
     <view class="teal-wrap">
       <view class="status-bar-spacer"></view>

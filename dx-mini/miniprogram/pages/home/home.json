@@ -4,6 +4,7 @@
     "van-config-provider": "@vant/weapp/config-provider/index",
     "van-skeleton": "@vant/weapp/skeleton/index",
     "dx-icon": "/components/dx-icon/index",
+    "dx-search-bar": "/components/dx-search-bar/index",
     "home-why-different": "/components/home/why-different/index",
     "home-features": "/components/home/features/index",
     "home-ai-features": "/components/home/ai-features/index",
