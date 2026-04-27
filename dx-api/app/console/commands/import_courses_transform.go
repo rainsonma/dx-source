@@ -344,10 +344,7 @@ func generateGameDescription(levelNames []string, totalItems int, typeDist map[s
 	levelCount := len(levelNames)
 	typeDesc := describeTypes(typeDist)
 
-	sampleCount := 3
-	if len(levelNames) < sampleCount {
-		sampleCount = len(levelNames)
-	}
+	sampleCount := min(3, len(levelNames))
 	samples := strings.Join(levelNames[:sampleCount], "、")
 
 	desc := fmt.Sprintf("共%d个学习单元，%d个学习内容。%s，涵盖%s等主题。", levelCount, totalItems, typeDesc, samples)
@@ -377,12 +374,9 @@ func generateLevelDescription(items []CourseItem) string {
 		typeName = primary
 	}
 
-	sampleCount := 2
-	if len(items) < sampleCount {
-		sampleCount = len(items)
-	}
+	sampleCount := min(2, len(items))
 	var samples []string
-	for i := 0; i < sampleCount; i++ {
+	for i := range sampleCount {
 		s := items[i].Content
 		if utf8.RuneCountInString(s) > 50 {
 			s = string([]rune(s)[:50])
