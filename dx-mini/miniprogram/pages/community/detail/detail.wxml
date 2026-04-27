@@ -38,5 +38,22 @@
     </block>
 
     <van-empty wx:if="{{!loading && !post}}" description="帖子不存在" />
+
+    <view class="input-bar">
+      <input
+        class="input"
+        value="{{inputValue}}"
+        placeholder="说点什么…"
+        maxlength="500"
+        confirm-type="send"
+        cursor-spacing="20"
+        adjust-position="{{true}}"
+        bind:input="onInput"
+        bind:confirm="onSend"
+      />
+      <view class="send-btn {{(inputValue.length === 0 || sending) ? 'disabled' : ''}}" bind:tap="onSend">
+        <dx-icon name="send" size="18px" color="#ffffff" />
+      </view>
+    </view>
   </view>
 </van-config-provider>

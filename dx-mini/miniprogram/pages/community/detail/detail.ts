@@ -1,6 +1,6 @@
 import { api } from '../../../utils/api'
 import { PaginatedData } from '../../../utils/api'
-import type { Post, CommentWithReplies } from '../types'
+import type { Post, CommentWithReplies, Comment } from '../types'
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
 
@@ -16,6 +16,8 @@ Page({
     commentsCursor: '',
     commentsHasMore: false,
     commentsLoading: false,
+    inputValue: '',
+    sending: false,
   },
   onLoad(query: Record<string, string>) {
     const sys = wx.getSystemInfoSync()
@@ -67,6 +69,34 @@ Page({
     } catch (err) {
       this.setData({ commentsLoading: false })
       wx.showToast({ title: (err as Error).message || '加载评论失败', icon: 'none' })
+    }
+  },
+  onInput(e: WechatMiniprogram.Input) {
+    this.setData({ inputValue: (e.detail as { value: string }).value })
+  },
+  async onSend() {
+    const v = this.data.inputValue.trim()
+    if (!v || this.data.sending) return
+    this.setData({ sending: true })
+    try {
+      const created = await api.post<Comment>(`/api/posts/${this.data.postId}/comments`, {
+        content: v,
+        parent_id: null,
+      })
+      this.setData({
+        sending: false,
+        inputValue: '',
+        comments: [{ comment: created, replies: [] }, ...this.data.comments],
+        post: this.data.post
+          ? { ...this.data.post, comment_count: this.data.post.comment_count + 1 }
+          : this.data.post,
+      })
+      if (this.data.post) {
+        this.emitUpdate({ comment_count: this.data.post.comment_count })
+      }
+    } catch (err) {
+      this.setData({ sending: false })
+      wx.showToast({ title: (err as Error).message || '评论失败', icon: 'none' })
     }
   },
   emitUpdate(patch: Partial<Post>) {
