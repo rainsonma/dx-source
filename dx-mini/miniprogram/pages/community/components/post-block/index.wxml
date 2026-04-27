@@ -25,6 +25,9 @@
         <text>关注</text>
       </block>
     </view>
+    <view class="more-btn" wx:if="{{isOwner}}" catch:tap="onMoreTap">
+      <dx-icon name="more-horizontal" size="20px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+    </view>
   </view>
 
   <text class="content">{{post.content}}</text>

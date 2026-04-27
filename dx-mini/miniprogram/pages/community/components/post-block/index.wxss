@@ -69,3 +69,4 @@
 }
 .action { display: flex; align-items: center; gap: 6px; padding: 4px 16px; }
 .action-text { font-size: 13px; color: var(--text-secondary); }
+.more-btn { padding: 4px; }

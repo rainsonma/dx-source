@@ -63,6 +63,7 @@ const ICONS = [
   ['send',            'send'],
   ['image',           'image'],
   ['plus',            'plus'],
+  ['more-horizontal', 'ellipsis'],           // lucide-static renamed more-horizontal -> ellipsis
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')

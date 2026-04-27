@@ -12,6 +12,7 @@ Component({
   properties: {
     item: { type: Object, value: null },
     theme: { type: String, value: 'light' },
+    isOwner: { type: Boolean, value: false },
   },
   data: {
     parentColor: '#999',
@@ -40,6 +41,11 @@ Component({
       this.triggerEvent('reply', {
         commentId: item.comment.id,
         nickname: item.comment.author.nickname,
+      })
+    },
+    onMore() {
+      this.triggerEvent('open-actions', {
+        commentId: (this.data as { item: CommentWithReplies }).item.comment.id,
       })
     },
   },

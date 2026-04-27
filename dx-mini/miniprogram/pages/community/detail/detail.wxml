@@ -16,9 +16,11 @@
         post="{{post}}"
         theme="{{theme}}"
         followed="{{followed}}"
+        is-owner="{{isOwner}}"
         bind:toggle-like="onToggleLike"
         bind:toggle-bookmark="onToggleBookmark"
         bind:toggle-follow="onToggleFollow"
+        bind:open-actions="onPostActions"
       />
     </block>
 
@@ -32,13 +34,23 @@
         wx:key="comment.id"
         item="{{item}}"
         theme="{{theme}}"
+        is-owner="{{currentUserId === item.comment.author.id}}"
         bind:reply="onReplyTo"
+        bind:open-actions="onCommentActions"
       />
       <van-loading wx:if="{{commentsLoading}}" size="20px" color="#0d9488" class="center-loader" />
       <van-empty wx:if="{{!commentsLoading && comments.length === 0}}" description="暂无评论，来抢沙发" />
     </block>
 
     <van-empty wx:if="{{!loading && !post}}" description="帖子不存在" />
+
+    <composer-popup
+      show="{{composerOpen}}"
+      theme="{{theme}}"
+      edit-post="{{composerEdit}}"
+      bind:close="onComposerClose"
+      bind:postupdated="onPostUpdated"
+    />
 
     <view class="input-bar">
       <view wx:if="{{replyingTo}}" class="reply-chip" bind:tap="onCancelReply">

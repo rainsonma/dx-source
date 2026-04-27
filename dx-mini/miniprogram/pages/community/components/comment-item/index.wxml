@@ -15,7 +15,12 @@
         <text class="time">{{parentTime}}</text>
       </view>
       <text class="content">{{item.comment.content}}</text>
-      <view class="reply-link" bind:tap="onReply">回复</view>
+      <view class="comment-actions">
+        <view class="reply-link" bind:tap="onReply">回复</view>
+        <view class="more-link" wx:if="{{isOwner}}" catch:tap="onMore">
+          <dx-icon name="more-horizontal" size="14px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+        </view>
+      </view>
     </view>
   </view>
 

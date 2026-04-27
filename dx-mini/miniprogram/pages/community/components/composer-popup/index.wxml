@@ -30,7 +30,7 @@
       <view class="counter">{{content.length}}/2000</view>
 
       <view class="image-row" wx:if="{{imageUrl}}">
-        <image src="{{imageUrl}}" class="thumb" mode="aspectFill" />
+        <image src="{{imagePreview}}" class="thumb" mode="aspectFill" />
         <view class="thumb-x" catch:tap="onRemoveImage">
           <dx-icon name="x" size="14px" color="#ffffff" />
         </view>

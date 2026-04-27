@@ -1,5 +1,6 @@
 import { api } from '../../../utils/api'
 import { PaginatedData } from '../../../utils/api'
+import { getUserId } from '../../../utils/auth'
 import type { Post, CommentWithReplies, Comment } from '../types'
 
 const app = getApp<{ globalData: { theme: 'light' | 'dark' } }>()
@@ -20,6 +21,11 @@ Page({
     sending: false,
     replyingTo: null as { commentId: string; nickname: string } | null,
     inputPlaceholder: '说点什么…',
+    isOwner: false,
+    composerOpen: false,
+    composerEdit: null as Post | null,
+    currentUserId: '',
+    editingCommentId: '',
   },
   onLoad(query: Record<string, string>) {
     const sys = wx.getSystemInfoSync()
@@ -28,6 +34,7 @@ Page({
       statusBarHeight: sys.statusBarHeight || 20,
       postId: query.id || '',
     })
+    this.setData({ currentUserId: getUserId() || '' })
     if (query.id) this.loadPost()
     if (query.id) this.loadComments(true)
   },
@@ -47,6 +54,7 @@ Page({
     try {
       const post = await api.get<Post>(`/api/posts/${this.data.postId}`)
       this.setData({ post, loading: false })
+      this.setData({ isOwner: (getUserId() || '') === post.author.id })
     } catch (err) {
       this.setData({ loading: false })
       wx.showToast({ title: (err as Error).message || '加载失败', icon: 'none' })
@@ -90,8 +98,30 @@ Page({
     const v = this.data.inputValue.trim()
     if (!v || this.data.sending) return
     this.setData({ sending: true })
-    const parentId = this.data.replyingTo ? this.data.replyingTo.commentId : null
     try {
+      if (this.data.editingCommentId) {
+        await api.put(`/api/posts/${this.data.postId}/comments/${this.data.editingCommentId}`, {
+          content: v,
+        })
+        const idx = this.data.comments.findIndex((c) => c.comment.id === this.data.editingCommentId)
+        if (idx >= 0) {
+          const next = this.data.comments.slice()
+          next[idx] = {
+            ...next[idx],
+            comment: { ...next[idx].comment, content: v },
+          }
+          this.setData({ comments: next })
+        }
+        this.setData({
+          sending: false,
+          inputValue: '',
+          editingCommentId: '',
+          inputPlaceholder: '说点什么…',
+        })
+        wx.showToast({ title: '已保存', icon: 'success' })
+        return
+      }
+      const parentId = this.data.replyingTo ? this.data.replyingTo.commentId : null
       const created = await api.post<Comment>(`/api/posts/${this.data.postId}/comments`, {
         content: v,
         parent_id: parentId,
@@ -120,7 +150,7 @@ Page({
       }
     } catch (err) {
       this.setData({ sending: false })
-      wx.showToast({ title: (err as Error).message || '评论失败', icon: 'none' })
+      wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
     }
   },
   emitUpdate(patch: Partial<Post>) {
@@ -173,6 +203,110 @@ Page({
     } catch (err) {
       this.setData({ followed: before })
       wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
+    }
+  },
+  onPostActions() {
+    if (!this.data.post) return
+    const self = this
+    wx.showActionSheet({
+      itemList: ['编辑', '删除'],
+      success(res) {
+        if (res.tapIndex === 0) self.editPost()
+        if (res.tapIndex === 1) self.deletePost()
+      },
+    })
+  },
+  editPost() {
+    if (!this.data.post) return
+    this.setData({
+      composerOpen: true,
+      composerEdit: this.data.post,
+    })
+  },
+  async deletePost() {
+    if (!this.data.post) return
+    const id = this.data.post.id
+    const confirmed = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '确认删除',
+        content: '删除后无法恢复',
+        confirmText: '删除',
+        cancelText: '取消',
+        confirmColor: '#ef4444',
+        success(res) { resolve(res.confirm) },
+      })
+    })
+    if (!confirmed) return
+    try {
+      await api.delete(`/api/posts/${id}`)
+      let channel: WechatMiniprogram.EventChannel | null = null
+      try { channel = this.getOpenerEventChannel() } catch { channel = null }
+      if (channel) channel.emit('post-deleted', { id })
+      wx.showToast({ title: '已删除', icon: 'success' })
+      wx.navigateBack()
+    } catch (err) {
+      wx.showToast({ title: (err as Error).message || '删除失败', icon: 'none' })
+    }
+  },
+  onComposerClose() {
+    this.setData({ composerOpen: false, composerEdit: null })
+  },
+  onPostUpdated(e: WechatMiniprogram.CustomEvent) {
+    const updated = (e.detail as { post: Post }).post
+    this.setData({ post: updated, composerOpen: false, composerEdit: null })
+    this.emitUpdate({
+      content: updated.content,
+      image_url: updated.image_url,
+      tags: updated.tags,
+    })
+  },
+  onCommentActions(e: WechatMiniprogram.CustomEvent) {
+    const commentId = (e.detail as { commentId: string }).commentId
+    const self = this
+    wx.showActionSheet({
+      itemList: ['编辑', '删除'],
+      success(res) {
+        if (res.tapIndex === 0) self.editComment(commentId)
+        if (res.tapIndex === 1) self.deleteComment(commentId)
+      },
+    })
+  },
+  editComment(commentId: string) {
+    const target = this.data.comments.find((c) => c.comment.id === commentId)
+    if (!target) return
+    this.setData({
+      replyingTo: null,
+      inputValue: target.comment.content,
+      inputPlaceholder: '编辑评论',
+      editingCommentId: commentId,
+    })
+  },
+  async deleteComment(commentId: string) {
+    const confirmed = await new Promise<boolean>((resolve) => {
+      wx.showModal({
+        title: '确认删除',
+        content: '删除后无法恢复',
+        confirmText: '删除',
+        cancelText: '取消',
+        confirmColor: '#ef4444',
+        success(res) { resolve(res.confirm) },
+      })
+    })
+    if (!confirmed) return
+    try {
+      await api.delete(`/api/posts/${this.data.postId}/comments/${commentId}`)
+      this.setData({
+        comments: this.data.comments.filter((c) => c.comment.id !== commentId),
+        post: this.data.post
+          ? { ...this.data.post, comment_count: Math.max(this.data.post.comment_count - 1, 0) }
+          : this.data.post,
+      })
+      if (this.data.post) {
+        this.emitUpdate({ comment_count: this.data.post.comment_count })
+      }
+      wx.showToast({ title: '已删除', icon: 'success' })
+    } catch (err) {
+      wx.showToast({ title: (err as Error).message || '删除失败', icon: 'none' })
     }
   },
 })

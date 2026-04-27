@@ -52,3 +52,5 @@
   gap: 10px;
 }
 .reply-row { display: flex; gap: 10px; }
+.comment-actions { display: flex; align-items: center; gap: 12px; }
+.more-link { padding: 4px; }

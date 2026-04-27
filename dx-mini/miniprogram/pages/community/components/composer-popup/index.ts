@@ -8,13 +8,41 @@ Component({
   properties: {
     show: { type: Boolean, value: false },
     theme: { type: String, value: 'light' },
+    editPost: { type: Object, value: null },
   },
   data: {
     content: '',
     tagInput: '',
     tags: [] as string[],
     imageUrl: '',
+    imagePreview: '',
     uploading: false,
+  },
+  observers: {
+    editPost(p: Post | null) {
+      if (!p) {
+        this.setData({ content: '', tagInput: '', tags: [], imageUrl: '', uploading: false })
+        return
+      }
+      this.setData({
+        content: p.content,
+        tagInput: '',
+        tags: p.tags.slice(),
+        imageUrl: p.image_url ? ('__keep__:' + p.image_url) : '',
+        uploading: false,
+      })
+    },
+    imageUrl(v: string) {
+      if (!v) {
+        this.setData({ imagePreview: '' })
+        return
+      }
+      if (v.indexOf('__keep__:') === 0) {
+        this.setData({ imagePreview: config.apiBaseUrl + v.slice('__keep__:'.length) })
+        return
+      }
+      this.setData({ imagePreview: v })
+    },
   },
   methods: {
     onContentInput(e: WechatMiniprogram.Input) {
@@ -69,7 +97,7 @@ Component({
       })
     },
     async onSubmit() {
-      const d = this.data as { content: string; imageUrl: string; tags: string[]; uploading: boolean }
+      const d = this.data as { content: string; imageUrl: string; tags: string[]; uploading: boolean; editPost: Post | null }
       const content = d.content.trim()
       if (!content) {
         wx.showToast({ title: '请输入内容', icon: 'none' })
@@ -83,20 +111,41 @@ Component({
         wx.showToast({ title: '图片上传中…', icon: 'none' })
         return
       }
-      wx.showLoading({ title: '发布中…', mask: true })
+      let imageUrl: string | null = null
+      if (d.imageUrl.indexOf('__keep__:') === 0) imageUrl = d.imageUrl.slice('__keep__:'.length)
+      else if (d.imageUrl) imageUrl = d.imageUrl
+      const editing = d.editPost
+      wx.showLoading({ title: editing ? '保存中…' : '发布中…', mask: true })
       try {
-        const post = await api.post<Post>('/api/posts', {
-          content,
-          image_url: d.imageUrl || null,
-          tags: d.tags.length > 0 ? d.tags : null,
-        })
-        wx.hideLoading()
-        wx.showToast({ title: '已发布', icon: 'success' })
-        this.triggerEvent('postcreated', { post })
+        if (editing) {
+          await api.put(`/api/posts/${editing.id}`, {
+            content,
+            image_url: imageUrl,
+            tags: d.tags.length > 0 ? d.tags : null,
+          })
+          const updated: Post = {
+            ...editing,
+            content,
+            image_url: imageUrl,
+            tags: d.tags,
+          }
+          wx.hideLoading()
+          wx.showToast({ title: '已保存', icon: 'success' })
+          this.triggerEvent('postupdated', { post: updated })
+        } else {
+          const post = await api.post<Post>('/api/posts', {
+            content,
+            image_url: imageUrl,
+            tags: d.tags.length > 0 ? d.tags : null,
+          })
+          wx.hideLoading()
+          wx.showToast({ title: '已发布', icon: 'success' })
+          this.triggerEvent('postcreated', { post })
+        }
         this.setData({ content: '', tagInput: '', tags: [], imageUrl: '', uploading: false })
       } catch (err) {
         wx.hideLoading()
-        wx.showToast({ title: (err as Error).message || '发布失败', icon: 'none' })
+        wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
       }
     },
     onPickImage() {

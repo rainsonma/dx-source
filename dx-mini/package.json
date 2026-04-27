@@ -11,6 +11,7 @@
   "license": "",
   "devDependencies": {
     "lucide-static": "^0.460.0",
-    "miniprogram-api-typings": "^2.8.3-1"
+    "miniprogram-api-typings": "^2.8.3-1",
+    "typescript": "^6.0.3"
   }
 }

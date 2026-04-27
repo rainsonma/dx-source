@@ -9,6 +9,7 @@ Component({
     post: { type: Object, value: null },
     theme: { type: String, value: 'light' },
     followed: { type: Boolean, value: false },
+    isOwner: { type: Boolean, value: false },
   },
   data: {
     avatarColor: '#999',
@@ -44,6 +45,9 @@ Component({
     },
     onFollowTap() {
       this.triggerEvent('toggle-follow')
+    },
+    onMoreTap() {
+      this.triggerEvent('open-actions')
     },
   },
 })
