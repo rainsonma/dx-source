@@ -15,9 +15,15 @@
         <text class="time">{{timeText}}</text>
       </view>
     </view>
-    <view class="follow-stub" catch:tap="onFollowTap">
-      <dx-icon name="user-plus" size="14px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
-      <text>关注</text>
+    <view class="follow-btn {{followed ? 'followed' : ''}}" catch:tap="onFollowTap">
+      <block wx:if="{{followed}}">
+        <dx-icon name="user-check" size="14px" color="{{theme === 'dark' ? '#9ca3af' : '#6b7280'}}" />
+        <text>已关注</text>
+      </block>
+      <block wx:else>
+        <dx-icon name="user-plus" size="14px" color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}" />
+        <text>关注</text>
+      </block>
     </view>
   </view>
 

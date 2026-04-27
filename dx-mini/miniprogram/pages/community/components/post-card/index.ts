@@ -8,6 +8,8 @@ Component({
   properties: {
     post: { type: Object, value: null },
     theme: { type: String, value: 'light' },
+    followed: { type: Boolean, value: false },
+    followPending: { type: Boolean, value: false },
   },
   data: {
     avatarColor: '#999',
@@ -43,8 +45,11 @@ Component({
     onBookmarkTap() {
       this.triggerEvent('toggle-bookmark', { id: (this.data as { post: Post }).post.id })
     },
-    onFollowTap(e: WechatMiniprogram.TouchEvent) {
-      void e
+    onFollowTap() {
+      if ((this.data as { followPending: boolean }).followPending) return
+      this.triggerEvent('toggle-follow', {
+        userId: (this.data as { post: Post }).post.author.id,
+      })
     },
   },
 })

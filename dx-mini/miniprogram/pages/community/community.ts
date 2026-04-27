@@ -15,6 +15,7 @@ Page({
     nextCursor: '',
     hasMore: false,
     loading: false,
+    followedUserIds: {} as Record<string, boolean>,
   },
   onLoad() {
     const sys = wx.getSystemInfoSync()
@@ -107,6 +108,24 @@ Page({
       this.patchPost(idx, { ...optimistic, is_bookmarked: res.bookmarked })
     } catch (err) {
       this.patchPost(idx, before)
+      wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
+    }
+  },
+  async onToggleFollow(e: WechatMiniprogram.CustomEvent) {
+    const userId = (e.detail as { userId: string }).userId
+    const before = this.data.followedUserIds[userId] || false
+    this.setData({
+      followedUserIds: { ...this.data.followedUserIds, [userId]: !before },
+    })
+    try {
+      const res = await api.post<{ followed: boolean }>(`/api/users/${userId}/follow`, {})
+      this.setData({
+        followedUserIds: { ...this.data.followedUserIds, [userId]: res.followed },
+      })
+    } catch (err) {
+      this.setData({
+        followedUserIds: { ...this.data.followedUserIds, [userId]: before },
+      })
       wx.showToast({ title: (err as Error).message || '操作失败', icon: 'none' })
     }
   },

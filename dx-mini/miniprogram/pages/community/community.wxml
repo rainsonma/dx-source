@@ -27,9 +27,11 @@
         wx:key="id"
         post="{{item}}"
         theme="{{theme}}"
+        followed="{{followedUserIds[item.author.id]}}"
         bind:opendetail="onOpenDetail"
         bind:toggle-like="onToggleLike"
         bind:toggle-bookmark="onToggleBookmark"
+        bind:toggle-follow="onToggleFollow"
       />
     </view>
 
