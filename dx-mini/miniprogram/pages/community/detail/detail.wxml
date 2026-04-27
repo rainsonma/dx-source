@@ -8,6 +8,13 @@
       <text class="nav-title">帖子</text>
       <view class="back-btn"></view>
     </view>
-    <view class="placeholder">postId={{postId}} — coming in Task 13</view>
+
+    <van-loading wx:if="{{loading}}" size="24px" color="#0d9488" class="center-loader" />
+
+    <block wx:if="{{!loading && post}}">
+      <post-block post="{{post}}" theme="{{theme}}" followed="{{followed}}" />
+    </block>
+
+    <van-empty wx:if="{{!loading && !post}}" description="帖子不存在" />
   </view>
 </van-config-provider>

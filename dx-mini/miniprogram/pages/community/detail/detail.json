@@ -5,6 +5,7 @@
     "van-loading": "@vant/weapp/loading/index",
     "van-empty": "@vant/weapp/empty/index",
     "van-image": "@vant/weapp/image/index",
-    "dx-icon": "/components/dx-icon/index"
+    "dx-icon": "/components/dx-icon/index",
+    "post-block": "../components/post-block/index"
   }
 }
