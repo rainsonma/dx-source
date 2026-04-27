@@ -3,7 +3,7 @@ export type SpellingItem = {
   answer: boolean;
   pos: string | null;
   position: number;
-  translation: string;
+  definition: string;
   phonetic: { uk: string; us: string } | null;
 };
 
