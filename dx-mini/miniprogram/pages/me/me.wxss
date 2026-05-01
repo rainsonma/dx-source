@@ -28,7 +28,7 @@
 .profile-name { font-size: 18px; font-weight: 700; color: var(--text-primary); display: block; margin-bottom: 6px; }
 .profile-badges { display: flex; gap: 6px; }
 .level-badge { font-size: 10px; font-weight: 700; color: #4f46e5; background: #e0e7ff; border-radius: 999px; padding: 2px 8px; }
-.grade-badge { font-size: 10px; font-weight: 600; color: #6b7280; background: #e5e7eb; border-radius: 4px; padding: 2px 6px; }
+.grade-badge { font-size: 10px; font-weight: 600; color: #ffffff; background: linear-gradient(90deg, #14b8a6, #a855f7); border-radius: 4px; padding: 2px 6px; }
 .stats-bar {
   display: flex;
   align-items: center;
@@ -55,7 +55,6 @@
 .vip-text { font-size: 12px; color: #d97706; }
 .dark .vip-bar { background: rgba(217,119,6,0.15); }
 .dark .level-badge { color: #a5b4fc; background: rgba(99,102,241,0.15); }
-.dark .grade-badge { color: #9ca3af; background: rgba(255,255,255,0.08); }
 .cell-icon { margin-right: 12px; }
 .logout-btn {
   margin: 16px;
