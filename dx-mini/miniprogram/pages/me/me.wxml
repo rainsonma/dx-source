@@ -74,9 +74,7 @@
         </van-cell>
       </van-cell-group>
 
-      <van-cell-group inset custom-style="margin:0 16px 16px;">
-        <van-cell title="退出登录" title-style="color:var(--van-danger-color);" bind:click="logout" />
-      </van-cell-group>
+      <view class="logout-btn" hover-class="logout-btn--hover" bind:tap="logout">退出登录</view>
     </block>
   </view>
 </van-config-provider>

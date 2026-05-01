@@ -54,3 +54,14 @@
 .dark .vip-bar { background: rgba(217,119,6,0.15); }
 .dark .grade-badge { background: rgba(217,119,6,0.2); }
 .cell-icon { margin-right: 12px; }
+.logout-btn {
+  margin: 16px;
+  padding: 14px 0;
+  background: var(--primary);
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+}
+.logout-btn--hover { opacity: 0.85; }
