@@ -1,8 +1,31 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
+  padding-top: var(--status-bar-height, 20px);
   padding-bottom: 100rpx;
+}
+.nav-bar {
+  position: relative;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+.back-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.nav-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 .center-loader { display: flex; justify-content: center; padding: 40px; }
 .content { padding: 0 16px; }

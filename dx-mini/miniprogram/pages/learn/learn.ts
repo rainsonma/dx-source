@@ -132,6 +132,7 @@ Page({
     if (this.data.nextDisabled) return
     this.rebuildProgress(this.data.progressPage + 1)
   },
+  goBack() { wx.navigateBack() },
   goGame(e: WechatMiniprogram.TouchEvent) {
     const id = e.currentTarget.dataset['id'] as string | undefined
     if (id) wx.navigateTo({ url: '/pages/games/detail/detail?id=' + id })
