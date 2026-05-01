@@ -9,9 +9,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--bg-card);
   padding: 20px 16px;
-  border-bottom: 1px solid var(--border-color);
 }
 .avatar-wrap { flex-shrink: 0; }
 .avatar-fallback {
@@ -35,9 +33,9 @@
   display: flex;
   align-items: center;
   background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
+  border-radius: 8px;
   padding: 14px 0;
-  margin-bottom: 12px;
+  margin: 0 16px 12px;
 }
 .stat-item { flex: 1; text-align: center; }
 .stat-v { font-size: 20px; font-weight: 700; color: var(--text-primary); display: block; }
