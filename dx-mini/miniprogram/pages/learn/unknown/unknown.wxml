@@ -12,7 +12,7 @@
       </view>
     </view>
     <van-loading wx:if="{{loading && items.length === 0}}" size="30px" color="{{primaryColor}}" class="center-loader" />
-    <van-empty wx:if="{{!loading && items.length === 0}}" description="暂无不认识的词" />
+    <van-empty wx:if="{{!loading && items.length === 0}}" description="生词本里还空着" />
     <van-checkbox-group value="{{selectedIds}}" bind:change="onSelectChange">
       <view class="word-list">
         <view wx:for="{{items}}" wx:key="id" class="word-item">

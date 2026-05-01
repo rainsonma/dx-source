@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "不认识",
+  "navigationBarTitleText": "生词本",
   "enablePullDownRefresh": true,
   "usingComponents": {
     "van-config-provider": "@vant/weapp/config-provider/index",
