@@ -20,8 +20,6 @@ Page({
       theme: app.globalData.theme,
       arrowColor: app.globalData.theme === 'dark' ? '#6b7280' : '#9ca3af',
     });
-    const tabBar = this.getTabBar() as any
-    if (tabBar) { tabBar.setData({ active: 3, theme: app.globalData.theme }) }
     this.loadStats()
   },
   async loadStats() {
