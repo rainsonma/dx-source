@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	contractshttp "github.com/goravel/framework/contracts/http"
@@ -27,9 +26,6 @@ func (c *UserSessionController) ListSessions(ctx contractshttp.Context) contract
 
 	rows, err := services.ListSessionProgress(userID)
 	if err != nil {
-		if errors.Is(err, services.ErrUserNotFound) {
-			return helpers.Error(ctx, http.StatusNotFound, consts.CodeUserNotFound, "用户不存在")
-		}
 		return helpers.Error(ctx, http.StatusInternalServerError, consts.CodeInternalError, "failed to list sessions")
 	}
 	return helpers.Success(ctx, rows)
