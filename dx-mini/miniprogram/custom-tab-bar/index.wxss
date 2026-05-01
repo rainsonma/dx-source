@@ -33,3 +33,20 @@
 .tab-bar.dark .active-label {
   color: #14b8a6;
 }
+.icon-wrap {
+  position: relative;
+  line-height: 0;
+}
+.unread-dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+}
+.tab-bar.dark .unread-dot {
+  border-color: #1c1c1e;
+}
