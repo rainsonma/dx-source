@@ -16,7 +16,6 @@ Page({
   data: {
     theme: 'light' as 'light' | 'dark',
     primaryColor: '#0d9488',
-    arrowColor: '#9ca3af',
     cellIconColor: '#6b7280',
     loading: true,
     profile: null as ProfileData | null,
@@ -35,7 +34,6 @@ Page({
     this.setData({
       theme,
       primaryColor: theme === 'dark' ? '#14b8a6' : '#0d9488',
-      arrowColor: theme === 'dark' ? '#6b7280' : '#9ca3af',
       cellIconColor: theme === 'dark' ? '#9ca3af' : '#6b7280',
     });
     const tabBar = this.getTabBar() as any
@@ -59,7 +57,6 @@ Page({
     this.setData({
       theme: next,
       primaryColor: next === 'dark' ? '#14b8a6' : '#0d9488',
-      arrowColor: next === 'dark' ? '#6b7280' : '#9ca3af',
       cellIconColor: next === 'dark' ? '#9ca3af' : '#6b7280',
     })
     const tabBar = this.getTabBar() as any

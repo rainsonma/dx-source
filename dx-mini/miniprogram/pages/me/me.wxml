@@ -1,14 +1,5 @@
 <van-config-provider theme="{{theme}}">
   <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
-    <view class="top-bar">
-      <dx-icon
-        name="{{theme === 'dark' ? 'sun' : 'moon'}}"
-        size="22px"
-        color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
-        bind:click="toggleTheme"
-      />
-    </view>
-
     <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
     <block wx:if="{{!loading && profile}}">
       <view class="profile-header" bind:tap="goProfileEdit">
@@ -32,7 +23,6 @@
             <text class="exp-badge">Lv.{{profile.level}}</text>
           </view>
         </view>
-        <dx-icon name="chevron-right" size="16px" color="{{arrowColor}}" />
       </view>
 
       <view class="stats-bar">
@@ -58,20 +48,29 @@
       </view>
 
       <van-cell-group inset custom-style="margin:16px;">
-        <van-cell title="我的团队" is-link bind:click="goGroups">
-          <dx-icon slot="icon" name="users" size="20px" color="{{cellIconColor}}" />
+        <van-cell title="我的团队" is-link center bind:click="goGroups">
+          <dx-icon slot="icon" custom-class="cell-icon" name="users" size="20px" color="{{cellIconColor}}" />
         </van-cell>
-        <van-cell title="推荐有礼" is-link bind:click="goInvite">
-          <dx-icon slot="icon" name="gift" size="20px" color="{{cellIconColor}}" />
+        <van-cell title="推荐有礼" is-link center bind:click="goInvite">
+          <dx-icon slot="icon" custom-class="cell-icon" name="gift" size="20px" color="{{cellIconColor}}" />
         </van-cell>
-        <van-cell title="兑换码" is-link bind:click="goRedeem">
-          <dx-icon slot="icon" name="ticket" size="20px" color="{{cellIconColor}}" />
+        <van-cell title="兑换码" is-link center bind:click="goRedeem">
+          <dx-icon slot="icon" custom-class="cell-icon" name="ticket" size="20px" color="{{cellIconColor}}" />
         </van-cell>
-        <van-cell title="购买会员" is-link bind:click="goPurchase">
-          <dx-icon slot="icon" name="crown" size="20px" color="{{cellIconColor}}" />
+        <van-cell title="购买会员" is-link center bind:click="goPurchase">
+          <dx-icon slot="icon" custom-class="cell-icon" name="crown" size="20px" color="{{cellIconColor}}" />
         </van-cell>
-        <van-cell title="收藏的课程" is-link bind:click="goFavorites">
-          <dx-icon slot="icon" name="star" size="20px" color="{{cellIconColor}}" />
+        <van-cell title="收藏的课程" is-link center bind:click="goFavorites">
+          <dx-icon slot="icon" custom-class="cell-icon" name="star" size="20px" color="{{cellIconColor}}" />
+        </van-cell>
+        <van-cell title="深色模式" center bind:click="toggleTheme">
+          <dx-icon
+            slot="icon"
+            custom-class="cell-icon"
+            name="{{theme === 'dark' ? 'sun' : 'moon'}}"
+            size="20px"
+            color="{{cellIconColor}}"
+          />
         </van-cell>
       </van-cell-group>
 

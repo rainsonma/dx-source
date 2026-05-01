@@ -1,15 +1,8 @@
 .page-container {
   min-height: 100vh;
   background: var(--bg-page);
-  padding-top: calc(var(--status-bar-height, 20px) + 88rpx);
+  padding-top: var(--status-bar-height, 20px);
   padding-bottom: 100rpx;
-}
-.top-bar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 20rpx;
-  padding: 12rpx 32rpx;
 }
 .center-loader { display: flex; justify-content: center; padding: 40px; }
 .profile-header {
@@ -62,3 +55,4 @@
 .vip-text { font-size: 12px; color: #d97706; }
 .dark .vip-bar { background: rgba(217,119,6,0.15); }
 .dark .grade-badge { background: rgba(217,119,6,0.2); }
+.cell-icon { margin-right: 12px; }
