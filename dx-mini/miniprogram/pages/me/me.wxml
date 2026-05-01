@@ -20,7 +20,7 @@
           <text class="profile-name">{{profile.nickname || profile.username}}</text>
           <view class="profile-badges">
             <text class="level-badge">Lv.{{profile.level}}</text>
-            <text class="grade-badge">{{gradeLabel(profile.grade)}}</text>
+            <text class="grade-badge">{{gradeLabelText}}</text>
           </view>
         </view>
       </view>
@@ -46,7 +46,7 @@
 
       <view wx:if="{{profile.vipDueAt}}" class="vip-bar">
         <dx-icon name="crown" size="16px" color="#d97706" />
-        <text class="vip-text">会员有效期至 {{formatDate(profile.vipDueAt)}}</text>
+        <text class="vip-text">会员有效期至 {{vipDueAtText}}</text>
       </view>
 
       <van-cell-group inset custom-style="margin:16px;">

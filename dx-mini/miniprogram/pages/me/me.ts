@@ -20,9 +20,9 @@ Page({
     loading: true,
     profile: null as ProfileData | null,
     avatarChar: '',
+    gradeLabelText: '',
+    vipDueAtText: '',
     statusBarHeight: 20,
-    formatDate,
-    gradeLabel,
   },
   onLoad() {
     const sys = wx.getSystemInfoSync()
@@ -44,7 +44,13 @@ Page({
     try {
       const profile = await api.get<ProfileData>('/api/user/profile')
       const avatarChar = (profile.nickname || profile.username).charAt(0)
-      this.setData({ loading: false, profile, avatarChar })
+      this.setData({
+        loading: false,
+        profile,
+        avatarChar,
+        gradeLabelText: gradeLabel(profile.grade),
+        vipDueAtText: formatDate(profile.vipDueAt),
+      })
     } catch {
       this.setData({ loading: false })
       wx.showToast({ title: '加载失败', icon: 'none' })
