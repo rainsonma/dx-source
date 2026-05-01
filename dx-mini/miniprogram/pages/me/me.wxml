@@ -19,8 +19,8 @@
         <view class="profile-info">
           <text class="profile-name">{{profile.nickname || profile.username}}</text>
           <view class="profile-badges">
+            <text class="level-badge">Lv.{{profile.level}}</text>
             <text class="grade-badge">{{gradeLabel(profile.grade)}}</text>
-            <text class="exp-badge">Lv.{{profile.level}}</text>
           </view>
         </view>
       </view>
@@ -28,7 +28,7 @@
       <view class="stats-bar">
         <view class="stat-item">
           <text class="stat-v">{{profile.beans}}</text>
-          <text class="stat-l">金豆</text>
+          <text class="stat-l">能量豆</text>
         </view>
         <view class="stat-divider" />
         <view class="stat-item">
@@ -36,9 +36,11 @@
           <text class="stat-l">经验值</text>
         </view>
         <view class="stat-divider" />
-        <view class="stat-item">
-          <text class="stat-v">{{profile.currentPlayStreak}}</text>
-          <text class="stat-l">连续天数</text>
+        <view class="stat-item stat-item--link" hover-class="stat-item--hover" bind:tap="goRedeem">
+          <view class="stat-icon">
+            <dx-icon name="ticket" size="22px" color="{{primaryColor}}" />
+          </view>
+          <text class="stat-l">兑换码</text>
         </view>
       </view>
 
@@ -53,9 +55,6 @@
         </van-cell>
         <van-cell title="推荐有礼" is-link center bind:click="goInvite">
           <dx-icon slot="icon" custom-class="cell-icon" name="gift" size="20px" color="{{cellIconColor}}" />
-        </van-cell>
-        <van-cell title="兑换码" is-link center bind:click="goRedeem">
-          <dx-icon slot="icon" custom-class="cell-icon" name="ticket" size="20px" color="{{cellIconColor}}" />
         </van-cell>
         <van-cell title="购买会员" is-link center bind:click="goPurchase">
           <dx-icon slot="icon" custom-class="cell-icon" name="crown" size="20px" color="{{cellIconColor}}" />
