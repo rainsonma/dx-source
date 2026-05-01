@@ -8,6 +8,7 @@
     "pages/games/favorites/favorites",
     "pages/games/search/search",
     "pages/leaderboard/leaderboard",
+    "pages/notices/notices",
     "pages/learn/learn",
     "pages/learn/mastered/mastered",
     "pages/learn/unknown/unknown",
@@ -32,7 +33,7 @@
       { "pagePath": "pages/home/home" },
       { "pagePath": "pages/games/games" },
       { "pagePath": "pages/leaderboard/leaderboard" },
-      { "pagePath": "pages/community/community" },
+      { "pagePath": "pages/notices/notices" },
       { "pagePath": "pages/me/me" }
     ]
   },
