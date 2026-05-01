@@ -121,6 +121,6 @@ Page({
   goStudy() { wx.navigateTo({ url: '/pages/learn/learn' }) },
   goGroups() { wx.navigateTo({ url: '/pages/me/groups/groups' }) },
   goTasks() { wx.navigateTo({ url: '/pages/me/tasks/tasks' }) },
-  goNotices() { wx.navigateTo({ url: '/pages/me/notices/notices' }) },
+  goCommunity() { wx.navigateTo({ url: '/pages/community/community' }) },
   goFeedback() { wx.navigateTo({ url: '/pages/me/feedback/feedback' }) },
 })
