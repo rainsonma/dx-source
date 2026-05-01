@@ -25,6 +25,7 @@ Page({
       statusBarHeight: sys.statusBarHeight || 20,
     })
   },
+  goBack() { wx.navigateBack() },
   onShow() {
     this.setData({ theme: app.globalData.theme })
     if (!isLoggedIn()) {
