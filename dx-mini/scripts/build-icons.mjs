@@ -64,6 +64,16 @@ const ICONS = [
   ['image',           'image'],
   ['plus',            'plus'],
   ['more-horizontal', 'ellipsis'],           // lucide-static renamed more-horizontal -> ellipsis
+  ['message-circle-more', 'message-circle-more'],
+  ['megaphone',           'megaphone'],
+  ['rocket',              'rocket'],
+  ['shield',              'shield'],
+  ['calendar',            'calendar'],
+  ['zap',                 'zap'],
+  ['party-popper',        'party-popper'],
+  ['info',                'info'],
+  ['alert-triangle',      'triangle-alert'],   // lucide-static renamed alert-triangle -> triangle-alert
+  ['check-circle-2',      'circle-check'],     // lucide-static dropped check-circle-2; circle-check is the closest equivalent
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')
