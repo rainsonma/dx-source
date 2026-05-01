@@ -61,8 +61,8 @@ Swap 消息 ⇄ 社区 between the home-page hub circles and the bottom tab bar,
     - `zap` / `zap`
     - `party-popper` / `party-popper`
     - `info` / `info`
-    - `alert-triangle` / `triangle-alert` *(verify against pinned `lucide-static`; build script throws a clear error if filename has been renamed differently)*
-    - `check-circle-2` / `circle-check-2` *(same — verify; if `lucide-static` only ships `circle-check`, map both API names to it via `resolveNoticeIcon`)*
+    - `alert-triangle` / `triangle-alert` (lucide-static rename)
+    - `check-circle-2` / `circle-check` (lucide-static rename — `circle-check-2` doesn't exist in 0.460; rendering close equivalent under the same logical name preserves API compatibility)
 
 ### Deleted files
 
@@ -370,10 +370,10 @@ The 10 to add (logical → lucide-static filename, last two pending verification
 | `zap` | `zap` |
 | `party-popper` | `party-popper` |
 | `info` | `info` |
-| `alert-triangle` | `triangle-alert` (verify) |
-| `check-circle-2` | `circle-check-2` (verify) |
+| `alert-triangle` | `triangle-alert` |
+| `check-circle-2` | `circle-check` |
 
-If `lucide-static` has renamed differently, the build script throws a clear error and we adjust the filename right column. If a particular icon doesn't exist at all, we drop it from the `ALLOWED` set so the API string falls back to `message-circle-more`.
+Both `triangle-alert` and `circle-check` exist in the pinned `lucide-static@0.460.0` (verified with `ls dx-mini/node_modules/lucide-static/icons`). `circle-check-2` does not exist in 0.460; we render the close-equivalent `circle-check` SVG under the logical name `check-circle-2` so dx-web `notice.icon` strings keep working unchanged.
 
 ## Error handling
 
