@@ -1,6 +1,7 @@
 import { api } from '../../utils/api'
 
 interface Stats { total: number; thisWeek: number; thisMonth: number }
+interface UnknownStats { total: number; today: number; lastThreeDays: number }
 interface ReviewStats { pending: number; overdue: number; reviewedToday: number }
 
 interface SessionProgress {
@@ -50,7 +51,7 @@ Page({
     statusBarHeight: 20,
     loading: true,
     masterStats: null as Stats | null,
-    unknownStats: null as Stats | null,
+    unknownStats: null as UnknownStats | null,
     reviewStats: null as ReviewStats | null,
     sessions: [] as SessionProgress[],
     progressItems: [] as ProgressItem[],
@@ -77,7 +78,7 @@ Page({
     this.setData({ loading: true })
     const results = await Promise.allSettled([
       api.get<Stats>('/api/tracking/master/stats'),
-      api.get<Stats>('/api/tracking/unknown/stats'),
+      api.get<UnknownStats>('/api/tracking/unknown/stats'),
       api.get<ReviewStats>('/api/tracking/review/stats'),
       api.get<SessionProgress[]>('/api/tracking/sessions'),
     ])

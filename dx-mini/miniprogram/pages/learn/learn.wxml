@@ -53,7 +53,7 @@
         <view class="learn-stat-card amber" bind:tap="goUnknown">
           <text class="lsc-value">{{unknownStats.total || 0}}</text>
           <text class="lsc-label">生词本</text>
-          <text class="lsc-sub">本周 +{{unknownStats.thisWeek || 0}}</text>
+          <text class="lsc-sub">今日 +{{unknownStats.today || 0}}</text>
         </view>
         <view class="learn-stat-card purple" bind:tap="goReview">
           <text class="lsc-value">{{reviewStats.pending || 0}}</text>
