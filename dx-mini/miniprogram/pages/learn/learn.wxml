@@ -1,7 +1,49 @@
 <van-config-provider theme="{{theme}}">
-  <view class="page-container {{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
     <van-loading wx:if="{{loading}}" size="30px" color="#0d9488" class="center-loader" />
     <view wx:if="{{!loading}}" class="content">
+
+      <view class="progress-card">
+        <view class="pc-header">
+          <view class="pc-icon-wrap">
+            <dx-icon name="list-checks" size="20px" color="{{accentColors.teal}}" />
+          </view>
+          <text class="pc-title">我的学习进度</text>
+        </view>
+
+        <view wx:if="{{progressItems.length === 0}}" class="pc-empty">
+          <dx-icon name="gamepad-2" size="40px" color="{{arrowColor}}" />
+          <text class="pc-empty-title">还没有学习进度</text>
+          <text class="pc-empty-sub">去发现课程游戏吧</text>
+        </view>
+
+        <block wx:else>
+          <view class="pc-list">
+            <view
+              wx:for="{{pageItems}}"
+              wx:key="gameId"
+              class="pc-row"
+              data-id="{{item.gameId}}"
+              bind:tap="goGame"
+            >
+              <view class="pc-row-top">
+                <text class="pc-row-title">{{item.title}}</text>
+                <text class="pc-row-pct">{{item.progressPct}}%</text>
+              </view>
+              <view class="pc-bar-track">
+                <view class="pc-bar-fill" style="background:{{item.barColor}};width:{{item.barWidth}}"></view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:if="{{hasPagination}}" class="pc-pager">
+            <view class="pc-pager-btn {{prevDisabled ? 'disabled' : ''}}" bind:tap="prevProgressPage">‹ 上一页</view>
+            <text class="pc-pager-label">{{pageLabel}}</text>
+            <view class="pc-pager-btn {{nextDisabled ? 'disabled' : ''}}" bind:tap="nextProgressPage">下一页 ›</view>
+          </view>
+        </block>
+      </view>
+
       <view class="stat-card-row">
         <view class="learn-stat-card teal" bind:tap="goMastered">
           <text class="lsc-value">{{masterStats.total || 0}}</text>
@@ -10,7 +52,7 @@
         </view>
         <view class="learn-stat-card amber" bind:tap="goUnknown">
           <text class="lsc-value">{{unknownStats.total || 0}}</text>
-          <text class="lsc-label">不认识</text>
+          <text class="lsc-label">生词本</text>
           <text class="lsc-sub">本周 +{{unknownStats.thisWeek || 0}}</text>
         </view>
         <view class="learn-stat-card purple" bind:tap="goReview">
@@ -19,6 +61,7 @@
           <text class="lsc-sub">逾期 {{reviewStats.overdue || 0}}</text>
         </view>
       </view>
+
       <view class="quick-links">
         <view class="quick-link" bind:tap="goMastered">
           <dx-icon name="check" size="20px" color="{{accentColors.teal}}" />
@@ -27,7 +70,7 @@
         </view>
         <view class="quick-link" bind:tap="goUnknown">
           <dx-icon name="help-circle" size="20px" color="{{accentColors.amber}}" />
-          <text class="ql-text">不认识词库</text>
+          <text class="ql-text">生词本词库</text>
           <dx-icon name="chevron-right" size="14px" color="{{arrowColor}}" />
         </view>
         <view class="quick-link" bind:tap="goReview">
@@ -36,6 +79,7 @@
           <dx-icon name="chevron-right" size="14px" color="{{arrowColor}}" />
         </view>
       </view>
+
     </view>
   </view>
 </van-config-provider>
