@@ -66,7 +66,6 @@ Page({
     if (tabBar) { tabBar.setData({ theme: next }) }
   },
   goProfileEdit() { wx.navigateTo({ url: '/pages/me/profile-edit/profile-edit' }) },
-  goNotices() { wx.navigateTo({ url: '/pages/me/notices/notices' }) },
   goGroups() { wx.navigateTo({ url: '/pages/me/groups/groups' }) },
   goInvite() { wx.navigateTo({ url: '/pages/me/invite/invite' }) },
   goRedeem() { wx.navigateTo({ url: '/pages/me/redeem/redeem' }) },

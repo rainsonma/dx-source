@@ -7,12 +7,6 @@
         color="{{theme === 'dark' ? '#14b8a6' : '#0d9488'}}"
         bind:click="toggleTheme"
       />
-      <dx-icon
-        name="bell"
-        size="22px"
-        color="{{theme === 'dark' ? '#f5f5f5' : '#1a1a1a'}}"
-        bind:click="goNotices"
-      />
     </view>
 
     <van-loading wx:if="{{loading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
