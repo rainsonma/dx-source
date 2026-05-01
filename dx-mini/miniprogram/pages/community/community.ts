@@ -27,8 +27,6 @@ Page({
   },
   onShow() {
     this.setData({ theme: app.globalData.theme })
-    const tabBar = this.getTabBar() as WechatMiniprogram.Component.TrivialInstance | null
-    if (tabBar) tabBar.setData({ active: 3, theme: app.globalData.theme })
     if (!isLoggedIn()) {
       wx.reLaunch({ url: '/pages/login/login' })
       return
