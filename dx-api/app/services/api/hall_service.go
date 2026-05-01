@@ -121,7 +121,7 @@ func GetDashboard(userID string) (*DashboardData, error) {
 	}
 
 	// Recent session progress
-	sessions, err := getSessionProgress(userID)
+	sessions, err := ListSessionProgress(userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session progress: %w", err)
 	}
@@ -203,8 +203,8 @@ func getReviewStats(userID string) (*ReviewStats, error) {
 	}, nil
 }
 
-// getSessionProgress returns recent game session progress entries.
-func getSessionProgress(userID string) ([]SessionProgress, error) {
+// ListSessionProgress returns recent game session progress entries (up to 20, ordered by last_played_at DESC).
+func ListSessionProgress(userID string) ([]SessionProgress, error) {
 	type SessionProgressItem struct {
 		GameID          string    `gorm:"column:game_id"`
 		GameName        string    `gorm:"column:game_name"`
