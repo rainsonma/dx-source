@@ -74,6 +74,8 @@ const ICONS = [
   ['info',                'info'],
   ['alert-triangle',      'triangle-alert'],   // lucide-static renamed alert-triangle -> triangle-alert
   ['check-circle-2',      'circle-check'],     // lucide-static dropped check-circle-2; circle-check is the closest equivalent
+  ['list-checks',         'list-checks'],
+  ['gamepad-2',           'gamepad-2'],
 ]
 
 const lucideDir = path.join(repoRoot, 'node_modules', 'lucide-static', 'icons')
