@@ -11,14 +11,10 @@
 
     <van-loading wx:if="{{firstLoading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
 
-    <van-empty
-      wx:if="{{!firstLoading && notices.length === 0}}"
-      description="暂无通知"
-    >
-      <view slot="image" class="empty-icon">
-        <dx-icon name="megaphone" size="40px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
-      </view>
-    </van-empty>
+    <view wx:if="{{!firstLoading && notices.length === 0}}" class="empty-state">
+      <dx-icon name="megaphone" size="40px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
+      <text class="empty-text">暂无通知</text>
+    </view>
 
     <view class="notice-list">
       <view wx:for="{{notices}}" wx:key="id" class="notice-item">

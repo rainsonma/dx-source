@@ -38,12 +38,22 @@
   padding: 60px 0;
 }
 
-.empty-icon {
+.empty-state {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  gap: 12px;
+  padding: 64px 0;
+}
+
+.empty-text {
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+.page-container.dark .empty-text {
+  color: #6b7280;
 }
 
 .notice-list {
