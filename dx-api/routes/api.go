@@ -141,10 +141,11 @@ func Api() {
 				sessions.Put("/{id}/content-item", playSingleController.UpdateContentItem)
 			})
 
-			// Tracking routes (mastered / unknown / review)
+			// Tracking routes (mastered / unknown / review / sessions)
 			userMasterController := apicontrollers.NewUserMasterController()
 			userUnknownController := apicontrollers.NewUserUnknownController()
 			userReviewController := apicontrollers.NewUserReviewController()
+			userSessionController := apicontrollers.NewUserSessionController()
 			protected.Prefix("/tracking").Group(func(tracking route.Router) {
 				// Mastered
 				tracking.Post("/master", userMasterController.MarkMastered)
@@ -166,6 +167,9 @@ func Api() {
 				tracking.Get("/review/stats", userReviewController.ReviewStats)
 				tracking.Delete("/review/{id}", userReviewController.DeleteReview)
 				tracking.Delete("/review", userReviewController.BulkDeleteReviews)
+
+				// Sessions
+				tracking.Get("/sessions", userSessionController.ListSessions)
 			})
 
 			// Favorites routes
