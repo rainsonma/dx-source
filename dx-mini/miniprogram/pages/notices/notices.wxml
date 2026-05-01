@@ -1,0 +1,40 @@
+<van-config-provider theme="{{theme}}">
+  <view class="page-container {{theme}}" style="--status-bar-height: {{statusBarHeight}}px">
+    <view class="status-bar-spacer"></view>
+    <view class="nav-band">
+      <text class="nav-title">消息</text>
+    </view>
+
+    <view class="meta-row" wx:if="{{!firstLoading}}">
+      <text class="meta-text">共 {{notices.length}} 条通知{{hasMore ? '+' : ''}}</text>
+    </view>
+
+    <van-loading wx:if="{{firstLoading}}" size="30px" color="{{primaryColor}}" class="center-loader" />
+
+    <van-empty
+      wx:if="{{!firstLoading && notices.length === 0}}"
+      description="暂无通知"
+    >
+      <view slot="image" class="empty-icon">
+        <dx-icon name="megaphone" size="40px" color="{{theme === 'dark' ? '#6b7280' : '#9ca3af'}}" />
+      </view>
+    </van-empty>
+
+    <view class="notice-list">
+      <view wx:for="{{notices}}" wx:key="id" class="notice-item">
+        <view class="notice-icon-bg">
+          <dx-icon name="{{item.iconName}}" size="18px" color="{{primaryColor}}" />
+        </view>
+        <view class="notice-body">
+          <text class="notice-title">{{item.title}}</text>
+          <text wx:if="{{item.content}}" class="notice-content">{{item.content}}</text>
+          <text class="notice-time">{{item.timeText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loadingMore}}" class="load-more">
+      <van-loading size="20px" color="{{primaryColor}}" />
+    </view>
+  </view>
+</van-config-provider>
