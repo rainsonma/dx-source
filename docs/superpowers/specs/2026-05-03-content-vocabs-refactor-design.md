@@ -170,23 +170,40 @@ Six tables get a parallel `content_vocab_id` FK alongside their existing `conten
 | `game_reports` | `content_item_id uuid` | `content_vocab_id uuid null` | exactly-one CHECK |
 | `game_sessions` | `current_content_item_id uuid null` | `current_content_vocab_id uuid null` | at-most-one CHECK (both null = no current item) |
 
-`content_item_id` becomes nullable on the five non-session tables (it was not nullable before).
+**All 6 tables also gain `SoftDeletesTz()`** — they don't have it today (audit confirmed: only `content_metas` and `content_items` have soft-delete among the 8 affected tables). This is a project-pattern fix more than a behavioral one; soft-delete fits the convention used elsewhere.
 
-Additional indexes per affected table:
-- New `INDEX(content_vocab_id)` mirroring the existing `INDEX(content_item_id)`.
-- The existing unique constraints (e.g., `UNIQUE(user_id, content_item_id)`) become **partial unique indexes** so the polymorphism works:
-  ```
-  UNIQUE(user_id, content_item_id)  WHERE content_item_id  IS NOT NULL AND deleted_at IS NULL
-  UNIQUE(user_id, content_vocab_id) WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL
-  ```
-- `game_reports`: `UNIQUE(user_id, content_item_id, reason)` and `UNIQUE(user_id, content_vocab_id, reason)` as partial unique indexes.
-- `game_records`: `UNIQUE(game_session_id, content_item_id)` and `UNIQUE(game_session_id, content_vocab_id)` as partial unique indexes.
+`content_item_id` becomes nullable on the 5 non-session tables (it was `NOT NULL` before).
+
+The existing simple `table.Unique(...)` calls in each create_table file are **removed**. The new partial uniques (which include `WHERE deleted_at IS NULL`) live in the per-table `*_raw.go` sibling migration:
+
+```
+-- per-table sibling raw SQL (per affected table)
+CREATE UNIQUE INDEX idx_<table>_user_item_uq
+  ON <table> (user_id, content_item_id)
+  WHERE content_item_id IS NOT NULL AND deleted_at IS NULL
+
+CREATE UNIQUE INDEX idx_<table>_user_vocab_uq
+  ON <table> (user_id, content_vocab_id)
+  WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL
+```
+
+Variants:
+- `game_reports` uses `(user_id, content_*_id, reason)` (3-col)
+- `game_records` uses `(game_session_id, content_*_id)`
+- `game_sessions` has no unique pair, only the at-most-one CHECK
+
+Both regular indexes (on `content_item_id` / `content_vocab_id`) also live in the sibling as partial indexes (`WHERE col IS NOT NULL`), since the columns are nullable.
 
 Rationale (two-FK + CHECK over discriminator + single-ID):
 - Single source of truth (kind is derivable from which FK is non-null).
 - Standard Postgres pattern when the kinds are finite and known at design time (we have exactly 2).
-- `CHECK` enforces the invariant at the DB level — no app-side drift.
+- `CHECK` enforces the invariant at the DB level — no app-side drift, negligible write cost (~tens of ns per row, no read-side impact, no partition impact).
 - Discriminator columns are mostly an ORM-driven convenience (Rails STI, Django GenericFK) for open-ended type sets; we don't need that flexibility.
+
+Behavioral consequence of the partial uniques (`WHERE deleted_at IS NULL`):
+- Soft-deleted rows do **not** occupy the unique slot, so re-marking after unmark is a plain `INSERT` of a new row — no UPSERT/reactivate needed.
+- Each mark/unmark cycle leaves a soft-deleted history row; one always-active row exists at most.
+- Service code: `MarkMastered` / `MarkUnknown` / `MarkReview` are simple `INSERT`s (after a "is there a live row already?" check for idempotency); `Unmark*` is `UPDATE ... SET deleted_at = NOW()`.
 
 ## Section 2 — ai-custom rewrite
 
@@ -448,27 +465,77 @@ Untouched — no content-table joins.
 
 ### Migration file changes (no production data — edit in place)
 
-| Action | File |
-|---|---|
-| EDIT | `20260322000036_create_content_metas_table.go` — add (game_id, game_level_id, order); column order per Section 1; drop dedup index |
-| EDIT | `20260322000037_create_content_items_table.go` — add (game_id, game_level_id, order); column order per Section 1 |
-| EDIT | `20260322000043_create_game_reports_table.go` — add `content_vocab_id` + CHECK + partial unique + index; nullable `content_item_id` |
-| EDIT | `20260322000044_create_user_masters_table.go` — same pattern |
-| EDIT | `20260322000045_create_user_unknowns_table.go` — same pattern |
-| EDIT | `20260322000046_create_user_reviews_table.go` — same pattern |
-| EDIT | `20260405000002_create_game_sessions_table.go` — add `current_content_vocab_id` + at-most-one CHECK |
-| EDIT | `20260405000004_create_game_records_table.go` — add `content_vocab_id` + CHECK + partial unique + index; nullable `content_item_id` |
-| RENAME + REWRITE | `20260414000001_create_game_metas_and_game_items_tables.go` → `20260414000001_create_content_vocabs_and_game_vocabs_tables.go` (creates content_vocabs + game_vocabs; the old junctions are simply not created) |
-| ADD | `20260414000002_create_content_vocab_edits_table.go` |
-| EDIT | `bootstrap/migrations.go` — register the renamed + new files |
+**Naming convention:** sibling raw-SQL migrations are named `<prefix>_<table>_raw.go` and **must come immediately after their create_table file in prefix order**. Existing `*_indexes.go` siblings are renamed to `*_raw.go`. Some create_table files get **renumbered** to make room for their new sibling.
+
+| Action | File | Notes |
+|---|---|---|
+| EDIT | `20260322000036_create_content_metas_table.go` | Add (game_id, game_level_id, order); column order per Section 1; drop dedup index. No sibling needed. |
+| EDIT | `20260322000037_create_content_items_table.go` | Add (game_id, game_level_id, order); column order per Section 1. No sibling needed. |
+| EDIT | `20260322000043_create_game_reports_table.go` | Add SoftDeletesTz, add nullable `content_vocab_id`, make `content_item_id` nullable, drop existing simple `Unique(...)` (moves to sibling). |
+| ADD | `20260322000044_add_game_reports_raw.go` | NEW sibling: regular indexes + partial uniques + XOR CHECK (raw SQL). |
+| RENUMBER + EDIT | `20260322000044_create_user_masters_table.go` → `20260322000045_create_user_masters_table.go` | Same edit pattern as game_reports. |
+| ADD | `20260322000046_add_user_masters_raw.go` | NEW sibling. |
+| RENUMBER + EDIT | `20260322000045_create_user_unknowns_table.go` → `20260322000047_create_user_unknowns_table.go` | Same. |
+| ADD | `20260322000048_add_user_unknowns_raw.go` | NEW sibling. |
+| RENUMBER + EDIT | `20260322000046_create_user_reviews_table.go` → `20260322000049_create_user_reviews_table.go` | Same. |
+| ADD | `20260322000050_add_user_reviews_raw.go` | NEW sibling. |
+| EDIT | `20260405000002_create_game_sessions_table.go` | Add SoftDeletesTz, add nullable `current_content_vocab_id`. |
+| RENAME + EDIT | `20260405000003_add_game_session_indexes.go` → `20260405000003_add_game_sessions_raw.go` | Same prefix; pluralized name to match table. **Append** index on `current_content_vocab_id` + at-most-one CHECK. Existing index statements untouched. |
+| EDIT | `20260405000004_create_game_records_table.go` | Same pattern as game_reports/user_*. |
+| ADD | `20260405000005_add_game_records_raw.go` | NEW sibling. |
+| RENUMBER | `20260405000005_create_game_pks_table.go` → `20260405000006_create_game_pks_table.go` | Bumped to make room for game_records sibling. No content change. |
+| RENAME + RENUMBER | `20260405000006_add_game_pk_indexes.go` → `20260405000007_add_game_pks_raw.go` | Renamed and bumped; content unchanged (was already a raw-SQL sibling). |
+| DELETE | `20260414000001_create_game_metas_and_game_items_tables.go` | Junctions are gone with the refactor. |
+| ADD (at freed prefix) | `20260414000001_create_content_vocabs_and_game_vocabs_tables.go` | Two tables in one file (mirrors the old "create both junctions in one file" pattern). |
+| ADD | `20260414000002_add_content_vocabs_raw.go` | NEW sibling for `content_vocabs`: partial unique on `content_key` (`WHERE deleted_at IS NULL`). `game_vocabs` needs no sibling. |
+| ADD | `20260414000003_create_content_vocab_edits_table.go` | NEW table; no sibling needed. |
+| EDIT | `bootstrap/migrations.go` | Drop `M20260414000001CreateGameMetasAndGameItemsTables`. Register all new + renumbered files in correct order. Update struct names for renumbered create files. |
+
+### Models — delete
+
+```
+DELETE: app/models/game_meta.go
+DELETE: app/models/game_item.go
+```
+
+These models have no callers after the service refactor. Remove the imports from any file that still references them.
+
+### `*_raw.go` sibling structure (template)
+
+All `*_raw.go` siblings follow the existing `add_game_session_indexes.go` shape — a `Signature()` returning the file's prefix, an `Up()` running an ordered slice of raw SQL `Exec(...)` calls, a `Down()` running the mirrored `DROP` slice. Example for `add_game_reports_raw.go`:
+
+```go
+func (r *M20260322000044AddGameReportsRaw) Up() error {
+    statements := []string{
+        `CREATE INDEX idx_game_reports_content_item_id
+           ON game_reports (content_item_id)
+           WHERE content_item_id IS NOT NULL`,
+        `CREATE INDEX idx_game_reports_content_vocab_id
+           ON game_reports (content_vocab_id)
+           WHERE content_vocab_id IS NOT NULL`,
+        `CREATE UNIQUE INDEX idx_game_reports_user_item_reason_uq
+           ON game_reports (user_id, content_item_id, reason)
+           WHERE content_item_id IS NOT NULL AND deleted_at IS NULL`,
+        `CREATE UNIQUE INDEX idx_game_reports_user_vocab_reason_uq
+           ON game_reports (user_id, content_vocab_id, reason)
+           WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL`,
+        `ALTER TABLE game_reports
+           ADD CONSTRAINT game_reports_content_xor
+           CHECK ((content_item_id IS NULL) != (content_vocab_id IS NULL))`,
+    }
+    // ... loop + Exec + return
+}
+```
+
+`add_user_*_raw.go` use the 2-col `(user_id, content_*_id)` unique (no `reason`). `add_game_records_raw.go` uses `(game_session_id, content_*_id)`. `add_game_sessions_raw.go` (renamed file) appends only the index on `current_content_vocab_id` and the at-most-one CHECK to its existing statement slice.
 
 ### Affected Go files
 
 **Models** (`app/models/`):
-- DELETE: `game_meta.go`, `game_item.go`
+- DELETE: `game_meta.go`, `game_item.go` (the junctions are gone)
 - ADD: `content_vocab.go`, `game_vocab.go`, `content_vocab_edit.go`
 - EDIT: `content_meta.go`, `content_item.go` (add fields, drop `Tags` from content_item)
-- EDIT: `game_record.go`, `game_session.go`, `user_master.go`, `user_unknown.go`, `user_review.go`, `game_report.go` (add `ContentVocabID *string`; make existing `ContentItemID` a pointer where it isn't already)
+- EDIT: `game_record.go`, `game_session.go`, `user_master.go`, `user_unknown.go`, `user_review.go`, `game_report.go` (add `ContentVocabID *string`; make existing `ContentItemID` a pointer; add `orm.SoftDeletes` to the 6 tracking models since the underlying tables now have `deleted_at`)
 
 **Consts** (`app/consts/`):
 - ADD: `pos.go` — 12-key set: n, v, adj, adv, prep, conj, pron, art, num, int, aux, det; `AllPos []string`; `IsValidPos(s string) bool`
@@ -549,6 +616,10 @@ None at sign-off. All resolved during brainstorming:
 - Anti-vandalism: complement = additive merge (anyone); replace = gated (creator/admin/<24h-unverified); admin verify-lock; full audit via content_vocab_edits.
 - POS keys: standard 12-key set.
 - WS mode keeps mixed sentence + vocab content (the "play vocabs the WS way" use case).
-- Polymorphism: two FK columns + CHECK (no discriminator).
+- Polymorphism: two FK columns + CHECK (no discriminator); CHECK is partition-safe (row-local, no coordination).
+- Soft-delete added to all 6 tracking tables (was missing); aligns with project pattern.
+- Mark/unmark behavior: insert-new on each mark, soft-delete on unmark (partial unique with `WHERE deleted_at IS NULL` allows it).
+- Sibling raw-SQL migrations: per-table `*_raw.go`, named to follow create_table file in prefix order; `add_game_session_indexes.go` and `add_game_pk_indexes.go` renamed to `*_raw.go` form.
+- `game_metas` / `game_items` migration file + model files deleted entirely.
 - Wiki browse page: deferred.
 - Audio TTS: out of scope.
