@@ -20,15 +20,15 @@ func (r *M20260322000043CreateGameReportsTable) Up() error {
 			table.Uuid("user_id")
 			table.Uuid("game_id")
 			table.Uuid("game_level_id")
-			table.Uuid("content_item_id")
+			table.Uuid("content_item_id").Nullable()
+			table.Uuid("content_vocab_id").Nullable()
 			table.Text("reason").Default("")
 			table.Text("note").Nullable()
 			table.Integer("count").Default(0)
+			table.SoftDeletesTz()
 			table.TimestampsTz()
-			table.Unique("user_id", "content_item_id", "reason")
 			table.Index("user_id")
 			table.Index("game_id")
-			table.Index("content_item_id")
 		})
 	}
 	return nil
