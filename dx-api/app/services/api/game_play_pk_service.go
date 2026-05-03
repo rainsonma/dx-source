@@ -737,26 +737,23 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			countCol = "wrong_count = wrong_count + 1"
 		}
 
-		var nextItemID *string
+		// Cursor for the next row: pick whichever polymorphic FK is populated
+		// on the next row, leaving the other NULL. Last row leaves both NULL.
+		// Setting both columns in one UPDATE keeps the at-most-one CHECK valid.
+		var nextItemFK, nextVocabFK *string
 		if i+1 < len(rows) {
-			nextItemID = &rows[i+1].ID
+			nextItemFK = rows[i+1].ContentItemID
+			nextVocabFK = rows[i+1].ContentVocabID
 		}
 
 		// Track elapsed seconds so the robot contributes to the playtime
 		// leaderboard (helps seed rankings before many real users exist).
 		elapsedSec := int(time.Since(now).Seconds())
 
-		if nextItemID != nil {
-			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, elapsedSec, *nextItemID, robotSession.ID,
-			)
-		} else {
-			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, elapsedSec, robotSession.ID,
-			)
-		}
+		facades.Orm().Query().Exec(
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, current_content_vocab_id = ?, updated_at = now() WHERE id = ?", countCol),
+			combo.TotalScore, combo.MaxCombo, elapsedSec, nextItemFK, nextVocabFK, robotSession.ID,
+		)
 
 		// Broadcast robot action
 		action := "score"

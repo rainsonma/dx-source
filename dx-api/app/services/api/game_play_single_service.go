@@ -629,7 +629,7 @@ func countLevelItems(query orm.Query, gameLevelID, degree string) (int64, error)
 		return 0, fmt.Errorf("countLevelItems: failed to load level: %w", err)
 	}
 	var game models.Game
-	if err := query.Select("mode").Where("id", level.GameID).First(&game); err != nil || game.ID == "" {
+	if err := query.Select("id", "mode").Where("id", level.GameID).First(&game); err != nil || game.ID == "" {
 		return 0, fmt.Errorf("countLevelItems: failed to load game: %w", err)
 	}
 
