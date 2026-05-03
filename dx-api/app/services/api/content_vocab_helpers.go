@@ -133,7 +133,7 @@ func CanReplaceVocab(userID string, vocab *models.ContentVocab) bool {
 	if IsAdmin(userID) {
 		return true
 	}
-	if !vocab.IsVerified && time.Since(vocab.CreatedAt.Time) < unverifiedEditWindow {
+	if !vocab.IsVerified && vocab.CreatedAt != nil && time.Since(vocab.CreatedAt.StdTime()) < unverifiedEditWindow {
 		return true
 	}
 	return false
