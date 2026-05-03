@@ -8,6 +8,7 @@ import (
 
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
+	apiReq "dx-api/app/http/requests/api"
 	services "dx-api/app/services/api"
 
 	"github.com/goravel/framework/facades"
@@ -215,6 +216,24 @@ func (c *AiCustomController) FormatVocab(ctx contractshttp.Context) contractshtt
 	return helpers.Success(ctx, map[string]any{
 		"formatted": result.Formatted,
 	})
+}
+
+// GenerateContentVocabFields enriches content_vocabs rows referenced by this
+// level's game_vocabs via SSE.
+func (c *AiCustomController) GenerateContentVocabFields(ctx contractshttp.Context) contractshttp.Response {
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+	var req apiReq.AiCustomLevelRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+
+	w := ctx.Response().Writer()
+	writer := helpers.NewNDJSONWriter(w)
+	services.GenerateContentVocabFields(userID, req.GameLevelID, writer)
+	return nil
 }
 
 // mapAIServiceError maps service errors to HTTP responses.
