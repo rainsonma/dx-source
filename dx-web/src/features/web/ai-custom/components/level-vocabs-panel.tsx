@@ -34,6 +34,7 @@ import { verifyVocabAction } from "@/features/web/ai-custom/actions/content-voca
 import { fetchWithProgress } from "@/features/web/ai-custom/helpers/stream-progress";
 import { AddVocabsDialog } from "@/features/web/ai-custom/components/add-vocabs-dialog";
 import { ComplementVocabDialog } from "@/features/web/ai-custom/components/complement-vocab-dialog";
+import { EditVocabDialog } from "@/features/web/ai-custom/components/edit-vocab-dialog";
 import { ProcessingOverlay } from "@/features/web/ai-custom/components/processing-overlay";
 import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
 
@@ -89,6 +90,7 @@ export function LevelVocabsPanel({
   const [vocabs, setVocabs] = useState<LevelVocabData[]>(initialVocabs);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [complementVocab, setComplementVocab] = useState<ContentVocabData | null>(null);
+  const [editVocab, setEditVocab] = useState<ContentVocabData | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isEnriching, setIsEnriching] = useState(false);
@@ -102,7 +104,11 @@ export function LevelVocabsPanel({
 
   function canEdit(vocab: ContentVocabData | null) {
     if (!vocab) return false;
-    return vocab.createdBy === currentUserId || isAdmin;
+    if (vocab.createdBy === currentUserId || isAdmin) return true;
+    if (!vocab.isVerified && vocab.createdAt) {
+      return Date.now() - new Date(vocab.createdAt).getTime() < 24 * 60 * 60 * 1000;
+    }
+    return false;
   }
 
   async function handleEnrich() {
@@ -204,6 +210,15 @@ export function LevelVocabsPanel({
       )
     );
     setComplementVocab(null);
+  }
+
+  function handleEditSaved(updated: ContentVocabData) {
+    setVocabs((prev) =>
+      prev.map((row) =>
+        row.vocab?.id === updated.id ? { ...row, vocab: updated } : row
+      )
+    );
+    setEditVocab(null);
   }
 
   return (
@@ -325,7 +340,7 @@ export function LevelVocabsPanel({
                           {editable && (
                             <button
                               type="button"
-                              onClick={() => setComplementVocab(vocab)}
+                              onClick={() => setEditVocab(vocab)}
                               disabled={readOnly}
                               title="编辑"
                               className="flex h-7 items-center gap-1 rounded-lg bg-muted px-2 text-xs font-semibold text-muted-foreground hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
@@ -438,6 +453,14 @@ export function LevelVocabsPanel({
           vocab={complementVocab}
           onClose={() => setComplementVocab(null)}
           onSaved={handleComplementSaved}
+        />
+      )}
+
+      {editVocab && (
+        <EditVocabDialog
+          vocab={editVocab}
+          onClose={() => setEditVocab(null)}
+          onSaved={handleEditSaved}
         />
       )}
 

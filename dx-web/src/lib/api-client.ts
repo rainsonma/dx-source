@@ -724,6 +724,7 @@ export interface ContentVocabData {
   isVerified: boolean;
   createdBy?: string | null;
   lastEditedBy?: string | null;
+  createdAt?: string | null;
 }
 
 export interface ContentVocabComplementPatch {
