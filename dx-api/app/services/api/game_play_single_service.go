@@ -72,27 +72,30 @@ type SessionRestoreData struct {
 
 // RecordAnswerInput holds the data needed to record an answer.
 type RecordAnswerInput struct {
-	GameSessionID     string
-	GameLevelID       string
-	ContentItemID     string
-	IsCorrect         bool
-	UserAnswer        string
-	SourceAnswer      string
-	BaseScore         int
-	ComboScore        int
-	Score             int
-	MaxCombo          int
-	PlayTime          int
-	NextContentItemID *string
-	Duration          int
+	GameSessionID      string
+	GameLevelID        string
+	ContentItemID      *string // exactly one of ContentItemID / ContentVocabID must be set
+	ContentVocabID     *string
+	IsCorrect          bool
+	UserAnswer         string
+	SourceAnswer       string
+	BaseScore          int
+	ComboScore         int
+	Score              int
+	MaxCombo           int
+	PlayTime           int
+	NextContentItemID  *string
+	NextContentVocabID *string
+	Duration           int
 }
 
 // RecordSkipInput holds the data needed to record a skip.
 type RecordSkipInput struct {
-	GameSessionID     string
-	GameLevelID       string
-	PlayTime          int
-	NextContentItemID *string
+	GameSessionID      string
+	GameLevelID        string
+	PlayTime           int
+	NextContentItemID  *string
+	NextContentVocabID *string
 }
 
 // EndSessionInput holds the data needed to end a session.
@@ -325,22 +328,28 @@ func RecordAnswer(userID string, input RecordAnswerInput) error {
 
 	// 1. Upsert game record
 	var existingRecord models.GameRecord
-	_ = tx.Where("game_session_id", input.GameSessionID).
-		Where("content_item_id", input.ContentItemID).First(&existingRecord)
+	q := tx.Where("game_session_id", input.GameSessionID)
+	if input.ContentItemID != nil {
+		q = q.Where("content_item_id", *input.ContentItemID)
+	} else if input.ContentVocabID != nil {
+		q = q.Where("content_vocab_id", *input.ContentVocabID)
+	}
+	_ = q.First(&existingRecord)
 
 	if existingRecord.ID == "" {
 		record := models.GameRecord{
-			ID:            newID(),
-			UserID:        userID,
-			GameSessionID: input.GameSessionID,
-			GameLevelID:   input.GameLevelID,
-			ContentItemID: input.ContentItemID,
-			IsCorrect:     input.IsCorrect,
-			UserAnswer:    input.UserAnswer,
-			SourceAnswer:  input.SourceAnswer,
-			BaseScore:     input.BaseScore,
-			ComboScore:    input.ComboScore,
-			Duration:      safeDuration,
+			ID:             newID(),
+			UserID:         userID,
+			GameSessionID:  input.GameSessionID,
+			GameLevelID:    input.GameLevelID,
+			ContentItemID:  input.ContentItemID,
+			ContentVocabID: input.ContentVocabID,
+			IsCorrect:      input.IsCorrect,
+			UserAnswer:     input.UserAnswer,
+			SourceAnswer:   input.SourceAnswer,
+			BaseScore:      input.BaseScore,
+			ComboScore:     input.ComboScore,
+			Duration:       safeDuration,
 		}
 		if err := tx.Create(&record); err != nil {
 			_ = tx.Rollback()
@@ -357,15 +366,23 @@ func RecordAnswer(userID string, input RecordAnswerInput) error {
 	}
 	if input.NextContentItemID != nil {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?", countCol),
 			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentItemID, input.GameSessionID,
+		); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("failed to update session stats: %w", err)
+		}
+	} else if input.NextContentVocabID != nil {
+		if _, err := tx.Exec(
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, current_content_vocab_id = ?, updated_at = now() WHERE id = ?", countCol),
+			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentVocabID, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("failed to update session stats: %w", err)
 		}
 	} else {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?", countCol),
 			input.Score, input.MaxCombo, input.PlayTime, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
@@ -403,12 +420,17 @@ func RecordSkip(userID string, input RecordSkipInput) error {
 
 	if input.NextContentItemID != nil {
 		_, err = facades.Orm().Query().Exec(
-			"UPDATE game_sessions SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = ?, updated_at = now() WHERE id = ?",
+			"UPDATE game_sessions SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = ?, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?",
 			input.PlayTime, *input.NextContentItemID, input.GameSessionID,
+		)
+	} else if input.NextContentVocabID != nil {
+		_, err = facades.Orm().Query().Exec(
+			"UPDATE game_sessions SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = NULL, current_content_vocab_id = ?, updated_at = now() WHERE id = ?",
+			input.PlayTime, *input.NextContentVocabID, input.GameSessionID,
 		)
 	} else {
 		_, err = facades.Orm().Query().Exec(
-			"UPDATE game_sessions SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = NULL, updated_at = now() WHERE id = ?",
+			"UPDATE game_sessions SET skip_count = skip_count + 1, play_time = ?, current_content_item_id = NULL, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?",
 			input.PlayTime, input.GameSessionID,
 		)
 	}
@@ -531,12 +553,16 @@ func SyncPlayTime(userID, sessionID string, playTime int) error {
 }
 
 // UpdateCurrentContentItem updates the session's resume point.
-func UpdateCurrentContentItem(userID, sessionID string, contentItemID *string) error {
+// Pass exactly one of contentItemID or contentVocabID; the other column is cleared.
+func UpdateCurrentContentItem(userID, sessionID string, contentItemID, contentVocabID *string) error {
 	if err := verifyOwnership(userID, sessionID); err != nil {
 		return err
 	}
 	_, err := facades.Orm().Query().Model(&models.GameSession{}).Where("id", sessionID).
-		Update("current_content_item_id", contentItemID)
+		Update(map[string]any{
+			"current_content_item_id":  contentItemID,
+			"current_content_vocab_id": contentVocabID,
+		})
 	return err
 }
 

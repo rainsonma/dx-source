@@ -365,22 +365,28 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 
 	// 1. Upsert game record
 	var existingRecord models.GameRecord
-	_ = tx.Where("game_session_id", input.GameSessionID).
-		Where("content_item_id", input.ContentItemID).First(&existingRecord)
+	q := tx.Where("game_session_id", input.GameSessionID)
+	if input.ContentItemID != nil {
+		q = q.Where("content_item_id", *input.ContentItemID)
+	} else if input.ContentVocabID != nil {
+		q = q.Where("content_vocab_id", *input.ContentVocabID)
+	}
+	_ = q.First(&existingRecord)
 
 	if existingRecord.ID == "" {
 		record := models.GameRecord{
-			ID:            newID(),
-			UserID:        userID,
-			GameSessionID: input.GameSessionID,
-			GameLevelID:   input.GameLevelID,
-			ContentItemID: input.ContentItemID,
-			IsCorrect:     input.IsCorrect,
-			UserAnswer:    input.UserAnswer,
-			SourceAnswer:  input.SourceAnswer,
-			BaseScore:     input.BaseScore,
-			ComboScore:    input.ComboScore,
-			Duration:      safeDuration,
+			ID:             newID(),
+			UserID:         userID,
+			GameSessionID:  input.GameSessionID,
+			GameLevelID:    input.GameLevelID,
+			ContentItemID:  input.ContentItemID,
+			ContentVocabID: input.ContentVocabID,
+			IsCorrect:      input.IsCorrect,
+			UserAnswer:     input.UserAnswer,
+			SourceAnswer:   input.SourceAnswer,
+			BaseScore:      input.BaseScore,
+			ComboScore:     input.ComboScore,
+			Duration:       safeDuration,
 		}
 		if err := tx.Create(&record); err != nil {
 			_ = tx.Rollback()
@@ -397,15 +403,23 @@ func GroupPlayRecordAnswer(userID string, input RecordAnswerInput) error {
 	}
 	if input.NextContentItemID != nil {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?", countCol),
 			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentItemID, input.GameSessionID,
+		); err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("failed to update session stats: %w", err)
+		}
+	} else if input.NextContentVocabID != nil {
+		if _, err := tx.Exec(
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, current_content_vocab_id = ?, updated_at = now() WHERE id = ?", countCol),
+			input.Score, input.MaxCombo, input.PlayTime, *input.NextContentVocabID, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
 			return fmt.Errorf("failed to update session stats: %w", err)
 		}
 	} else {
 		if _, err := tx.Exec(
-			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, current_content_vocab_id = NULL, updated_at = now() WHERE id = ?", countCol),
 			input.Score, input.MaxCombo, input.PlayTime, input.GameSessionID,
 		); err != nil {
 			_ = tx.Rollback()
@@ -479,7 +493,8 @@ func GroupPlayRestoreSessionData(userID, sessionID string) (*SessionRestoreData,
 }
 
 // GroupPlayUpdateContentItem updates the session's resume point.
-func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string) error {
+// Pass exactly one of contentItemID or contentVocabID; the other column is cleared.
+func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID, contentVocabID *string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
@@ -487,7 +502,10 @@ func GroupPlayUpdateContentItem(userID, sessionID string, contentItemID *string)
 		return err
 	}
 	_, err := facades.Orm().Query().Model(&models.GameSession{}).Where("id", sessionID).
-		Update("current_content_item_id", contentItemID)
+		Update(map[string]any{
+			"current_content_item_id":  contentItemID,
+			"current_content_vocab_id": contentVocabID,
+		})
 	return err
 }
 

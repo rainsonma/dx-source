@@ -545,11 +545,12 @@ func PkRestoreSessionData(userID, sessionID string) (*SessionRestoreData, error)
 }
 
 // PkUpdateContentItem updates the current content item in a PK session.
-func PkUpdateContentItem(userID, sessionID string, contentItemID *string) error {
+// Pass exactly one of contentItemID or contentVocabID; the other column is cleared.
+func PkUpdateContentItem(userID, sessionID string, contentItemID, contentVocabID *string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	return UpdateCurrentContentItem(userID, sessionID, contentItemID)
+	return UpdateCurrentContentItem(userID, sessionID, contentItemID, contentVocabID)
 }
 
 // --- Robot goroutine ---
