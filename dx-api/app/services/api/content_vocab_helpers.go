@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"dx-api/app/consts"
-	"dx-api/app/models"
-
 	"github.com/google/uuid"
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
 )
 
 // Edit gating: rows are editable freely up to this age if not yet verified.
@@ -71,6 +71,13 @@ func ValidateDefinition(definitionJSON string) error {
 	if err := json.Unmarshal([]byte(definitionJSON), &entries); err != nil {
 		return fmt.Errorf("invalid definition JSON: %w", err)
 	}
+	return ValidatePosEntries(entries)
+}
+
+// ValidatePosEntries enforces single-key objects with known POS keys on an
+// already-parsed definition slice. Used by ComplementContentVocab,
+// ReplaceContentVocab, and ValidateDefinition.
+func ValidatePosEntries(entries []map[string]string) error {
 	for _, entry := range entries {
 		if len(entry) != 1 {
 			return fmt.Errorf("each definition entry must be a single-key object")

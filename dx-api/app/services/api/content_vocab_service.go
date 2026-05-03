@@ -6,11 +6,11 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/goravel/framework/facades"
+
 	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	"dx-api/app/models"
-
-	"github.com/goravel/framework/facades"
 )
 
 // ContentVocabData is the public response shape for canonical wiki entries.
@@ -89,13 +89,8 @@ func ComplementContentVocab(userID, vocabID string, patch VocabComplementPatch) 
 
 	updates := map[string]any{}
 	if patch.Definition != nil {
-		// Validate POS keys
-		for _, e := range patch.Definition {
-			for k := range e {
-				if !consts.IsValidPos(k) {
-					return nil, ErrInvalidPosKey
-				}
-			}
+		if err := ValidatePosEntries(patch.Definition); err != nil {
+			return nil, err
 		}
 		existing := ""
 		if v.Definition != nil {
@@ -168,12 +163,8 @@ func ReplaceContentVocab(userID, vocabID string, patch VocabReplacePatch) (*Cont
 	if err := ValidateVocabContent(patch.Content); err != nil {
 		return nil, err
 	}
-	for _, e := range patch.Definition {
-		for k := range e {
-			if !consts.IsValidPos(k) {
-				return nil, ErrInvalidPosKey
-			}
-		}
+	if err := ValidatePosEntries(patch.Definition); err != nil {
+		return nil, err
 	}
 
 	beforeSnapshot, _ := SnapshotVocab(&v)
@@ -359,26 +350,42 @@ func enrichContentVocab(userID string, v models.ContentVocab) bool {
 	if err := json.Unmarshal([]byte(result), &ai); err != nil {
 		return false
 	}
-	for _, e := range ai.Definition {
-		for k := range e {
-			if !consts.IsValidPos(k) {
-				return false
-			}
-		}
-	}
-	defJSON, err := json.Marshal(ai.Definition)
-	if err != nil {
+	if err := ValidatePosEntries(ai.Definition); err != nil {
 		return false
 	}
 
 	beforeSnapshot, _ := SnapshotVocab(&v)
-	updates := map[string]any{
-		"uk_phonetic":    ai.UkPhonetic,
-		"us_phonetic":    ai.UsPhonetic,
-		"definition":     string(defJSON),
-		"explanation":    ai.Explanation,
-		"last_edited_by": userID,
+
+	// Additive merge — never overwrite existing curated data.
+	// Phonetic / explanation set only when currently null/empty.
+	// Definition merges new POS keys (existing keys win on conflict).
+	updates := map[string]any{"last_edited_by": userID}
+	if v.UkPhonetic == nil || *v.UkPhonetic == "" {
+		updates["uk_phonetic"] = ai.UkPhonetic
 	}
+	if v.UsPhonetic == nil || *v.UsPhonetic == "" {
+		updates["us_phonetic"] = ai.UsPhonetic
+	}
+	if v.Explanation == nil || *v.Explanation == "" {
+		updates["explanation"] = ai.Explanation
+	}
+	existingDef := ""
+	if v.Definition != nil {
+		existingDef = *v.Definition
+	}
+	mergedDef, err := MergeDefinition(existingDef, ai.Definition)
+	if err != nil {
+		return false
+	}
+	if mergedDef != existingDef {
+		updates["definition"] = mergedDef
+	}
+
+	if len(updates) == 1 {
+		// Only "last_edited_by" — nothing to merge in. Skip update + edit log.
+		return true
+	}
+
 	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
 		Where("id", v.ID).Update(updates); err != nil {
 		return false

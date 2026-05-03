@@ -3,12 +3,12 @@ package api
 import (
 	"fmt"
 
-	"dx-api/app/consts"
-	"dx-api/app/models"
-
 	"github.com/google/uuid"
 	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
 )
 
 // AddedGameVocab is one item in the AddVocabsToLevel response.
