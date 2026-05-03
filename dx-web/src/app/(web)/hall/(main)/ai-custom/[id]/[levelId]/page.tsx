@@ -4,9 +4,12 @@ import { use } from "react"
 import useSWR from "swr"
 import { BreadcrumbTopBar } from "@/features/web/hall/components/breadcrumb-top-bar"
 import { LevelUnitsPanel } from "@/features/web/ai-custom/components/level-units-panel"
+import { LevelVocabsPanel } from "@/features/web/ai-custom/components/level-vocabs-panel"
 import type { GameMode } from "@/consts/game-mode"
 import { GAME_STATUSES } from "@/consts/game-status"
+import { isVocabMode } from "@/consts/game-mode"
 import { PageSpinner } from "@/components/in/page-spinner"
+import type { LevelVocabData } from "@/lib/api-client"
 
 export default function CourseGameLevelPage({
   params,
@@ -16,6 +19,8 @@ export default function CourseGameLevelPage({
   const { id, levelId } = use(params)
 
   const { data: game, isLoading: gameLoading } = useSWR(`/api/course-games/${id}`)
+  const { data: profile, isLoading: profileLoading } = useSWR<{ id: string; username: string }>("/api/user/profile")
+
   type ContentGroupItem = { items: unknown[] | null; contentType: string };
   type ContentGroup = {
     meta: {
@@ -30,11 +35,19 @@ export default function CourseGameLevelPage({
     items?: ContentGroupItem[];
   };
 
+  const vocabMode = isVocabMode(game?.mode ?? "")
+
   const { data: contentGroups, isLoading: contentLoading } = useSWR<ContentGroup[]>(
-    `/api/course-games/${id}/levels/${levelId}/content-items`
+    !vocabMode ? `/api/course-games/${id}/levels/${levelId}/content-items` : null
   )
 
-  if (gameLoading || contentLoading) return <PageSpinner size="lg" />
+  const { data: gameVocabs, isLoading: vocabsLoading } = useSWR<LevelVocabData[]>(
+    vocabMode ? `/api/course-games/${id}/levels/${levelId}/game-vocabs` : null
+  )
+
+  const isLoading = gameLoading || profileLoading || (vocabMode ? vocabsLoading : contentLoading)
+
+  if (isLoading) return <PageSpinner size="lg" />
 
   const metas = (contentGroups ?? []).map((group) => ({
     id: group.meta.id,
@@ -56,6 +69,9 @@ export default function CourseGameLevelPage({
   const level = game?.levels?.find((l: { id: string }) => l.id === levelId)
   const isPublished = game?.status === GAME_STATUSES.PUBLISHED
 
+  const currentUserId = profile?.id ?? ""
+  const isAdmin = profile?.username === "rainson"
+
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <BreadcrumbTopBar
@@ -67,7 +83,27 @@ export default function CourseGameLevelPage({
         ]}
       />
 
-      <LevelUnitsPanel gameId={id} levelId={levelId} gameMode={(game?.mode ?? "word-sentence") as GameMode} initialMetas={metas} readOnly={isPublished} sentenceItemCount={sentenceItemCount} vocabItemCount={vocabItemCount} />
+      {vocabMode ? (
+        <LevelVocabsPanel
+          gameId={id}
+          levelId={levelId}
+          gameMode={(game?.mode ?? "vocab-battle") as GameMode}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          initialVocabs={gameVocabs ?? []}
+          readOnly={isPublished}
+        />
+      ) : (
+        <LevelUnitsPanel
+          gameId={id}
+          levelId={levelId}
+          gameMode={(game?.mode ?? "word-sentence") as GameMode}
+          initialMetas={metas}
+          readOnly={isPublished}
+          sentenceItemCount={sentenceItemCount}
+          vocabItemCount={vocabItemCount}
+        />
+      )}
     </div>
   )
 }
