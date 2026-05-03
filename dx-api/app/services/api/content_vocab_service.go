@@ -26,6 +26,7 @@ type ContentVocabData struct {
 	IsVerified   bool    `json:"isVerified"`
 	CreatedBy    *string `json:"createdBy"`
 	LastEditedBy *string `json:"lastEditedBy"`
+	CreatedAt    any     `json:"createdAt"`
 }
 
 func vocabToData(v *models.ContentVocab) *ContentVocabData {
@@ -41,6 +42,7 @@ func vocabToData(v *models.ContentVocab) *ContentVocabData {
 		IsVerified:   v.IsVerified,
 		CreatedBy:    v.CreatedBy,
 		LastEditedBy: v.LastEditedBy,
+		CreatedAt:    v.CreatedAt,
 	}
 }
 
