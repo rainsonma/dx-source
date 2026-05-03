@@ -201,7 +201,7 @@ Changes:
 | `GenerateMetadata` | story from keywords | unchanged |
 | `FormatMetadata` | clean text, emit `[S]/[V]` markers | unchanged |
 | `SaveMetadataBatch` | per-user dedup via 4-table JOIN; reuse items if `is_break_done`; create game_metas row | **just inserts content_metas rows** with `(game_id, game_level_id, order)`; no dedup, no junction, no item reuse. Capacity check (sentences vs vocab ratio for WS) preserved by querying content_metas directly. |
-| `BreakMetadata` | reads via `JOIN game_metas`; writes content_items + game_items | reads `content_metas WHERE game_level_id = ? AND is_break_done = false`; writes content_items directly with `(game_id, game_level_id, order = parent_meta_order + 10*i)` |
+| `BreakMetadata` | reads via `JOIN game_metas`; writes content_items + game_items | reads `content_metas WHERE game_level_id = ? AND is_break_done = false`; writes content_items directly with `(game_id, game_level_id, order = parent_meta_order + 10*(i+1))` (matches today's `baseOrder + 10*(i+1)` cadence) |
 | `GenerateContentItems` | reads via `JOIN game_items`; updates `items` JSON | reads `content_items WHERE game_level_id = ? AND items IS NULL`; updates `items` |
 | `ReorderMetadata` / `ReorderContentItems` | UPDATE on junction `"order"` | UPDATE on `content_metas."order"` / `content_items."order"` directly |
 | `DeleteMetadata` / `DeleteContentItem` / `DeleteAllLevelContent` / `DeleteGame` / `DeleteLevel` | soft-delete junction rows + orphan-check canonical | soft-delete `content_metas` / `content_items` rows directly; no junctions, no orphan check |
@@ -280,8 +280,12 @@ AddVocabsToLevel(userID, gameID, levelID, entries []string) → []AddedVocab
   --      Miss → INSERT canonical (content, content_key, created_by = userID),
   --              write content_vocab_edits('create', null, snapshot),
   --              create game_vocabs row pointing at new canonical_id.
-  -- Vocab batch-size enforced (5/8/20) on TOTAL count of game_vocabs in level
-  -- after the batch is applied. game.mode determines the batch size.
+  -- Vocab batch-size enforced via consts.VocabBatchSize(game.Mode) on TOTAL
+  -- count of game_vocabs in level after the batch is applied:
+  --   vocab-match       → multiple of 5
+  --   vocab-elimination → multiple of 8
+  --   vocab-battle      → 0 (no batch constraint)
+  -- A flat MaxMetasPerLevel (20) cap also applies, mirroring today's behavior.
   -- Returns array of {gameVocabId, contentVocabId, content, wasReused: bool}
   -- so the UI can render "用了已有词条" vs "新建词条" badges.
 
@@ -342,7 +346,7 @@ WHERE gv.game_level_id = ? AND cv.deleted_at IS NULL
 ORDER BY gv."order" ASC
 ```
 
-Insert sites that record answers (`game_records`, `user_masters`, `user_unknowns`, `user_reviews`, `game_reports`) populate `content_vocab_id` for vocab modes and `content_item_id` for WS — exactly one of the two on every row.
+Insert sites that record answers (`game_records`, `user_masters`, `user_unknowns`, `user_reviews`, `game_reports`) populate `content_vocab_id` for vocab modes and `content_item_id` for WS — exactly one of the two on every row. The lookup chain for vocab modes when the client sends back the answered item id (which is `game_vocab_id` — see Section 4): play service loads `game_vocabs` row → reads `content_vocab_id` → writes that into the record.
 
 The PK robot loop in `game_play_pk_service.go` gets the same branching for both content load and record insertion.
 
@@ -394,7 +398,7 @@ Verify toggle:
 
 ### Tracking pages (mastered/unknown/review)
 - Existing pages are unaffected; the API still returns `{content, contentType, translation}` shapes per the polymorphic-loading branch in the backend.
-- Optional v1 nicety: render a "vocab" pill next to vocab-source rows. Defer if not desired.
+- No new "vocab" pill in v1; deferred.
 
 ### Browse page
 - Wiki search/browse UI deferred; not in v1 scope.
@@ -496,8 +500,8 @@ Untouched — no content-table joins.
 - ADD: see Section 2 routes list
 
 **Console commands** (`app/console/commands/`):
-- DELETE or REWRITE: `backfill_metas.go` (was for the legacy import flow; obsolete with the new schema)
-- EDIT or DELETE: `import_courses.go` (adapt or remove if no longer used)
+- DELETE: `backfill_metas.go` (linked content_items to a synthetic content_meta via game_metas — obsolete with the new schema and no production data)
+- EDIT: `import_courses.go` if it references game_metas/game_items; otherwise leave untouched. Decision deferred to implementation pass after reading the file
 
 ### Affected dx-web files
 
