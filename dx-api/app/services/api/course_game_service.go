@@ -215,7 +215,6 @@ func UpdateGame(userID, gameID, name string, description *string, mode string, c
 }
 
 // DeleteGame deletes a course game and cascades to levels and content. Rejects published games.
-// DeleteGame deletes a course game and cascades to levels and content. Rejects published games.
 func DeleteGame(userID, gameID string) error {
 	if err := requireVip(userID); err != nil {
 		return err
@@ -403,7 +402,6 @@ func CreateLevel(userID, gameID, name string, description *string) (string, erro
 	return id, nil
 }
 
-// DeleteLevel removes a level and its content from a course game.
 // DeleteLevel removes a level and its content from a course game.
 func DeleteLevel(userID, gameID, levelID string) error {
 	if err := requireVip(userID); err != nil {
