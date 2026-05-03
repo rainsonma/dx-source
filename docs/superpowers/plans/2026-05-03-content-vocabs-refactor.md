@@ -6242,6 +6242,712 @@ Expected: all green. (Tests still need updating — that's Phase 9.)
 
 ---
 
+## Phase 8 — dx-web changes
+
+The vocab-mode editor is fully replaced; the WS editor stays. Backend response shapes are preserved for existing surfaces, so most changes are additive.
+
+### Task 8.1: Add API client for content_vocabs and game_vocabs
+
+**Files:**
+- Modify: `dx-web/src/lib/api-client.ts`
+
+- [ ] **Step 1: Append two new API objects to api-client.ts**
+
+Find the existing `courseGameApi` export and add these two siblings after it (matches the existing apiFetch pattern):
+
+```typescript
+export const contentVocabApi = {
+  getByContent: (content: string) =>
+    apiFetch<ContentVocabData | null>(`/api/content-vocabs?content=${encodeURIComponent(content)}`),
+
+  complement: (id: string, patch: ContentVocabComplementPatch) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/complement`, {
+      method: 'POST',
+      body: JSON.stringify(patch),
+    }),
+
+  replace: (id: string, patch: ContentVocabReplacePatch) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  verify: (id: string, verified: boolean) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/verify`, {
+      method: 'POST',
+      body: JSON.stringify({ verified }),
+    }),
+}
+
+export const gameVocabApi = {
+  list: (gameId: string, levelId: string) =>
+    apiFetch<LevelVocabData[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`),
+
+  add: (gameId: string, levelId: string, entries: string[]) =>
+    apiFetch<AddedGameVocab[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`, {
+      method: 'POST',
+      body: JSON.stringify({ entries }),
+    }),
+
+  reorder: (gameId: string, gvId: string, newOrder: number) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ newOrder }),
+    }),
+
+  delete: (gameId: string, gvId: string) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}`, {
+      method: 'DELETE',
+    }),
+}
+```
+
+- [ ] **Step 2: Add the type definitions** (in the same file or import from a sibling types file matching the project pattern)
+
+```typescript
+export type PosKey = 'n' | 'v' | 'adj' | 'adv' | 'prep' | 'conj' | 'pron' | 'art' | 'num' | 'int' | 'aux' | 'det'
+export type DefinitionEntry = Partial<Record<PosKey, string>>
+
+export interface ContentVocabData {
+  id: string
+  content: string
+  ukPhonetic?: string | null
+  usPhonetic?: string | null
+  ukAudioUrl?: string | null
+  usAudioUrl?: string | null
+  definition?: string | null   // JSON string of DefinitionEntry[]
+  explanation?: string | null
+  isVerified: boolean
+  createdBy?: string | null
+  lastEditedBy?: string | null
+}
+
+export interface ContentVocabComplementPatch {
+  definition?: DefinitionEntry[]
+  ukPhonetic?: string | null
+  usPhonetic?: string | null
+  ukAudioUrl?: string | null
+  usAudioUrl?: string | null
+  explanation?: string | null
+}
+
+export interface ContentVocabReplacePatch {
+  content: string
+  definition: DefinitionEntry[]
+  ukPhonetic?: string | null
+  usPhonetic?: string | null
+  ukAudioUrl?: string | null
+  usAudioUrl?: string | null
+  explanation?: string | null
+}
+
+export interface AddedGameVocab {
+  gameVocabId: string
+  contentVocabId: string
+  content: string
+  wasReused: boolean
+}
+
+export interface LevelVocabData {
+  gameVocabId: string
+  order: number
+  vocab: ContentVocabData | null
+}
+```
+
+- [ ] **Step 3: Verify types compile**
+
+```bash
+cd dx-web && npx tsc --noEmit
+```
+
+Expected: 0 errors.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-web/src/lib/api-client.ts
+git commit -m "feat(web): add contentVocabApi and gameVocabApi clients"
+```
+
+### Task 8.2: Add server actions
+
+**Files:**
+- Create: `dx-web/src/features/web/course/actions/content-vocab.action.ts`
+- Create: `dx-web/src/features/web/course/actions/game-vocab.action.ts`
+
+- [ ] **Step 1: Create content-vocab.action.ts**
+
+Mirror the existing `course-game.action.ts` server-action wrapper pattern. Each action:
+- `'use server'` directive at top
+- Uses `apiServerFetch` from `@/lib/api-server`
+- Wraps `contentVocabApi` calls
+
+Skeleton:
+```typescript
+'use server'
+
+import { apiServerFetch } from '@/lib/api-server'
+import type { ContentVocabComplementPatch, ContentVocabData, ContentVocabReplacePatch } from '@/lib/api-client'
+
+export async function getVocabByContentAction(content: string) {
+  return apiServerFetch<ContentVocabData | null>(`/api/content-vocabs?content=${encodeURIComponent(content)}`)
+}
+
+export async function complementVocabAction(id: string, patch: ContentVocabComplementPatch) {
+  return apiServerFetch<ContentVocabData>(`/api/content-vocabs/${id}/complement`, {
+    method: 'POST',
+    body: JSON.stringify(patch),
+  })
+}
+
+export async function replaceVocabAction(id: string, patch: ContentVocabReplacePatch) {
+  return apiServerFetch<ContentVocabData>(`/api/content-vocabs/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(patch),
+  })
+}
+
+export async function verifyVocabAction(id: string, verified: boolean) {
+  return apiServerFetch<ContentVocabData>(`/api/content-vocabs/${id}/verify`, {
+    method: 'POST',
+    body: JSON.stringify({ verified }),
+  })
+}
+```
+
+- [ ] **Step 2: Create game-vocab.action.ts**
+
+```typescript
+'use server'
+
+import { apiServerFetch } from '@/lib/api-server'
+import type { AddedGameVocab, LevelVocabData } from '@/lib/api-client'
+
+export async function listGameVocabsAction(gameId: string, levelId: string) {
+  return apiServerFetch<LevelVocabData[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`)
+}
+
+export async function addGameVocabsAction(gameId: string, levelId: string, entries: string[]) {
+  return apiServerFetch<AddedGameVocab[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`, {
+    method: 'POST',
+    body: JSON.stringify({ entries }),
+  })
+}
+
+export async function reorderGameVocabAction(gameId: string, gvId: string, newOrder: number) {
+  return apiServerFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}/reorder`, {
+    method: 'PUT',
+    body: JSON.stringify({ newOrder }),
+  })
+}
+
+export async function deleteGameVocabAction(gameId: string, gvId: string) {
+  return apiServerFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}`, {
+    method: 'DELETE',
+  })
+}
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-web/src/features/web/course/actions/content-vocab.action.ts dx-web/src/features/web/course/actions/game-vocab.action.ts
+git commit -m "feat(web): add content-vocab and game-vocab server actions"
+```
+
+### Task 8.3: Build LevelVocabsPanel + AddVocabDialog + ComplementVocabDialog
+
+**Files:**
+- Create: `dx-web/src/features/web/course/components/LevelVocabsPanel.tsx`
+- Create: `dx-web/src/features/web/course/components/AddVocabDialog.tsx` (rewrite if exists)
+- Create: `dx-web/src/features/web/course/components/ComplementVocabDialog.tsx`
+
+- [ ] **Step 1: LevelVocabsPanel.tsx — single-list layout for vocab modes**
+
+Component contract:
+- Props: `{ gameId: string, levelId: string, gameMode: GameMode, currentUserId: string, isAdmin: boolean }`
+- On mount: `await listGameVocabsAction(gameId, levelId)` → state
+- Renders each `LevelVocabData` row showing: content, POS-keyed pills from definition JSON, phonetic chips, audio play buttons (when URLs present), per-row buttons: Complement / Edit (gated) / Delete
+- "Add" button opens `AddVocabDialog`
+- "AI 补全" button calls SSE endpoint `/api/ai-custom/generate-content-vocab-fields`
+- Per-row "Complement" → opens `ComplementVocabDialog` with current values
+- "Edit" button shown only when `vocab.createdBy === currentUserId || isAdmin || (!vocab.isVerified && Date.now() - row.createdAt < 24h)`
+- Admin "Verify" toggle as a top-right action
+
+Use the existing `LevelUnitsPanel.tsx` as the structural reference (same routing, error handling, drag-drop infra).
+
+- [ ] **Step 2: AddVocabDialog.tsx — text input → batch add**
+
+Component contract:
+- Inputs: list of vocab strings (textarea), one per line
+- Validates client-side: non-empty, only `[A-Za-z0-9' \-]` chars (mirror server regex)
+- For vocab modes: client-side count check against batch size (5/8/20)
+- On submit: `await addGameVocabsAction(gameId, levelId, entries)`
+- Response shows per-row badges in the resulting list: "用了已有词条" (`wasReused: true`) vs "新建词条" (`wasReused: false`)
+- "Format with AI" button calls `/api/ai-custom/format-vocab` and replaces textarea content with the response
+
+- [ ] **Step 3: ComplementVocabDialog.tsx — additive merge form**
+
+Component contract:
+- Props: `{ vocab: ContentVocabData, onClose: () => void, onSaved: (v: ContentVocabData) => void }`
+- Renders the current state as read-only labels for fields already set, plus inputs for missing fields:
+  - Definition: list of `<select pos><input gloss>` rows for adding new POS entries (existing entries shown but not editable in complement mode)
+  - Phonetic, audio URL, explanation: inputs visible only if currently null
+- On submit: builds a `ContentVocabComplementPatch` containing only the new/null fields and calls `complementVocabAction(id, patch)`
+- Toast feedback: "added X POS entries; phonetic/audio unchanged (already set)"
+
+- [ ] **Step 4: Verify types**
+
+```bash
+cd dx-web && npx tsc --noEmit
+```
+
+Expected: 0 errors.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add dx-web/src/features/web/course/components/LevelVocabsPanel.tsx dx-web/src/features/web/course/components/AddVocabDialog.tsx dx-web/src/features/web/course/components/ComplementVocabDialog.tsx
+git commit -m "feat(web): vocab-mode editor — LevelVocabsPanel + AddVocab/ComplementVocab dialogs"
+```
+
+### Task 8.4: Mode-branch the level editor page
+
+**Files:**
+- Modify: `dx-web/src/app/(web)/hall/(main)/ai-custom/[id]/[levelId]/page.tsx`
+
+- [ ] **Step 1: Branch on game.mode**
+
+Read the level + parent game in the server component, then conditionally render:
+
+```tsx
+import { LevelUnitsPanel } from '@/features/web/course/components/LevelUnitsPanel'
+import { LevelVocabsPanel } from '@/features/web/course/components/LevelVocabsPanel'
+import { isVocabMode } from '@/consts/game-mode'
+
+// inside the component
+return isVocabMode(game.mode)
+  ? <LevelVocabsPanel
+      gameId={game.id}
+      levelId={level.id}
+      gameMode={game.mode}
+      currentUserId={user.id}
+      isAdmin={user.username === 'rainson'}
+    />
+  : <LevelUnitsPanel
+      gameId={game.id}
+      levelId={level.id}
+      gameMode={game.mode}
+    />
+```
+
+- [ ] **Step 2: Add the consts helper if missing**
+
+Create or extend `dx-web/src/consts/game-mode.ts`:
+
+```typescript
+export const GAME_MODES = {
+  WORD_SENTENCE: 'word-sentence',
+  VOCAB_BATTLE: 'vocab-battle',
+  VOCAB_MATCH: 'vocab-match',
+  VOCAB_ELIMINATION: 'vocab-elimination',
+} as const
+
+export type GameMode = (typeof GAME_MODES)[keyof typeof GAME_MODES]
+
+export function isVocabMode(mode: string): boolean {
+  return (
+    mode === GAME_MODES.VOCAB_BATTLE ||
+    mode === GAME_MODES.VOCAB_MATCH ||
+    mode === GAME_MODES.VOCAB_ELIMINATION
+  )
+}
+
+export function vocabBatchSize(mode: string): number {
+  switch (mode) {
+    case GAME_MODES.VOCAB_MATCH: return 5
+    case GAME_MODES.VOCAB_ELIMINATION: return 8
+    default: return 0
+  }
+}
+```
+
+- [ ] **Step 3: Verify build**
+
+```bash
+cd dx-web && npm run build
+```
+
+Expected: clean build.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-web/src/app/\(web\)/hall/\(main\)/ai-custom/\[id\]/\[levelId\]/page.tsx dx-web/src/consts/game-mode.ts
+git commit -m "feat(web): branch level editor by game mode (vocab → LevelVocabsPanel)"
+```
+
+### Task 8.5: Drop dedup-related types from course-game.action.ts
+
+**Files:**
+- Modify: `dx-web/src/features/web/course/actions/course-game.action.ts`
+
+- [ ] **Step 1: Remove any types or properties referencing dedup**
+
+Grep for `dedup`, `wasReused`, `isBreakDone`-related dedup paths in this file and remove. (NOTE: `wasReused` is still used by the new game-vocab flow but lives in `game-vocab.action.ts` — not in the course-game one.)
+
+- [ ] **Step 2: Adjust the "duplicate skipped" toast handler in `LevelUnitsPanel.tsx`** (search for the existing toast)
+
+Change the message from "X 条重复已跳过" to "已添加 N 条" — same text twice now creates two rows.
+
+- [ ] **Step 3: Verify build + types**
+
+```bash
+cd dx-web && npx tsc --noEmit && npm run build
+```
+
+Expected: clean.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-web/src/features/web/course/actions/course-game.action.ts dx-web/src/features/web/course/components/LevelUnitsPanel.tsx
+git commit -m "refactor(web): drop dedup types and update WS save toast (no more skip)"
+```
+
+### Task 8.6: Manual smoke test
+
+**Files:** None
+
+- [ ] **Step 1: Start backend + frontend in dev mode**
+
+```bash
+# Terminal 1
+cd dx-api && air
+
+# Terminal 2
+cd dx-web && npm run dev
+```
+
+- [ ] **Step 2: Sign in, create a vocab game, walk through the flow**
+
+In a browser at `http://localhost:3000`:
+1. Sign in as a VIP user.
+2. Create a new course game with mode `vocab-battle`.
+3. Add a level.
+4. Open the level editor — confirm `LevelVocabsPanel` renders (single list, not two-panel).
+5. Click "Add" → enter `fast`, `slow`, `bright` (3 entries) → submit.
+6. Confirm 3 rows appear with "新建词条" badges.
+7. Add the same `fast` again → confirm "用了已有词条" badge on that row.
+8. Click "AI 补全" → SSE progress events tick; rows show populated definition/phonetic.
+9. Click a row's "Complement" → add an extra POS entry → save → row updates.
+10. As admin (username `rainson`), toggle Verify on a row → row shows verified state.
+11. Switch to a `word-sentence` game → confirm `LevelUnitsPanel` (two-panel) still works as before.
+
+- [ ] **Step 2: No commit if no code change**
+
+If you discover bugs during this smoke test, fix them before moving on (commit each fix separately).
+
+### Phase 8 validation gate
+
+- [ ] **Run web validation**
+
+```bash
+cd dx-web && npm run lint && npx tsc --noEmit && npm run build
+```
+
+Expected: clean.
+
+---
+
+## Phase 9 — Tests + cleanup
+
+Final validation, new feature tests, deletion of obsolete code, and one last sweep across both repos.
+
+### Task 9.1: Delete obsolete dedup test
+
+**Files:**
+- Delete: `dx-api/tests/feature/course_content_dedup_test.go`
+
+- [ ] **Step 1: Delete the file** (it tests the removed dedup feature, depends on the deleted GameMeta/GameItem models)
+
+```bash
+rm dx-api/tests/feature/course_content_dedup_test.go
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/tests/feature/course_content_dedup_test.go
+git commit -m "test(api): remove course_content_dedup_test — dedup feature gone"
+```
+
+### Task 9.2: Add content_vocab_wiki_test.go
+
+**Files:**
+- Create: `dx-api/tests/feature/content_vocab_wiki_test.go`
+
+- [ ] **Step 1: Create the test file**
+
+Use the existing test suite pattern from the deleted `course_content_dedup_test.go` (testify suite with `SetupTest` / `TearDownTest`). Cover:
+
+- `TestCreate_NewCanonical_WritesEdit`: AddVocabsToLevel("fast") creates content_vocabs row + content_vocab_edits('create') row.
+- `TestAdd_ReusesCanonical_NoNewRow`: a second AddVocabsToLevel("FAST") in another game returns `wasReused: true` and does NOT create a new content_vocabs row (count stays 1).
+- `TestComplement_AdditiveMerge`: complementing with `[{v:斋戒}]` over existing `[{adj:快的}]` produces `[{adj:快的},{v:斋戒}]`. Complementing with `[{adj:错}]` is silently dropped (existing wins).
+- `TestComplement_PhoneticOnlyIfNull`: complement sets `ukPhonetic` only when currently null; existing values preserved.
+- `TestReplace_GatedToCreator`: original `created_by` user can replace; another user gets `ErrVocabNotEditable`.
+- `TestReplace_GatedToAdmin`: admin can replace any row.
+- `TestReplace_BlockedAfter24hAndVerified`: a verified row is admin-only; an unverified row older than 24h is gated.
+- `TestVerify_AdminOnly`: non-admin gets `ErrVocabAdminOnly`.
+- `TestVerify_LocksFutureReplaces`: after admin verify, even creator can't replace.
+- `TestEdits_AppendOnEachOp`: each create / complement / replace / verify writes one content_vocab_edits row with correct edit_type.
+
+Each test seeds a VIP user (and a separate one for cross-user tests), seeds a vocab-mode game + level, calls the service functions, and asserts via SQL counts and field equality.
+
+- [ ] **Step 2: Run the tests**
+
+```bash
+cd dx-api && go test -race ./tests/feature/... -run TestContentVocabWiki -v
+```
+
+Expected: all PASS.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/tests/feature/content_vocab_wiki_test.go
+git commit -m "test(api): cover content_vocab wiki — create/complement/replace/verify/audit"
+```
+
+### Task 9.3: Add game_vocab_placement_test.go
+
+**Files:**
+- Create: `dx-api/tests/feature/game_vocab_placement_test.go`
+
+- [ ] **Step 1: Create the test file**
+
+Cover:
+- `TestAdd_BatchSize_VocabMatch`: adding 4 entries to a vocab-match game returns `ErrBatchSizeInvalid`; adding 5 succeeds.
+- `TestAdd_BatchSize_VocabBattle`: vocab-battle has no batch constraint (any count up to MaxMetasPerLevel works).
+- `TestAdd_RejectsInvalidContent`: `"fast!"` → `ErrVocabContentInvalid`; empty string → `ErrVocabContentEmpty`.
+- `TestAdd_AllowsInLevelRepetition`: adding `["fast","fast"]` creates 2 game_vocabs rows pointing at the same canonical content_vocabs row.
+- `TestReorder_ChangesOrder`: ReorderGameVocab updates the `order` column.
+- `TestDelete_SoftDeletesPlacementOnly`: DeleteGameVocab soft-deletes game_vocabs row but content_vocabs row remains.
+- `TestList_ReturnsOrdered`: GetLevelVocabs returns rows ordered by `order ASC`.
+
+- [ ] **Step 2: Run the tests**
+
+```bash
+cd dx-api && go test -race ./tests/feature/... -run TestGameVocabPlacement -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/tests/feature/game_vocab_placement_test.go
+git commit -m "test(api): cover game_vocab placement — batch size, validation, repetition, reorder"
+```
+
+### Task 9.4: Add level_content_branching_test.go
+
+**Files:**
+- Create: `dx-api/tests/feature/level_content_branching_test.go`
+
+- [ ] **Step 1: Create the test file**
+
+Cover that `GetLevelContent` (the public mini endpoint) returns the right shape per mode:
+
+- `TestGetLevelContent_WordSentence_ReturnsContentItems`: WS mode returns `ContentItemData` populated from `content_items` (with `items` JSON intact when populated).
+- `TestGetLevelContent_VocabMode_SynthesizesEnvelope`: vocab mode returns `ContentItemData` with `id = game_vocab_id`, `content`, `contentType="vocab"`, `definition` joined gloss, `items` synthesized array of length 1.
+- `TestGetLevelContent_VocabMode_OrderingByGameVocabsOrder`: ordering follows `game_vocabs.order ASC`.
+- `TestGetLevelContent_VocabMode_NullPhonetic_StillReturnsItems`: vocab row with null `uk_phonetic`/`us_phonetic`/`definition` still produces a single-element items array (with empty strings for missing fields).
+
+- [ ] **Step 2: Run the tests**
+
+```bash
+cd dx-api && go test -race ./tests/feature/... -run TestGetLevelContent -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/tests/feature/level_content_branching_test.go
+git commit -m "test(api): cover GetLevelContent mode-branching + vocab envelope synthesis"
+```
+
+### Task 9.5: Add tracking_polymorphic_test.go
+
+**Files:**
+- Create: `dx-api/tests/feature/tracking_polymorphic_test.go`
+
+- [ ] **Step 1: Create the test file**
+
+Cover the polymorphic mark/list/delete flow across all three tracking services:
+
+- `TestMark_Item_StoresContentItemID`: MarkAsMastered with `contentItemID` set populates that column, leaves `content_vocab_id` NULL.
+- `TestMark_Vocab_StoresContentVocabID`: same with the vocab side.
+- `TestMark_Both_NullErrors`: passing both nil returns the XOR error.
+- `TestMark_Both_SetErrors`: passing both non-nil returns the XOR error.
+- `TestMark_Idempotent_ItemTwice`: calling MarkAsMastered twice for the same `(user, content_item_id)` does NOT create a second row (ON CONFLICT DO NOTHING).
+- `TestMark_AfterUnmark_NewRow`: MarkAsMastered → DeleteMastered → MarkAsMastered again creates a fresh row (the soft-deleted row is excluded from the partial unique).
+- `TestList_MixedItemAndVocab`: a user with both kinds of marked rows gets a unified list with each row's content_item / content_vocab loaded into the same `{content, translation, contentType}` shape.
+
+Repeat the same pattern for unknown and review services.
+
+- [ ] **Step 2: Run the tests**
+
+```bash
+cd dx-api && go test -race ./tests/feature/... -run TestTrackingPolymorphic -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/tests/feature/tracking_polymorphic_test.go
+git commit -m "test(api): cover tracking polymorphism — mark/list/delete for both kinds"
+```
+
+### Task 9.6: Console commands cleanup
+
+**Files:**
+- Delete: `dx-api/app/console/commands/backfill_metas.go`
+- Inspect: `dx-api/app/console/commands/import_courses.go`
+
+- [ ] **Step 1: Delete backfill_metas.go**
+
+```bash
+rm dx-api/app/console/commands/backfill_metas.go
+```
+
+- [ ] **Step 2: Read import_courses.go**
+
+```bash
+grep -n "GameMeta\|GameItem\|game_metas\|game_items" dx-api/app/console/commands/import_courses.go
+```
+
+If the file still references the deleted models/tables, update it: replace junction inserts with direct `content_metas` / `content_items` inserts (with `game_id`, `game_level_id`, `order` directly on the rows). If the import flow is no longer relevant, delete the file.
+
+- [ ] **Step 3: Update bootstrap/app.go**
+
+If `bootstrap/app.go` registers the deleted commands, remove the references.
+
+```bash
+grep -n "BackfillMetas\|ImportCourses" dx-api/bootstrap/app.go
+```
+
+- [ ] **Step 4: Verify build**
+
+```bash
+cd dx-api && go build ./...
+```
+
+Expected: clean.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add -A dx-api/app/console/commands/ dx-api/bootstrap/app.go
+git commit -m "chore(api): remove obsolete backfill_metas command; adapt or remove import_courses"
+```
+
+### Task 9.7: Final validation gates (full sweep)
+
+**Files:** None
+
+- [ ] **Step 1: dx-api gates**
+
+```bash
+cd dx-api && gofmt -l . && go vet ./... && go build ./... && go test -race ./...
+```
+
+Expected: no output from gofmt; no errors from vet/build; all tests pass.
+
+- [ ] **Step 2: staticcheck (if installed per project hooks)**
+
+```bash
+cd dx-api && staticcheck ./...
+```
+
+Expected: no warnings (or address each).
+
+- [ ] **Step 3: dx-web gates**
+
+```bash
+cd dx-web && npm run lint && npx tsc --noEmit && npm run build
+```
+
+Expected: clean.
+
+- [ ] **Step 4: Smoke-test the WS path end-to-end**
+
+Open the browser to a word-sentence game, add metadata (mixed [S]/[V]), break, generate items. Confirm content shows up in `Get /api/games/{id}/levels/{lid}/content` exactly as before.
+
+- [ ] **Step 5: Smoke-test the vocab path end-to-end**
+
+Open the browser to a vocab game, add vocabs (mix new + reused), AI-enrich, complement one row, play the game from dx-mini (real device or simulator) and confirm the MCQ choices render correctly.
+
+- [ ] **Step 6: Confirm dx-mini play sessions still record correctly**
+
+After playing one of each game type from dx-mini, query the dev DB:
+
+```sql
+SELECT id, content_item_id, content_vocab_id, is_correct
+FROM game_records
+ORDER BY created_at DESC
+LIMIT 10;
+```
+
+Each row should have exactly one of the two FKs set.
+
+- [ ] **Step 7: No code change → no commit**
+
+If everything is green, the refactor is complete. Otherwise, fix issues and commit each fix separately.
+
+### Phase 9 final commit (optional rollup)
+
+If the engineer wants a single tag/commit marking the refactor complete:
+
+```bash
+git tag -a refactor/content-vocabs-complete -m "Content/Vocab schema refactor — complete"
+```
+
+(Only do this on `main` after a successful smoke test.)
+
+---
+
+## Spec → Plan coverage check
+
+| Spec section | Implemented in |
+|---|---|
+| Section 1 — Schema (content_metas/items column changes) | Phase 1 Tasks 1.1–1.2; Phase 2 Tasks 2.1–2.2 |
+| Section 1 — content_vocabs / game_vocabs / content_vocab_edits | Phase 1 Tasks 1.18–1.20; Phase 2 Tasks 2.3–2.5 |
+| Section 1 — Tracking polymorphism (6 tables) | Phase 1 Tasks 1.3–1.16; Phase 2 Tasks 2.6–2.11 |
+| Section 1 — POS consts | Phase 3 Tasks 3.1–3.2 |
+| Section 2 — ai_custom rewrite | Phase 4 Task 4.2 |
+| Section 2 — course_content_service rewrite | Phase 4 Task 4.1 |
+| Section 2 — course_game_service mode-aware publish | Phase 4 Task 4.3 |
+| Section 2 — content_vocab + game_vocab services | Phase 5 Tasks 5.1–5.4 |
+| Section 2 — ai_custom_vocab deletion | Phase 5 Task 5.5 |
+| Section 2 — content_vocab + game_vocab controllers/requests | Phase 5 Tasks 5.6–5.9 |
+| Section 2 — ai_custom controller AI enrichment endpoint | Phase 5 Task 5.10 |
+| Section 2 — Routes wiring | Phase 5 Task 5.11 |
+| Section 2 — Game play services mode-branching | Phase 6 Tasks 6.1–6.4 |
+| Section 3 — dx-web vocab editor + dialogs | Phase 8 Tasks 8.3–8.4 |
+| Section 3 — dx-web action files / api-client | Phase 8 Tasks 8.1–8.2 |
+| Section 3 — dx-web WS toast cleanup | Phase 8 Task 8.5 |
+| Section 4 — dx-mini compatibility (envelope synthesis) | Phase 6 Task 6.1 |
+| Section 4 — Tracking polymorphic loaders | Phase 7 Tasks 7.1–7.4 |
+| Section 5 — Tests + cleanup | Phase 9 Tasks 9.1–9.7 |
+| Section 5 — Console command cleanup | Phase 9 Task 9.6 |
+
+
 
 
 
