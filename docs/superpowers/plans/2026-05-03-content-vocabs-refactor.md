@@ -5350,6 +5350,899 @@ Expected: gofmt clean. Vet errors should now only reference Phases 6-7 work (`co
 
 ---
 
+## Phase 6 — Play services mode-branching
+
+Update `content_service.GetLevelContent`, the three play services (`single`, `pk`, `group`), and ensure record insertion populates the right FK.
+
+### Task 6.1: Update content_service.GetLevelContent
+
+**Files:**
+- Modify: `dx-api/app/services/api/content_service.go`
+
+- [ ] **Step 1: Replace the file contents** (mode-branched: WS reads content_items directly; vocab modes read content_vocabs via game_vocabs and synthesize the envelope)
+
+```go
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
+)
+
+// ContentItemData represents a content item returned to the client.
+// Shape preserved exactly for dx-mini compatibility.
+type ContentItemData struct {
+	ID          string  `json:"id"`
+	Content     string  `json:"content"`
+	ContentType string  `json:"contentType"`
+	Translation *string `json:"translation"`
+	Definition  *string `json:"definition"`
+	Explanation *string `json:"explanation"`
+	Items       *string `json:"items"`
+	Structure   *string `json:"structure"`
+	UkAudioURL  *string `json:"ukAudioUrl"`
+	UsAudioURL  *string `json:"usAudioUrl"`
+}
+
+// GetLevelContent returns content for a game level, mode-branched.
+// Word-sentence: reads content_items, filtered by degree's allowed content_type set.
+// Vocab modes: reads content_vocabs via game_vocabs, synthesizes ContentItemData envelopes.
+func GetLevelContent(userID, gameLevelID string, degree string) ([]ContentItemData, error) {
+	// VIP guard: non-first levels require active VIP
+	var level models.GameLevel
+	if err := facades.Orm().Query().Select("id", "game_id").Where("id", gameLevelID).First(&level); err != nil || level.ID == "" {
+		return nil, ErrLevelNotFound
+	}
+	if err := requireVipForLevel(userID, level.GameID, gameLevelID); err != nil {
+		return nil, err
+	}
+
+	// Fetch the game to determine mode
+	var game models.Game
+	if err := facades.Orm().Query().Select("id", "mode").Where("id", level.GameID).First(&game); err != nil || game.ID == "" {
+		return nil, ErrGameNotFound
+	}
+
+	if consts.IsVocabMode(game.Mode) {
+		return getLevelVocabContent(gameLevelID)
+	}
+	return getLevelItemContent(gameLevelID, degree)
+}
+
+func getLevelItemContent(gameLevelID, degree string) ([]ContentItemData, error) {
+	allowedTypes, hasDegree := consts.DegreeContentTypes[degree]
+
+	query := facades.Orm().Query().Model(&models.ContentItem{}).
+		Where("game_level_id", gameLevelID)
+
+	if hasDegree && allowedTypes != nil {
+		query = query.Where("content_type IN ?", allowedTypes)
+	}
+
+	var items []models.ContentItem
+	if err := query.Order(`"order" ASC`).Get(&items); err != nil {
+		return nil, fmt.Errorf("failed to get level content: %w", err)
+	}
+
+	result := make([]ContentItemData, 0, len(items))
+	for _, item := range items {
+		result = append(result, ContentItemData{
+			ID:          item.ID,
+			Content:     item.Content,
+			ContentType: item.ContentType,
+			Translation: item.Translation,
+			Definition:  item.Definition,
+			Explanation: item.Explanation,
+			Items:       item.Items,
+			Structure:   item.Structure,
+			UkAudioURL:  item.UkAudioURL,
+			UsAudioURL:  item.UsAudioURL,
+		})
+	}
+	return result, nil
+}
+
+// getLevelVocabContent loads game_vocabs joined with content_vocabs and
+// synthesizes ContentItemData envelopes so dx-mini sees the same shape.
+func getLevelVocabContent(gameLevelID string) ([]ContentItemData, error) {
+	type joinedRow struct {
+		GvID         string  `gorm:"column:gv_id"`
+		Order        float64 `gorm:"column:gv_order"`
+		Content      string  `gorm:"column:content"`
+		Definition   *string `gorm:"column:definition"`
+		Explanation  *string `gorm:"column:explanation"`
+		UkPhonetic   *string `gorm:"column:uk_phonetic"`
+		UsPhonetic   *string `gorm:"column:us_phonetic"`
+		UkAudioURL   *string `gorm:"column:uk_audio_url"`
+		UsAudioURL   *string `gorm:"column:us_audio_url"`
+	}
+	var rows []joinedRow
+	if err := facades.Orm().Query().Raw(
+		`SELECT gv.id AS gv_id, gv."order" AS gv_order,
+		        cv.content, cv.definition, cv.explanation,
+		        cv.uk_phonetic, cv.us_phonetic, cv.uk_audio_url, cv.us_audio_url
+		   FROM game_vocabs gv
+		   JOIN content_vocabs cv
+		     ON cv.id = gv.content_vocab_id AND cv.deleted_at IS NULL
+		  WHERE gv.game_level_id = ? AND gv.deleted_at IS NULL
+		  ORDER BY gv."order" ASC`,
+		gameLevelID,
+	).Scan(&rows); err != nil {
+		return nil, fmt.Errorf("failed to load level vocabs: %w", err)
+	}
+
+	result := make([]ContentItemData, 0, len(rows))
+	for _, r := range rows {
+		// Synthesize: definition becomes joined Chinese gloss; items has one element.
+		joinedDef := joinDefinitionGloss(r.Definition)
+		itemsJSON := buildSyntheticVocabItems(r.Content, r.UkPhonetic, r.UsPhonetic, r.Definition)
+
+		row := ContentItemData{
+			ID:          r.GvID,
+			Content:     r.Content,
+			ContentType: "vocab",
+			UkAudioURL:  r.UkAudioURL,
+			UsAudioURL:  r.UsAudioURL,
+			Explanation: r.Explanation,
+		}
+		if joinedDef != "" {
+			row.Definition = &joinedDef
+		}
+		if itemsJSON != "" {
+			row.Items = &itemsJSON
+		}
+		result = append(result, row)
+	}
+	return result, nil
+}
+
+// joinDefinitionGloss flattens the [{pos: gloss}] JSON into "gloss; gloss; gloss"
+// for dx-mini's display. Returns "" if input is null or unparseable.
+func joinDefinitionGloss(defJSON *string) string {
+	if defJSON == nil || *defJSON == "" {
+		return ""
+	}
+	var entries []map[string]string
+	if err := json.Unmarshal([]byte(*defJSON), &entries); err != nil {
+		return ""
+	}
+	parts := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		for _, gloss := range entry {
+			parts = append(parts, gloss)
+		}
+	}
+	return strings.Join(parts, "; ")
+}
+
+// buildSyntheticVocabItems produces the items JSON dx-mini's MCQ builder expects.
+func buildSyntheticVocabItems(content string, ukP, usP, defJSON *string) string {
+	uk := ""
+	us := ""
+	if ukP != nil {
+		uk = *ukP
+	}
+	if usP != nil {
+		us = *usP
+	}
+	posLabel := ""
+	defLabel := ""
+	if defJSON != nil && *defJSON != "" {
+		var entries []map[string]string
+		if err := json.Unmarshal([]byte(*defJSON), &entries); err == nil {
+			posKeys := make([]string, 0, len(entries))
+			defParts := make([]string, 0, len(entries))
+			for _, e := range entries {
+				for k, v := range e {
+					posKeys = append(posKeys, k)
+					defParts = append(defParts, v)
+				}
+			}
+			posLabel = strings.Join(posKeys, "/")
+			defLabel = strings.Join(defParts, "; ")
+		}
+	}
+
+	item := map[string]any{
+		"position":   1,
+		"item":       content,
+		"phonetic":   map[string]string{"uk": uk, "us": us},
+		"pos":        posLabel,
+		"definition": defLabel,
+		"answer":     true,
+	}
+	out, err := json.Marshal([]map[string]any{item})
+	if err != nil {
+		return ""
+	}
+	return string(out)
+}
+```
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/content_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/content_service.go
+git commit -m "refactor(api): content_service.GetLevelContent — mode-branch + vocab envelope synthesis"
+```
+
+### Task 6.2: Update countLevelItems in game_play_single_service.go
+
+**Files:**
+- Modify: `dx-api/app/services/api/game_play_single_service.go` (lines 597-608, the `countLevelItems` function)
+
+- [ ] **Step 1: Replace the function**
+
+```go
+// countLevelItems counts content items linked to a level, mode-branched.
+// Shared by single play, PK play, and group play.
+func countLevelItems(query orm.Query, gameLevelID, degree string) (int64, error) {
+	// We need the game's mode. Take the game_id from the level row first.
+	var level models.GameLevel
+	if err := query.Select("game_id").Where("id", gameLevelID).First(&level); err != nil || level.GameID == "" {
+		return 0, fmt.Errorf("countLevelItems: failed to load level: %w", err)
+	}
+	var game models.Game
+	if err := query.Select("mode").Where("id", level.GameID).First(&game); err != nil || game.ID == "" {
+		return 0, fmt.Errorf("countLevelItems: failed to load game: %w", err)
+	}
+
+	if consts.IsVocabMode(game.Mode) {
+		return query.Model(&models.GameVocab{}).Where("game_level_id", gameLevelID).Count()
+	}
+
+	q := query.Model(&models.ContentItem{}).Where("game_level_id", gameLevelID)
+	if allowedTypes, ok := consts.DegreeContentTypes[degree]; ok && allowedTypes != nil {
+		q = q.Where("content_type IN ?", allowedTypes)
+	}
+	return q.Count()
+}
+```
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/game_play_single_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/game_play_single_service.go
+git commit -m "refactor(api): countLevelItems — mode-branch (vocab modes count game_vocabs)"
+```
+
+### Task 6.3: Update PK robot content loader + record insert in game_play_pk_service.go
+
+**Files:**
+- Modify: `dx-api/app/services/api/game_play_pk_service.go` (around lines 595-689)
+
+- [ ] **Step 1: Replace the robot content-loading + answer-recording block** (the section that opens with `// Fetch content items for the level` and continues through `facades.Orm().Query().Create(&record)`).
+
+Replace from `contentTypes := consts.DegreeContentTypes[degree]` through the end of the answer simulation loop with:
+
+```go
+// Fetch the play set, mode-branched.
+type playRow struct {
+	ID             string  // ID we record back to the client (game_vocab_id for vocab, content_item_id for WS)
+	Content        string
+	ContentItemID  *string // populate exactly one of these on insert
+	ContentVocabID *string
+}
+
+var rows []playRow
+if consts.IsVocabMode(game.Mode) {
+	type vocabJoin struct {
+		GvID    string `gorm:"column:gv_id"`
+		Cv      string `gorm:"column:cv_id"`
+		Content string `gorm:"column:content"`
+	}
+	var vrows []vocabJoin
+	if err := query.Raw(
+		`SELECT gv.id AS gv_id, cv.id AS cv_id, cv.content
+		   FROM game_vocabs gv
+		   JOIN content_vocabs cv ON cv.id = gv.content_vocab_id AND cv.deleted_at IS NULL
+		  WHERE gv.game_level_id = ? AND gv.deleted_at IS NULL
+		  ORDER BY gv."order" ASC`,
+		gameLevelID,
+	).Scan(&vrows); err != nil || len(vrows) == 0 {
+		fmt.Printf("[PK] No content vocabs for pk=%s level=%s\n", pkID, gameLevelID)
+		return
+	}
+	for _, vr := range vrows {
+		cvID := vr.Cv
+		rows = append(rows, playRow{ID: vr.GvID, Content: vr.Content, ContentVocabID: &cvID})
+	}
+} else {
+	contentTypes := consts.DegreeContentTypes[degree]
+	contentQuery := query.Model(&models.ContentItem{}).Where("game_level_id", gameLevelID)
+	if len(contentTypes) > 0 {
+		contentQuery = contentQuery.Where("content_type IN ?", contentTypes)
+	}
+	var items []models.ContentItem
+	if err := contentQuery.Order(`"order" ASC`).Get(&items); err != nil || len(items) == 0 {
+		fmt.Printf("[PK] No content items for pk=%s level=%s\n", pkID, gameLevelID)
+		return
+	}
+	for _, item := range items {
+		ciID := item.ID
+		rows = append(rows, playRow{ID: item.ID, Content: item.Content, ContentItemID: &ciID})
+	}
+}
+
+// ... existing code for difficulty params, accuracy roll, robot user info ...
+
+// Replace the for-range loop body where game_records are created.
+// Inside the loop where `record := models.GameRecord{...}` is constructed,
+// replace the existing `ContentItemID: item.ID` field with both polymorphic
+// fields populated from the current playRow:
+
+record := models.GameRecord{
+	ID:             newID(),
+	UserID:         robotUserID,
+	GameSessionID:  robotSession.ID,
+	GameLevelID:    gameLevelID,
+	ContentItemID:  rows[i].ContentItemID,
+	ContentVocabID: rows[i].ContentVocabID,
+	IsCorrect:      isCorrect,
+	SourceAnswer:   rows[i].Content,
+	UserAnswer:     rows[i].Content,
+	BaseScore:      consts.CorrectAnswer,
+	ComboScore:     result.ComboBonus,
+	Duration:       delayMs / 1000,
+}
+```
+
+(Adjust the surrounding loop variable name from `item` to `rows[i]` consistently — the source/user_answer reference also needs updating to `rows[i].Content`.)
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/game_play_pk_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/game_play_pk_service.go
+git commit -m "refactor(api): pk robot — mode-branched content load + polymorphic record insert"
+```
+
+### Task 6.4: Update player record insertion sites (single/pk/group)
+
+**Files:**
+- Modify: `dx-api/app/services/api/game_play_single_service.go` (RecordAnswer / RecordSkip)
+- Modify: `dx-api/app/services/api/game_play_pk_service.go` (RecordAnswer / RecordSkip)
+- Modify: `dx-api/app/services/api/game_play_group_service.go` (RecordAnswer / RecordSkip)
+
+For each play service, the player-side answer recording paths (`RecordAnswer`, `RecordSkip`, `UpdateContentItem`) need to populate the right polymorphic FK. The current code accepts a `contentItemID` parameter — this must become two optional params (`contentItemID *string`, `contentVocabID *string`), and the model insert sets both fields directly from the input.
+
+- [ ] **Step 1: Update each service file's record creation site**
+
+The pattern across all three is: when constructing `models.GameRecord` (or updating session's `current_content_item_id`), set both polymorphic fields based on which is non-nil in the input. Example:
+
+```go
+record := models.GameRecord{
+    // ... existing fields ...
+    ContentItemID:  contentItemID,
+    ContentVocabID: contentVocabID,
+    // ... rest ...
+}
+```
+
+For session updates:
+```go
+updates := map[string]any{
+    "current_content_item_id":  contentItemID,
+    "current_content_vocab_id": contentVocabID,
+    // ... rest ...
+}
+```
+
+- [ ] **Step 2: Update controllers and request validators**
+
+Add `contentVocabId` to the request body in `app/http/requests/api/session_request.go`. Pass through to the service.
+
+(The dx-web client and dx-mini both send the value in `id` field — after Phase 6 the controller must accept either ID and route to the right FK. The simplest path: the client sends `contentItemId` for WS and `contentVocabId` for vocab modes, and the controller passes both through.)
+
+- [ ] **Step 3: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/ app/http/controllers/api/ app/http/requests/api/
+```
+
+Expected: no output.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-api/app/services/api/game_play_*.go dx-api/app/http/requests/api/session_request.go dx-api/app/http/controllers/api/game_play_*.go
+git commit -m "refactor(api): play services — polymorphic content FK on records and session cursor"
+```
+
+### Phase 6 validation gate
+
+- [ ] **Build the play package**
+
+```bash
+cd dx-api && go build ./app/services/api/... ./app/http/controllers/api/... 2>&1 | head -30
+```
+
+Expected: Phase 6 work eliminates errors from `content_service.go`, `game_play_*_service.go`. Remaining errors should reference Phase 7 (tracking services).
+
+---
+
+## Phase 7 — Tracking polymorphism
+
+Update `user_master_service`, `user_unknown_service`, `user_review_service`, and `feedback_service` to handle the polymorphic FK on their tables.
+
+### Task 7.1: Update user_master_service.go
+
+**Files:**
+- Modify: `dx-api/app/services/api/user_master_service.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package api
+
+import (
+	"fmt"
+	"time"
+
+	"dx-api/app/helpers"
+	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
+	"github.com/goravel/framework/support/carbon"
+)
+
+const (
+	rateLimitMasterKey   = "ratelimit:mark-mastered:%s"
+	rateLimitUnknownKey  = "ratelimit:mark-unknown:%s"
+	rateLimitReviewKey   = "ratelimit:mark-review:%s"
+	rateLimitTracking    = 30
+	rateLimitTrackingSec = 60
+)
+
+type TrackingItemData struct {
+	ID          string               `json:"id"`
+	ContentItem *TrackingContentData `json:"contentItem"`
+	GameName    *string              `json:"gameName"`
+	MasteredAt  any                  `json:"masteredAt,omitempty"`
+	CreatedAt   any                  `json:"createdAt"`
+}
+
+type TrackingContentData struct {
+	Content     string  `json:"content"`
+	Translation *string `json:"translation"`
+	ContentType string  `json:"contentType"`
+}
+
+// MarkAsMastered is now polymorphic: pass exactly one of contentItemID or contentVocabID.
+func MarkAsMastered(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string) error {
+	allowed, err := helpers.CheckRateLimit(
+		fmt.Sprintf(rateLimitMasterKey, userID), rateLimitTracking, rateLimitTrackingSec,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to check rate limit: %w", err)
+	}
+	if !allowed {
+		return ErrRateLimited
+	}
+	if (contentItemID == nil) == (contentVocabID == nil) {
+		return fmt.Errorf("must specify exactly one of contentItemID / contentVocabID")
+	}
+
+	now := carbon.Now()
+	id := newID()
+
+	// Plain insert; partial uniques (with `WHERE deleted_at IS NULL`) keep us
+	// idempotent against double-clicks. Conflicts on live rows are silent.
+	if contentItemID != nil {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_masters
+			   (id, user_id, content_item_id, game_id, game_level_id, mastered_at, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_item_id) WHERE content_item_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			id, userID, *contentItemID, gameID, gameLevelID, now,
+		); err != nil {
+			return fmt.Errorf("failed to mark as mastered (item): %w", err)
+		}
+		// Soft-delete from unknown if exists
+		_, _ = facades.Orm().Query().Exec(
+			`UPDATE user_unknowns SET deleted_at = NOW()
+			   WHERE user_id = ? AND content_item_id = ? AND deleted_at IS NULL`,
+			userID, *contentItemID,
+		)
+	} else {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_masters
+			   (id, user_id, content_vocab_id, game_id, game_level_id, mastered_at, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_vocab_id) WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			id, userID, *contentVocabID, gameID, gameLevelID, now,
+		); err != nil {
+			return fmt.Errorf("failed to mark as mastered (vocab): %w", err)
+		}
+		_, _ = facades.Orm().Query().Exec(
+			`UPDATE user_unknowns SET deleted_at = NOW()
+			   WHERE user_id = ? AND content_vocab_id = ? AND deleted_at IS NULL`,
+			userID, *contentVocabID,
+		)
+	}
+
+	return nil
+}
+
+// ListMastered returns paginated mastered items with content details (mixed item+vocab).
+func ListMastered(userID, cursor string, limit int) ([]TrackingItemData, string, bool, error) {
+	query := facades.Orm().Query()
+
+	var masters []models.UserMaster
+	q := query.Where("user_id", userID).Order("mastered_at desc").Limit(limit + 1)
+	if cursor != "" {
+		var cursorItem models.UserMaster
+		if err := query.Where("id", cursor).First(&cursorItem); err == nil && cursorItem.ID != "" {
+			q = q.Where("mastered_at <= ?", cursorItem.MasteredAt).Where("id != ?", cursor)
+		}
+	}
+	if err := q.Get(&masters); err != nil {
+		return nil, "", false, fmt.Errorf("failed to list mastered: %w", err)
+	}
+
+	hasMore := len(masters) > limit
+	if hasMore {
+		masters = masters[:limit]
+	}
+
+	nextCursor := ""
+	if hasMore && len(masters) > 0 {
+		nextCursor = masters[len(masters)-1].ID
+	}
+
+	return enrichTrackingItems(masters, nil, nil), nextCursor, hasMore, nil
+}
+
+// enrichTrackingItems assembles {content, translation, contentType} for each row,
+// loading from content_items or content_vocabs based on which FK is non-nil.
+func enrichTrackingItems(masters []models.UserMaster, unknowns []models.UserUnknown, reviews []models.UserReview) []TrackingItemData {
+	itemIDs := []string{}
+	vocabIDs := []string{}
+	gameIDs := []string{}
+
+	collect := func(itemID, vocabID *string, gameID string) {
+		if itemID != nil {
+			itemIDs = append(itemIDs, *itemID)
+		}
+		if vocabID != nil {
+			vocabIDs = append(vocabIDs, *vocabID)
+		}
+		if gameID != "" {
+			gameIDs = append(gameIDs, gameID)
+		}
+	}
+
+	for _, m := range masters {
+		collect(m.ContentItemID, m.ContentVocabID, m.GameID)
+	}
+	for _, u := range unknowns {
+		collect(u.ContentItemID, u.ContentVocabID, u.GameID)
+	}
+	for _, r := range reviews {
+		collect(r.ContentItemID, r.ContentVocabID, r.GameID)
+	}
+
+	itemMap := batchLoadContentItems(itemIDs)
+	vocabMap := batchLoadContentVocabs(vocabIDs)
+	gameMap := batchLoadGameNames(gameIDs)
+
+	resolve := func(itemID, vocabID *string) *TrackingContentData {
+		if itemID != nil {
+			return itemMap[*itemID]
+		}
+		if vocabID != nil {
+			return vocabMap[*vocabID]
+		}
+		return nil
+	}
+
+	out := make([]TrackingItemData, 0, len(masters)+len(unknowns)+len(reviews))
+	for _, m := range masters {
+		out = append(out, TrackingItemData{
+			ID:          m.ID,
+			ContentItem: resolve(m.ContentItemID, m.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, m.GameID),
+			MasteredAt:  m.MasteredAt,
+			CreatedAt:   m.CreatedAt,
+		})
+	}
+	for _, u := range unknowns {
+		out = append(out, TrackingItemData{
+			ID:          u.ID,
+			ContentItem: resolve(u.ContentItemID, u.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, u.GameID),
+			CreatedAt:   u.CreatedAt,
+		})
+	}
+	for _, r := range reviews {
+		out = append(out, TrackingItemData{
+			ID:          r.ID,
+			ContentItem: resolve(r.ContentItemID, r.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, r.GameID),
+			CreatedAt:   r.CreatedAt,
+		})
+	}
+	return out
+}
+
+func gameMapPtr(m map[string]string, id string) *string {
+	if v, ok := m[id]; ok {
+		return &v
+	}
+	return nil
+}
+
+func batchLoadContentItems(ids []string) map[string]*TrackingContentData {
+	result := make(map[string]*TrackingContentData)
+	if len(ids) == 0 {
+		return result
+	}
+	var items []models.ContentItem
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&items)
+	for _, ci := range items {
+		result[ci.ID] = &TrackingContentData{
+			Content:     ci.Content,
+			Translation: ci.Translation,
+			ContentType: ci.ContentType,
+		}
+	}
+	return result
+}
+
+func batchLoadContentVocabs(ids []string) map[string]*TrackingContentData {
+	result := make(map[string]*TrackingContentData)
+	if len(ids) == 0 {
+		return result
+	}
+	var vocabs []models.ContentVocab
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&vocabs)
+	for _, cv := range vocabs {
+		// translation is the joined gloss from definition (or nil if empty)
+		joined := joinDefinitionGloss(cv.Definition)
+		var translation *string
+		if joined != "" {
+			translation = &joined
+		}
+		result[cv.ID] = &TrackingContentData{
+			Content:     cv.Content,
+			Translation: translation,
+			ContentType: "vocab",
+		}
+	}
+	return result
+}
+
+func batchLoadGameNames(ids []string) map[string]string {
+	result := make(map[string]string)
+	if len(ids) == 0 {
+		return result
+	}
+	var games []models.Game
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&games)
+	for _, g := range games {
+		result[g.ID] = g.Name
+	}
+	return result
+}
+
+// MasterStatsData / GetMasterStats / DeleteMastered / BulkDeleteMastered: same shape.
+
+type MasterStatsData struct {
+	Total     int64 `json:"total"`
+	ThisWeek  int64 `json:"thisWeek"`
+	ThisMonth int64 `json:"thisMonth"`
+}
+
+func GetMasterStats(userID string) (*MasterStatsData, error) {
+	query := facades.Orm().Query()
+	now := time.Now()
+	startOfWeek := now.AddDate(0, 0, -int(now.Weekday()))
+	startOfWeek = time.Date(startOfWeek.Year(), startOfWeek.Month(), startOfWeek.Day(), 0, 0, 0, 0, now.Location())
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+
+	total, _ := query.Model(&models.UserMaster{}).Where("user_id", userID).Count()
+	thisWeek, _ := query.Model(&models.UserMaster{}).Where("user_id", userID).Where("mastered_at >= ?", startOfWeek).Count()
+	thisMonth, _ := query.Model(&models.UserMaster{}).Where("user_id", userID).Where("mastered_at >= ?", startOfMonth).Count()
+
+	return &MasterStatsData{Total: total, ThisWeek: thisWeek, ThisMonth: thisMonth}, nil
+}
+
+// DeleteMastered soft-deletes a single mastered entry owned by the user.
+func DeleteMastered(userID, id string) error {
+	_, err := facades.Orm().Query().Exec(
+		`UPDATE user_masters SET deleted_at = NOW()
+		   WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		id, userID,
+	)
+	return err
+}
+
+// BulkDeleteMastered soft-deletes multiple mastered entries owned by the user.
+func BulkDeleteMastered(userID string, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := facades.Orm().Query().Exec(
+		`UPDATE user_masters SET deleted_at = NOW()
+		   WHERE user_id = ? AND id IN ? AND deleted_at IS NULL`,
+		userID, ids,
+	)
+	return err
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/services/api/user_master_service.go
+git commit -m "refactor(api): user_master_service — polymorphic FK; soft-delete on Mark/Delete"
+```
+
+### Task 7.2: Update user_unknown_service.go and user_review_service.go
+
+**Files:**
+- Modify: `dx-api/app/services/api/user_unknown_service.go`
+- Modify: `dx-api/app/services/api/user_review_service.go`
+
+- [ ] **Step 1: Apply the same polymorphic-FK + soft-delete pattern**
+
+Mirror Task 7.1's structure:
+- `MarkUnknown(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string)` with the same XOR check and INSERT + ON CONFLICT split.
+- `MarkReview(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string)` ditto.
+- `ListUnknown` / `ListReviews` use the shared `enrichTrackingItems` (now in `user_master_service.go`).
+- `DeleteUnknown` / `BulkDeleteUnknown` / `DeleteReview` / `BulkDeleteReviews` use `UPDATE ... SET deleted_at = NOW()` with `deleted_at IS NULL` filter.
+
+Don't duplicate `enrichTrackingItems`; the helper from `user_master_service.go` is exported within the package and accepts the `unknowns []models.UserUnknown` / `reviews []models.UserReview` slices.
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/user_unknown_service.go app/services/api/user_review_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/user_unknown_service.go dx-api/app/services/api/user_review_service.go
+git commit -m "refactor(api): user_unknown/review services — polymorphic FK + soft-delete"
+```
+
+### Task 7.3: Update feedback_service.go (game_reports polymorphism)
+
+**Files:**
+- Modify: `dx-api/app/services/api/feedback_service.go`
+
+- [ ] **Step 1: Update SubmitReport signature and logic**
+
+Change the function signature from:
+```go
+func SubmitReport(userID, gameID, gameLevelID, contentItemID, reason string, note *string) (*ReportResult, error)
+```
+to:
+```go
+func SubmitReport(userID, gameID, gameLevelID string, contentItemID, contentVocabID *string, reason string, note *string) (*ReportResult, error)
+```
+
+Inside the function:
+- Add an XOR check at the top: `if (contentItemID == nil) == (contentVocabID == nil) { return nil, fmt.Errorf("must specify exactly one of contentItemID / contentVocabID") }`.
+- The "find existing duplicate" query branches on which FK is set: `WHERE user_id = ? AND content_item_id = ? AND reason = ?` OR `WHERE user_id = ? AND content_vocab_id = ? AND reason = ?`.
+- The new report row populates both polymorphic columns.
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/feedback_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/feedback_service.go
+git commit -m "refactor(api): feedback_service — polymorphic FK on game_reports"
+```
+
+### Task 7.4: Update tracking + report controllers and request validators
+
+**Files:**
+- Modify: `dx-api/app/http/controllers/api/user_master_controller.go`
+- Modify: `dx-api/app/http/controllers/api/user_unknown_controller.go`
+- Modify: `dx-api/app/http/controllers/api/user_review_controller.go`
+- Modify: `dx-api/app/http/controllers/api/game_report_controller.go`
+- Modify: `dx-api/app/http/requests/api/user_master_request.go`
+- Modify: `dx-api/app/http/requests/api/user_unknown_request.go`
+- Modify: `dx-api/app/http/requests/api/user_review_request.go`
+- Modify: `dx-api/app/http/requests/api/game_report_request.go`
+
+- [ ] **Step 1: For each request file**
+
+Add an optional `ContentVocabID` field alongside the existing `ContentItemID`:
+
+```go
+type MarkMasterRequest struct {
+	ContentItemID  *string `form:"contentItemId" json:"contentItemId"`
+	ContentVocabID *string `form:"contentVocabId" json:"contentVocabId"`
+	GameID         string  `form:"gameId" json:"gameId"`
+	GameLevelID    string  `form:"gameLevelId" json:"gameLevelId"`
+}
+```
+
+Validation rule: at least one of `contentItemId`/`contentVocabId` must be present and only one. Add to `Rules`:
+```go
+return map[string]string{
+	"gameId":      "required|uuid",
+	"gameLevelId": "required|uuid",
+}
+```
+
+(XOR is enforced server-side in the service layer; Goravel's validator doesn't have a clean "exactly one" rule, and the service-level error is sufficient.)
+
+- [ ] **Step 2: For each controller, pass through both fields to the service**
+
+```go
+err := api.MarkAsMastered(userID, req.ContentItemID, req.ContentVocabID, req.GameID, req.GameLevelID)
+```
+
+- [ ] **Step 3: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/http/controllers/api/ app/http/requests/api/
+```
+
+Expected: no output.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-api/app/http/controllers/api/ dx-api/app/http/requests/api/
+git commit -m "refactor(api): tracking + report controllers/requests — accept contentVocabId"
+```
+
+### Phase 7 validation gate
+
+- [ ] **Full build and vet**
+
+```bash
+cd dx-api && gofmt -l . && go vet ./... && go build ./...
+```
+
+Expected: all green. (Tests still need updating — that's Phase 9.)
+
+---
+
+
 
 
 
