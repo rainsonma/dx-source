@@ -203,18 +203,20 @@ func backfillChunk(size int) (int, error) {
 	// Pre-generate UUIDs outside the transaction so the work on the critical
 	// path is purely I/O.
 	metaIDs := make([]string, len(rows))
-	gameMetaIDs := make([]string, len(rows))
 	for i := range rows {
 		metaIDs[i] = uuid.Must(uuid.NewV7()).String()
-		gameMetaIDs[i] = uuid.Must(uuid.NewV7()).String()
 	}
 
 	err = facades.Orm().Transaction(func(tx orm.Query) error {
-		// 1. Bulk insert content_metas.
+		// 1. Bulk insert content_metas (game_id/game_level_id/order are now
+		//    columns on content_metas itself — no separate game_metas table).
 		metas := make([]models.ContentMeta, len(rows))
 		for i, r := range rows {
 			metas[i] = models.ContentMeta{
 				ID:          metaIDs[i],
+				GameID:      r.GameID,
+				GameLevelID: r.GameLevelID,
+				Order:       r.GIOrder,
 				SourceFrom:  consts.SourceFromImport,
 				SourceType:  deriveSourceType(r.ContentType),
 				SourceData:  r.Content,
@@ -226,23 +228,7 @@ func backfillChunk(size int) (int, error) {
 			return fmt.Errorf("insert content_metas: %w", err)
 		}
 
-		// 2. Bulk insert game_metas, each pointing at the matching content_meta
-		//    with the same (game_id, game_level_id, order) as its game_item.
-		gameMetas := make([]models.GameMeta, len(rows))
-		for i, r := range rows {
-			gameMetas[i] = models.GameMeta{
-				ID:            gameMetaIDs[i],
-				GameID:        r.GameID,
-				GameLevelID:   r.GameLevelID,
-				ContentMetaID: metaIDs[i],
-				Order:         r.GIOrder,
-			}
-		}
-		if err := tx.Create(&gameMetas); err != nil {
-			return fmt.Errorf("insert game_metas: %w", err)
-		}
-
-		// 3. Bulk update content_items.content_meta_id in a single UPDATE.
+		// 2. Bulk update content_items.content_meta_id in a single UPDATE.
 		if err := bulkLinkItems(tx, rows, metaIDs); err != nil {
 			return err
 		}

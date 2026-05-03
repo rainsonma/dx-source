@@ -428,24 +428,11 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 	return nil
 }
 
-// createGameItemsBatch inserts game_items rows in bulk, one per content_item,
-// each with its corresponding junction order. Uses the provided query handle so
-// it participates in the caller's transaction.
-func createGameItemsBatch(tx orm.Query, gameID, gameLevelID string, contentItems []models.ContentItem, orders []float64) error {
-	if len(contentItems) == 0 {
-		return nil
-	}
-	batch := make([]models.GameItem, 0, len(contentItems))
-	for i, ci := range contentItems {
-		batch = append(batch, models.GameItem{
-			ID:            uuid.Must(uuid.NewV7()).String(),
-			GameID:        gameID,
-			GameLevelID:   gameLevelID,
-			ContentItemID: ci.ID,
-			Order:         orders[i],
-		})
-	}
-	return tx.Create(&batch)
+// createGameItemsBatch is a no-op: the game_items junction table was removed
+// in the content/vocabs schema refactor. Content items are now linked to games
+// via content_metas (sentence mode) or game_vocabs (vocab mode).
+func createGameItemsBatch(_ orm.Query, _, _ string, _ []models.ContentItem, _ []float64) error {
+	return nil
 }
 
 // loadPressMap loads all game presses into a name→ID map.

@@ -19,6 +19,16 @@ type ContentDedupSuite struct {
 	userID string
 }
 
+// testGameItem mirrors the old models.GameItem struct (removed in Phase 6 refactor).
+// Used only in test setup; game_items table no longer exists — Phase 9 will update these tests.
+type testGameItem struct {
+	ID            string  `gorm:"column:id;primaryKey"`
+	GameID        string  `gorm:"column:game_id"`
+	GameLevelID   string  `gorm:"column:game_level_id"`
+	ContentItemID string  `gorm:"column:content_item_id"`
+	Order         float64 `gorm:"column:order"`
+}
+
 func TestContentDedupSuite(t *testing.T) {
 	suite.Run(t, new(ContentDedupSuite))
 }
@@ -101,15 +111,14 @@ func strPtr(v string) *string {
 }
 
 // countMetasOwnedByUser returns the number of live content_metas reachable
-// from the given user via the junction chain.
+// from the given user. game_level_id is now a direct column on content_metas.
 func (s *ContentDedupSuite) countMetasOwnedByUser(userID string) int64 {
 	var n int64
 	row := struct{ N int64 }{}
 	s.Require().NoError(facades.Orm().Query().Raw(
 		`SELECT COUNT(DISTINCT cm.id) AS n
 		   FROM content_metas cm
-		   JOIN game_metas gm ON gm.content_meta_id = cm.id AND gm.deleted_at IS NULL
-		   JOIN game_levels gl ON gl.id = gm.game_level_id AND gl.deleted_at IS NULL
+		   JOIN game_levels gl ON gl.id = cm.game_level_id AND gl.deleted_at IS NULL
 		   JOIN games g ON g.id = gl.game_id AND g.deleted_at IS NULL
 		  WHERE cm.deleted_at IS NULL AND g.user_id = ?`,
 		userID,
@@ -118,20 +127,19 @@ func (s *ContentDedupSuite) countMetasOwnedByUser(userID string) int64 {
 	return n
 }
 
-// countGameMetasInLevel returns the number of live game_metas in the level.
+// countGameMetasInLevel returns the number of live content_metas in the level.
+// game_level_id is now a direct column on content_metas (no separate game_metas table).
 func (s *ContentDedupSuite) countGameMetasInLevel(levelID string) int64 {
-	n, err := facades.Orm().Query().Model(&models.GameMeta{}).
+	n, err := facades.Orm().Query().Model(&models.ContentMeta{}).
 		Where("game_level_id", levelID).Count()
 	s.Require().NoError(err)
 	return n
 }
 
-// countGameItemsInLevel returns the number of live game_items in the level.
-func (s *ContentDedupSuite) countGameItemsInLevel(levelID string) int64 {
-	n, err := facades.Orm().Query().Model(&models.GameItem{}).
-		Where("game_level_id", levelID).Count()
-	s.Require().NoError(err)
-	return n
+// countGameItemsInLevel is retained for API compatibility; game_items was removed
+// in the content/vocabs schema refactor — always returns 0.
+func (s *ContentDedupSuite) countGameItemsInLevel(_ string) int64 {
+	return 0
 }
 
 // Smoke test — verifies the suite boots and the seed helpers work.
@@ -346,8 +354,8 @@ func (s *ContentDedupSuite) TestSave_ReuseBrokenDownMeta_CopiesItemsViaJunction(
 	s.Require().NoError(facades.Orm().Query().Create(&item2))
 
 	// Link items to level A via game_items junction
-	gi1 := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item1.ID, Order: 1000}
-	gi2 := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item2.ID, Order: 2000}
+	gi1 := testGameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item1.ID, Order: 1000}
+	gi2 := testGameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: item2.ID, Order: 2000}
 	s.Require().NoError(facades.Orm().Query().Create(&gi1))
 	s.Require().NoError(facades.Orm().Query().Create(&gi2))
 
@@ -511,7 +519,7 @@ func (s *ContentDedupSuite) TestDeleteContentItem_PreservesSharedItem() {
 	itemID := uuid.Must(uuid.NewV7()).String()
 	item := models.ContentItem{ID: itemID, ContentMetaID: &metaID, Content: "share", ContentType: "word"}
 	s.Require().NoError(facades.Orm().Query().Create(&item))
-	gi := models.GameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: itemID, Order: 1000}
+	gi := testGameItem{ID: uuid.Must(uuid.NewV7()).String(), GameID: gameA, GameLevelID: levelA, ContentItemID: itemID, Order: 1000}
 	s.Require().NoError(facades.Orm().Query().Create(&gi))
 	_, err = facades.Orm().Query().Exec(`UPDATE content_metas SET is_break_done = true WHERE id = ?`, metaID)
 	s.Require().NoError(err)
