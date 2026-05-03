@@ -594,15 +594,26 @@ func verifyOwnership(userID, sessionID string) error {
 	return nil
 }
 
-// countLevelItems counts content items linked to a level via game_items,
-// filtered by the degree's allowed content types. Shared by single play,
-// PK play, and group play.
+// countLevelItems counts content items linked to a level, mode-branched.
+// Shared by single play, PK play, and group play.
 func countLevelItems(query orm.Query, gameLevelID, degree string) (int64, error) {
-	q := query.Model(&models.GameItem{}).
-		Join("JOIN content_items ci ON ci.id = game_items.content_item_id AND ci.deleted_at IS NULL").
-		Where("game_items.game_level_id", gameLevelID)
+	// We need the game's mode. Take the game_id from the level row first.
+	var level models.GameLevel
+	if err := query.Select("game_id").Where("id", gameLevelID).First(&level); err != nil || level.GameID == "" {
+		return 0, fmt.Errorf("countLevelItems: failed to load level: %w", err)
+	}
+	var game models.Game
+	if err := query.Select("mode").Where("id", level.GameID).First(&game); err != nil || game.ID == "" {
+		return 0, fmt.Errorf("countLevelItems: failed to load game: %w", err)
+	}
+
+	if consts.IsVocabMode(game.Mode) {
+		return query.Model(&models.GameVocab{}).Where("game_level_id", gameLevelID).Count()
+	}
+
+	q := query.Model(&models.ContentItem{}).Where("game_level_id", gameLevelID)
 	if allowedTypes, ok := consts.DegreeContentTypes[degree]; ok && allowedTypes != nil {
-		q = q.Where("ci.content_type IN ?", allowedTypes)
+		q = q.Where("content_type IN ?", allowedTypes)
 	}
 	return q.Count()
 }
