@@ -22,6 +22,7 @@ func (r *M20260405000002CreateGameSessionsTable) Up() error {
 		table.Text("degree").Default("")
 		table.Text("pattern").Nullable()
 		table.Uuid("current_content_item_id").Nullable()
+		table.Uuid("current_content_vocab_id").Nullable()
 		table.TimestampTz("started_at")
 		table.TimestampTz("last_played_at")
 		table.TimestampTz("ended_at").Nullable()
@@ -37,6 +38,7 @@ func (r *M20260405000002CreateGameSessionsTable) Up() error {
 		table.Uuid("game_group_id").Nullable()
 		table.Uuid("game_subgroup_id").Nullable()
 		table.Uuid("game_pk_id").Nullable()
+		table.SoftDeletesTz()
 		table.TimestampsTz()
 	})
 }
