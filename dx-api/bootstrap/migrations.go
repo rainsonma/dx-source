@@ -60,8 +60,9 @@ func Migrations() []schema.Migration {
 		&migrations.M20260405000005AddGameRecordsRaw{},
 		&migrations.M20260405000006CreateGamePksTable{},
 		&migrations.M20260405000007AddGamePksRaw{},
-		&migrations.M20260414000001CreateContentVocabsAndGameVocabsTables{},
+		&migrations.M20260414000001CreateContentVocabsTable{},
 		&migrations.M20260414000002AddContentVocabsRaw{},
-		&migrations.M20260414000003CreateContentVocabEditsTable{},
+		&migrations.M20260414000003CreateGameVocabsTable{},
+		&migrations.M20260414000004CreateContentVocabEditsTable{},
 	}
 }

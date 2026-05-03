@@ -5,13 +5,13 @@ import (
 	"github.com/goravel/framework/facades"
 )
 
-type M20260414000003CreateContentVocabEditsTable struct{}
+type M20260414000004CreateContentVocabEditsTable struct{}
 
-func (r *M20260414000003CreateContentVocabEditsTable) Signature() string {
-	return "20260414000003_create_content_vocab_edits_table"
+func (r *M20260414000004CreateContentVocabEditsTable) Signature() string {
+	return "20260414000004_create_content_vocab_edits_table"
 }
 
-func (r *M20260414000003CreateContentVocabEditsTable) Up() error {
+func (r *M20260414000004CreateContentVocabEditsTable) Up() error {
 	if facades.Schema().HasTable("content_vocab_edits") {
 		return nil
 	}
@@ -31,6 +31,6 @@ func (r *M20260414000003CreateContentVocabEditsTable) Up() error {
 	})
 }
 
-func (r *M20260414000003CreateContentVocabEditsTable) Down() error {
+func (r *M20260414000004CreateContentVocabEditsTable) Down() error {
 	return facades.Schema().DropIfExists("content_vocab_edits")
 }
