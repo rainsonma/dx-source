@@ -1455,3 +1455,500 @@ Expected: no output from gofmt; no errors from vet/build. Note: tests will fail 
 
 ---
 
+## Phase 2 — Models
+
+Edit existing models to match the schema and add 3 new model files. Delete `game_meta.go` and `game_item.go` last so we can update services that import them in Phase 4.
+
+### Task 2.1: Edit content_meta.go
+
+**Files:**
+- Modify: `dx-api/app/models/content_meta.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type ContentMeta struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID          string  `gorm:"column:id;primaryKey" json:"id"`
+	GameID      string  `gorm:"column:game_id" json:"game_id"`
+	GameLevelID string  `gorm:"column:game_level_id" json:"game_level_id"`
+	SourceFrom  string  `gorm:"column:source_from" json:"source_from"`
+	SourceType  string  `gorm:"column:source_type" json:"source_type"`
+	SourceData  string  `gorm:"column:source_data" json:"source_data"`
+	Translation *string `gorm:"column:translation" json:"translation"`
+	Speaker     *string `gorm:"column:speaker" json:"speaker"`
+	IsBreakDone bool    `gorm:"column:is_break_done" json:"is_break_done"`
+	Order       float64 `gorm:"column:order" json:"order"`
+}
+
+// TableName returns the database table name.
+func (c *ContentMeta) TableName() string {
+	return "content_metas"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/content_meta.go
+git commit -m "refactor(api): content_meta model — add game_id/level_id/order, speaker"
+```
+
+### Task 2.2: Edit content_item.go (drop Tags, add fields)
+
+**Files:**
+- Modify: `dx-api/app/models/content_item.go`
+
+- [ ] **Step 1: Replace the file contents** (drops `pq.StringArray` Tags field; the `lib/pq` import becomes unused — remove it)
+
+```go
+package models
+
+import (
+	"github.com/goravel/framework/database/orm"
+)
+
+type ContentItem struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID            string  `gorm:"column:id;primaryKey" json:"id"`
+	GameID        string  `gorm:"column:game_id" json:"game_id"`
+	GameLevelID   string  `gorm:"column:game_level_id" json:"game_level_id"`
+	ContentMetaID *string `gorm:"column:content_meta_id" json:"content_meta_id"`
+	Content       string  `gorm:"column:content" json:"content"`
+	ContentType   string  `gorm:"column:content_type" json:"content_type"`
+	UkAudioURL    *string `gorm:"column:uk_audio_url" json:"uk_audio_url"`
+	UsAudioURL    *string `gorm:"column:us_audio_url" json:"us_audio_url"`
+	Definition    *string `gorm:"column:definition" json:"definition"`
+	Translation   *string `gorm:"column:translation" json:"translation"`
+	Explanation   *string `gorm:"column:explanation" json:"explanation"`
+	Speaker       *string `gorm:"column:speaker" json:"speaker"`
+	Items         *string `gorm:"column:items;type:jsonb" json:"items"`
+	Structure     *string `gorm:"column:structure;type:jsonb" json:"structure"`
+	Order         float64 `gorm:"column:order" json:"order"`
+}
+
+// TableName returns the database table name.
+func (c *ContentItem) TableName() string {
+	return "content_items"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/content_item.go
+git commit -m "refactor(api): content_item model — add game_id/level_id/order, drop dead Tags field"
+```
+
+### Task 2.3: Add content_vocab.go
+
+**Files:**
+- Create: `dx-api/app/models/content_vocab.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type ContentVocab struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID            string  `gorm:"column:id;primaryKey" json:"id"`
+	Content       string  `gorm:"column:content" json:"content"`
+	ContentKey    string  `gorm:"column:content_key" json:"content_key"`
+	UkPhonetic    *string `gorm:"column:uk_phonetic" json:"uk_phonetic"`
+	UsPhonetic    *string `gorm:"column:us_phonetic" json:"us_phonetic"`
+	UkAudioURL    *string `gorm:"column:uk_audio_url" json:"uk_audio_url"`
+	UsAudioURL    *string `gorm:"column:us_audio_url" json:"us_audio_url"`
+	Definition    *string `gorm:"column:definition;type:jsonb" json:"definition"`
+	Explanation   *string `gorm:"column:explanation" json:"explanation"`
+	IsVerified    bool    `gorm:"column:is_verified" json:"is_verified"`
+	CreatedBy     *string `gorm:"column:created_by" json:"created_by"`
+	LastEditedBy  *string `gorm:"column:last_edited_by" json:"last_edited_by"`
+}
+
+// TableName returns the database table name.
+func (c *ContentVocab) TableName() string {
+	return "content_vocabs"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/content_vocab.go
+git commit -m "feat(api): add ContentVocab model (canonical wiki entry)"
+```
+
+### Task 2.4: Add game_vocab.go
+
+**Files:**
+- Create: `dx-api/app/models/game_vocab.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type GameVocab struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string  `gorm:"column:id;primaryKey" json:"id"`
+	GameID         string  `gorm:"column:game_id" json:"game_id"`
+	GameLevelID    string  `gorm:"column:game_level_id" json:"game_level_id"`
+	ContentVocabID string  `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	Order          float64 `gorm:"column:order" json:"order"`
+}
+
+// TableName returns the database table name.
+func (g *GameVocab) TableName() string {
+	return "game_vocabs"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/game_vocab.go
+git commit -m "feat(api): add GameVocab model (placement junction)"
+```
+
+### Task 2.5: Add content_vocab_edit.go
+
+**Files:**
+- Create: `dx-api/app/models/content_vocab_edit.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type ContentVocabEdit struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string  `gorm:"column:id;primaryKey" json:"id"`
+	ContentVocabID string  `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	EditorUserID   *string `gorm:"column:editor_user_id" json:"editor_user_id"`
+	EditType       string  `gorm:"column:edit_type" json:"edit_type"`
+	Before         *string `gorm:"column:before;type:jsonb" json:"before"`
+	After          *string `gorm:"column:after;type:jsonb" json:"after"`
+}
+
+// TableName returns the database table name.
+func (c *ContentVocabEdit) TableName() string {
+	return "content_vocab_edits"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/content_vocab_edit.go
+git commit -m "feat(api): add ContentVocabEdit model (audit log)"
+```
+
+### Task 2.6: Edit user_master.go (polymorphism + soft-delete)
+
+**Files:**
+- Modify: `dx-api/app/models/user_master.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import (
+	"github.com/goravel/framework/database/orm"
+	"github.com/goravel/framework/support/carbon"
+)
+
+type UserMaster struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string           `gorm:"column:id;primaryKey" json:"id"`
+	UserID         string           `gorm:"column:user_id" json:"user_id"`
+	ContentItemID  *string          `gorm:"column:content_item_id" json:"content_item_id"`
+	ContentVocabID *string          `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	GameID         string           `gorm:"column:game_id" json:"game_id"`
+	GameLevelID    string           `gorm:"column:game_level_id" json:"game_level_id"`
+	MasteredAt     *carbon.DateTime `gorm:"column:mastered_at" json:"mastered_at"`
+}
+
+// TableName returns the database table name.
+func (u *UserMaster) TableName() string {
+	return "user_masters"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/user_master.go
+git commit -m "refactor(api): user_master model — polymorphic content FK, soft-delete"
+```
+
+### Task 2.7: Edit user_unknown.go
+
+**Files:**
+- Modify: `dx-api/app/models/user_unknown.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type UserUnknown struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string  `gorm:"column:id;primaryKey" json:"id"`
+	UserID         string  `gorm:"column:user_id" json:"user_id"`
+	ContentItemID  *string `gorm:"column:content_item_id" json:"content_item_id"`
+	ContentVocabID *string `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	GameID         string  `gorm:"column:game_id" json:"game_id"`
+	GameLevelID    string  `gorm:"column:game_level_id" json:"game_level_id"`
+}
+
+// TableName returns the database table name.
+func (u *UserUnknown) TableName() string {
+	return "user_unknowns"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/user_unknown.go
+git commit -m "refactor(api): user_unknown model — polymorphic content FK, soft-delete"
+```
+
+### Task 2.8: Edit user_review.go
+
+**Files:**
+- Modify: `dx-api/app/models/user_review.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import (
+	"github.com/goravel/framework/database/orm"
+	"github.com/goravel/framework/support/carbon"
+)
+
+type UserReview struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string           `gorm:"column:id;primaryKey" json:"id"`
+	UserID         string           `gorm:"column:user_id" json:"user_id"`
+	ContentItemID  *string          `gorm:"column:content_item_id" json:"content_item_id"`
+	ContentVocabID *string          `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	GameID         string           `gorm:"column:game_id" json:"game_id"`
+	GameLevelID    string           `gorm:"column:game_level_id" json:"game_level_id"`
+	LastReviewAt   *carbon.DateTime `gorm:"column:last_review_at" json:"last_review_at"`
+	NextReviewAt   *carbon.DateTime `gorm:"column:next_review_at" json:"next_review_at"`
+	ReviewCount    int              `gorm:"column:review_count" json:"review_count"`
+}
+
+// TableName returns the database table name.
+func (u *UserReview) TableName() string {
+	return "user_reviews"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/user_review.go
+git commit -m "refactor(api): user_review model — polymorphic content FK, soft-delete"
+```
+
+### Task 2.9: Edit game_record.go
+
+**Files:**
+- Modify: `dx-api/app/models/game_record.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type GameRecord struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string  `gorm:"column:id;primaryKey" json:"id"`
+	UserID         string  `gorm:"column:user_id" json:"user_id"`
+	GameSessionID  string  `gorm:"column:game_session_id" json:"game_session_id"`
+	GameLevelID    string  `gorm:"column:game_level_id" json:"game_level_id"`
+	ContentItemID  *string `gorm:"column:content_item_id" json:"content_item_id"`
+	ContentVocabID *string `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	IsCorrect      bool    `gorm:"column:is_correct" json:"is_correct"`
+	SourceAnswer   string  `gorm:"column:source_answer" json:"source_answer"`
+	UserAnswer     string  `gorm:"column:user_answer" json:"user_answer"`
+	BaseScore      int     `gorm:"column:base_score" json:"base_score"`
+	ComboScore     int     `gorm:"column:combo_score" json:"combo_score"`
+	Duration       int     `gorm:"column:duration" json:"duration"`
+}
+
+func (g *GameRecord) TableName() string {
+	return "game_records"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/game_record.go
+git commit -m "refactor(api): game_record model — polymorphic content FK, soft-delete"
+```
+
+### Task 2.10: Edit game_session.go
+
+**Files:**
+- Modify: `dx-api/app/models/game_session.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import (
+	"time"
+
+	"github.com/goravel/framework/database/orm"
+)
+
+type GameSession struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID                    string     `gorm:"column:id;primaryKey" json:"id"`
+	UserID                string     `gorm:"column:user_id" json:"user_id"`
+	GameID                string     `gorm:"column:game_id" json:"game_id"`
+	GameLevelID           string     `gorm:"column:game_level_id" json:"game_level_id"`
+	Degree                string     `gorm:"column:degree" json:"degree"`
+	Pattern               *string    `gorm:"column:pattern" json:"pattern"`
+	CurrentContentItemID  *string    `gorm:"column:current_content_item_id" json:"current_content_item_id"`
+	CurrentContentVocabID *string    `gorm:"column:current_content_vocab_id" json:"current_content_vocab_id"`
+	StartedAt             time.Time  `gorm:"column:started_at" json:"started_at"`
+	LastPlayedAt          time.Time  `gorm:"column:last_played_at" json:"last_played_at"`
+	EndedAt               *time.Time `gorm:"column:ended_at" json:"ended_at"`
+	Score                 int        `gorm:"column:score" json:"score"`
+	Exp                   int        `gorm:"column:exp" json:"exp"`
+	MaxCombo              int        `gorm:"column:max_combo" json:"max_combo"`
+	CorrectCount          int        `gorm:"column:correct_count" json:"correct_count"`
+	WrongCount            int        `gorm:"column:wrong_count" json:"wrong_count"`
+	SkipCount             int        `gorm:"column:skip_count" json:"skip_count"`
+	PlayTime              int        `gorm:"column:play_time" json:"play_time"`
+	TotalItemsCount       int        `gorm:"column:total_items_count" json:"total_items_count"`
+	PlayedItemsCount      int        `gorm:"column:played_items_count" json:"played_items_count"`
+	GameGroupID           *string    `gorm:"column:game_group_id" json:"game_group_id"`
+	GameSubgroupID        *string    `gorm:"column:game_subgroup_id" json:"game_subgroup_id"`
+	GamePkID              *string    `gorm:"column:game_pk_id" json:"game_pk_id"`
+}
+
+func (g *GameSession) TableName() string {
+	return "game_sessions"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/game_session.go
+git commit -m "refactor(api): game_session model — add CurrentContentVocabID, soft-delete"
+```
+
+### Task 2.11: Edit game_report.go
+
+**Files:**
+- Modify: `dx-api/app/models/game_report.go`
+
+- [ ] **Step 1: Replace the file contents**
+
+```go
+package models
+
+import "github.com/goravel/framework/database/orm"
+
+type GameReport struct {
+	orm.Timestamps
+	orm.SoftDeletes
+	ID             string  `gorm:"column:id;primaryKey" json:"id"`
+	UserID         string  `gorm:"column:user_id" json:"user_id"`
+	GameID         string  `gorm:"column:game_id" json:"game_id"`
+	GameLevelID    string  `gorm:"column:game_level_id" json:"game_level_id"`
+	ContentItemID  *string `gorm:"column:content_item_id" json:"content_item_id"`
+	ContentVocabID *string `gorm:"column:content_vocab_id" json:"content_vocab_id"`
+	Reason         string  `gorm:"column:reason" json:"reason"`
+	Note           *string `gorm:"column:note" json:"note"`
+	Count          int     `gorm:"column:count" json:"count"`
+}
+
+func (g *GameReport) TableName() string {
+	return "game_reports"
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/models/game_report.go
+git commit -m "refactor(api): game_report model — polymorphic content FK, soft-delete"
+```
+
+### Task 2.12: Delete game_meta.go and game_item.go models
+
+**Files:**
+- Delete: `dx-api/app/models/game_meta.go`
+- Delete: `dx-api/app/models/game_item.go`
+
+- [ ] **Step 1: Delete the files**
+
+```bash
+rm dx-api/app/models/game_meta.go dx-api/app/models/game_item.go
+```
+
+- [ ] **Step 2: Verify build fails (expected — services still reference them)**
+
+```bash
+cd dx-api && go build ./... 2>&1 | head -30
+```
+
+Expected: errors like `undefined: models.GameMeta` / `models.GameItem` from `app/services/api/*.go`. **This is expected** — Phases 4-7 will remove those references.
+
+- [ ] **Step 3: Commit anyway (the deletes are correct; service edits come next)**
+
+```bash
+git add dx-api/app/models/game_meta.go dx-api/app/models/game_item.go
+git commit -m "refactor(api): delete GameMeta and GameItem models — junctions removed"
+```
+
+### Phase 2 validation gate
+
+- [ ] **Run gofmt + vet on models only**
+
+```bash
+cd dx-api && gofmt -l app/models/ && go vet ./app/models/...
+```
+
+Expected: no output. (Full `go build ./...` will fail until services are updated; that's planned for Phases 4-7.)
+
+---
+
+
