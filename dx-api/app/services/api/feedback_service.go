@@ -55,8 +55,13 @@ type ReportResult struct {
 }
 
 // SubmitReport creates a game report or increments count on duplicate.
+// Exactly one of contentItemID or contentVocabID must be set.
 // Rate limited to 10 requests per 60 seconds.
-func SubmitReport(userID, gameID, gameLevelID, contentItemID, reason string, note *string) (*ReportResult, error) {
+func SubmitReport(userID, gameID, gameLevelID string, contentItemID, contentVocabID *string, reason string, note *string) (*ReportResult, error) {
+	if (contentItemID == nil) == (contentVocabID == nil) {
+		return nil, fmt.Errorf("must specify exactly one of contentItemID / contentVocabID")
+	}
+
 	// Rate limit check
 	key := fmt.Sprintf("ratelimit:report:%s", userID)
 	allowed, err := helpers.CheckRateLimit(key, 10, 60)
@@ -69,12 +74,21 @@ func SubmitReport(userID, gameID, gameLevelID, contentItemID, reason string, not
 
 	query := facades.Orm().Query()
 
-	// Check for existing report with same user + content item + reason
+	// Check for existing report with same user + content + reason
 	var existing models.GameReport
-	if err := query.Where("user_id", userID).
-		Where("content_item_id", contentItemID).
-		Where("reason", reason).
-		First(&existing); err == nil && existing.ID != "" {
+	if contentItemID != nil {
+		query.Where("user_id", userID).
+			Where("content_item_id", *contentItemID).
+			Where("reason", reason).
+			First(&existing)
+	} else {
+		query.Where("user_id", userID).
+			Where("content_vocab_id", *contentVocabID).
+			Where("reason", reason).
+			First(&existing)
+	}
+
+	if existing.ID != "" {
 		// Duplicate: increment count, update note and level
 		if note != nil {
 			if _, err := facades.Orm().Query().Exec(
@@ -96,14 +110,15 @@ func SubmitReport(userID, gameID, gameLevelID, contentItemID, reason string, not
 
 	// Create new report
 	report := models.GameReport{
-		ID:            newID(),
-		UserID:        userID,
-		GameID:        gameID,
-		GameLevelID:   gameLevelID,
-		ContentItemID: contentItemID,
-		Reason:        reason,
-		Note:          note,
-		Count:         1,
+		ID:             newID(),
+		UserID:         userID,
+		GameID:         gameID,
+		GameLevelID:    gameLevelID,
+		ContentItemID:  contentItemID,
+		ContentVocabID: contentVocabID,
+		Reason:         reason,
+		Note:           note,
+		Count:          1,
 	}
 	if err := query.Create(&report); err != nil {
 		return nil, fmt.Errorf("failed to create report: %w", err)
