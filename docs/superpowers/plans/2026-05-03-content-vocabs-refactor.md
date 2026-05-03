@@ -4986,19 +4986,22 @@ git commit -m "feat(api): add request validators for game-vocab placement ops"
 **Files:**
 - Create: `dx-api/app/http/controllers/api/content_vocab_controller.go`
 
-- [ ] **Step 1: Create the file** (mirrors existing controller patterns: thin, validates, calls service, returns helpers.Success/Fail)
+- [ ] **Step 1: Create the file** (mirrors the existing controller pattern: extract userID via `facades.Auth(ctx).Guard("user").ID()`, validate via `helpers.Validate`, return via `helpers.Success` / `helpers.Error`)
 
 ```go
 package api
 
 import (
 	"errors"
+	nethttp "net/http"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	apiReq "dx-api/app/http/requests/api"
-	"dx-api/app/services/api"
+	services "dx-api/app/services/api"
 
 	"github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 )
 
 type ContentVocabController struct{}
@@ -5011,26 +5014,27 @@ func NewContentVocabController() *ContentVocabController {
 func (c *ContentVocabController) GetByContent(ctx http.Context) http.Response {
 	content := ctx.Request().Query("content", "")
 	if content == "" {
-		return helpers.Fail(ctx, 400, "content query param required")
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "content query param required")
 	}
-	v, err := api.GetContentVocabByContent(content)
+	v, err := services.GetContentVocabByContent(content)
 	if err != nil {
-		return helpers.Fail(ctx, 500, err.Error())
+		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, err.Error())
 	}
 	return helpers.Success(ctx, v)
 }
 
 // POST /api/content-vocabs/{id}/complement
 func (c *ContentVocabController) Complement(ctx http.Context) http.Response {
-	var req apiReq.ComplementVocabRequest
-	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
-		return helpers.Fail(ctx, 400, err.Error())
-	} else if errs != nil {
-		return helpers.Fail(ctx, 400, errs.One())
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	userID := helpers.AuthUserID(ctx)
+	var req apiReq.ComplementVocabRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 	vocabID := ctx.Request().Route("id")
-	patch := api.VocabComplementPatch{
+	patch := services.VocabComplementPatch{
 		Definition:  req.Definition,
 		UkPhonetic:  req.UkPhonetic,
 		UsPhonetic:  req.UsPhonetic,
@@ -5038,7 +5042,7 @@ func (c *ContentVocabController) Complement(ctx http.Context) http.Response {
 		UsAudioURL:  req.UsAudioURL,
 		Explanation: req.Explanation,
 	}
-	v, err := api.ComplementContentVocab(userID, vocabID, patch)
+	v, err := services.ComplementContentVocab(userID, vocabID, patch)
 	if err != nil {
 		return mapVocabError(ctx, err)
 	}
@@ -5047,15 +5051,16 @@ func (c *ContentVocabController) Complement(ctx http.Context) http.Response {
 
 // PUT /api/content-vocabs/{id}
 func (c *ContentVocabController) Replace(ctx http.Context) http.Response {
-	var req apiReq.ReplaceVocabRequest
-	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
-		return helpers.Fail(ctx, 400, err.Error())
-	} else if errs != nil {
-		return helpers.Fail(ctx, 400, errs.One())
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	userID := helpers.AuthUserID(ctx)
+	var req apiReq.ReplaceVocabRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 	vocabID := ctx.Request().Route("id")
-	patch := api.VocabReplacePatch{
+	patch := services.VocabReplacePatch{
 		Content:     req.Content,
 		Definition:  req.Definition,
 		UkPhonetic:  req.UkPhonetic,
@@ -5064,7 +5069,7 @@ func (c *ContentVocabController) Replace(ctx http.Context) http.Response {
 		UsAudioURL:  req.UsAudioURL,
 		Explanation: req.Explanation,
 	}
-	v, err := api.ReplaceContentVocab(userID, vocabID, patch)
+	v, err := services.ReplaceContentVocab(userID, vocabID, patch)
 	if err != nil {
 		return mapVocabError(ctx, err)
 	}
@@ -5073,15 +5078,16 @@ func (c *ContentVocabController) Replace(ctx http.Context) http.Response {
 
 // POST /api/content-vocabs/{id}/verify
 func (c *ContentVocabController) Verify(ctx http.Context) http.Response {
-	var req apiReq.VerifyVocabRequest
-	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
-		return helpers.Fail(ctx, 400, err.Error())
-	} else if errs != nil {
-		return helpers.Fail(ctx, 400, errs.One())
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	userID := helpers.AuthUserID(ctx)
+	var req apiReq.VerifyVocabRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 	vocabID := ctx.Request().Route("id")
-	v, err := api.VerifyContentVocab(userID, vocabID, req.Verified)
+	v, err := services.VerifyContentVocab(userID, vocabID, req.Verified)
 	if err != nil {
 		return mapVocabError(ctx, err)
 	}
@@ -5090,18 +5096,18 @@ func (c *ContentVocabController) Verify(ctx http.Context) http.Response {
 
 func mapVocabError(ctx http.Context, err error) http.Response {
 	switch {
-	case errors.Is(err, api.ErrVocabNotFound):
-		return helpers.Fail(ctx, 404, "词条不存在")
-	case errors.Is(err, api.ErrVocabNotEditable):
-		return helpers.Fail(ctx, 403, "无权编辑此词条")
-	case errors.Is(err, api.ErrVocabAdminOnly):
-		return helpers.Fail(ctx, 403, "需要管理员权限")
-	case errors.Is(err, api.ErrInvalidPosKey):
-		return helpers.Fail(ctx, 400, "definition 中包含无效词性")
-	case errors.Is(err, api.ErrVocabContentEmpty), errors.Is(err, api.ErrVocabContentInvalid):
-		return helpers.Fail(ctx, 400, "词条内容无效")
+	case errors.Is(err, services.ErrVocabNotFound):
+		return helpers.Error(ctx, nethttp.StatusNotFound, consts.CodeContentNotFound, "词条不存在")
+	case errors.Is(err, services.ErrVocabNotEditable):
+		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeForbidden, "无权编辑此词条")
+	case errors.Is(err, services.ErrVocabAdminOnly):
+		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeForbidden, "需要管理员权限")
+	case errors.Is(err, services.ErrInvalidPosKey):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "definition 中包含无效词性")
+	case errors.Is(err, services.ErrVocabContentEmpty), errors.Is(err, services.ErrVocabContentInvalid):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "词条内容无效")
 	default:
-		return helpers.Fail(ctx, 500, err.Error())
+		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, err.Error())
 	}
 }
 ```
@@ -5125,12 +5131,15 @@ package api
 
 import (
 	"errors"
+	nethttp "net/http"
 
+	"dx-api/app/consts"
 	"dx-api/app/helpers"
 	apiReq "dx-api/app/http/requests/api"
-	"dx-api/app/services/api"
+	services "dx-api/app/services/api"
 
 	"github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/facades"
 )
 
 type GameVocabController struct{}
@@ -5141,17 +5150,18 @@ func NewGameVocabController() *GameVocabController {
 
 // POST /api/course-games/{id}/levels/{levelId}/game-vocabs
 func (c *GameVocabController) Add(ctx http.Context) http.Response {
-	var req apiReq.AddGameVocabsRequest
-	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
-		return helpers.Fail(ctx, 400, err.Error())
-	} else if errs != nil {
-		return helpers.Fail(ctx, 400, errs.One())
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	userID := helpers.AuthUserID(ctx)
+	var req apiReq.AddGameVocabsRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 
-	added, err := api.AddVocabsToLevel(userID, gameID, levelID, req.Entries)
+	added, err := services.AddVocabsToLevel(userID, gameID, levelID, req.Entries)
 	if err != nil {
 		return mapGameVocabError(ctx, err)
 	}
@@ -5160,10 +5170,13 @@ func (c *GameVocabController) Add(ctx http.Context) http.Response {
 
 // GET /api/course-games/{id}/levels/{levelId}/game-vocabs
 func (c *GameVocabController) List(ctx http.Context) http.Response {
-	userID := helpers.AuthUserID(ctx)
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
-	rows, err := api.GetLevelVocabs(userID, gameID, levelID)
+	rows, err := services.GetLevelVocabs(userID, gameID, levelID)
 	if err != nil {
 		return mapGameVocabError(ctx, err)
 	}
@@ -5172,16 +5185,17 @@ func (c *GameVocabController) List(ctx http.Context) http.Response {
 
 // PUT /api/course-games/{id}/game-vocabs/{gvId}/reorder
 func (c *GameVocabController) Reorder(ctx http.Context) http.Response {
-	var req apiReq.ReorderGameVocabRequest
-	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
-		return helpers.Fail(ctx, 400, err.Error())
-	} else if errs != nil {
-		return helpers.Fail(ctx, 400, errs.One())
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	userID := helpers.AuthUserID(ctx)
+	var req apiReq.ReorderGameVocabRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
 	gameID := ctx.Request().Route("id")
 	gvID := ctx.Request().Route("gvId")
-	if err := api.ReorderGameVocab(userID, gameID, gvID, req.NewOrder); err != nil {
+	if err := services.ReorderGameVocab(userID, gameID, gvID, req.NewOrder); err != nil {
 		return mapGameVocabError(ctx, err)
 	}
 	return helpers.Success(ctx, nil)
@@ -5189,10 +5203,13 @@ func (c *GameVocabController) Reorder(ctx http.Context) http.Response {
 
 // DELETE /api/course-games/{id}/game-vocabs/{gvId}
 func (c *GameVocabController) Delete(ctx http.Context) http.Response {
-	userID := helpers.AuthUserID(ctx)
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
 	gameID := ctx.Request().Route("id")
 	gvID := ctx.Request().Route("gvId")
-	if err := api.DeleteGameVocab(userID, gameID, gvID); err != nil {
+	if err := services.DeleteGameVocab(userID, gameID, gvID); err != nil {
 		return mapGameVocabError(ctx, err)
 	}
 	return helpers.Success(ctx, nil)
@@ -5200,20 +5217,22 @@ func (c *GameVocabController) Delete(ctx http.Context) http.Response {
 
 func mapGameVocabError(ctx http.Context, err error) http.Response {
 	switch {
-	case errors.Is(err, api.ErrGamePublished):
-		return helpers.Fail(ctx, 409, "已发布的游戏不可编辑，请先撤回")
-	case errors.Is(err, api.ErrCapacityExceeded):
-		return helpers.Fail(ctx, 422, "容量已满")
-	case errors.Is(err, api.ErrBatchSizeInvalid):
-		return helpers.Fail(ctx, 422, "数量必须是批次大小的倍数")
-	case errors.Is(err, api.ErrForbidden):
-		return helpers.Fail(ctx, 403, "无权操作")
-	case errors.Is(err, api.ErrLevelNotFound), errors.Is(err, api.ErrGameNotFound):
-		return helpers.Fail(ctx, 404, "未找到")
-	case errors.Is(err, api.ErrVocabContentEmpty), errors.Is(err, api.ErrVocabContentInvalid):
-		return helpers.Fail(ctx, 400, "词条内容无效（仅允许字母/数字/空格/' /-）")
+	case errors.Is(err, services.ErrGamePublished):
+		return helpers.Error(ctx, nethttp.StatusConflict, consts.CodeValidationError, "已发布的游戏不可编辑，请先撤回")
+	case errors.Is(err, services.ErrCapacityExceeded):
+		return helpers.Error(ctx, nethttp.StatusUnprocessableEntity, consts.CodeValidationError, "容量已满")
+	case errors.Is(err, services.ErrBatchSizeInvalid):
+		return helpers.Error(ctx, nethttp.StatusUnprocessableEntity, consts.CodeValidationError, "数量必须是批次大小的倍数")
+	case errors.Is(err, services.ErrForbidden):
+		return helpers.Error(ctx, nethttp.StatusForbidden, consts.CodeForbidden, "无权操作")
+	case errors.Is(err, services.ErrLevelNotFound):
+		return helpers.Error(ctx, nethttp.StatusNotFound, consts.CodeLevelNotFound, "关卡不存在")
+	case errors.Is(err, services.ErrGameNotFound):
+		return helpers.Error(ctx, nethttp.StatusNotFound, consts.CodeGameNotFound, "游戏不存在")
+	case errors.Is(err, services.ErrVocabContentEmpty), errors.Is(err, services.ErrVocabContentInvalid):
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "词条内容无效（仅允许字母/数字/空格/' /-）")
 	default:
-		return helpers.Fail(ctx, 500, err.Error())
+		return helpers.Error(ctx, nethttp.StatusInternalServerError, consts.CodeInternalError, err.Error())
 	}
 }
 ```
@@ -5238,23 +5257,28 @@ cat dx-api/app/http/controllers/api/ai_custom_controller.go
 
 - [ ] **Step 2: Edit it to:**
 - Drop the `BreakVocabMetadata` and `GenerateVocabContentItems` handler methods (these were the legacy vocab-game-mode SSE endpoints).
-- Add a new handler method `GenerateContentVocabFields`:
+- Add a new handler method `GenerateContentVocabFields` matching the existing SSE pattern in `BreakMetadata` / `GenerateContentItems` in this file:
 
 ```go
 // POST /api/ai-custom/generate-content-vocab-fields  (SSE)
 func (c *AiCustomController) GenerateContentVocabFields(ctx http.Context) http.Response {
-	userID := helpers.AuthUserID(ctx)
-	gameLevelID := ctx.Request().Input("gameLevelId", "")
-	if gameLevelID == "" {
-		return helpers.Fail(ctx, 400, "gameLevelId required")
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	writer := helpers.NewNDJSONWriter(ctx)
-	go api.GenerateContentVocabFields(userID, gameLevelID, writer)
-	return writer.Response()
+	var req apiReq.AiCustomLevelRequest // existing request type with GameLevelID field; reuse if present, else add
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+
+	w := ctx.Response().Writer()
+	writer := helpers.NewNDJSONWriter(w)
+	services.GenerateContentVocabFields(userID, req.GameLevelID, writer)
+	return nil
 }
 ```
 
-(Adapt to the existing SSE handler pattern in `BreakMetadata` / `GenerateContentItems` — same shape.)
+The existing SSE handlers (`BreakMetadata`, `GenerateContentItems`) call the service synchronously — the writer streams chunks to `w` as the service progresses. Don't add `go` to dispatch in a goroutine (the response would close before chunks land). Required imports: add `nethttp "net/http"`, `"dx-api/app/consts"`, `"github.com/goravel/framework/facades"` if not already present.
 
 - [ ] **Step 3: Verify formatting**
 
