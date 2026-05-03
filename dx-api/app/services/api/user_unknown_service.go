@@ -17,8 +17,8 @@ type UnknownStatsData struct {
 	LastThreeDays int64 `json:"lastThreeDays"`
 }
 
-// MarkAsUnknown upserts an unknown entry.
-func MarkAsUnknown(userID, contentItemID, gameID, gameLevelID string) error {
+// MarkAsUnknown is polymorphic: pass exactly one of contentItemID or contentVocabID.
+func MarkAsUnknown(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string) error {
 	allowed, err := helpers.CheckRateLimit(
 		fmt.Sprintf(rateLimitUnknownKey, userID), rateLimitTracking, rateLimitTrackingSec,
 	)
@@ -28,16 +28,32 @@ func MarkAsUnknown(userID, contentItemID, gameID, gameLevelID string) error {
 	if !allowed {
 		return ErrRateLimited
 	}
-
-	_, err = facades.Orm().Query().Exec(
-		`INSERT INTO user_unknowns (id, user_id, content_item_id, game_id, game_level_id, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, now(), now())
-		 ON CONFLICT (user_id, content_item_id) DO NOTHING`,
-		newID(), userID, contentItemID, gameID, gameLevelID,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to mark as unknown: %w", err)
+	if (contentItemID == nil) == (contentVocabID == nil) {
+		return fmt.Errorf("must specify exactly one of contentItemID / contentVocabID")
 	}
+
+	if contentItemID != nil {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_unknowns
+			   (id, user_id, content_item_id, game_id, game_level_id, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_item_id) WHERE content_item_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			newID(), userID, *contentItemID, gameID, gameLevelID,
+		); err != nil {
+			return fmt.Errorf("failed to mark as unknown (item): %w", err)
+		}
+	} else {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_unknowns
+			   (id, user_id, content_vocab_id, game_id, game_level_id, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_vocab_id) WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			newID(), userID, *contentVocabID, gameID, gameLevelID,
+		); err != nil {
+			return fmt.Errorf("failed to mark as unknown (vocab): %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -67,7 +83,7 @@ func ListUnknown(userID, cursor string, limit int) ([]TrackingItemData, string, 
 		nextCursor = unknowns[len(unknowns)-1].ID
 	}
 
-	return enrichTrackingItems(nil, unknowns), nextCursor, hasMore, nil
+	return enrichTrackingItems(nil, unknowns, nil), nextCursor, hasMore, nil
 }
 
 // GetUnknownStats returns unknown word count statistics.
@@ -84,21 +100,25 @@ func GetUnknownStats(userID string) (*UnknownStatsData, error) {
 	return &UnknownStatsData{Total: total, Today: today, LastThreeDays: lastThree}, nil
 }
 
-// DeleteUnknown removes a single unknown entry owned by the user.
+// DeleteUnknown soft-deletes a single unknown entry owned by the user.
 func DeleteUnknown(userID, id string) error {
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_unknowns WHERE id = ? AND user_id = ?", id, userID,
+		`UPDATE user_unknowns SET deleted_at = NOW()
+		   WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		id, userID,
 	)
 	return err
 }
 
-// BulkDeleteUnknown removes multiple unknown entries owned by the user.
+// BulkDeleteUnknown soft-deletes multiple unknown entries owned by the user.
 func BulkDeleteUnknown(userID string, ids []string) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_unknowns WHERE user_id = ? AND id IN ?", userID, ids,
+		`UPDATE user_unknowns SET deleted_at = NOW()
+		   WHERE user_id = ? AND id IN ? AND deleted_at IS NULL`,
+		userID, ids,
 	)
 	return err
 }
