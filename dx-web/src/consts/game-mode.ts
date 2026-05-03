@@ -19,3 +19,11 @@ export const GAME_MODE_OPTIONS: { value: GameMode; label: string }[] =
     value: value as GameMode,
     label,
   }));
+
+export function isVocabMode(mode: string): boolean {
+  return (
+    mode === GAME_MODES.VOCAB_BATTLE ||
+    mode === GAME_MODES.VOCAB_MATCH ||
+    mode === GAME_MODES.VOCAB_ELIMINATION
+  );
+}
