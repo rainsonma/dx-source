@@ -17,6 +17,8 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 		return facades.Schema().Create("content_items", func(table schema.Blueprint) {
 			table.Uuid("id")
 			table.Primary("id")
+			table.Uuid("game_id")
+			table.Uuid("game_level_id")
 			table.Uuid("content_meta_id").Nullable()
 			table.Text("content").Default("")
 			table.Text("content_type").Default("")
@@ -28,11 +30,14 @@ func (r *M20260322000037CreateContentItemsTable) Up() error {
 			table.Text("speaker").Nullable()
 			table.Json("items").Nullable()
 			table.Json("structure").Nullable()
+			table.Double("order").Default(0)
 			table.SoftDeletesTz()
 			table.TimestampsTz()
 			table.Index("content_meta_id")
 			table.Index("content_type")
 			table.Index("created_at")
+			table.Index("game_id")
+			table.Index("game_level_id", "deleted_at", "order").Name("idx_content_items_level_order")
 		})
 	}
 	return nil
