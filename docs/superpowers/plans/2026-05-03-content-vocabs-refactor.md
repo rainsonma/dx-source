@@ -3763,5 +3763,1593 @@ Expected: errors only in files we'll handle in Phases 5-7 (`ai_custom_vocab_serv
 
 ---
 
+## Phase 5 — Vocab wiki backend
+
+Build the `content_vocabs` (canonical wiki) and `game_vocabs` (placement) service layer, then delete the legacy `ai_custom_vocab_service.go` path.
+
+### Task 5.1: Add content_vocab_helpers.go
+
+**Files:**
+- Create: `dx-api/app/services/api/content_vocab_helpers.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/contracts/database/orm"
+)
+
+// Edit gating: rows are editable freely up to this age if not yet verified.
+const unverifiedEditWindow = 24 * time.Hour
+
+// Admin username (per CLAUDE.md). Wiki replace + verify operations require this.
+const adminUsername = "rainson"
+
+// Vocab content validator: words/phrases only — letters, digits, spaces,
+// apostrophe, and hyphen. Rejects punctuation otherwise.
+var vocabContentRe = regexp.MustCompile(`^[A-Za-z0-9' \-]+$`)
+
+var (
+	ErrVocabContentEmpty   = errors.New("vocab content is empty")
+	ErrVocabContentInvalid = errors.New("vocab content contains disallowed characters")
+	ErrVocabNotFound       = errors.New("content vocab not found")
+	ErrVocabNotEditable    = errors.New("content vocab is not editable by this user")
+	ErrVocabAdminOnly      = errors.New("operation requires admin")
+	ErrInvalidPosKey       = errors.New("definition contains invalid POS key")
+)
+
+// NormalizeVocabContent trims and lowercases the content for use as content_key.
+// Multiple internal whitespace runs are collapsed to a single space.
+func NormalizeVocabContent(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.ToLower(s)
+	if s == "" {
+		return ""
+	}
+	// Collapse internal whitespace
+	parts := strings.Fields(s)
+	return strings.Join(parts, " ")
+}
+
+// ValidateVocabContent ensures a vocab string is non-empty and contains only
+// allowed characters (letters, digits, spaces, apostrophe, hyphen).
+func ValidateVocabContent(s string) error {
+	t := strings.TrimSpace(s)
+	if t == "" {
+		return ErrVocabContentEmpty
+	}
+	if !vocabContentRe.MatchString(t) {
+		return ErrVocabContentInvalid
+	}
+	return nil
+}
+
+// ValidateDefinition ensures every entry is a single-key object with a known POS.
+// definition is the JSON text from a request body.
+func ValidateDefinition(definitionJSON string) error {
+	if definitionJSON == "" {
+		return nil
+	}
+	var entries []map[string]string
+	if err := json.Unmarshal([]byte(definitionJSON), &entries); err != nil {
+		return fmt.Errorf("invalid definition JSON: %w", err)
+	}
+	for _, entry := range entries {
+		if len(entry) != 1 {
+			return fmt.Errorf("each definition entry must be a single-key object")
+		}
+		for k := range entry {
+			if !consts.IsValidPos(k) {
+				return ErrInvalidPosKey
+			}
+		}
+	}
+	return nil
+}
+
+// MergeDefinition merges newEntries into existingJSON additively: only POS keys
+// not already present in existing get appended. Returns the merged JSON text.
+func MergeDefinition(existingJSON string, newEntries []map[string]string) (string, error) {
+	var existing []map[string]string
+	if existingJSON != "" {
+		if err := json.Unmarshal([]byte(existingJSON), &existing); err != nil {
+			return "", fmt.Errorf("invalid existing definition JSON: %w", err)
+		}
+	}
+	seen := make(map[string]struct{})
+	for _, entry := range existing {
+		for k := range entry {
+			seen[k] = struct{}{}
+		}
+	}
+	merged := append([]map[string]string{}, existing...)
+	for _, entry := range newEntries {
+		for k := range entry {
+			if _, ok := seen[k]; ok {
+				continue
+			}
+			seen[k] = struct{}{}
+			merged = append(merged, entry)
+		}
+	}
+	out, err := json.Marshal(merged)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal merged definition: %w", err)
+	}
+	return string(out), nil
+}
+
+// IsAdmin returns true if the user has the admin username.
+func IsAdmin(userID string) bool {
+	var user models.User
+	if err := orm0().Where("id", userID).Select("username").First(&user); err != nil {
+		return false
+	}
+	return user.Username == adminUsername
+}
+
+// CanReplaceVocab returns true if userID can perform a destructive replace on vocab.
+func CanReplaceVocab(userID string, vocab *models.ContentVocab) bool {
+	if vocab.CreatedBy != nil && *vocab.CreatedBy == userID {
+		return true
+	}
+	if IsAdmin(userID) {
+		return true
+	}
+	if !vocab.IsVerified && time.Since(vocab.CreatedAt.Time) < unverifiedEditWindow {
+		return true
+	}
+	return false
+}
+
+// SnapshotVocab serializes a ContentVocab into a JSON map for audit log.
+func SnapshotVocab(v *models.ContentVocab) (string, error) {
+	b, err := json.Marshal(map[string]any{
+		"id":             v.ID,
+		"content":        v.Content,
+		"content_key":    v.ContentKey,
+		"uk_phonetic":    v.UkPhonetic,
+		"us_phonetic":    v.UsPhonetic,
+		"uk_audio_url":   v.UkAudioURL,
+		"us_audio_url":   v.UsAudioURL,
+		"definition":     v.Definition,
+		"explanation":    v.Explanation,
+		"is_verified":    v.IsVerified,
+		"created_by":     v.CreatedBy,
+		"last_edited_by": v.LastEditedBy,
+	})
+	if err != nil {
+		return "", fmt.Errorf("snapshot marshal failed: %w", err)
+	}
+	return string(b), nil
+}
+
+// WriteVocabEdit appends an audit row. tx is optional — pass nil to use facades.Orm().
+func WriteVocabEdit(tx orm.Query, vocabID, editorUserID, editType, beforeJSON, afterJSON string) error {
+	q := tx
+	if q == nil {
+		q = orm0()
+	}
+	edit := models.ContentVocabEdit{
+		ID:             uuid.Must(uuid.NewV7()).String(),
+		ContentVocabID: vocabID,
+		EditType:       editType,
+	}
+	if editorUserID != "" {
+		v := editorUserID
+		edit.EditorUserID = &v
+	}
+	if beforeJSON != "" {
+		v := beforeJSON
+		edit.Before = &v
+	}
+	if afterJSON != "" {
+		v := afterJSON
+		edit.After = &v
+	}
+	if err := q.Create(&edit); err != nil {
+		return fmt.Errorf("failed to create content_vocab_edit: %w", err)
+	}
+	return nil
+}
+
+// orm0 returns the default ORM query handle. Wrapped in a helper so test code
+// can monkey-patch a fixture if needed (currently unused — direct call works).
+func orm0() orm.Query {
+	return facadesQuery()
+}
+```
+
+Note: `facadesQuery()` is a helper that should already exist in this package; if not, replace it with `facades.Orm().Query()` in the function body and add the import.
+
+- [ ] **Step 2: Add the helper if missing**
+
+```bash
+cd dx-api && grep -rn "func facadesQuery" app/services/api/
+```
+
+If no result, edit the bottom of `content_vocab_helpers.go` to replace the wrapper with a direct call:
+
+```go
+func orm0() orm.Query {
+	return facades.Orm().Query()
+}
+```
+
+Then add import: `"github.com/goravel/framework/facades"` (the file should already include it via other lines but verify).
+
+- [ ] **Step 3: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/content_vocab_helpers.go
+```
+
+Expected: no output.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-api/app/services/api/content_vocab_helpers.go
+git commit -m "feat(api): add content_vocab helpers (normalize, validate, merge, gating, audit)"
+```
+
+### Task 5.2: Add unit tests for helpers
+
+**Files:**
+- Create: `dx-api/app/services/api/content_vocab_helpers_test.go`
+
+- [ ] **Step 1: Create the test file**
+
+```go
+package api
+
+import "testing"
+
+func TestNormalizeVocabContent(t *testing.T) {
+	cases := []struct {
+		in, out string
+	}{
+		{"Fast", "fast"},
+		{"  fast  ", "fast"},
+		{"FAST  CAR", "fast car"},
+		{"foo  bar  baz", "foo bar baz"},
+		{"", ""},
+		{"   ", ""},
+	}
+	for _, tc := range cases {
+		if got := NormalizeVocabContent(tc.in); got != tc.out {
+			t.Errorf("NormalizeVocabContent(%q) = %q, want %q", tc.in, got, tc.out)
+		}
+	}
+}
+
+func TestValidateVocabContent(t *testing.T) {
+	good := []string{"fast", "fast car", "don't", "well-known", "abc123"}
+	bad := []string{"", "   ", "fast.", "hello!", "你好", "a@b"}
+	for _, s := range good {
+		if err := ValidateVocabContent(s); err != nil {
+			t.Errorf("ValidateVocabContent(%q) want nil, got %v", s, err)
+		}
+	}
+	for _, s := range bad {
+		if err := ValidateVocabContent(s); err == nil {
+			t.Errorf("ValidateVocabContent(%q) want error, got nil", s)
+		}
+	}
+}
+
+func TestValidateDefinition(t *testing.T) {
+	good := []string{
+		``,
+		`[{"adj":"快的"}]`,
+		`[{"adj":"快的"},{"v":"斋戒"}]`,
+	}
+	bad := []string{
+		`[{"foo":"bar"}]`,                         // unknown POS
+		`[{"adj":"快的","v":"斋戒"}]`,                // multi-key entry
+		`not json`,
+	}
+	for _, s := range good {
+		if err := ValidateDefinition(s); err != nil {
+			t.Errorf("ValidateDefinition(%q) want nil, got %v", s, err)
+		}
+	}
+	for _, s := range bad {
+		if err := ValidateDefinition(s); err == nil {
+			t.Errorf("ValidateDefinition(%q) want error, got nil", s)
+		}
+	}
+}
+
+func TestMergeDefinition_AdditiveOnly(t *testing.T) {
+	existing := `[{"adj":"快的"}]`
+	new := []map[string]string{{"v": "斋戒"}, {"adj": "错误的"}}
+	got, err := MergeDefinition(existing, new)
+	if err != nil {
+		t.Fatalf("MergeDefinition failed: %v", err)
+	}
+	want := `[{"adj":"快的"},{"v":"斋戒"}]`
+	if got != want {
+		t.Errorf("MergeDefinition got %q, want %q", got, want)
+	}
+}
+
+func TestMergeDefinition_EmptyExisting(t *testing.T) {
+	got, err := MergeDefinition("", []map[string]string{{"adj": "快的"}})
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if got != `[{"adj":"快的"}]` {
+		t.Errorf("got %q", got)
+	}
+}
+```
+
+- [ ] **Step 2: Run the tests**
+
+```bash
+cd dx-api && go test -race ./app/services/api/ -run "TestNormalizeVocabContent|TestValidateVocabContent|TestValidateDefinition|TestMergeDefinition" -v
+```
+
+Expected: PASS for all subtests. (Will not run if other files in the package don't compile yet — see note below.)
+
+**Note:** if the package doesn't compile because of leftover `ai_custom_vocab_service.go` references, defer running this test until Task 5.5 deletes that file.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/content_vocab_helpers_test.go
+git commit -m "test(api): cover content_vocab helpers — normalize, validate, merge"
+```
+
+### Task 5.3: Add content_vocab_service.go
+
+**Files:**
+- Create: `dx-api/app/services/api/content_vocab_service.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"encoding/json"
+	"fmt"
+	"sync"
+	"sync/atomic"
+
+	"dx-api/app/consts"
+	"dx-api/app/helpers"
+	"dx-api/app/models"
+
+	"github.com/goravel/framework/facades"
+)
+
+// ContentVocabData is the public response shape for canonical wiki entries.
+type ContentVocabData struct {
+	ID            string  `json:"id"`
+	Content       string  `json:"content"`
+	UkPhonetic    *string `json:"ukPhonetic"`
+	UsPhonetic    *string `json:"usPhonetic"`
+	UkAudioURL    *string `json:"ukAudioUrl"`
+	UsAudioURL    *string `json:"usAudioUrl"`
+	Definition    *string `json:"definition"`
+	Explanation   *string `json:"explanation"`
+	IsVerified    bool    `json:"isVerified"`
+	CreatedBy     *string `json:"createdBy"`
+	LastEditedBy  *string `json:"lastEditedBy"`
+}
+
+func vocabToData(v *models.ContentVocab) *ContentVocabData {
+	return &ContentVocabData{
+		ID:            v.ID,
+		Content:       v.Content,
+		UkPhonetic:    v.UkPhonetic,
+		UsPhonetic:    v.UsPhonetic,
+		UkAudioURL:    v.UkAudioURL,
+		UsAudioURL:    v.UsAudioURL,
+		Definition:    v.Definition,
+		Explanation:   v.Explanation,
+		IsVerified:    v.IsVerified,
+		CreatedBy:     v.CreatedBy,
+		LastEditedBy:  v.LastEditedBy,
+	}
+}
+
+// GetContentVocabByContent returns the canonical wiki row matching content (case-insensitive).
+// Returns nil, nil if not found.
+func GetContentVocabByContent(content string) (*ContentVocabData, error) {
+	key := NormalizeVocabContent(content)
+	if key == "" {
+		return nil, nil
+	}
+	var v models.ContentVocab
+	if err := facades.Orm().Query().Where("content_key", key).First(&v); err != nil {
+		return nil, nil
+	}
+	if v.ID == "" {
+		return nil, nil
+	}
+	return vocabToData(&v), nil
+}
+
+// VocabComplementPatch is the request body for ComplementContentVocab.
+// All fields optional; only non-nil fields are applied.
+// Definition is the new POS entries to merge additively.
+type VocabComplementPatch struct {
+	Definition  []map[string]string `json:"definition,omitempty"`
+	UkPhonetic  *string             `json:"ukPhonetic,omitempty"`
+	UsPhonetic  *string             `json:"usPhonetic,omitempty"`
+	UkAudioURL  *string             `json:"ukAudioUrl,omitempty"`
+	UsAudioURL  *string             `json:"usAudioUrl,omitempty"`
+	Explanation *string             `json:"explanation,omitempty"`
+}
+
+// ComplementContentVocab applies an additive merge: definition appends only
+// new POS keys; phonetic/audio/explanation set only if currently null.
+// Anyone may complement.
+func ComplementContentVocab(userID, vocabID string, patch VocabComplementPatch) (*ContentVocabData, error) {
+	var v models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
+		return nil, ErrVocabNotFound
+	}
+
+	beforeSnapshot, err := SnapshotVocab(&v)
+	if err != nil {
+		return nil, err
+	}
+
+	updates := map[string]any{}
+	if patch.Definition != nil {
+		// Validate POS keys
+		for _, e := range patch.Definition {
+			for k := range e {
+				if !consts.IsValidPos(k) {
+					return nil, ErrInvalidPosKey
+				}
+			}
+		}
+		existing := ""
+		if v.Definition != nil {
+			existing = *v.Definition
+		}
+		merged, err := MergeDefinition(existing, patch.Definition)
+		if err != nil {
+			return nil, err
+		}
+		updates["definition"] = merged
+	}
+	if patch.UkPhonetic != nil && (v.UkPhonetic == nil || *v.UkPhonetic == "") {
+		updates["uk_phonetic"] = *patch.UkPhonetic
+	}
+	if patch.UsPhonetic != nil && (v.UsPhonetic == nil || *v.UsPhonetic == "") {
+		updates["us_phonetic"] = *patch.UsPhonetic
+	}
+	if patch.UkAudioURL != nil && (v.UkAudioURL == nil || *v.UkAudioURL == "") {
+		updates["uk_audio_url"] = *patch.UkAudioURL
+	}
+	if patch.UsAudioURL != nil && (v.UsAudioURL == nil || *v.UsAudioURL == "") {
+		updates["us_audio_url"] = *patch.UsAudioURL
+	}
+	if patch.Explanation != nil && (v.Explanation == nil || *v.Explanation == "") {
+		updates["explanation"] = *patch.Explanation
+	}
+
+	if len(updates) == 0 {
+		// Nothing to merge — return current state without writing an edit log.
+		return vocabToData(&v), nil
+	}
+	updates["last_edited_by"] = userID
+
+	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
+		Where("id", vocabID).Update(updates); err != nil {
+		return nil, fmt.Errorf("failed to update content_vocab: %w", err)
+	}
+
+	// Reload + write audit
+	var updated models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
+		return nil, fmt.Errorf("failed to reload content_vocab: %w", err)
+	}
+	afterSnapshot, _ := SnapshotVocab(&updated)
+	_ = WriteVocabEdit(nil, vocabID, userID, "complement", beforeSnapshot, afterSnapshot)
+
+	return vocabToData(&updated), nil
+}
+
+// VocabReplacePatch is the request body for ReplaceContentVocab — full overwrite.
+type VocabReplacePatch struct {
+	Content     string              `json:"content"`
+	Definition  []map[string]string `json:"definition"`
+	UkPhonetic  *string             `json:"ukPhonetic"`
+	UsPhonetic  *string             `json:"usPhonetic"`
+	UkAudioURL  *string             `json:"ukAudioUrl"`
+	UsAudioURL  *string             `json:"usAudioUrl"`
+	Explanation *string             `json:"explanation"`
+}
+
+// ReplaceContentVocab fully overwrites the row, gated by CanReplaceVocab.
+func ReplaceContentVocab(userID, vocabID string, patch VocabReplacePatch) (*ContentVocabData, error) {
+	var v models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
+		return nil, ErrVocabNotFound
+	}
+	if !CanReplaceVocab(userID, &v) {
+		return nil, ErrVocabNotEditable
+	}
+	if err := ValidateVocabContent(patch.Content); err != nil {
+		return nil, err
+	}
+	for _, e := range patch.Definition {
+		for k := range e {
+			if !consts.IsValidPos(k) {
+				return nil, ErrInvalidPosKey
+			}
+		}
+	}
+
+	beforeSnapshot, _ := SnapshotVocab(&v)
+
+	defJSON, err := json.Marshal(patch.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("definition marshal: %w", err)
+	}
+
+	updates := map[string]any{
+		"content":        patch.Content,
+		"content_key":    NormalizeVocabContent(patch.Content),
+		"definition":     string(defJSON),
+		"uk_phonetic":    patch.UkPhonetic,
+		"us_phonetic":    patch.UsPhonetic,
+		"uk_audio_url":   patch.UkAudioURL,
+		"us_audio_url":   patch.UsAudioURL,
+		"explanation":    patch.Explanation,
+		"last_edited_by": userID,
+	}
+	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
+		Where("id", vocabID).Update(updates); err != nil {
+		return nil, fmt.Errorf("failed to replace content_vocab: %w", err)
+	}
+
+	var updated models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
+		return nil, err
+	}
+	afterSnapshot, _ := SnapshotVocab(&updated)
+	_ = WriteVocabEdit(nil, vocabID, userID, "replace", beforeSnapshot, afterSnapshot)
+
+	return vocabToData(&updated), nil
+}
+
+// VerifyContentVocab toggles is_verified. Admin only.
+func VerifyContentVocab(adminUserID, vocabID string, verified bool) (*ContentVocabData, error) {
+	if !IsAdmin(adminUserID) {
+		return nil, ErrVocabAdminOnly
+	}
+	var v models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
+		return nil, ErrVocabNotFound
+	}
+	beforeSnapshot, _ := SnapshotVocab(&v)
+
+	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
+		Where("id", vocabID).Update(map[string]any{
+		"is_verified":    verified,
+		"last_edited_by": adminUserID,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to verify content_vocab: %w", err)
+	}
+
+	var updated models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
+		return nil, err
+	}
+	afterSnapshot, _ := SnapshotVocab(&updated)
+	_ = WriteVocabEdit(nil, vocabID, adminUserID, "verify", beforeSnapshot, afterSnapshot)
+
+	return vocabToData(&updated), nil
+}
+
+// --- AI enrichment SSE: GenerateContentVocabFields ---
+
+// GenerateContentVocabFields enriches every content_vocabs row referenced by
+// this level's game_vocabs that has uk_phonetic IS NULL.
+func GenerateContentVocabFields(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
+	if err := requireVip(userID); err != nil {
+		writeSSEError(writer, err)
+		return
+	}
+	game, level, err := verifyLevelOwnership(userID, gameLevelID)
+	if err != nil {
+		writeSSEError(writer, err)
+		return
+	}
+	if game.Status == consts.GameStatusPublished {
+		writeSSEError(writer, ErrGamePublished)
+		return
+	}
+	if !consts.IsVocabMode(game.Mode) {
+		writeSSEError(writer, ErrForbidden)
+		return
+	}
+	_ = level
+
+	// Find canonical rows via game_vocabs
+	var vocabs []models.ContentVocab
+	if err := facades.Orm().Query().Model(&models.ContentVocab{}).
+		Select("DISTINCT content_vocabs.*").
+		Join("JOIN game_vocabs gv ON gv.content_vocab_id = content_vocabs.id AND gv.deleted_at IS NULL").
+		Where("gv.game_level_id", gameLevelID).
+		Where("content_vocabs.uk_phonetic IS NULL").
+		Get(&vocabs); err != nil {
+		writeSSEError(writer, fmt.Errorf("failed to load vocabs needing enrichment: %w", err))
+		return
+	}
+	if len(vocabs) == 0 {
+		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
+		writer.Close()
+		return
+	}
+
+	// Bean cost = total word count across vocabs
+	totalCost := 0
+	for _, v := range vocabs {
+		totalCost += helpers.CountWords(v.Content)
+	}
+	if totalCost == 0 {
+		writeSSEError(writer, ErrEmptyContent)
+		return
+	}
+	if err := ConsumeBeans(userID, totalCost, consts.BeanSlugAIVocabGenItemsConsume, consts.BeanReasonAIVocabGenItemsConsume); err != nil {
+		writeSSEError(writer, err)
+		return
+	}
+
+	var failedWords int64
+	var processed int64
+	var failed int64
+	sem := make(chan struct{}, genItemsConcurrencyLimit)
+	var wg sync.WaitGroup
+	var done int64
+	total := len(vocabs)
+
+	for _, v := range vocabs {
+		wg.Add(1)
+		sem <- struct{}{}
+
+		go func(vocab models.ContentVocab) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			ok := enrichContentVocab(userID, vocab)
+			d := atomic.AddInt64(&done, 1)
+			if ok {
+				atomic.AddInt64(&processed, 1)
+				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "ok"})
+			} else {
+				atomic.AddInt64(&failed, 1)
+				atomic.AddInt64(&failedWords, int64(helpers.CountWords(vocab.Content)))
+				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "failed"})
+			}
+		}(v)
+	}
+	wg.Wait()
+
+	fw := int(atomic.LoadInt64(&failedWords))
+	if fw > 0 {
+		_ = RefundBeans(userID, fw, consts.BeanSlugAIVocabGenItemsRefund, consts.BeanReasonAIVocabGenItemsRefund)
+	}
+	_ = writer.Write(SSEProgressEvent{
+		Done:      total,
+		Total:     total,
+		Processed: int(atomic.LoadInt64(&processed)),
+		Failed:    int(atomic.LoadInt64(&failed)),
+		Complete:  true,
+	})
+	writer.Close()
+}
+
+func enrichContentVocab(userID string, v models.ContentVocab) bool {
+	userMsg := "Word: " + v.Content
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: vocabFieldsPrompt},
+			{Role: "user", Content: userMsg},
+		},
+		Temperature: 0.1,
+	})
+	if err != nil {
+		return false
+	}
+
+	var ai struct {
+		UkPhonetic  string              `json:"ukPhonetic"`
+		UsPhonetic  string              `json:"usPhonetic"`
+		Definition  []map[string]string `json:"definition"`
+		Explanation string              `json:"explanation"`
+	}
+	if err := json.Unmarshal([]byte(result), &ai); err != nil {
+		return false
+	}
+	for _, e := range ai.Definition {
+		for k := range e {
+			if !consts.IsValidPos(k) {
+				return false
+			}
+		}
+	}
+	defJSON, err := json.Marshal(ai.Definition)
+	if err != nil {
+		return false
+	}
+
+	beforeSnapshot, _ := SnapshotVocab(&v)
+	updates := map[string]any{
+		"uk_phonetic":    ai.UkPhonetic,
+		"us_phonetic":    ai.UsPhonetic,
+		"definition":     string(defJSON),
+		"explanation":    ai.Explanation,
+		"last_edited_by": userID,
+	}
+	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
+		Where("id", v.ID).Update(updates); err != nil {
+		return false
+	}
+	var updated models.ContentVocab
+	if err := facades.Orm().Query().Where("id", v.ID).First(&updated); err == nil {
+		afterSnapshot, _ := SnapshotVocab(&updated)
+		_ = WriteVocabEdit(nil, v.ID, userID, "complement", beforeSnapshot, afterSnapshot)
+	}
+	return true
+}
+
+var vocabFieldsPrompt = `You are an English dictionary writer. Given a single English word or phrase, produce JSON with phonetic, definition (POS entries), and a short explanation.
+
+OUTPUT FORMAT:
+A JSON object with these keys:
+- ukPhonetic: IPA pronunciation in UK style, e.g. "/fæst/"
+- usPhonetic: IPA pronunciation in US style, e.g. "/fæst/"
+- definition: array of single-key objects mapping POS to Chinese gloss; allowed POS keys are n, v, adj, adv, prep, conj, pron, art, num, int, aux, det
+- explanation: short Chinese explanation/example (1-2 sentences)
+
+Output ONLY the JSON. No markdown, no extra text.
+
+Example for "fast":
+{"ukPhonetic":"/fɑːst/","usPhonetic":"/fæst/","definition":[{"adj":"快的"},{"adv":"快速地"},{"v":"斋戒"}],"explanation":"形容速度快或动作迅速；动词义为禁食。"}`
+```
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/content_vocab_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/content_vocab_service.go
+git commit -m "feat(api): add content_vocab_service — wiki get/complement/replace/verify + AI enrichment"
+```
+
+### Task 5.4: Add game_vocab_service.go
+
+**Files:**
+- Create: `dx-api/app/services/api/game_vocab_service.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"fmt"
+
+	"dx-api/app/consts"
+	"dx-api/app/models"
+
+	"github.com/google/uuid"
+	"github.com/goravel/framework/contracts/database/orm"
+	"github.com/goravel/framework/facades"
+)
+
+// AddedGameVocab is one item in the AddVocabsToLevel response.
+type AddedGameVocab struct {
+	GameVocabID    string `json:"gameVocabId"`
+	ContentVocabID string `json:"contentVocabId"`
+	Content        string `json:"content"`
+	WasReused      bool   `json:"wasReused"` // true if canonical existed
+}
+
+// LevelVocabData is one row in GetLevelVocabs.
+type LevelVocabData struct {
+	GameVocabID string             `json:"gameVocabId"`
+	Order       float64            `json:"order"`
+	Vocab       *ContentVocabData  `json:"vocab"`
+}
+
+// AddVocabsToLevel creates/reuses canonical content_vocabs and inserts
+// game_vocabs placement rows. Validates batch-size for vocab modes.
+func AddVocabsToLevel(userID, gameID, gameLevelID string, entries []string) ([]AddedGameVocab, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	game, err := getCourseGameOwned(userID, gameID)
+	if err != nil {
+		return nil, err
+	}
+	if game.Status == consts.GameStatusPublished {
+		return nil, ErrGamePublished
+	}
+	if !consts.IsVocabMode(game.Mode) {
+		return nil, ErrForbidden
+	}
+
+	var level models.GameLevel
+	if err := facades.Orm().Query().Where("id", gameLevelID).Where("game_id", gameID).First(&level); err != nil {
+		return nil, fmt.Errorf("failed to find level: %w", err)
+	}
+	if level.ID == "" {
+		return nil, ErrLevelNotFound
+	}
+
+	// Validate inputs first
+	cleaned := make([]string, 0, len(entries))
+	for _, raw := range entries {
+		if err := ValidateVocabContent(raw); err != nil {
+			return nil, fmt.Errorf("entry %q: %w", raw, err)
+		}
+		cleaned = append(cleaned, raw)
+	}
+
+	// Capacity & batch-size checks (match course_game.PublishGame logic)
+	existingCount, err := facades.Orm().Query().Model(&models.GameVocab{}).
+		Where("game_level_id", gameLevelID).Count()
+	if err != nil {
+		return nil, fmt.Errorf("failed to count existing vocabs: %w", err)
+	}
+	if existingCount+int64(len(cleaned)) > int64(consts.MaxMetasPerLevel) {
+		return nil, ErrCapacityExceeded
+	}
+	batchSize := consts.VocabBatchSize(game.Mode)
+	if batchSize > 0 && (existingCount+int64(len(cleaned)))%int64(batchSize) != 0 {
+		return nil, ErrBatchSizeInvalid
+	}
+
+	// Find max order in level
+	type ordRow struct {
+		MaxOrder float64 `gorm:"column:max_order"`
+	}
+	var maxRow ordRow
+	if err := facades.Orm().Query().Raw(
+		`SELECT COALESCE(MAX("order"), 0) AS max_order
+		   FROM game_vocabs WHERE game_level_id = ? AND deleted_at IS NULL`,
+		gameLevelID,
+	).Scan(&maxRow); err != nil {
+		return nil, fmt.Errorf("failed to load max order: %w", err)
+	}
+	maxOrder := maxRow.MaxOrder
+
+	added := make([]AddedGameVocab, 0, len(cleaned))
+
+	if err := facades.Orm().Transaction(func(tx orm.Query) error {
+		for i, raw := range cleaned {
+			key := NormalizeVocabContent(raw)
+			var canonical models.ContentVocab
+			err := tx.Where("content_key", key).First(&canonical)
+			wasReused := err == nil && canonical.ID != ""
+
+			if !wasReused {
+				canonical = models.ContentVocab{
+					ID:         uuid.Must(uuid.NewV7()).String(),
+					Content:    raw,
+					ContentKey: key,
+					IsVerified: false,
+				}
+				createdBy := userID
+				canonical.CreatedBy = &createdBy
+				if err := tx.Create(&canonical); err != nil {
+					return fmt.Errorf("create canonical vocab: %w", err)
+				}
+				snap, _ := SnapshotVocab(&canonical)
+				_ = WriteVocabEdit(tx, canonical.ID, userID, "create", "", snap)
+			}
+
+			gv := models.GameVocab{
+				ID:             uuid.Must(uuid.NewV7()).String(),
+				GameID:         gameID,
+				GameLevelID:    gameLevelID,
+				ContentVocabID: canonical.ID,
+				Order:          maxOrder + float64((i+1)*1000),
+			}
+			if err := tx.Create(&gv); err != nil {
+				return fmt.Errorf("create game_vocab: %w", err)
+			}
+
+			added = append(added, AddedGameVocab{
+				GameVocabID:    gv.ID,
+				ContentVocabID: canonical.ID,
+				Content:        canonical.Content,
+				WasReused:      wasReused,
+			})
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return added, nil
+}
+
+// GetLevelVocabs returns all game_vocabs in a level joined with their canonical rows.
+func GetLevelVocabs(userID, gameID, gameLevelID string) ([]LevelVocabData, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	if _, err := getCourseGameOwned(userID, gameID); err != nil {
+		return nil, err
+	}
+
+	var gvs []models.GameVocab
+	if err := facades.Orm().Query().
+		Where("game_level_id", gameLevelID).
+		Order(`"order" ASC`).
+		Get(&gvs); err != nil {
+		return nil, fmt.Errorf("failed to load game_vocabs: %w", err)
+	}
+	if len(gvs) == 0 {
+		return []LevelVocabData{}, nil
+	}
+
+	vocabIDs := make([]string, 0, len(gvs))
+	for _, gv := range gvs {
+		vocabIDs = append(vocabIDs, gv.ContentVocabID)
+	}
+	var vocabs []models.ContentVocab
+	if err := facades.Orm().Query().Where("id IN ?", vocabIDs).Get(&vocabs); err != nil {
+		return nil, fmt.Errorf("failed to load content_vocabs: %w", err)
+	}
+	vocabByID := make(map[string]models.ContentVocab, len(vocabs))
+	for _, v := range vocabs {
+		vocabByID[v.ID] = v
+	}
+
+	result := make([]LevelVocabData, 0, len(gvs))
+	for _, gv := range gvs {
+		row := LevelVocabData{
+			GameVocabID: gv.ID,
+			Order:       gv.Order,
+		}
+		if v, ok := vocabByID[gv.ContentVocabID]; ok {
+			row.Vocab = vocabToData(&v)
+		}
+		result = append(result, row)
+	}
+	return result, nil
+}
+
+// ReorderGameVocab updates the placement order.
+func ReorderGameVocab(userID, gameID, gameVocabID string, newOrder float64) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+	game, err := getCourseGameOwned(userID, gameID)
+	if err != nil {
+		return err
+	}
+	if game.Status == consts.GameStatusPublished {
+		return ErrGamePublished
+	}
+
+	// Verify ownership: gv.game_id must match
+	var gv models.GameVocab
+	if err := facades.Orm().Query().Where("id", gameVocabID).First(&gv); err != nil || gv.ID == "" {
+		return ErrContentItemNotFound
+	}
+	if gv.GameID != gameID {
+		return ErrForbidden
+	}
+	if _, err := facades.Orm().Query().Exec(
+		`UPDATE game_vocabs SET "order" = ?
+		   WHERE id = ? AND deleted_at IS NULL`,
+		newOrder, gameVocabID,
+	); err != nil {
+		return fmt.Errorf("failed to reorder game_vocab: %w", err)
+	}
+	return nil
+}
+
+// DeleteGameVocab soft-deletes a placement row only; canonical row stays.
+func DeleteGameVocab(userID, gameID, gameVocabID string) error {
+	if err := requireVip(userID); err != nil {
+		return err
+	}
+	game, err := getCourseGameOwned(userID, gameID)
+	if err != nil {
+		return err
+	}
+	if game.Status == consts.GameStatusPublished {
+		return ErrGamePublished
+	}
+	var gv models.GameVocab
+	if err := facades.Orm().Query().Where("id", gameVocabID).First(&gv); err != nil || gv.ID == "" {
+		return ErrContentItemNotFound
+	}
+	if gv.GameID != gameID {
+		return ErrForbidden
+	}
+	if _, err := facades.Orm().Query().Exec(
+		`UPDATE game_vocabs SET deleted_at = NOW()
+		   WHERE id = ? AND deleted_at IS NULL`,
+		gameVocabID,
+	); err != nil {
+		return fmt.Errorf("failed to delete game_vocab: %w", err)
+	}
+	return nil
+}
+```
+
+- [ ] **Step 2: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/services/api/game_vocab_service.go
+```
+
+Expected: no output.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add dx-api/app/services/api/game_vocab_service.go
+git commit -m "feat(api): add game_vocab_service — placement add-batch/list/reorder/delete"
+```
+
+### Task 5.5: Delete ai_custom_vocab_service.go and its controller
+
+**Files:**
+- Delete: `dx-api/app/services/api/ai_custom_vocab_service.go`
+- Delete: `dx-api/app/http/controllers/api/ai_custom_vocab_controller.go`
+
+- [ ] **Step 1: Delete both files**
+
+```bash
+rm dx-api/app/services/api/ai_custom_vocab_service.go
+rm dx-api/app/http/controllers/api/ai_custom_vocab_controller.go
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add -A dx-api/app/services/api/ dx-api/app/http/controllers/api/
+git commit -m "refactor(api): delete ai_custom_vocab_service+controller — replaced by content/game vocab services"
+```
+
+### Task 5.6: Add content_vocab_request.go
+
+**Files:**
+- Create: `dx-api/app/http/requests/api/content_vocab_request.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/contracts/validation"
+)
+
+// ComplementVocabRequest — POST /api/content-vocabs/{id}/complement
+type ComplementVocabRequest struct {
+	Definition  []map[string]string `form:"definition" json:"definition"`
+	UkPhonetic  *string             `form:"ukPhonetic" json:"ukPhonetic"`
+	UsPhonetic  *string             `form:"usPhonetic" json:"usPhonetic"`
+	UkAudioURL  *string             `form:"ukAudioUrl" json:"ukAudioUrl"`
+	UsAudioURL  *string             `form:"usAudioUrl" json:"usAudioUrl"`
+	Explanation *string             `form:"explanation" json:"explanation"`
+}
+
+func (r *ComplementVocabRequest) Authorize(http.Context) error { return nil }
+func (r *ComplementVocabRequest) Rules(http.Context) map[string]string {
+	return map[string]string{}
+}
+func (r *ComplementVocabRequest) Filters(http.Context) map[string]string { return nil }
+func (r *ComplementVocabRequest) Messages(http.Context) map[string]string { return nil }
+func (r *ComplementVocabRequest) Attributes(http.Context) map[string]string { return nil }
+func (r *ComplementVocabRequest) PrepareForValidation(_ http.Context, _ validation.Data) error {
+	return nil
+}
+
+// ReplaceVocabRequest — PUT /api/content-vocabs/{id}
+type ReplaceVocabRequest struct {
+	Content     string              `form:"content" json:"content"`
+	Definition  []map[string]string `form:"definition" json:"definition"`
+	UkPhonetic  *string             `form:"ukPhonetic" json:"ukPhonetic"`
+	UsPhonetic  *string             `form:"usPhonetic" json:"usPhonetic"`
+	UkAudioURL  *string             `form:"ukAudioUrl" json:"ukAudioUrl"`
+	UsAudioURL  *string             `form:"usAudioUrl" json:"usAudioUrl"`
+	Explanation *string             `form:"explanation" json:"explanation"`
+}
+
+func (r *ReplaceVocabRequest) Authorize(http.Context) error { return nil }
+func (r *ReplaceVocabRequest) Rules(http.Context) map[string]string {
+	return map[string]string{
+		"content": "required|min_len:1|max_len:200",
+	}
+}
+func (r *ReplaceVocabRequest) Filters(http.Context) map[string]string { return nil }
+func (r *ReplaceVocabRequest) Messages(http.Context) map[string]string { return nil }
+func (r *ReplaceVocabRequest) Attributes(http.Context) map[string]string { return nil }
+func (r *ReplaceVocabRequest) PrepareForValidation(_ http.Context, _ validation.Data) error {
+	return nil
+}
+
+// VerifyVocabRequest — POST /api/content-vocabs/{id}/verify
+type VerifyVocabRequest struct {
+	Verified bool `form:"verified" json:"verified"`
+}
+
+func (r *VerifyVocabRequest) Authorize(http.Context) error { return nil }
+func (r *VerifyVocabRequest) Rules(http.Context) map[string]string {
+	return map[string]string{}
+}
+func (r *VerifyVocabRequest) Filters(http.Context) map[string]string { return nil }
+func (r *VerifyVocabRequest) Messages(http.Context) map[string]string { return nil }
+func (r *VerifyVocabRequest) Attributes(http.Context) map[string]string { return nil }
+func (r *VerifyVocabRequest) PrepareForValidation(_ http.Context, _ validation.Data) error {
+	return nil
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/http/requests/api/content_vocab_request.go
+git commit -m "feat(api): add request validators for content-vocab wiki ops"
+```
+
+### Task 5.7: Add game_vocab_request.go
+
+**Files:**
+- Create: `dx-api/app/http/requests/api/game_vocab_request.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"github.com/goravel/framework/contracts/http"
+	"github.com/goravel/framework/contracts/validation"
+)
+
+// AddGameVocabsRequest — POST /api/course-games/{id}/levels/{levelId}/game-vocabs
+type AddGameVocabsRequest struct {
+	Entries []string `form:"entries" json:"entries"`
+}
+
+func (r *AddGameVocabsRequest) Authorize(http.Context) error { return nil }
+func (r *AddGameVocabsRequest) Rules(http.Context) map[string]string {
+	return map[string]string{
+		"entries": "required",
+	}
+}
+func (r *AddGameVocabsRequest) Filters(http.Context) map[string]string { return nil }
+func (r *AddGameVocabsRequest) Messages(http.Context) map[string]string { return nil }
+func (r *AddGameVocabsRequest) Attributes(http.Context) map[string]string { return nil }
+func (r *AddGameVocabsRequest) PrepareForValidation(_ http.Context, _ validation.Data) error {
+	return nil
+}
+
+// ReorderGameVocabRequest — PUT /api/course-games/{id}/game-vocabs/{gvId}/reorder
+type ReorderGameVocabRequest struct {
+	NewOrder float64 `form:"newOrder" json:"newOrder"`
+}
+
+func (r *ReorderGameVocabRequest) Authorize(http.Context) error { return nil }
+func (r *ReorderGameVocabRequest) Rules(http.Context) map[string]string {
+	return map[string]string{
+		"newOrder": "required",
+	}
+}
+func (r *ReorderGameVocabRequest) Filters(http.Context) map[string]string { return nil }
+func (r *ReorderGameVocabRequest) Messages(http.Context) map[string]string { return nil }
+func (r *ReorderGameVocabRequest) Attributes(http.Context) map[string]string { return nil }
+func (r *ReorderGameVocabRequest) PrepareForValidation(_ http.Context, _ validation.Data) error {
+	return nil
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/http/requests/api/game_vocab_request.go
+git commit -m "feat(api): add request validators for game-vocab placement ops"
+```
+
+### Task 5.8: Add content_vocab_controller.go
+
+**Files:**
+- Create: `dx-api/app/http/controllers/api/content_vocab_controller.go`
+
+- [ ] **Step 1: Create the file** (mirrors existing controller patterns: thin, validates, calls service, returns helpers.Success/Fail)
+
+```go
+package api
+
+import (
+	"errors"
+
+	"dx-api/app/helpers"
+	apiReq "dx-api/app/http/requests/api"
+	"dx-api/app/services/api"
+
+	"github.com/goravel/framework/contracts/http"
+)
+
+type ContentVocabController struct{}
+
+func NewContentVocabController() *ContentVocabController {
+	return &ContentVocabController{}
+}
+
+// GET /api/content-vocabs?content=<key>
+func (c *ContentVocabController) GetByContent(ctx http.Context) http.Response {
+	content := ctx.Request().Query("content", "")
+	if content == "" {
+		return helpers.Fail(ctx, 400, "content query param required")
+	}
+	v, err := api.GetContentVocabByContent(content)
+	if err != nil {
+		return helpers.Fail(ctx, 500, err.Error())
+	}
+	return helpers.Success(ctx, v)
+}
+
+// POST /api/content-vocabs/{id}/complement
+func (c *ContentVocabController) Complement(ctx http.Context) http.Response {
+	var req apiReq.ComplementVocabRequest
+	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
+		return helpers.Fail(ctx, 400, err.Error())
+	} else if errs != nil {
+		return helpers.Fail(ctx, 400, errs.One())
+	}
+	userID := helpers.AuthUserID(ctx)
+	vocabID := ctx.Request().Route("id")
+	patch := api.VocabComplementPatch{
+		Definition:  req.Definition,
+		UkPhonetic:  req.UkPhonetic,
+		UsPhonetic:  req.UsPhonetic,
+		UkAudioURL:  req.UkAudioURL,
+		UsAudioURL:  req.UsAudioURL,
+		Explanation: req.Explanation,
+	}
+	v, err := api.ComplementContentVocab(userID, vocabID, patch)
+	if err != nil {
+		return mapVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, v)
+}
+
+// PUT /api/content-vocabs/{id}
+func (c *ContentVocabController) Replace(ctx http.Context) http.Response {
+	var req apiReq.ReplaceVocabRequest
+	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
+		return helpers.Fail(ctx, 400, err.Error())
+	} else if errs != nil {
+		return helpers.Fail(ctx, 400, errs.One())
+	}
+	userID := helpers.AuthUserID(ctx)
+	vocabID := ctx.Request().Route("id")
+	patch := api.VocabReplacePatch{
+		Content:     req.Content,
+		Definition:  req.Definition,
+		UkPhonetic:  req.UkPhonetic,
+		UsPhonetic:  req.UsPhonetic,
+		UkAudioURL:  req.UkAudioURL,
+		UsAudioURL:  req.UsAudioURL,
+		Explanation: req.Explanation,
+	}
+	v, err := api.ReplaceContentVocab(userID, vocabID, patch)
+	if err != nil {
+		return mapVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, v)
+}
+
+// POST /api/content-vocabs/{id}/verify
+func (c *ContentVocabController) Verify(ctx http.Context) http.Response {
+	var req apiReq.VerifyVocabRequest
+	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
+		return helpers.Fail(ctx, 400, err.Error())
+	} else if errs != nil {
+		return helpers.Fail(ctx, 400, errs.One())
+	}
+	userID := helpers.AuthUserID(ctx)
+	vocabID := ctx.Request().Route("id")
+	v, err := api.VerifyContentVocab(userID, vocabID, req.Verified)
+	if err != nil {
+		return mapVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, v)
+}
+
+func mapVocabError(ctx http.Context, err error) http.Response {
+	switch {
+	case errors.Is(err, api.ErrVocabNotFound):
+		return helpers.Fail(ctx, 404, "词条不存在")
+	case errors.Is(err, api.ErrVocabNotEditable):
+		return helpers.Fail(ctx, 403, "无权编辑此词条")
+	case errors.Is(err, api.ErrVocabAdminOnly):
+		return helpers.Fail(ctx, 403, "需要管理员权限")
+	case errors.Is(err, api.ErrInvalidPosKey):
+		return helpers.Fail(ctx, 400, "definition 中包含无效词性")
+	case errors.Is(err, api.ErrVocabContentEmpty), errors.Is(err, api.ErrVocabContentInvalid):
+		return helpers.Fail(ctx, 400, "词条内容无效")
+	default:
+		return helpers.Fail(ctx, 500, err.Error())
+	}
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/http/controllers/api/content_vocab_controller.go
+git commit -m "feat(api): add ContentVocabController for wiki ops"
+```
+
+### Task 5.9: Add game_vocab_controller.go
+
+**Files:**
+- Create: `dx-api/app/http/controllers/api/game_vocab_controller.go`
+
+- [ ] **Step 1: Create the file**
+
+```go
+package api
+
+import (
+	"errors"
+
+	"dx-api/app/helpers"
+	apiReq "dx-api/app/http/requests/api"
+	"dx-api/app/services/api"
+
+	"github.com/goravel/framework/contracts/http"
+)
+
+type GameVocabController struct{}
+
+func NewGameVocabController() *GameVocabController {
+	return &GameVocabController{}
+}
+
+// POST /api/course-games/{id}/levels/{levelId}/game-vocabs
+func (c *GameVocabController) Add(ctx http.Context) http.Response {
+	var req apiReq.AddGameVocabsRequest
+	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
+		return helpers.Fail(ctx, 400, err.Error())
+	} else if errs != nil {
+		return helpers.Fail(ctx, 400, errs.One())
+	}
+	userID := helpers.AuthUserID(ctx)
+	gameID := ctx.Request().Route("id")
+	levelID := ctx.Request().Route("levelId")
+
+	added, err := api.AddVocabsToLevel(userID, gameID, levelID, req.Entries)
+	if err != nil {
+		return mapGameVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, added)
+}
+
+// GET /api/course-games/{id}/levels/{levelId}/game-vocabs
+func (c *GameVocabController) List(ctx http.Context) http.Response {
+	userID := helpers.AuthUserID(ctx)
+	gameID := ctx.Request().Route("id")
+	levelID := ctx.Request().Route("levelId")
+	rows, err := api.GetLevelVocabs(userID, gameID, levelID)
+	if err != nil {
+		return mapGameVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, rows)
+}
+
+// PUT /api/course-games/{id}/game-vocabs/{gvId}/reorder
+func (c *GameVocabController) Reorder(ctx http.Context) http.Response {
+	var req apiReq.ReorderGameVocabRequest
+	if errs, err := ctx.Request().ValidateRequest(&req); err != nil {
+		return helpers.Fail(ctx, 400, err.Error())
+	} else if errs != nil {
+		return helpers.Fail(ctx, 400, errs.One())
+	}
+	userID := helpers.AuthUserID(ctx)
+	gameID := ctx.Request().Route("id")
+	gvID := ctx.Request().Route("gvId")
+	if err := api.ReorderGameVocab(userID, gameID, gvID, req.NewOrder); err != nil {
+		return mapGameVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, nil)
+}
+
+// DELETE /api/course-games/{id}/game-vocabs/{gvId}
+func (c *GameVocabController) Delete(ctx http.Context) http.Response {
+	userID := helpers.AuthUserID(ctx)
+	gameID := ctx.Request().Route("id")
+	gvID := ctx.Request().Route("gvId")
+	if err := api.DeleteGameVocab(userID, gameID, gvID); err != nil {
+		return mapGameVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, nil)
+}
+
+func mapGameVocabError(ctx http.Context, err error) http.Response {
+	switch {
+	case errors.Is(err, api.ErrGamePublished):
+		return helpers.Fail(ctx, 409, "已发布的游戏不可编辑，请先撤回")
+	case errors.Is(err, api.ErrCapacityExceeded):
+		return helpers.Fail(ctx, 422, "容量已满")
+	case errors.Is(err, api.ErrBatchSizeInvalid):
+		return helpers.Fail(ctx, 422, "数量必须是批次大小的倍数")
+	case errors.Is(err, api.ErrForbidden):
+		return helpers.Fail(ctx, 403, "无权操作")
+	case errors.Is(err, api.ErrLevelNotFound), errors.Is(err, api.ErrGameNotFound):
+		return helpers.Fail(ctx, 404, "未找到")
+	case errors.Is(err, api.ErrVocabContentEmpty), errors.Is(err, api.ErrVocabContentInvalid):
+		return helpers.Fail(ctx, 400, "词条内容无效（仅允许字母/数字/空格/' /-）")
+	default:
+		return helpers.Fail(ctx, 500, err.Error())
+	}
+}
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add dx-api/app/http/controllers/api/game_vocab_controller.go
+git commit -m "feat(api): add GameVocabController for placement ops"
+```
+
+### Task 5.10: Edit ai_custom_controller.go
+
+**Files:**
+- Modify: `dx-api/app/http/controllers/api/ai_custom_controller.go`
+
+- [ ] **Step 1: Read the existing controller**
+
+```bash
+cat dx-api/app/http/controllers/api/ai_custom_controller.go
+```
+
+- [ ] **Step 2: Edit it to:**
+- Drop the `BreakVocabMetadata` and `GenerateVocabContentItems` handler methods (these were the legacy vocab-game-mode SSE endpoints).
+- Add a new handler method `GenerateContentVocabFields`:
+
+```go
+// POST /api/ai-custom/generate-content-vocab-fields  (SSE)
+func (c *AiCustomController) GenerateContentVocabFields(ctx http.Context) http.Response {
+	userID := helpers.AuthUserID(ctx)
+	gameLevelID := ctx.Request().Input("gameLevelId", "")
+	if gameLevelID == "" {
+		return helpers.Fail(ctx, 400, "gameLevelId required")
+	}
+	writer := helpers.NewNDJSONWriter(ctx)
+	go api.GenerateContentVocabFields(userID, gameLevelID, writer)
+	return writer.Response()
+}
+```
+
+(Adapt to the existing SSE handler pattern in `BreakMetadata` / `GenerateContentItems` — same shape.)
+
+- [ ] **Step 3: Verify formatting**
+
+```bash
+cd dx-api && gofmt -l app/http/controllers/api/ai_custom_controller.go
+```
+
+Expected: no output.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add dx-api/app/http/controllers/api/ai_custom_controller.go
+git commit -m "refactor(api): ai_custom_controller — drop vocab-meta SSE handlers, add content-vocab-fields SSE"
+```
+
+### Task 5.11: Update routes/api.go
+
+**Files:**
+- Modify: `dx-api/routes/api.go`
+
+- [ ] **Step 1: Edit the `/api/ai-custom/...` group** (around lines 220-234) — remove the two old vocab routes and add the new content-vocab-fields route:
+
+Find:
+```go
+// Vocab endpoints
+ai.Post("/generate-vocab", aiCustomVocabController.GenerateVocab)
+ai.Post("/format-vocab", aiCustomVocabController.FormatVocab)
+ai.Post("/break-vocab-metadata", aiCustomVocabController.BreakMetadata)
+ai.Post("/generate-vocab-content-items", aiCustomVocabController.GenerateContentItems)
+```
+
+Replace with:
+```go
+// Vocab text helpers (kept; output is raw text user pastes)
+ai.Post("/generate-vocab", aiCustomController.GenerateVocab)
+ai.Post("/format-vocab", aiCustomController.FormatVocab)
+// AI enrichment for canonical content_vocabs (SSE)
+ai.Post("/generate-content-vocab-fields", aiCustomController.GenerateContentVocabFields)
+```
+
+(NOTE: the `aiCustomVocabController` variable should also be removed from the surrounding scope.)
+
+- [ ] **Step 2: Move `GenerateVocab` and `FormatVocab` handler methods into `ai_custom_controller.go`**
+
+If they're not already on `AiCustomController`, port them over from the deleted `ai_custom_vocab_controller.go`. Their service-layer counterparts (`GenerateVocab`, `FormatVocab` in `ai_custom_vocab_service.go`) were also deleted — port their bodies into `ai_custom_service.go`. Use the existing functions in that file as the model for cost/refund/error patterns.
+
+- [ ] **Step 3: Add new content-vocabs and game-vocabs route groups** under the protected group:
+
+```go
+// Content vocabs (canonical wiki ops)
+contentVocabController := apicontrollers.NewContentVocabController()
+protected.Get("/content-vocabs", contentVocabController.GetByContent)
+protected.Post("/content-vocabs/{id}/complement", contentVocabController.Complement)
+protected.Put("/content-vocabs/{id}", contentVocabController.Replace)
+protected.Post("/content-vocabs/{id}/verify", contentVocabController.Verify)
+
+// Game vocabs (placement ops, nested under course-games)
+gameVocabController := apicontrollers.NewGameVocabController()
+protected.Post("/course-games/{id}/levels/{levelId}/game-vocabs", gameVocabController.Add)
+protected.Get("/course-games/{id}/levels/{levelId}/game-vocabs", gameVocabController.List)
+protected.Put("/course-games/{id}/game-vocabs/{gvId}/reorder", gameVocabController.Reorder)
+protected.Delete("/course-games/{id}/game-vocabs/{gvId}", gameVocabController.Delete)
+```
+
+Place them after the existing `course-games` group registration.
+
+- [ ] **Step 4: Verify build**
+
+```bash
+cd dx-api && go build ./routes/...
+```
+
+Expected: clean build (other packages may still fail until later phases). If the route file refers to a controller that no longer exists, fix the import.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add dx-api/routes/api.go dx-api/app/services/api/ai_custom_service.go dx-api/app/http/controllers/api/ai_custom_controller.go
+git commit -m "refactor(api): wire content-vocabs / game-vocabs routes; port vocab text helpers"
+```
+
+### Phase 5 validation gate
+
+- [ ] **Run gofmt + vet on the affected packages**
+
+```bash
+cd dx-api && gofmt -l app/services/api/ app/http/controllers/api/ app/http/requests/api/ routes/
+cd dx-api && go vet ./app/services/api/... ./app/http/controllers/api/... 2>&1 | head -30
+```
+
+Expected: gofmt clean. Vet errors should now only reference Phases 6-7 work (`content_service.go`, play services, tracking services).
+
+---
+
+
 
 
