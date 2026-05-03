@@ -102,11 +102,16 @@ export function LevelVocabsPanel({
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Stable mount-time clock for the 24h edit gate. useState initializer is
+  // exempt from react-hooks/purity since it runs once at mount, not on every
+  // render. Reopening the page refreshes the cutoff.
+  const [renderNow] = useState(() => Date.now());
+
   function canEdit(vocab: ContentVocabData | null) {
     if (!vocab) return false;
     if (vocab.createdBy === currentUserId || isAdmin) return true;
     if (!vocab.isVerified && vocab.createdAt) {
-      return Date.now() - new Date(vocab.createdAt).getTime() < 24 * 60 * 60 * 1000;
+      return renderNow - new Date(vocab.createdAt).getTime() < 24 * 60 * 60 * 1000;
     }
     return false;
   }
