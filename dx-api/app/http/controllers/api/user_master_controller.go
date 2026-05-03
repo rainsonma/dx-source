@@ -32,7 +32,7 @@ func (c *UserMasterController) MarkMastered(ctx contractshttp.Context) contracts
 		return resp
 	}
 
-	if err := services.MarkAsMastered(userID, req.ContentItemID, req.GameID, req.GameLevelID); err != nil {
+	if err := services.MarkAsMastered(userID, req.ContentItemID, req.ContentVocabID, req.GameID, req.GameLevelID); err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
 			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "操作过于频繁，请稍后再试")
 		}
