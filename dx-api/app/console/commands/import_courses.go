@@ -249,42 +249,14 @@ func forceCleanup(categoryID string, names []string) (int, error) {
 			levelIDs = append(levelIDs, l.ID)
 		}
 
-		// Delete content via the junction (pre-reuse 1:1 invariant), then the
-		// junction rows themselves.
+		// Delete content items linked to this game's levels.
 		if len(levelIDs) > 0 {
 			if _, err := query.Exec(
 				`UPDATE content_items SET deleted_at = NOW()
-				 WHERE deleted_at IS NULL
-				   AND id IN (
-				     SELECT content_item_id FROM game_items
-				     WHERE game_level_id IN ? AND deleted_at IS NULL
-				   )`,
+				 WHERE deleted_at IS NULL AND game_level_id IN ?`,
 				levelIDs,
 			); err != nil {
 				return 0, fmt.Errorf("failed to delete content items for game %s: %w", game.ID, err)
-			}
-			if _, err := query.Exec(
-				`UPDATE content_metas SET deleted_at = NOW()
-				 WHERE deleted_at IS NULL
-				   AND id IN (
-				     SELECT content_meta_id FROM game_metas
-				     WHERE game_level_id IN ? AND deleted_at IS NULL
-				   )`,
-				levelIDs,
-			); err != nil {
-				return 0, fmt.Errorf("failed to delete content metas for game %s: %w", game.ID, err)
-			}
-			if _, err := query.Exec(
-				"UPDATE game_items SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
-				levelIDs,
-			); err != nil {
-				return 0, fmt.Errorf("failed to delete game_items for game %s: %w", game.ID, err)
-			}
-			if _, err := query.Exec(
-				"UPDATE game_metas SET deleted_at = NOW() WHERE game_level_id IN ? AND deleted_at IS NULL",
-				levelIDs,
-			); err != nil {
-				return 0, fmt.Errorf("failed to delete game_metas for game %s: %w", game.ID, err)
 			}
 		}
 
@@ -376,12 +348,8 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 			return fmt.Errorf("failed to create level %s: %w", level.Title, err)
 		}
 
-		// Build content items in batches; also collect the full set and their
-		// computed order values for the junction insert that follows (metas
-		// are not imported by this command).
+		// Build content items in batches.
 		var batch []models.ContentItem
-		allItems := make([]models.ContentItem, 0, len(level.Sentences))
-		allItemOrders := make([]float64, 0, len(level.Sentences))
 		for _, item := range level.Sentences {
 			items, err := transformItems(item.Content, item.WordDetails)
 			if err != nil {
@@ -402,8 +370,6 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 				Structure:   structure,
 			}
 			batch = append(batch, ci)
-			allItems = append(allItems, ci)
-			allItemOrders = append(allItemOrders, float64(item.SortOrder*1000))
 
 			if len(batch) >= batchSize {
 				if err := tx.Create(&batch); err != nil {
@@ -420,18 +386,8 @@ func insertLevels(tx orm.Query, gameID string, levels []CourseFile) error {
 			}
 		}
 
-		if err := createGameItemsBatch(tx, gameID, levelID, allItems, allItemOrders); err != nil {
-			return fmt.Errorf("failed to create game_items: %w", err)
-		}
 	}
 
-	return nil
-}
-
-// createGameItemsBatch is a no-op: the game_items junction table was removed
-// in the content/vocabs schema refactor. Content items are now linked to games
-// via content_metas (sentence mode) or game_vocabs (vocab mode).
-func createGameItemsBatch(_ orm.Query, _, _ string, _ []models.ContentItem, _ []float64) error {
 	return nil
 }
 
