@@ -42,7 +42,7 @@ func TestValidateDefinition(t *testing.T) {
 		`[{"adj":"快的"},{"v":"斋戒"}]`,
 	}
 	bad := []string{
-		`[{"foo":"bar"}]`,          // unknown POS
+		`[{"foo":"bar"}]`,         // unknown POS
 		`[{"adj":"快的","v":"斋戒"}]`, // multi-key entry
 		`not json`,
 	}

@@ -52,8 +52,9 @@ var upgrader = gorillaWs.Upgrader{
 
 // Close codes for WebSocket auth outcomes. dx-web's provider already knows
 // about these (see websocket-provider.tsx onclose handler):
-//   4001 session replaced
-//   4401 auth expired / invalid
+//
+//	4001 session replaced
+//	4401 auth expired / invalid
 const (
 	wsCloseSessionReplaced = 4001
 	wsCloseAuthFailed      = 4401
