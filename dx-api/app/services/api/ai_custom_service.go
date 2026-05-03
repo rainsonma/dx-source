@@ -782,6 +782,164 @@ func verifyLevelOwnership(userID, gameLevelID string) (*models.Game, *models.Gam
 	return game, &level, nil
 }
 
+// --- GenerateVocab ---
+
+// GenerateVocabResult holds the response from vocab generation.
+type GenerateVocabResult struct {
+	Generated string `json:"generated,omitempty"`
+	Warning   string `json:"warning,omitempty"`
+}
+
+// GenerateVocab generates English-Chinese vocab pairs from keywords using DeepSeek AI.
+// Consumes 5 beans. Count based on game mode (5/8/20).
+func GenerateVocab(userID string, difficulty string, keywords []string, gameMode string) (*GenerateVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	if err := ConsumeBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateConsume, consts.BeanReasonAIVocabGenerateConsume); err != nil {
+		return nil, err
+	}
+
+	levelDesc, ok := difficultyDescriptions[difficulty]
+	if !ok {
+		levelDesc = difficultyDescriptions["a1-a2"]
+	}
+
+	count := consts.VocabGenerateCount(gameMode)
+	prompt := buildVocabGeneratePrompt(levelDesc, count)
+	userMsg := "Keywords: " + strings.Join(keywords, ", ")
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: prompt},
+			{Role: "user", Content: userMsg},
+		},
+		Temperature: 0.7,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateRefund, consts.BeanReasonAIVocabGenerateRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &GenerateVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	return &GenerateVocabResult{Generated: result}, nil
+}
+
+func buildVocabGeneratePrompt(levelDesc string, count int) string {
+	return fmt.Sprintf(`You are a vocabulary generator for an English learning app. Your job is to generate English-Chinese vocabulary pairs.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the provided keywords contain any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If they do, respond ONLY with: WARNING:包含不适当内容，请修改后重试
+Do NOT generate any vocabulary. Stop here.
+
+STEP 2 — GENERATE VOCABULARY:
+Generate exactly %d English-Chinese vocabulary pairs that:
+- Are related to ALL the provided keywords
+- Use CEFR level %s appropriate vocabulary
+- Include a mix of single words and short phrases
+- Are suitable for English language learners
+
+OUTPUT FORMAT:
+- Each pair on two lines: English word/phrase, then Chinese translation
+- No numbering, no bullets, no markdown, no explanations
+- No empty lines between pairs
+
+Example output:
+apple
+苹果
+banana
+香蕉
+red apple
+红苹果`, count, levelDesc)
+}
+
+// --- FormatVocab ---
+
+// FormatVocabResult holds the response from vocab formatting.
+type FormatVocabResult struct {
+	Formatted string `json:"formatted,omitempty"`
+	Warning   string `json:"warning,omitempty"`
+}
+
+// FormatVocab formats raw vocab text via DeepSeek.
+// Only vocab — rejects sentences. Cost = word count.
+func FormatVocab(userID string, content string) (*FormatVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	wordCount := helpers.CountWords(content)
+	if wordCount == 0 {
+		return nil, ErrEmptyContent
+	}
+
+	if err := ConsumeBeans(userID, wordCount, consts.BeanSlugAIVocabFormatConsume, consts.BeanReasonAIVocabFormatConsume); err != nil {
+		return nil, err
+	}
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: vocabFormatPrompt},
+			{Role: "user", Content: content},
+		},
+		Temperature: 0.1,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &FormatVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	formatted := cleanVocabFormatted(result)
+	if formatted == "" {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, helpers.ErrDeepSeekEmpty
+	}
+
+	return &FormatVocabResult{Formatted: formatted}, nil
+}
+
+var vocabFormatPrompt = `You are a content formatter for an English learning app. Your job is to clean up and reformat messy user input into a strict line-by-line format for vocabulary.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the content contains any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If it does, respond ONLY with: WARNING:内容包含不适当内容，请修改后重试
+Do NOT format the content. Stop here.
+
+STEP 2 — TYPE MISMATCH CHECK:
+If the content consists mostly of full sentences with punctuation, respond ONLY with: WARNING:内容看起来是语句而非词汇，请使用「连词成句」模式
+
+STEP 3 — FORMAT:
+- If the content contains Chinese text: output alternating lines of English word/phrase followed by its Chinese translation.
+- If the content contains NO Chinese text: output English words/phrases only, one per line.
+
+RULES:
+- Output ONLY the formatted text. No explanations, headers, numbering, or markdown.
+- Remove duplicates.
+- Fix obvious spelling errors in English.
+- Preserve the original meaning. Do not add or remove content.
+- Each line must contain exactly ONE word or phrase (or one translation).
+- Remove any empty lines.`
+
+// cleanVocabFormatted removes empty lines and trims whitespace.
+func cleanVocabFormatted(result string) string {
+	lines := strings.Split(result, "\n")
+	var clean []string
+	for _, line := range lines {
+		line = strings.TrimRight(line, " \t\r")
+		if line != "" {
+			clean = append(clean, line)
+		}
+	}
+	return strings.Join(clean, "\n")
+}
+
 func writeSSEError(writer *helpers.NDJSONWriter, err error) {
 	msg := "服务异常"
 	switch {

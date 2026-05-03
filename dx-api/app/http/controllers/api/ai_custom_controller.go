@@ -145,6 +145,78 @@ func (c *AiCustomController) GenerateContentItems(ctx contractshttp.Context) con
 	return nil
 }
 
+// GenerateVocab generates vocab pairs from keywords using AI.
+func (c *AiCustomController) GenerateVocab(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	var req struct {
+		Difficulty string   `json:"difficulty"`
+		Keywords   []string `json:"keywords"`
+		GameMode   string   `json:"gameMode"`
+	}
+	if err := ctx.Request().Bind(&req); err != nil {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
+	}
+
+	if req.Difficulty == "" {
+		req.Difficulty = "a1-a2"
+	}
+	if len(req.Keywords) == 0 || len(req.Keywords) > 5 {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请提供1-5个关键词")
+	}
+	if !consts.IsVocabMode(req.GameMode) {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的游戏模式")
+	}
+
+	result, err := services.GenerateVocab(userID, req.Difficulty, req.Keywords, req.GameMode)
+	if err != nil {
+		return mapAIServiceError(ctx, err, "AI 词汇服务")
+	}
+
+	if result.Warning != "" {
+		return helpers.Success(ctx, map[string]any{"warning": result.Warning})
+	}
+
+	return helpers.Success(ctx, map[string]any{
+		"generated": result.Generated,
+	})
+}
+
+// FormatVocab formats raw vocab text using AI.
+func (c *AiCustomController) FormatVocab(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	var req struct {
+		Content string `json:"content"`
+	}
+	if err := ctx.Request().Bind(&req); err != nil {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
+	}
+
+	if req.Content == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请输入内容")
+	}
+
+	result, err := services.FormatVocab(userID, req.Content)
+	if err != nil {
+		return mapAIServiceError(ctx, err, "格式化服务")
+	}
+
+	if result.Warning != "" {
+		return helpers.Success(ctx, map[string]any{"warning": result.Warning})
+	}
+
+	return helpers.Success(ctx, map[string]any{
+		"formatted": result.Formatted,
+	})
+}
+
 // mapAIServiceError maps service errors to HTTP responses.
 func mapAIServiceError(ctx contractshttp.Context, err error, serviceLabel string) contractshttp.Response {
 	switch {
