@@ -6,13 +6,13 @@ import (
 	"github.com/goravel/framework/facades"
 )
 
-type M20260405000005CreateGamePksTable struct{}
+type M20260405000006CreateGamePksTable struct{}
 
-func (r *M20260405000005CreateGamePksTable) Signature() string {
-	return "20260405000005_create_game_pks_table"
+func (r *M20260405000006CreateGamePksTable) Signature() string {
+	return "20260405000006_create_game_pks_table"
 }
 
-func (r *M20260405000005CreateGamePksTable) Up() error {
+func (r *M20260405000006CreateGamePksTable) Up() error {
 	if err := facades.Schema().Create("game_pks", func(table schema.Blueprint) {
 		table.Uuid("id")
 		table.Primary("id")
@@ -39,6 +39,6 @@ func (r *M20260405000005CreateGamePksTable) Up() error {
 	return nil
 }
 
-func (r *M20260405000005CreateGamePksTable) Down() error {
+func (r *M20260405000006CreateGamePksTable) Down() error {
 	return facades.Schema().DropIfExists("game_pks")
 }
