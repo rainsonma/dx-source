@@ -708,4 +708,101 @@ export const orderApi = {
   },
 };
 
+// Content vocab types
+export type PosKey = 'n' | 'v' | 'adj' | 'adv' | 'prep' | 'conj' | 'pron' | 'art' | 'num' | 'int' | 'aux' | 'det';
+export type DefinitionEntry = Partial<Record<PosKey, string>>;
+
+export interface ContentVocabData {
+  id: string;
+  content: string;
+  ukPhonetic?: string | null;
+  usPhonetic?: string | null;
+  ukAudioUrl?: string | null;
+  usAudioUrl?: string | null;
+  definition?: string | null;
+  explanation?: string | null;
+  isVerified: boolean;
+  createdBy?: string | null;
+  lastEditedBy?: string | null;
+}
+
+export interface ContentVocabComplementPatch {
+  definition?: DefinitionEntry[];
+  ukPhonetic?: string | null;
+  usPhonetic?: string | null;
+  ukAudioUrl?: string | null;
+  usAudioUrl?: string | null;
+  explanation?: string | null;
+}
+
+export interface ContentVocabReplacePatch {
+  content: string;
+  definition: DefinitionEntry[];
+  ukPhonetic?: string | null;
+  usPhonetic?: string | null;
+  ukAudioUrl?: string | null;
+  usAudioUrl?: string | null;
+  explanation?: string | null;
+}
+
+export interface AddedGameVocab {
+  gameVocabId: string;
+  contentVocabId: string;
+  content: string;
+  wasReused: boolean;
+}
+
+export interface LevelVocabData {
+  gameVocabId: string;
+  order: number;
+  vocab: ContentVocabData | null;
+}
+
+// Content vocab API functions
+export const contentVocabApi = {
+  getByContent: (content: string) =>
+    apiFetch<ContentVocabData | null>(`/api/content-vocabs?content=${encodeURIComponent(content)}`),
+
+  complement: (id: string, patch: ContentVocabComplementPatch) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/complement`, {
+      method: 'POST',
+      body: JSON.stringify(patch),
+    }),
+
+  replace: (id: string, patch: ContentVocabReplacePatch) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+
+  verify: (id: string, verified: boolean) =>
+    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/verify`, {
+      method: 'POST',
+      body: JSON.stringify({ verified }),
+    }),
+};
+
+// Game vocab placement API functions
+export const gameVocabApi = {
+  list: (gameId: string, levelId: string) =>
+    apiFetch<LevelVocabData[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`),
+
+  add: (gameId: string, levelId: string, entries: string[]) =>
+    apiFetch<AddedGameVocab[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`, {
+      method: 'POST',
+      body: JSON.stringify({ entries }),
+    }),
+
+  reorder: (gameId: string, gvId: string, newOrder: number) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ newOrder }),
+    }),
+
+  delete: (gameId: string, gvId: string) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}`, {
+      method: 'DELETE',
+    }),
+};
+
 export type { ApiResponse, CursorPaginated, OffsetPaginated };
