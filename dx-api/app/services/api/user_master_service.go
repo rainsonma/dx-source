@@ -19,7 +19,6 @@ const (
 	rateLimitTrackingSec = 60
 )
 
-// TrackingItemData represents a mastered/unknown/review item with content details.
 type TrackingItemData struct {
 	ID          string               `json:"id"`
 	ContentItem *TrackingContentData `json:"contentItem"`
@@ -28,114 +27,14 @@ type TrackingItemData struct {
 	CreatedAt   any                  `json:"createdAt"`
 }
 
-// TrackingContentData holds content item details for tracking lists.
 type TrackingContentData struct {
 	Content     string  `json:"content"`
 	Translation *string `json:"translation"`
 	ContentType string  `json:"contentType"`
 }
 
-// enrichTrackingItems enriches master or unknown items with content and game details.
-func enrichTrackingItems(masters []models.UserMaster, unknowns []models.UserUnknown) []TrackingItemData {
-	var contentIDs, gameIDs []string
-	var items []TrackingItemData
-
-	if masters != nil {
-		contentIDs = make([]string, 0, len(masters))
-		gameIDs = make([]string, 0, len(masters))
-		for _, m := range masters {
-			contentIDs = append(contentIDs, m.ContentItemID)
-			gameIDs = append(gameIDs, m.GameID)
-		}
-	} else if unknowns != nil {
-		contentIDs = make([]string, 0, len(unknowns))
-		gameIDs = make([]string, 0, len(unknowns))
-		for _, u := range unknowns {
-			contentIDs = append(contentIDs, u.ContentItemID)
-			gameIDs = append(gameIDs, u.GameID)
-		}
-	}
-
-	contentMap := batchLoadContentItems(contentIDs)
-	gameMap := batchLoadGameNames(gameIDs)
-
-	if masters != nil {
-		items = make([]TrackingItemData, 0, len(masters))
-		for _, m := range masters {
-			item := TrackingItemData{
-				ID:         m.ID,
-				MasteredAt: m.MasteredAt,
-				CreatedAt:  m.CreatedAt,
-			}
-			if ci, ok := contentMap[m.ContentItemID]; ok {
-				item.ContentItem = ci
-			}
-			if name, ok := gameMap[m.GameID]; ok {
-				item.GameName = &name
-			}
-			items = append(items, item)
-		}
-	} else if unknowns != nil {
-		items = make([]TrackingItemData, 0, len(unknowns))
-		for _, u := range unknowns {
-			item := TrackingItemData{
-				ID:        u.ID,
-				CreatedAt: u.CreatedAt,
-			}
-			if ci, ok := contentMap[u.ContentItemID]; ok {
-				item.ContentItem = ci
-			}
-			if name, ok := gameMap[u.GameID]; ok {
-				item.GameName = &name
-			}
-			items = append(items, item)
-		}
-	}
-
-	return items
-}
-
-// batchLoadContentItems loads content items by IDs and returns a map.
-func batchLoadContentItems(ids []string) map[string]*TrackingContentData {
-	result := make(map[string]*TrackingContentData)
-	if len(ids) == 0 {
-		return result
-	}
-	var items []models.ContentItem
-	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&items)
-	for _, ci := range items {
-		result[ci.ID] = &TrackingContentData{
-			Content:     ci.Content,
-			Translation: ci.Translation,
-			ContentType: ci.ContentType,
-		}
-	}
-	return result
-}
-
-// batchLoadGameNames loads game names by IDs and returns a map.
-func batchLoadGameNames(ids []string) map[string]string {
-	result := make(map[string]string)
-	if len(ids) == 0 {
-		return result
-	}
-	var games []models.Game
-	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&games)
-	for _, g := range games {
-		result[g.ID] = g.Name
-	}
-	return result
-}
-
-// MasterStatsData holds mastered word statistics.
-type MasterStatsData struct {
-	Total     int64 `json:"total"`
-	ThisWeek  int64 `json:"thisWeek"`
-	ThisMonth int64 `json:"thisMonth"`
-}
-
-// MarkAsMastered upserts a mastered entry and removes from unknown.
-func MarkAsMastered(userID, contentItemID, gameID, gameLevelID string) error {
+// MarkAsMastered is now polymorphic: pass exactly one of contentItemID or contentVocabID.
+func MarkAsMastered(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string) error {
 	allowed, err := helpers.CheckRateLimit(
 		fmt.Sprintf(rateLimitMasterKey, userID), rateLimitTracking, rateLimitTrackingSec,
 	)
@@ -145,28 +44,52 @@ func MarkAsMastered(userID, contentItemID, gameID, gameLevelID string) error {
 	if !allowed {
 		return ErrRateLimited
 	}
-
-	now := carbon.Now()
-	_, err = facades.Orm().Query().Exec(
-		`INSERT INTO user_masters (id, user_id, content_item_id, game_id, game_level_id, mastered_at, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, now(), now())
-		 ON CONFLICT (user_id, content_item_id) DO NOTHING`,
-		newID(), userID, contentItemID, gameID, gameLevelID, now,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to mark as mastered: %w", err)
+	if (contentItemID == nil) == (contentVocabID == nil) {
+		return fmt.Errorf("must specify exactly one of contentItemID / contentVocabID")
 	}
 
-	// Remove from unknown if exists
-	_, _ = facades.Orm().Query().Exec(
-		"DELETE FROM user_unknowns WHERE user_id = ? AND content_item_id = ?",
-		userID, contentItemID,
-	)
+	now := carbon.Now()
+	id := newID()
+
+	// Plain insert; partial uniques (with `WHERE deleted_at IS NULL`) keep us
+	// idempotent against double-clicks. Conflicts on live rows are silent.
+	if contentItemID != nil {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_masters
+			   (id, user_id, content_item_id, game_id, game_level_id, mastered_at, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_item_id) WHERE content_item_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			id, userID, *contentItemID, gameID, gameLevelID, now,
+		); err != nil {
+			return fmt.Errorf("failed to mark as mastered (item): %w", err)
+		}
+		// Soft-delete from unknown if exists
+		_, _ = facades.Orm().Query().Exec(
+			`UPDATE user_unknowns SET deleted_at = NOW()
+			   WHERE user_id = ? AND content_item_id = ? AND deleted_at IS NULL`,
+			userID, *contentItemID,
+		)
+	} else {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_masters
+			   (id, user_id, content_vocab_id, game_id, game_level_id, mastered_at, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, now(), now())
+			 ON CONFLICT (user_id, content_vocab_id) WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			id, userID, *contentVocabID, gameID, gameLevelID, now,
+		); err != nil {
+			return fmt.Errorf("failed to mark as mastered (vocab): %w", err)
+		}
+		_, _ = facades.Orm().Query().Exec(
+			`UPDATE user_unknowns SET deleted_at = NOW()
+			   WHERE user_id = ? AND content_vocab_id = ? AND deleted_at IS NULL`,
+			userID, *contentVocabID,
+		)
+	}
 
 	return nil
 }
 
-// ListMastered returns paginated mastered items with content details.
+// ListMastered returns paginated mastered items with content details (mixed item+vocab).
 func ListMastered(userID, cursor string, limit int) ([]TrackingItemData, string, bool, error) {
 	query := facades.Orm().Query()
 
@@ -192,10 +115,149 @@ func ListMastered(userID, cursor string, limit int) ([]TrackingItemData, string,
 		nextCursor = masters[len(masters)-1].ID
 	}
 
-	return enrichTrackingItems(masters, nil), nextCursor, hasMore, nil
+	return enrichTrackingItems(masters, nil, nil), nextCursor, hasMore, nil
 }
 
-// GetMasterStats returns mastered word count statistics.
+// enrichTrackingItems assembles {content, translation, contentType} for each row,
+// loading from content_items or content_vocabs based on which FK is non-nil.
+func enrichTrackingItems(masters []models.UserMaster, unknowns []models.UserUnknown, reviews []models.UserReview) []TrackingItemData {
+	itemIDs := []string{}
+	vocabIDs := []string{}
+	gameIDs := []string{}
+
+	collect := func(itemID, vocabID *string, gameID string) {
+		if itemID != nil {
+			itemIDs = append(itemIDs, *itemID)
+		}
+		if vocabID != nil {
+			vocabIDs = append(vocabIDs, *vocabID)
+		}
+		if gameID != "" {
+			gameIDs = append(gameIDs, gameID)
+		}
+	}
+
+	for _, m := range masters {
+		collect(m.ContentItemID, m.ContentVocabID, m.GameID)
+	}
+	for _, u := range unknowns {
+		collect(u.ContentItemID, u.ContentVocabID, u.GameID)
+	}
+	for _, r := range reviews {
+		collect(r.ContentItemID, r.ContentVocabID, r.GameID)
+	}
+
+	itemMap := batchLoadContentItems(itemIDs)
+	vocabMap := batchLoadContentVocabs(vocabIDs)
+	gameMap := batchLoadGameNames(gameIDs)
+
+	resolve := func(itemID, vocabID *string) *TrackingContentData {
+		if itemID != nil {
+			return itemMap[*itemID]
+		}
+		if vocabID != nil {
+			return vocabMap[*vocabID]
+		}
+		return nil
+	}
+
+	out := make([]TrackingItemData, 0, len(masters)+len(unknowns)+len(reviews))
+	for _, m := range masters {
+		out = append(out, TrackingItemData{
+			ID:          m.ID,
+			ContentItem: resolve(m.ContentItemID, m.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, m.GameID),
+			MasteredAt:  m.MasteredAt,
+			CreatedAt:   m.CreatedAt,
+		})
+	}
+	for _, u := range unknowns {
+		out = append(out, TrackingItemData{
+			ID:          u.ID,
+			ContentItem: resolve(u.ContentItemID, u.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, u.GameID),
+			CreatedAt:   u.CreatedAt,
+		})
+	}
+	for _, r := range reviews {
+		out = append(out, TrackingItemData{
+			ID:          r.ID,
+			ContentItem: resolve(r.ContentItemID, r.ContentVocabID),
+			GameName:    gameMapPtr(gameMap, r.GameID),
+			CreatedAt:   r.CreatedAt,
+		})
+	}
+	return out
+}
+
+func gameMapPtr(m map[string]string, id string) *string {
+	if v, ok := m[id]; ok {
+		return &v
+	}
+	return nil
+}
+
+func batchLoadContentItems(ids []string) map[string]*TrackingContentData {
+	result := make(map[string]*TrackingContentData)
+	if len(ids) == 0 {
+		return result
+	}
+	var items []models.ContentItem
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&items)
+	for _, ci := range items {
+		result[ci.ID] = &TrackingContentData{
+			Content:     ci.Content,
+			Translation: ci.Translation,
+			ContentType: ci.ContentType,
+		}
+	}
+	return result
+}
+
+func batchLoadContentVocabs(ids []string) map[string]*TrackingContentData {
+	result := make(map[string]*TrackingContentData)
+	if len(ids) == 0 {
+		return result
+	}
+	var vocabs []models.ContentVocab
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&vocabs)
+	for _, cv := range vocabs {
+		// translation is the joined gloss from definition (or nil if empty)
+		joined := joinDefinitionGloss(cv.Definition)
+		var translation *string
+		if joined != "" {
+			translation = &joined
+		}
+		result[cv.ID] = &TrackingContentData{
+			Content:     cv.Content,
+			Translation: translation,
+			ContentType: "vocab",
+		}
+	}
+	return result
+}
+
+func batchLoadGameNames(ids []string) map[string]string {
+	result := make(map[string]string)
+	if len(ids) == 0 {
+		return result
+	}
+	var games []models.Game
+	facades.Orm().Query().WithTrashed().Where("id IN ?", ids).Get(&games)
+	for _, g := range games {
+		result[g.ID] = g.Name
+	}
+	return result
+}
+
+// MasterStatsData / GetMasterStats / DeleteMastered / BulkDeleteMastered: same shape.
+
+type MasterStatsData struct {
+	Total     int64 `json:"total"`
+	ThisWeek  int64 `json:"thisWeek"`
+	ThisMonth int64 `json:"thisMonth"`
+}
+
 func GetMasterStats(userID string) (*MasterStatsData, error) {
 	query := facades.Orm().Query()
 	now := time.Now()
@@ -210,21 +272,25 @@ func GetMasterStats(userID string) (*MasterStatsData, error) {
 	return &MasterStatsData{Total: total, ThisWeek: thisWeek, ThisMonth: thisMonth}, nil
 }
 
-// DeleteMastered removes a single mastered entry owned by the user.
+// DeleteMastered soft-deletes a single mastered entry owned by the user.
 func DeleteMastered(userID, id string) error {
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_masters WHERE id = ? AND user_id = ?", id, userID,
+		`UPDATE user_masters SET deleted_at = NOW()
+		   WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		id, userID,
 	)
 	return err
 }
 
-// BulkDeleteMastered removes multiple mastered entries owned by the user.
+// BulkDeleteMastered soft-deletes multiple mastered entries owned by the user.
 func BulkDeleteMastered(userID string, ids []string) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_masters WHERE user_id = ? AND id IN ?", userID, ids,
+		`UPDATE user_masters SET deleted_at = NOW()
+		   WHERE user_id = ? AND id IN ? AND deleted_at IS NULL`,
+		userID, ids,
 	)
 	return err
 }
