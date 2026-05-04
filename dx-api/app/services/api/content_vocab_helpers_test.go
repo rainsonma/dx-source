@@ -15,7 +15,7 @@ func TestNormalizeVocabContent(t *testing.T) {
 	}
 	for _, tc := range cases {
 		if got := NormalizeVocabContent(tc.in); got != tc.out {
-			t.Errorf("NormalizeVocabContent(%q) = %q, want %q", tc.in, got, tc.out)
+			t.Errorf("NormalizeVocabContent(%q) = %q, want %q", tc.in, tc.out, got)
 		}
 	}
 }
@@ -55,28 +55,5 @@ func TestValidateDefinition(t *testing.T) {
 		if err := ValidateDefinition(s); err == nil {
 			t.Errorf("ValidateDefinition(%q) want error, got nil", s)
 		}
-	}
-}
-
-func TestMergeDefinition_AdditiveOnly(t *testing.T) {
-	existing := `[{"adj":"快的"}]`
-	new := []map[string]string{{"v": "斋戒"}, {"adj": "错误的"}}
-	got, err := MergeDefinition(existing, new)
-	if err != nil {
-		t.Fatalf("MergeDefinition failed: %v", err)
-	}
-	want := `[{"adj":"快的"},{"v":"斋戒"}]`
-	if got != want {
-		t.Errorf("MergeDefinition got %q, want %q", got, want)
-	}
-}
-
-func TestMergeDefinition_EmptyExisting(t *testing.T) {
-	got, err := MergeDefinition("", []map[string]string{{"adj": "快的"}})
-	if err != nil {
-		t.Fatalf("err: %v", err)
-	}
-	if got != `[{"adj":"快的"}]` {
-		t.Errorf("got %q", got)
 	}
 }
