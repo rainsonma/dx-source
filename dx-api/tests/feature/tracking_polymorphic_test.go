@@ -38,12 +38,8 @@ func (s *TrackingPolymorphicSuite) TearDownTest() {
 	_, _ = q.Exec(`DELETE FROM user_masters WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM user_unknowns WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM user_reviews WHERE user_id = ?`, s.userID)
-	_, _ = q.Exec(`DELETE FROM content_vocab_edits WHERE content_vocab_id IN (
-		SELECT cv.id FROM content_vocabs cv
-		JOIN game_vocabs gv ON gv.content_vocab_id = cv.id
-		WHERE gv.game_id = ?
-	)`, s.gameID)
 	_, _ = q.Exec(`DELETE FROM game_vocabs WHERE game_id = ?`, s.gameID)
+	_, _ = q.Exec(`DELETE FROM content_vocabs WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM content_items WHERE game_id = ?`, s.gameID)
 	_, _ = q.Exec(`DELETE FROM game_levels WHERE game_id = ?`, s.gameID)
 	_, _ = q.Exec(`DELETE FROM games WHERE id = ?`, s.gameID)
@@ -108,9 +104,10 @@ func (s *TrackingPolymorphicSuite) seedContentItem(content string) string {
 func (s *TrackingPolymorphicSuite) seedContentVocab(content string) string {
 	key := api.NormalizeVocabContent(content)
 	var cv models.ContentVocab
-	if err := facades.Orm().Query().Where("content_key", key).First(&cv); err != nil || cv.ID == "" {
+	if err := facades.Orm().Query().Where("user_id", s.userID).Where("content_key", key).First(&cv); err != nil || cv.ID == "" {
 		cv = models.ContentVocab{
 			ID:         uuid.Must(uuid.NewV7()).String(),
+			UserID:     s.userID,
 			Content:    content,
 			ContentKey: key,
 		}
