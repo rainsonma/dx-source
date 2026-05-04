@@ -32,13 +32,8 @@ func (s *GameVocabPlacementSuite) TearDownTest() {
 		return
 	}
 	q := facades.Orm().Query()
-	_, _ = q.Exec(`DELETE FROM content_vocab_edits WHERE content_vocab_id IN (
-		SELECT cv.id FROM content_vocabs cv
-		JOIN game_vocabs gv ON gv.content_vocab_id = cv.id
-		JOIN games g ON g.id = gv.game_id
-		WHERE g.user_id = ?
-	)`, s.userID)
 	_, _ = q.Exec(`DELETE FROM game_vocabs WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM content_vocabs WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM game_levels WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
 	_, _ = q.Exec(`DELETE FROM games WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM users WHERE id = ?`, s.userID)
@@ -86,6 +81,16 @@ func (s *GameVocabPlacementSuite) seedLevel(gameID string) string {
 	return id
 }
 
+// seedVocab creates a content_vocabs row owned by s.userID and returns its ID.
+func (s *GameVocabPlacementSuite) seedVocab(content string) string {
+	res, err := api.CreateUserVocab(s.userID, api.VocabInput{
+		Content:    content,
+		Definition: []map[string]string{},
+	})
+	s.Require().NoError(err)
+	return res.Vocab.ID
+}
+
 func (s *GameVocabPlacementSuite) countGameVocabs(levelID string) int64 {
 	n, err := facades.Orm().Query().Model(&models.GameVocab{}).
 		Where("game_level_id", levelID).Count()
@@ -93,24 +98,24 @@ func (s *GameVocabPlacementSuite) countGameVocabs(levelID string) int64 {
 	return n
 }
 
-// TestAdd_BatchSize_VocabMatch: adding 4 entries to vocab-match (batchSize=5) is rejected.
+// TestAdd_BatchSize_VocabMatch: adding 4 vocabIDs to vocab-match (batchSize=5) is rejected.
 func (s *GameVocabPlacementSuite) TestAdd_BatchSize_VocabMatch() {
 	gameID := s.seedGame(consts.GameModeVocabMatch)
 	levelID := s.seedLevel(gameID)
 
-	words4 := make([]string, 4)
-	for i := range words4 {
-		words4[i] = "word" + uuid.Must(uuid.NewV7()).String()[:4]
+	ids4 := make([]string, 4)
+	for i := range ids4 {
+		ids4[i] = s.seedVocab("matchword" + uuid.Must(uuid.NewV7()).String()[:4])
 	}
-	_, err := api.AddVocabsToLevel(s.userID, gameID, levelID, words4)
+	_, err := api.AddVocabsToLevel(s.userID, gameID, levelID, ids4)
 	s.ErrorIs(err, api.ErrBatchSizeInvalid, "4 vocabs in vocab-match (batchSize=5) must be rejected")
 
 	// Adding exactly 5 must succeed
-	words5 := make([]string, 5)
-	for i := range words5 {
-		words5[i] = "wrd" + uuid.Must(uuid.NewV7()).String()[:5]
+	ids5 := make([]string, 5)
+	for i := range ids5 {
+		ids5[i] = s.seedVocab("mwd" + uuid.Must(uuid.NewV7()).String()[:5])
 	}
-	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, words5)
+	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, ids5)
 	s.Require().NoError(err)
 	s.Len(result, 5)
 }
@@ -120,35 +125,55 @@ func (s *GameVocabPlacementSuite) TestAdd_BatchSize_VocabBattle() {
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	// 3 words — no batch constraint for vocab-battle
-	words := []string{"battleA", "battleB", "battleC"}
-	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, words)
+	ids := []string{
+		s.seedVocab("battleA"),
+		s.seedVocab("battleB"),
+		s.seedVocab("battleC"),
+	}
+	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, ids)
 	s.Require().NoError(err)
 	s.Len(result, 3)
 }
 
-// TestAdd_RejectsInvalidContent: punctuation and empty strings are rejected.
-func (s *GameVocabPlacementSuite) TestAdd_RejectsInvalidContent() {
+// TestAdd_RejectsOtherUsersVocabs: User B's vocab ID passed by User A → ErrForbidden.
+func (s *GameVocabPlacementSuite) TestAdd_RejectsOtherUsersVocabs() {
+	// Seed a second user
+	otherID := uuid.Must(uuid.NewV7()).String()
+	other := models.User{
+		ID:         otherID,
+		Username:   "other_" + otherID,
+		Grade:      consts.UserGradeLifetime,
+		IsActive:   true,
+		InviteCode: "o" + otherID[24:],
+		Password:   "x",
+	}
+	s.Require().NoError(facades.Orm().Query().Create(&other))
+	defer func() {
+		_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE user_id = ?`, otherID)
+		_, _ = facades.Orm().Query().Exec(`DELETE FROM users WHERE id = ?`, otherID)
+	}()
+
+	// Create a vocab owned by the other user
+	otherVocab, err := api.CreateUserVocab(otherID, api.VocabInput{
+		Content:    "stolen",
+		Definition: []map[string]string{},
+	})
+	s.Require().NoError(err)
+
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	_, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{"fast!"})
-	s.ErrorIs(err, api.ErrVocabContentInvalid)
-
-	_, err = api.AddVocabsToLevel(s.userID, gameID, levelID, []string{""})
-	s.ErrorIs(err, api.ErrVocabContentEmpty)
+	_, err = api.AddVocabsToLevel(s.userID, gameID, levelID, []string{otherVocab.Vocab.ID})
+	s.ErrorIs(err, api.ErrForbidden, "using another user's vocab must be rejected")
 }
 
-// TestAdd_AllowsInLevelRepetition: same word twice creates 2 game_vocabs rows
-// pointing at the same canonical content_vocabs row.
+// TestAdd_AllowsInLevelRepetition: same vocabID twice creates 2 game_vocabs rows.
 func (s *GameVocabPlacementSuite) TestAdd_AllowsInLevelRepetition() {
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	// Clean up any prior canonical row so we can count reliably
-	_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE content_key = 'repeatme'`)
-
-	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{"repeatme", "repeatme"})
+	vocabID := s.seedVocab("repeatme")
+	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{vocabID, vocabID})
 	s.Require().NoError(err)
 	s.Require().Len(result, 2)
 
@@ -157,14 +182,7 @@ func (s *GameVocabPlacementSuite) TestAdd_AllowsInLevelRepetition() {
 
 	// Both point at the same canonical row
 	s.Equal(result[0].ContentVocabID, result[1].ContentVocabID,
-		"both game_vocabs must reference the same canonical content_vocab")
-
-	// Only one canonical row exists
-	var row struct{ N int64 }
-	s.Require().NoError(facades.Orm().Query().Raw(
-		`SELECT COUNT(*) AS n FROM content_vocabs WHERE content_key = 'repeatme' AND deleted_at IS NULL`,
-	).Scan(&row))
-	s.Equal(int64(1), row.N, "canonical row must not be duplicated")
+		"both game_vocabs must reference the same content_vocab")
 }
 
 // TestReorder_ChangesOrder verifies ReorderGameVocab updates the order column.
@@ -172,7 +190,8 @@ func (s *GameVocabPlacementSuite) TestReorder_ChangesOrder() {
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{"reorderme"})
+	vocabID := s.seedVocab("reorderme")
+	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{vocabID})
 	s.Require().NoError(err)
 	s.Require().Len(result, 1)
 	gvID := result[0].GameVocabID
@@ -187,15 +206,14 @@ func (s *GameVocabPlacementSuite) TestReorder_ChangesOrder() {
 // TestDelete_SoftDeletesPlacementOnly verifies DeleteGameVocab soft-deletes the
 // game_vocabs row but leaves the content_vocabs row intact.
 func (s *GameVocabPlacementSuite) TestDelete_SoftDeletesPlacementOnly() {
-	_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE content_key = 'deleteplaceme'`)
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{"deleteplaceme"})
+	vocabID := s.seedVocab("deleteplaceme")
+	result, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{vocabID})
 	s.Require().NoError(err)
 	s.Require().Len(result, 1)
 	gvID := result[0].GameVocabID
-	cvID := result[0].ContentVocabID
 
 	s.Require().NoError(api.DeleteGameVocab(s.userID, gameID, gvID))
 
@@ -203,9 +221,9 @@ func (s *GameVocabPlacementSuite) TestDelete_SoftDeletesPlacementOnly() {
 	s.Equal(int64(0), s.countGameVocabs(levelID))
 
 	// content_vocabs still alive
-	n, err := facades.Orm().Query().Model(&models.ContentVocab{}).Where("id", cvID).Count()
+	n, err := facades.Orm().Query().Model(&models.ContentVocab{}).Where("id", vocabID).Count()
 	s.Require().NoError(err)
-	s.Equal(int64(1), n, "canonical content_vocab must survive placement delete")
+	s.Equal(int64(1), n, "content_vocab must survive placement delete")
 }
 
 // TestList_ReturnsOrdered verifies GetLevelVocabs returns rows ordered by order ASC.
@@ -213,21 +231,22 @@ func (s *GameVocabPlacementSuite) TestList_ReturnsOrdered() {
 	gameID := s.seedGame(consts.GameModeVocabBattle)
 	levelID := s.seedLevel(gameID)
 
-	// Add 3 words — order is assigned 1000, 2000, 3000 by the service
-	words := []string{"alpha", "beta", "gamma"}
-	_, err := api.AddVocabsToLevel(s.userID, gameID, levelID, words)
+	alphaID := s.seedVocab("alpha")
+	betaID := s.seedVocab("beta")
+	gammaID := s.seedVocab("gamma")
+	_, err := api.AddVocabsToLevel(s.userID, gameID, levelID, []string{alphaID, betaID, gammaID})
 	s.Require().NoError(err)
 
 	// Manually scramble the orders to verify sort
 	_, _ = facades.Orm().Query().Exec(
 		`UPDATE game_vocabs SET "order" = CASE
-		   WHEN content_vocab_id = (SELECT id FROM content_vocabs WHERE content_key='alpha' AND deleted_at IS NULL LIMIT 1) THEN 3000
-		   WHEN content_vocab_id = (SELECT id FROM content_vocabs WHERE content_key='beta' AND deleted_at IS NULL LIMIT 1) THEN 1000
-		   WHEN content_vocab_id = (SELECT id FROM content_vocabs WHERE content_key='gamma' AND deleted_at IS NULL LIMIT 1) THEN 2000
+		   WHEN content_vocab_id = ? THEN 3000
+		   WHEN content_vocab_id = ? THEN 1000
+		   WHEN content_vocab_id = ? THEN 2000
 		   ELSE "order"
 		 END
 		 WHERE game_level_id = ?`,
-		levelID,
+		alphaID, betaID, gammaID, levelID,
 	)
 
 	listed, err := api.GetLevelVocabs(s.userID, gameID, levelID)
