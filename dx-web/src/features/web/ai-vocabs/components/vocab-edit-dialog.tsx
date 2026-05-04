@@ -48,8 +48,6 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
   });
   const [ukPhonetic, setUkPhonetic] = useState(vocab.ukPhonetic ?? "");
   const [usPhonetic, setUsPhonetic] = useState(vocab.usPhonetic ?? "");
-  const [ukAudioUrl, setUkAudioUrl] = useState(vocab.ukAudioUrl ?? "");
-  const [usAudioUrl, setUsAudioUrl] = useState(vocab.usAudioUrl ?? "");
   const [explanation, setExplanation] = useState(vocab.explanation ?? "");
   const [isPending, startTransition] = useTransition();
 
@@ -75,8 +73,9 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
       definition: validDefs.map((r) => ({ [r.pos]: r.gloss.trim() } as DefinitionEntry)),
       ukPhonetic: ukPhonetic.trim() || null,
       usPhonetic: usPhonetic.trim() || null,
-      ukAudioUrl: ukAudioUrl.trim() || null,
-      usAudioUrl: usAudioUrl.trim() || null,
+      // Audio URLs are generated automatically by the backend later — not user-editable here.
+      ukAudioUrl: vocab.ukAudioUrl ?? null,
+      usAudioUrl: vocab.usAudioUrl ?? null,
       explanation: explanation.trim() || null,
     };
 
@@ -102,16 +101,16 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
       <DialogContent
         aria-describedby={undefined}
         showCloseButton={false}
-        className="sm:max-w-lg overflow-hidden rounded-[20px] border-0 p-0 shadow-[0_12px_40px_rgba(15,23,42,0.19)]"
+        className="sm:max-w-2xl overflow-hidden rounded-[20px] border-0 p-0 shadow-[0_12px_40px_rgba(15,23,42,0.19)]"
       >
         <VisuallyHidden><DialogTitle>编辑词条</DialogTitle></VisuallyHidden>
 
         <div className="flex flex-col max-h-[90vh] overflow-y-auto">
           <div className="flex shrink-0 items-center justify-between px-6 py-4">
             <div className="flex items-center gap-2.5">
-              <PenLine className="h-5 w-5 text-blue-600" />
+              <PenLine className="h-5 w-5 text-teal-600" />
               <h2 className="text-lg font-bold text-foreground">
-                编辑 <span className="text-blue-600">{vocab.content}</span>
+                编辑 <span className="text-teal-600">{vocab.content}</span>
               </h2>
             </div>
             <button type="button" onClick={onClose} aria-label="关闭"
@@ -125,7 +124,7 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
               <p className="mb-2 text-sm font-semibold text-foreground">词条</p>
               <input type="text" value={content} onChange={(e) => setContent(e.target.value)}
                 placeholder="词条内容"
-                className="h-9 w-full rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                className="h-9 w-full rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
             </section>
 
             <section>
@@ -133,19 +132,19 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
                 <p className="text-sm font-semibold text-foreground">释义</p>
                 <button type="button" onClick={addPosRow}
                   className="flex items-center gap-1 rounded-lg bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100">
-                  <Plus className="h-3 w-3" />添加词性
+                  <Plus className="h-3 w-3" />添加词性释义
                 </button>
               </div>
               <div className="flex flex-col gap-2">
                 {posRows.map((row, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <select value={row.pos} onChange={(e) => updatePosRow(i, "pos", e.target.value)}
-                      className="h-9 rounded-lg border border-border bg-muted px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500">
+                      className="h-9 rounded-lg border border-border bg-muted px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-teal-500">
                       {ALL_POS.map((pos) => <option key={pos} value={pos}>{POS_LABELS[pos]}</option>)}
                     </select>
                     <input type="text" value={row.gloss} onChange={(e) => updatePosRow(i, "gloss", e.target.value)}
                       placeholder="释义"
-                      className="h-9 flex-1 rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      className="h-9 flex-1 rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
                     {posRows.length > 1 && (
                       <button type="button" onClick={() => removePosRow(i)}
                         className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100">
@@ -166,24 +165,8 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
                     <input type="text"
                       value={region === "UK" ? ukPhonetic : usPhonetic}
                       onChange={(e) => region === "UK" ? setUkPhonetic(e.target.value) : setUsPhonetic(e.target.value)}
-                      placeholder="/fæst/"
-                      className="h-9 flex-1 rounded-lg border border-border bg-muted/50 px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section>
-              <p className="mb-2 text-sm font-semibold text-foreground">音频地址</p>
-              <div className="flex flex-col gap-2">
-                {(["UK", "US"] as const).map((region) => (
-                  <div key={region} className="flex items-center gap-2">
-                    <span className="w-8 text-xs font-medium text-foreground">{region}</span>
-                    <input type="text"
-                      value={region === "UK" ? ukAudioUrl : usAudioUrl}
-                      onChange={(e) => region === "UK" ? setUkAudioUrl(e.target.value) : setUsAudioUrl(e.target.value)}
-                      placeholder="/audio/uk/fast.mp3"
-                      className="h-9 flex-1 rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                      placeholder="fæst（保存时自动加上 / /）"
+                      className="h-9 flex-1 rounded-lg border border-border bg-muted/50 px-3 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
                   </div>
                 ))}
               </div>
@@ -193,7 +176,7 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
               <p className="mb-2 text-sm font-semibold text-foreground">说明 / 用法</p>
               <textarea value={explanation} onChange={(e) => setExplanation(e.target.value)}
                 placeholder="用法说明、例句等" rows={3}
-                className="w-full resize-none rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+                className="w-full resize-none rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500" />
             </section>
 
             <div className="flex justify-end">
@@ -203,7 +186,7 @@ export function VocabEditDialog({ vocab, onClose, onSaved }: VocabEditDialogProp
                   <span className="text-xs font-semibold text-muted-foreground">取消</span>
                 </button>
                 <button type="button" disabled={isPending} onClick={handleSave}
-                  className="flex h-11 items-center justify-center gap-1.5 bg-blue-600 px-5 disabled:opacity-50">
+                  className="flex h-11 items-center justify-center gap-1.5 bg-teal-600 px-5 disabled:opacity-50">
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Save className="h-4 w-4 text-white" />}
                   <span className="text-sm font-semibold text-white">保存</span>
                 </button>

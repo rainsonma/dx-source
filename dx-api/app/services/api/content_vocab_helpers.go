@@ -47,6 +47,28 @@ func ValidateVocabContent(s string) error {
 	return nil
 }
 
+// NormalizePhonetic ensures a phonetic string is wrapped in slashes, e.g.
+// "fæst" → "/fæst/". Returns nil for nil or empty/whitespace-only input. If
+// the input already starts/ends with a slash, only adds the missing side.
+// Inputs like "/fæst/" are returned unchanged.
+func NormalizePhonetic(s *string) *string {
+	if s == nil {
+		return nil
+	}
+	t := strings.TrimSpace(*s)
+	if t == "" {
+		return nil
+	}
+	// Strip any extra leading/trailing slashes the user might have typed.
+	t = strings.TrimLeft(t, "/")
+	t = strings.TrimRight(t, "/")
+	if t == "" {
+		return nil
+	}
+	wrapped := "/" + t + "/"
+	return &wrapped
+}
+
 // ValidateDefinition ensures every entry is a single-key object with a known POS.
 // definition is the JSON text from a request body.
 func ValidateDefinition(definitionJSON string) error {

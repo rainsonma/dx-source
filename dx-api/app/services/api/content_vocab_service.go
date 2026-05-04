@@ -142,8 +142,8 @@ func CreateUserVocab(userID string, in VocabInput) (*CreateVocabResult, error) {
 		UserID:      userID,
 		Content:     in.Content,
 		ContentKey:  key,
-		UkPhonetic:  in.UkPhonetic,
-		UsPhonetic:  in.UsPhonetic,
+		UkPhonetic:  NormalizePhonetic(in.UkPhonetic),
+		UsPhonetic:  NormalizePhonetic(in.UsPhonetic),
 		UkAudioURL:  in.UkAudioURL,
 		UsAudioURL:  in.UsAudioURL,
 		Definition:  &defStr,
@@ -200,8 +200,8 @@ func UpdateUserVocab(userID, vocabID string, in VocabInput) (*ContentVocabData, 
 		"content":      in.Content,
 		"content_key":  newKey,
 		"definition":   string(defJSON),
-		"uk_phonetic":  in.UkPhonetic,
-		"us_phonetic":  in.UsPhonetic,
+		"uk_phonetic":  NormalizePhonetic(in.UkPhonetic),
+		"us_phonetic":  NormalizePhonetic(in.UsPhonetic),
 		"uk_audio_url": in.UkAudioURL,
 		"us_audio_url": in.UsAudioURL,
 		"explanation":  in.Explanation,
@@ -480,10 +480,10 @@ func enrichVocabWord(word string) (VocabInput, error) {
 		Definition: obj.Definition,
 	}
 	if obj.UkPhonetic != "" {
-		inp.UkPhonetic = &obj.UkPhonetic
+		inp.UkPhonetic = NormalizePhonetic(&obj.UkPhonetic)
 	}
 	if obj.UsPhonetic != "" {
-		inp.UsPhonetic = &obj.UsPhonetic
+		inp.UsPhonetic = NormalizePhonetic(&obj.UsPhonetic)
 	}
 	if obj.Explanation != "" {
 		inp.Explanation = &obj.Explanation
