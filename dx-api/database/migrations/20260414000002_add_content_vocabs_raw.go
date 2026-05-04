@@ -12,8 +12,8 @@ func (r *M20260414000002AddContentVocabsRaw) Signature() string {
 
 func (r *M20260414000002AddContentVocabsRaw) Up() error {
 	statements := []string{
-		`CREATE UNIQUE INDEX idx_content_vocabs_content_key_uq
-           ON content_vocabs (content_key)
+		`CREATE UNIQUE INDEX idx_content_vocabs_user_content_key_uq
+           ON content_vocabs (user_id, content_key)
            WHERE deleted_at IS NULL`,
 		`CREATE INDEX idx_content_vocabs_content_key
            ON content_vocabs (content_key, deleted_at)`,
@@ -29,7 +29,7 @@ func (r *M20260414000002AddContentVocabsRaw) Up() error {
 func (r *M20260414000002AddContentVocabsRaw) Down() error {
 	statements := []string{
 		"DROP INDEX IF EXISTS idx_content_vocabs_content_key",
-		"DROP INDEX IF EXISTS idx_content_vocabs_content_key_uq",
+		"DROP INDEX IF EXISTS idx_content_vocabs_user_content_key_uq",
 	}
 	for _, sql := range statements {
 		if _, err := facades.Orm().Query().Exec(sql); err != nil {
