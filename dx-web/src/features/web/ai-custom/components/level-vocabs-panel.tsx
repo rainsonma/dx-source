@@ -227,7 +227,7 @@ export function LevelVocabsPanel({
                           {vocab.ukPhonetic && (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                               <span className="font-medium text-foreground">UK</span>
-                              <span>/{vocab.ukPhonetic}/</span>
+                              <span>{vocab.ukPhonetic}</span>
                               {vocab.ukAudioUrl && (
                                 <button
                                   type="button"
@@ -242,7 +242,7 @@ export function LevelVocabsPanel({
                           {vocab.usPhonetic && (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">
                               <span className="font-medium text-foreground">US</span>
-                              <span>/{vocab.usPhonetic}/</span>
+                              <span>{vocab.usPhonetic}</span>
                               {vocab.usAudioUrl && (
                                 <button
                                   type="button"
