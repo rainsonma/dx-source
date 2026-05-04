@@ -32,12 +32,8 @@ func (s *LevelContentBranchingSuite) TearDownTest() {
 		return
 	}
 	q := facades.Orm().Query()
-	_, _ = q.Exec(`DELETE FROM content_vocab_edits WHERE content_vocab_id IN (
-		SELECT cv.id FROM content_vocabs cv
-		JOIN game_vocabs gv ON gv.content_vocab_id = cv.id
-		JOIN games g ON g.id = gv.game_id WHERE g.user_id = ?
-	)`, s.userID)
 	_, _ = q.Exec(`DELETE FROM game_vocabs WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
+	_, _ = q.Exec(`DELETE FROM content_vocabs WHERE user_id = ?`, s.userID)
 	_, _ = q.Exec(`DELETE FROM content_items WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
 	_, _ = q.Exec(`DELETE FROM game_levels WHERE game_id IN (SELECT id FROM games WHERE user_id = ?)`, s.userID)
 	_, _ = q.Exec(`DELETE FROM games WHERE user_id = ?`, s.userID)
@@ -124,14 +120,15 @@ func (s *LevelContentBranchingSuite) seedContentItem(gameID, levelID, content st
 	return id
 }
 
-// seedVocabWithCanonical inserts a content_vocabs row and a game_vocabs placement row.
+// seedVocabWithCanonical inserts a content_vocabs row (owned by s.userID) and a game_vocabs placement row.
 func (s *LevelContentBranchingSuite) seedVocabWithCanonical(gameID, levelID, content string, order float64, ukPhonetic *string) (gameVocabID, contentVocabID string) {
 	key := api.NormalizeVocabContent(content)
 
 	var cv models.ContentVocab
-	if err := facades.Orm().Query().Where("content_key", key).First(&cv); err != nil || cv.ID == "" {
+	if err := facades.Orm().Query().Where("user_id", s.userID).Where("content_key", key).First(&cv); err != nil || cv.ID == "" {
 		cv = models.ContentVocab{
 			ID:         uuid.Must(uuid.NewV7()).String(),
+			UserID:     s.userID,
 			Content:    content,
 			ContentKey: key,
 			UkPhonetic: ukPhonetic,
@@ -170,9 +167,6 @@ func (s *LevelContentBranchingSuite) TestGetLevelContent_WordSentence_ReturnsCon
 // TestGetLevelContent_VocabMode_SynthesizesEnvelope verifies vocab mode returns
 // ContentItemData with id=game_vocab_id, contentType="vocab", and items synthesized.
 func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_SynthesizesEnvelope() {
-	// Ensure no stale canonical row
-	_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE content_key = 'bright'`)
-
 	gameID, levelID := s.seedVocabGame()
 	uk := "/braɪt/"
 	gvID, _ := s.seedVocabWithCanonical(gameID, levelID, "bright", 1000, &uk)
@@ -180,7 +174,8 @@ func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_SynthesizesEn
 	// Set definition so gloss is populated
 	_, _ = facades.Orm().Query().Exec(
 		`UPDATE content_vocabs SET definition = '[{"adj":"明亮的"}]'
-		   WHERE content_key = 'bright' AND deleted_at IS NULL`,
+		   WHERE content_key = 'bright' AND user_id = ? AND deleted_at IS NULL`,
+		s.userID,
 	)
 
 	items, err := api.GetLevelContent(s.userID, levelID, "")
@@ -200,10 +195,6 @@ func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_SynthesizesEn
 // TestGetLevelContent_VocabMode_OrderingByGameVocabsOrder verifies ordering follows
 // game_vocabs.order ASC.
 func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_OrderingByGameVocabsOrder() {
-	for _, key := range []string{"apple", "banana", "cherry"} {
-		_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE content_key = ?`, key)
-	}
-
 	gameID, levelID := s.seedVocabGame()
 	// Insert out of order: cherry 1000, apple 2000, banana 3000 — then scramble
 	s.seedVocabWithCanonical(gameID, levelID, "cherry", 1000, nil)
@@ -221,8 +212,6 @@ func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_OrderingByGam
 // TestGetLevelContent_VocabMode_NullPhonetic_StillReturnsItems verifies that null
 // phonetic/definition still produces a single-element items array.
 func (s *LevelContentBranchingSuite) TestGetLevelContent_VocabMode_NullPhonetic_StillReturnsItems() {
-	_, _ = facades.Orm().Query().Exec(`DELETE FROM content_vocabs WHERE content_key = 'sparrow'`)
-
 	gameID, levelID := s.seedVocabGame()
 	// Seed with no phonetic, no definition
 	s.seedVocabWithCanonical(gameID, levelID, "sparrow", 1000, nil)
