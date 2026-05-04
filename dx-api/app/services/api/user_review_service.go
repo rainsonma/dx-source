@@ -31,8 +31,9 @@ type ReviewItemData struct {
 	CreatedAt    any                  `json:"createdAt"`
 }
 
-// MarkAsReview creates a review entry if it doesn't exist, with spaced repetition schedule.
-func MarkAsReview(userID, contentItemID, gameID, gameLevelID string) error {
+// MarkAsReview is polymorphic: pass exactly one of contentItemID or contentVocabID.
+// Creates a review entry with spaced repetition schedule if it doesn't exist.
+func MarkAsReview(userID string, contentItemID, contentVocabID *string, gameID, gameLevelID string) error {
 	allowed, err := helpers.CheckRateLimit(
 		fmt.Sprintf(rateLimitReviewKey, userID), rateLimitTracking, rateLimitTrackingSec,
 	)
@@ -42,19 +43,35 @@ func MarkAsReview(userID, contentItemID, gameID, gameLevelID string) error {
 	if !allowed {
 		return ErrRateLimited
 	}
+	if (contentItemID == nil) == (contentVocabID == nil) {
+		return fmt.Errorf("must specify exactly one of contentItemID / contentVocabID")
+	}
 
 	nextReview := consts.GetNextReviewAt(0)
 	nextReviewCarbon := carbon.FromStdTime(nextReview)
 
-	_, err = facades.Orm().Query().Exec(
-		`INSERT INTO user_reviews (id, user_id, content_item_id, game_id, game_level_id, next_review_at, review_count, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, 0, now(), now())
-		 ON CONFLICT (user_id, content_item_id) DO NOTHING`,
-		newID(), userID, contentItemID, gameID, gameLevelID, nextReviewCarbon,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to mark for review: %w", err)
+	if contentItemID != nil {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_reviews
+			   (id, user_id, content_item_id, game_id, game_level_id, next_review_at, review_count, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, 0, now(), now())
+			 ON CONFLICT (user_id, content_item_id) WHERE content_item_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			newID(), userID, *contentItemID, gameID, gameLevelID, nextReviewCarbon,
+		); err != nil {
+			return fmt.Errorf("failed to mark for review (item): %w", err)
+		}
+	} else {
+		if _, err := facades.Orm().Query().Exec(
+			`INSERT INTO user_reviews
+			   (id, user_id, content_vocab_id, game_id, game_level_id, next_review_at, review_count, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, 0, now(), now())
+			 ON CONFLICT (user_id, content_vocab_id) WHERE content_vocab_id IS NOT NULL AND deleted_at IS NULL DO NOTHING`,
+			newID(), userID, *contentVocabID, gameID, gameLevelID, nextReviewCarbon,
+		); err != nil {
+			return fmt.Errorf("failed to mark for review (vocab): %w", err)
+		}
 	}
+
 	return nil
 }
 
@@ -84,20 +101,29 @@ func ListReviews(userID, cursor string, limit int) ([]ReviewItemData, string, bo
 		nextCursor = reviews[len(reviews)-1].ID
 	}
 
-	// Enrich with content item details
 	items := make([]ReviewItemData, 0, len(reviews))
 	if len(reviews) == 0 {
 		return items, nextCursor, hasMore, nil
 	}
 
-	contentIDs := make([]string, 0, len(reviews))
-	gameIDs := make([]string, 0, len(reviews))
+	// Collect IDs for batch loading
+	itemIDs := []string{}
+	vocabIDs := []string{}
+	gameIDs := []string{}
 	for _, r := range reviews {
-		contentIDs = append(contentIDs, r.ContentItemID)
-		gameIDs = append(gameIDs, r.GameID)
+		if r.ContentItemID != nil {
+			itemIDs = append(itemIDs, *r.ContentItemID)
+		}
+		if r.ContentVocabID != nil {
+			vocabIDs = append(vocabIDs, *r.ContentVocabID)
+		}
+		if r.GameID != "" {
+			gameIDs = append(gameIDs, r.GameID)
+		}
 	}
 
-	contentMap := batchLoadContentItems(contentIDs)
+	contentMap := batchLoadContentItems(itemIDs)
+	vocabMap := batchLoadContentVocabs(vocabIDs)
 	gameMap := batchLoadGameNames(gameIDs)
 
 	for _, r := range reviews {
@@ -109,12 +135,12 @@ func ListReviews(userID, cursor string, limit int) ([]ReviewItemData, string, bo
 			ReviewCount:  r.ReviewCount,
 			CreatedAt:    r.CreatedAt,
 		}
-		if ci, ok := contentMap[r.ContentItemID]; ok {
-			item.ContentItem = ci
+		if r.ContentItemID != nil {
+			item.ContentItem = contentMap[*r.ContentItemID]
+		} else if r.ContentVocabID != nil {
+			item.ContentItem = vocabMap[*r.ContentVocabID]
 		}
-		if name, ok := gameMap[r.GameID]; ok {
-			item.GameName = &name
-		}
+		item.GameName = gameMapPtr(gameMap, r.GameID)
 		items = append(items, item)
 	}
 
@@ -134,21 +160,25 @@ func GetReviewStats(userID string) (*ReviewStatsData, error) {
 	return &ReviewStatsData{Pending: pending, Overdue: overdue, ReviewedToday: reviewedToday}, nil
 }
 
-// DeleteReview removes a single review entry owned by the user.
+// DeleteReview soft-deletes a single review entry owned by the user.
 func DeleteReview(userID, id string) error {
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_reviews WHERE id = ? AND user_id = ?", id, userID,
+		`UPDATE user_reviews SET deleted_at = NOW()
+		   WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		id, userID,
 	)
 	return err
 }
 
-// BulkDeleteReviews removes multiple review entries owned by the user.
+// BulkDeleteReviews soft-deletes multiple review entries owned by the user.
 func BulkDeleteReviews(userID string, ids []string) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	_, err := facades.Orm().Query().Exec(
-		"DELETE FROM user_reviews WHERE user_id = ? AND id IN ?", userID, ids,
+		`UPDATE user_reviews SET deleted_at = NOW()
+		   WHERE user_id = ? AND id IN ? AND deleted_at IS NULL`,
+		userID, ids,
 	)
 	return err
 }

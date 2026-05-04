@@ -148,19 +148,21 @@ func (c *GamePlaySingleController) RecordAnswer(ctx contractshttp.Context) contr
 	}
 
 	err = services.RecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionID:     req.GameSessionId,
-		GameLevelID:       req.GameLevelID,
-		ContentItemID:     req.ContentItemID,
-		IsCorrect:         req.IsCorrect,
-		UserAnswer:        req.UserAnswer,
-		SourceAnswer:      req.SourceAnswer,
-		BaseScore:         req.BaseScore,
-		ComboScore:        req.ComboScore,
-		Score:             req.Score,
-		MaxCombo:          req.MaxCombo,
-		PlayTime:          req.PlayTime,
-		NextContentItemID: req.NextContentItemID,
-		Duration:          req.Duration,
+		GameSessionID:      req.GameSessionId,
+		GameLevelID:        req.GameLevelID,
+		ContentItemID:      req.ContentItemID,
+		ContentVocabID:     req.ContentVocabID,
+		IsCorrect:          req.IsCorrect,
+		UserAnswer:         req.UserAnswer,
+		SourceAnswer:       req.SourceAnswer,
+		BaseScore:          req.BaseScore,
+		ComboScore:         req.ComboScore,
+		Score:              req.Score,
+		MaxCombo:           req.MaxCombo,
+		PlayTime:           req.PlayTime,
+		NextContentItemID:  req.NextContentItemID,
+		NextContentVocabID: req.NextContentVocabID,
+		Duration:           req.Duration,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -188,10 +190,11 @@ func (c *GamePlaySingleController) RecordSkip(ctx contractshttp.Context) contrac
 	}
 
 	err = services.RecordSkip(userID, services.RecordSkipInput{
-		GameSessionID:     req.GameSessionId,
-		GameLevelID:       req.GameLevelID,
-		PlayTime:          req.PlayTime,
-		NextContentItemID: req.NextContentItemID,
+		GameSessionID:      req.GameSessionId,
+		GameLevelID:        req.GameLevelID,
+		PlayTime:           req.PlayTime,
+		NextContentItemID:  req.NextContentItemID,
+		NextContentVocabID: req.NextContentVocabID,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -301,7 +304,7 @@ func (c *GamePlaySingleController) UpdateContentItem(ctx contractshttp.Context) 
 		return resp
 	}
 
-	if err := services.UpdateCurrentContentItem(userID, sessionID, req.ContentItemID); err != nil {
+	if err := services.UpdateCurrentContentItem(userID, sessionID, req.ContentItemID, req.ContentVocabID); err != nil {
 		return mapSessionError(ctx, err)
 	}
 

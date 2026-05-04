@@ -75,19 +75,21 @@ func (c *GamePlayPkController) RecordAnswer(ctx contractshttp.Context) contracts
 	}
 
 	err = services.PkRecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionID:     req.GameSessionId,
-		GameLevelID:       req.GameLevelID,
-		ContentItemID:     req.ContentItemID,
-		IsCorrect:         req.IsCorrect,
-		UserAnswer:        req.UserAnswer,
-		SourceAnswer:      req.SourceAnswer,
-		BaseScore:         req.BaseScore,
-		ComboScore:        req.ComboScore,
-		Score:             req.Score,
-		MaxCombo:          req.MaxCombo,
-		PlayTime:          req.PlayTime,
-		NextContentItemID: req.NextContentItemID,
-		Duration:          req.Duration,
+		GameSessionID:      req.GameSessionId,
+		GameLevelID:        req.GameLevelID,
+		ContentItemID:      req.ContentItemID,
+		ContentVocabID:     req.ContentVocabID,
+		IsCorrect:          req.IsCorrect,
+		UserAnswer:         req.UserAnswer,
+		SourceAnswer:       req.SourceAnswer,
+		BaseScore:          req.BaseScore,
+		ComboScore:         req.ComboScore,
+		Score:              req.Score,
+		MaxCombo:           req.MaxCombo,
+		PlayTime:           req.PlayTime,
+		NextContentItemID:  req.NextContentItemID,
+		NextContentVocabID: req.NextContentVocabID,
+		Duration:           req.Duration,
 	})
 	if err != nil {
 		return mapPkError(ctx, err)
@@ -151,7 +153,7 @@ func (c *GamePlayPkController) UpdateContentItem(ctx contractshttp.Context) cont
 		return resp
 	}
 
-	if err := services.PkUpdateContentItem(userID, sessionID, req.ContentItemID); err != nil {
+	if err := services.PkUpdateContentItem(userID, sessionID, req.ContentItemID, req.ContentVocabID); err != nil {
 		return mapPkError(ctx, err)
 	}
 

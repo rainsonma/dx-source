@@ -25,6 +25,7 @@ func HallMenuSections() []HallMenuSection {
 			{Icon: "Trophy", Label: "排行榜单", Subtitle: "查看学习排名，与好友一起进步", Href: "/hall/leaderboard"},
 		}},
 		{Items: []HallMenuItem{
+			{Icon: "BookA", Label: "AI 词汇库", Subtitle: "管理你的个人词汇库，AI 生成或手动添加", Href: "/hall/ai-vocabs"},
 			{Icon: "Sparkles", Label: "AI 随心学", Subtitle: "AI 驱动的个性化英语练习游戏", Href: "/hall/ai-custom"},
 		}},
 		{Items: []HallMenuItem{

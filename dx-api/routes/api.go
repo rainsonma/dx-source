@@ -219,18 +219,19 @@ func Api() {
 
 			// AI custom content routes
 			aiCustomController := apicontrollers.NewAiCustomController()
-			aiCustomVocabController := apicontrollers.NewAiCustomVocabController()
 			protected.Prefix("/ai-custom").Group(func(ai route.Router) {
 				// Word-sentence endpoints
 				ai.Post("/generate-metadata", aiCustomController.GenerateMetadata)
 				ai.Post("/format-metadata", aiCustomController.FormatMetadata)
 				ai.Post("/break-metadata", aiCustomController.BreakMetadata)
 				ai.Post("/generate-content-items", aiCustomController.GenerateContentItems)
-				// Vocab endpoints
-				ai.Post("/generate-vocab", aiCustomVocabController.GenerateVocab)
-				ai.Post("/format-vocab", aiCustomVocabController.FormatVocab)
-				ai.Post("/break-vocab-metadata", aiCustomVocabController.BreakMetadata)
-				ai.Post("/generate-vocab-content-items", aiCustomVocabController.GenerateContentItems)
+				// Vocab text helpers (kept; output is raw text user pastes)
+				ai.Post("/generate-vocab", aiCustomController.GenerateVocab)
+				ai.Post("/format-vocab", aiCustomController.FormatVocab)
+				// AI vocab pool: Phase 1 — generate word list from keywords
+				ai.Post("/generate-vocab-words", aiCustomController.GenerateVocabWords)
+				// AI vocab pool: format paste — English-only, no translations
+				ai.Post("/format-vocab-words", aiCustomController.FormatVocabWords)
 			})
 
 			// User-facing admin routes (user JWT + admin check)
@@ -271,6 +272,22 @@ func Api() {
 				cg.Delete("/{id}/levels/{levelId}/content-items/{itemId}", courseGameController.DeleteContentItem)
 				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
 			})
+
+			// Content vocabs (per-user pool)
+			contentVocabController := apicontrollers.NewContentVocabController()
+			protected.Get("/content-vocabs/mine", contentVocabController.ListMine)
+			protected.Post("/content-vocabs", contentVocabController.Create)
+			protected.Post("/content-vocabs/batch", contentVocabController.CreateBatch)
+			protected.Post("/content-vocabs/from-words", contentVocabController.CreateFromWords)
+			protected.Put("/content-vocabs/{id}", contentVocabController.Update)
+			protected.Delete("/content-vocabs/{id}", contentVocabController.Delete)
+
+			// Game vocabs (placement ops, nested under course-games)
+			gameVocabController := apicontrollers.NewGameVocabController()
+			protected.Post("/course-games/{id}/levels/{levelId}/game-vocabs", gameVocabController.Add)
+			protected.Get("/course-games/{id}/levels/{levelId}/game-vocabs", gameVocabController.List)
+			protected.Put("/course-games/{id}/game-vocabs/{gvId}/reorder", gameVocabController.Reorder)
+			protected.Delete("/course-games/{id}/game-vocabs/{gvId}", gameVocabController.Delete)
 
 			// Group game play routes
 			playGroupController := apicontrollers.NewGamePlayGroupController()

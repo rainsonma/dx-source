@@ -91,19 +91,21 @@ func (c *GamePlayGroupController) RecordAnswer(ctx contractshttp.Context) contra
 	}
 
 	err = services.GroupPlayRecordAnswer(userID, services.RecordAnswerInput{
-		GameSessionID:     req.GameSessionId,
-		GameLevelID:       req.GameLevelID,
-		ContentItemID:     req.ContentItemID,
-		IsCorrect:         req.IsCorrect,
-		UserAnswer:        req.UserAnswer,
-		SourceAnswer:      req.SourceAnswer,
-		BaseScore:         req.BaseScore,
-		ComboScore:        req.ComboScore,
-		Score:             req.Score,
-		MaxCombo:          req.MaxCombo,
-		PlayTime:          req.PlayTime,
-		NextContentItemID: req.NextContentItemID,
-		Duration:          req.Duration,
+		GameSessionID:      req.GameSessionId,
+		GameLevelID:        req.GameLevelID,
+		ContentItemID:      req.ContentItemID,
+		ContentVocabID:     req.ContentVocabID,
+		IsCorrect:          req.IsCorrect,
+		UserAnswer:         req.UserAnswer,
+		SourceAnswer:       req.SourceAnswer,
+		BaseScore:          req.BaseScore,
+		ComboScore:         req.ComboScore,
+		Score:              req.Score,
+		MaxCombo:           req.MaxCombo,
+		PlayTime:           req.PlayTime,
+		NextContentItemID:  req.NextContentItemID,
+		NextContentVocabID: req.NextContentVocabID,
+		Duration:           req.Duration,
 	})
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
@@ -173,7 +175,7 @@ func (c *GamePlayGroupController) UpdateContentItem(ctx contractshttp.Context) c
 		return resp
 	}
 
-	if err := services.GroupPlayUpdateContentItem(userID, sessionID, req.ContentItemID); err != nil {
+	if err := services.GroupPlayUpdateContentItem(userID, sessionID, req.ContentItemID, req.ContentVocabID); err != nil {
 		return mapGroupPlayError(ctx, err)
 	}
 

@@ -708,4 +708,104 @@ export const orderApi = {
   },
 };
 
+// Content vocab types
+export type PosKey = 'n' | 'v' | 'adj' | 'adv' | 'prep' | 'conj' | 'pron' | 'art' | 'num' | 'int' | 'aux' | 'det';
+export type DefinitionEntry = Partial<Record<PosKey, string>>;
+
+export interface ContentVocabData {
+  id: string;
+  content: string;
+  ukPhonetic?: string | null;
+  usPhonetic?: string | null;
+  ukAudioUrl?: string | null;
+  usAudioUrl?: string | null;
+  definition?: string | null;
+  explanation?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface VocabInput {
+  content: string;
+  definition: DefinitionEntry[];
+  ukPhonetic?: string | null;
+  usPhonetic?: string | null;
+  ukAudioUrl?: string | null;
+  usAudioUrl?: string | null;
+  explanation?: string | null;
+}
+
+export interface CreateVocabResult {
+  vocab: ContentVocabData;
+  wasReused: boolean;
+}
+
+export interface AddedGameVocab {
+  gameVocabId: string;
+  contentVocabId: string;
+  content: string;
+}
+
+export interface LevelVocabData {
+  gameVocabId: string;
+  order: number;
+  vocab: ContentVocabData | null;
+}
+
+// Content vocab API functions
+export const contentVocabApi = {
+  listMine: (params?: { cursor?: string; search?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set("cursor", params.cursor);
+    if (params?.search) query.set("search", params.search);
+    if (params?.limit) query.set("limit", String(params.limit));
+    const qs = query.toString();
+    return apiClient.get<CursorPaginated<ContentVocabData>>(`/api/content-vocabs/mine${qs ? `?${qs}` : ""}`);
+  },
+
+  create: (input: VocabInput) =>
+    apiClient.post<CreateVocabResult>('/api/content-vocabs', input),
+
+  createBatch: (inputs: VocabInput[]) =>
+    apiClient.post<CreateVocabResult[]>('/api/content-vocabs/batch', { inputs }),
+
+  createFromWords: (words: string[]) =>
+    apiClient.post<CreateVocabResult[]>('/api/content-vocabs/from-words', { words }),
+
+  update: (id: string, input: VocabInput) =>
+    apiClient.put<ContentVocabData>(`/api/content-vocabs/${id}`, input),
+
+  delete: (id: string) =>
+    apiClient.delete<void>(`/api/content-vocabs/${id}`),
+};
+
+// AI custom API functions
+export const aiCustomApi = {
+  generateVocabWords: (keywords: string[], difficulty: string) =>
+    apiClient.post<{ words: string[] }>('/api/ai-custom/generate-vocab-words', { keywords, difficulty }),
+};
+
+// Game vocab placement API functions
+export const gameVocabApi = {
+  list: (gameId: string, levelId: string) =>
+    apiFetch<LevelVocabData[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`),
+
+  add: (gameId: string, levelId: string, vocabIds: string[]) =>
+    apiFetch<AddedGameVocab[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`, {
+      method: 'POST',
+      body: JSON.stringify({ vocabIds }),
+    }),
+
+  reorder: (gameId: string, gvId: string, newOrder: number) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ newOrder }),
+    }),
+
+  delete: (gameId: string, gvId: string) =>
+    apiFetch<void>(`/api/course-games/${gameId}/game-vocabs/${gvId}`, {
+      method: 'DELETE',
+    }),
+};
+
 export type { ApiResponse, CursorPaginated, OffsetPaginated };

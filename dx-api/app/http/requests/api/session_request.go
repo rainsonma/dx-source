@@ -102,80 +102,88 @@ func (r *CompleteLevelRequest) Messages(ctx http.Context) map[string]string {
 // ---------- RecordAnswerRequest ----------
 
 type RecordAnswerRequest struct {
-	GameSessionId     string  `form:"game_session_id" json:"game_session_id"`
-	GameLevelID       string  `form:"game_level_id" json:"game_level_id"`
-	ContentItemID     string  `form:"content_item_id" json:"content_item_id"`
-	IsCorrect         bool    `form:"is_correct" json:"is_correct"`
-	UserAnswer        string  `form:"user_answer" json:"user_answer"`
-	SourceAnswer      string  `form:"source_answer" json:"source_answer"`
-	BaseScore         int     `form:"base_score" json:"base_score"`
-	ComboScore        int     `form:"combo_score" json:"combo_score"`
-	Score             int     `form:"score" json:"score"`
-	MaxCombo          int     `form:"max_combo" json:"max_combo"`
-	PlayTime          int     `form:"play_time" json:"play_time"`
-	NextContentItemID *string `form:"next_content_item_id" json:"next_content_item_id"`
-	Duration          int     `form:"duration" json:"duration"`
+	GameSessionId      string  `form:"game_session_id" json:"game_session_id"`
+	GameLevelID        string  `form:"game_level_id" json:"game_level_id"`
+	ContentItemID      *string `form:"content_item_id" json:"content_item_id"`
+	ContentVocabID     *string `form:"content_vocab_id" json:"content_vocab_id"`
+	IsCorrect          bool    `form:"is_correct" json:"is_correct"`
+	UserAnswer         string  `form:"user_answer" json:"user_answer"`
+	SourceAnswer       string  `form:"source_answer" json:"source_answer"`
+	BaseScore          int     `form:"base_score" json:"base_score"`
+	ComboScore         int     `form:"combo_score" json:"combo_score"`
+	Score              int     `form:"score" json:"score"`
+	MaxCombo           int     `form:"max_combo" json:"max_combo"`
+	PlayTime           int     `form:"play_time" json:"play_time"`
+	NextContentItemID  *string `form:"next_content_item_id" json:"next_content_item_id"`
+	NextContentVocabID *string `form:"next_content_vocab_id" json:"next_content_vocab_id"`
+	Duration           int     `form:"duration" json:"duration"`
 }
 
 func (r *RecordAnswerRequest) Authorize(ctx http.Context) error { return nil }
 func (r *RecordAnswerRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_session_id":      "required|uuid",
-		"game_level_id":        "required|uuid",
-		"content_item_id":      "required|uuid",
-		"base_score":           "min:0",
-		"combo_score":          "min:0",
-		"score":                "min:0",
-		"max_combo":            "min:0",
-		"play_time":            "min:0",
-		"duration":             "min:0",
-		"next_content_item_id": "uuid",
+		"game_session_id":       "required|uuid",
+		"game_level_id":         "required|uuid",
+		"content_item_id":       "uuid",
+		"content_vocab_id":      "uuid",
+		"base_score":            "min:0",
+		"combo_score":           "min:0",
+		"score":                 "min:0",
+		"max_combo":             "min:0",
+		"play_time":             "min:0",
+		"duration":              "min:0",
+		"next_content_item_id":  "uuid",
+		"next_content_vocab_id": "uuid",
 	}
 }
 func (r *RecordAnswerRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_session_id.required":  "请指定游戏会话",
-		"game_session_id.uuid":      "无效的游戏会话ID",
-		"game_level_id.required":    "请指定关卡",
-		"game_level_id.uuid":        "无效的关卡ID",
-		"content_item_id.required":  "请指定内容项",
-		"content_item_id.uuid":      "无效的内容项ID",
-		"base_score.min":            "基础分数不能为负数",
-		"combo_score.min":           "连击分数不能为负数",
-		"score.min":                 "分数不能为负数",
-		"max_combo.min":             "最大连击不能为负数",
-		"play_time.min":             "游玩时长不能为负数",
-		"duration.min":              "持续时间不能为负数",
-		"next_content_item_id.uuid": "无效的内容项ID",
+		"game_session_id.required":   "请指定游戏会话",
+		"game_session_id.uuid":       "无效的游戏会话ID",
+		"game_level_id.required":     "请指定关卡",
+		"game_level_id.uuid":         "无效的关卡ID",
+		"content_item_id.uuid":       "无效的内容项ID",
+		"content_vocab_id.uuid":      "无效的词汇ID",
+		"base_score.min":             "基础分数不能为负数",
+		"combo_score.min":            "连击分数不能为负数",
+		"score.min":                  "分数不能为负数",
+		"max_combo.min":              "最大连击不能为负数",
+		"play_time.min":              "游玩时长不能为负数",
+		"duration.min":               "持续时间不能为负数",
+		"next_content_item_id.uuid":  "无效的内容项ID",
+		"next_content_vocab_id.uuid": "无效的词汇ID",
 	}
 }
 
 // ---------- RecordSkipRequest ----------
 
 type RecordSkipRequest struct {
-	GameSessionId     string  `form:"game_session_id" json:"game_session_id"`
-	GameLevelID       string  `form:"game_level_id" json:"game_level_id"`
-	PlayTime          int     `form:"play_time" json:"play_time"`
-	NextContentItemID *string `form:"next_content_item_id" json:"next_content_item_id"`
+	GameSessionId      string  `form:"game_session_id" json:"game_session_id"`
+	GameLevelID        string  `form:"game_level_id" json:"game_level_id"`
+	PlayTime           int     `form:"play_time" json:"play_time"`
+	NextContentItemID  *string `form:"next_content_item_id" json:"next_content_item_id"`
+	NextContentVocabID *string `form:"next_content_vocab_id" json:"next_content_vocab_id"`
 }
 
 func (r *RecordSkipRequest) Authorize(ctx http.Context) error { return nil }
 func (r *RecordSkipRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_session_id":      "required|uuid",
-		"game_level_id":        "required|uuid",
-		"play_time":            "min:0",
-		"next_content_item_id": "uuid",
+		"game_session_id":       "required|uuid",
+		"game_level_id":         "required|uuid",
+		"play_time":             "min:0",
+		"next_content_item_id":  "uuid",
+		"next_content_vocab_id": "uuid",
 	}
 }
 func (r *RecordSkipRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"game_session_id.required":  "请指定游戏会话",
-		"game_session_id.uuid":      "无效的游戏会话ID",
-		"game_level_id.required":    "请指定关卡",
-		"game_level_id.uuid":        "无效的关卡ID",
-		"play_time.min":             "游玩时长不能为负数",
-		"next_content_item_id.uuid": "无效的内容项ID",
+		"game_session_id.required":   "请指定游戏会话",
+		"game_session_id.uuid":       "无效的游戏会话ID",
+		"game_level_id.required":     "请指定关卡",
+		"game_level_id.uuid":         "无效的关卡ID",
+		"play_time.min":              "游玩时长不能为负数",
+		"next_content_item_id.uuid":  "无效的内容项ID",
+		"next_content_vocab_id.uuid": "无效的词汇ID",
 	}
 }
 
@@ -201,18 +209,21 @@ func (r *SyncPlayTimeRequest) Messages(ctx http.Context) map[string]string {
 // ---------- UpdateContentItemRequest ----------
 
 type UpdateContentItemRequest struct {
-	ContentItemID *string `form:"content_item_id" json:"content_item_id"`
+	ContentItemID  *string `form:"content_item_id" json:"content_item_id"`
+	ContentVocabID *string `form:"content_vocab_id" json:"content_vocab_id"`
 }
 
 func (r *UpdateContentItemRequest) Authorize(ctx http.Context) error { return nil }
 func (r *UpdateContentItemRequest) Rules(ctx http.Context) map[string]string {
 	return map[string]string{
-		"content_item_id": "uuid",
+		"content_item_id":  "uuid",
+		"content_vocab_id": "uuid",
 	}
 }
 func (r *UpdateContentItemRequest) Messages(ctx http.Context) map[string]string {
 	return map[string]string{
-		"content_item_id.uuid": "无效的内容ID",
+		"content_item_id.uuid":  "无效的内容ID",
+		"content_vocab_id.uuid": "无效的词汇ID",
 	}
 }
 

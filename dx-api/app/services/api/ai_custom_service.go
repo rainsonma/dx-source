@@ -64,10 +64,8 @@ type SSEProgressEvent struct {
 	Complete  bool   `json:"complete,omitempty"`
 }
 
-// --- GenerateMetadata ---
+// --- GenerateMetadata --- (unchanged from original)
 
-// GenerateMetadata generates an English story from keywords using DeepSeek AI.
-// Consumes 5 beans. Refunds on AI failure.
 func GenerateMetadata(userID string, difficulty string, keywords []string) (*GenerateMetadataResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
@@ -131,10 +129,8 @@ RULES:
 - Keep each sentence under 200 characters.`
 }
 
-// --- FormatMetadata ---
+// --- FormatMetadata --- (unchanged from original — preserves [S]/[V] mixed input)
 
-// FormatMetadata formats raw user text into structured learning content.
-// Bean cost = word count of input.
 func FormatMetadata(userID string, content string, formatType string) (*FormatMetadataResult, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
@@ -298,9 +294,8 @@ func validateFormatCounts(sourceTypes []string) string {
 	return ""
 }
 
-// --- BreakMetadata ---
+// --- BreakMetadata --- (rewritten — direct queries on content_metas/content_items)
 
-// BreakMetadata processes content metas for a game level: breaks them into learning units via SSE.
 func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeSSEError(writer, err)
@@ -317,51 +312,15 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	}
 	gameID := level.GameID
 
-	// Fetch unbroken metas linked to this level via game_metas junction.
-	// We need gm."order" as the base order for the generated content items, so
-	// we load the junction rows first, then pull the content_metas by id.
-	var gameMetas []models.GameMeta
+	// Load unbroken metas in order — directly from content_metas
+	var metas []models.ContentMeta
 	if err := facades.Orm().Query().
 		Where("game_level_id", gameLevelID).
-		Order(`"order" ASC`).
-		Get(&gameMetas); err != nil {
-		writeSSEError(writer, fmt.Errorf("failed to load game_metas: %w", err))
-		return
-	}
-	if len(gameMetas) == 0 {
-		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
-		writer.Close()
-		return
-	}
-
-	metaIDs := make([]string, 0, len(gameMetas))
-	for _, gm := range gameMetas {
-		metaIDs = append(metaIDs, gm.ContentMetaID)
-	}
-
-	var rawMetas []models.ContentMeta
-	if err := facades.Orm().Query().
-		Where("id IN ?", metaIDs).
 		Where("is_break_done", false).
-		Get(&rawMetas); err != nil {
+		Order(`"order" ASC`).
+		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
-	}
-	cmByID := make(map[string]models.ContentMeta, len(rawMetas))
-	for _, cm := range rawMetas {
-		cmByID[cm.ID] = cm
-	}
-
-	// Build parallel metas / metaOrders in gm.order order, skipping broken ones.
-	metas := make([]models.ContentMeta, 0, len(gameMetas))
-	metaOrders := make([]float64, 0, len(gameMetas))
-	for _, gm := range gameMetas {
-		cm, ok := cmByID[gm.ContentMetaID]
-		if !ok {
-			continue
-		}
-		metas = append(metas, cm)
-		metaOrders = append(metaOrders, gm.Order)
 	}
 
 	if len(metas) == 0 {
@@ -370,7 +329,6 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 		return
 	}
 
-	// Calculate bean cost per meta (word count)
 	metaWordCounts := make([]int, len(metas))
 	totalCost := 0
 	for i, m := range metas {
@@ -403,11 +361,11 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 		wg.Add(1)
 		sem <- struct{}{}
 
-		go func(m models.ContentMeta, idx int, baseOrder float64) {
+		go func(m models.ContentMeta, idx int) {
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			success := processBreakMeta(m, gameID, gameLevelID, baseOrder)
+			success := processBreakMeta(m, gameID, gameLevelID)
 			d := atomic.AddInt64(&done, 1)
 
 			if success {
@@ -418,12 +376,11 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 				atomic.AddInt64(&failedWords, int64(metaWordCounts[idx]))
 				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "failed"})
 			}
-		}(meta, i, metaOrders[i])
+		}(meta, i)
 	}
 
 	wg.Wait()
 
-	// Refund failed words
 	fw := int(atomic.LoadInt64(&failedWords))
 	if fw > 0 {
 		_ = RefundBeans(userID, fw, consts.BeanSlugAIBreakRefund, consts.BeanReasonAIBreakRefund)
@@ -439,11 +396,9 @@ func BreakMetadata(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	writer.Close()
 }
 
-// processBreakMeta calls DeepSeek to split a meta into content items, then
-// creates one content_items row per unit with a matching game_items junction
-// row. baseOrder is the junction order of this meta (game_metas."order"); new
-// items fan out above it in increments of 10.
-func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string, baseOrder float64) bool {
+// processBreakMeta calls DeepSeek to split a meta into content_items rows.
+// Item orders fan out from the parent meta's order in increments of 10.
+func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string) bool {
 	userMsg := "English: " + meta.SourceData
 	if meta.Translation != nil && *meta.Translation != "" {
 		userMsg += "\nChinese translation: " + *meta.Translation
@@ -465,8 +420,7 @@ func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string, baseO
 		return false
 	}
 
-	// Parse and create content items
-	startOrder := baseOrder + 10
+	startOrder := meta.Order + 10
 
 	for i, raw := range items {
 		var unit struct {
@@ -484,32 +438,22 @@ func processBreakMeta(meta models.ContentMeta, gameID, gameLevelID string, baseO
 		if unit.Translation != "" {
 			translation = &unit.Translation
 		}
-		itemOrder := startOrder + float64(i*10)
 
 		item := models.ContentItem{
 			ID:            id,
+			GameID:        gameID,
+			GameLevelID:   gameLevelID,
 			ContentMetaID: &metaID,
 			Content:       unit.Content,
 			ContentType:   unit.ContentType,
 			Translation:   translation,
+			Order:         startOrder + float64(i*10),
 		}
 		if err := facades.Orm().Query().Create(&item); err != nil {
 			return false
 		}
-
-		gi := models.GameItem{
-			ID:            uuid.Must(uuid.NewV7()).String(),
-			GameID:        gameID,
-			GameLevelID:   gameLevelID,
-			ContentItemID: item.ID,
-			Order:         itemOrder,
-		}
-		if err := facades.Orm().Query().Create(&gi); err != nil {
-			return false
-		}
 	}
 
-	// Mark meta as broken
 	if _, err := facades.Orm().Query().Model(&models.ContentMeta{}).
 		Where("id", meta.ID).
 		Update("is_break_done", true); err != nil {
@@ -583,9 +527,8 @@ Example output:
   {"content": "I like the food.", "contentType": "sentence", "translation": "我喜欢这食物。"}
 ]`
 
-// --- GenerateContentItems ---
+// --- GenerateContentItems --- (rewritten — direct queries)
 
-// GenerateContentItems generates word-level phonetics/POS/translations for content items via SSE.
 func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
 	if err := requireVip(userID); err != nil {
 		writeSSEError(writer, err)
@@ -602,26 +545,21 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 	}
 	_ = level
 
-	// Fetch broken metas (ready for item generation) linked to this level via game_metas junction
 	var metas []models.ContentMeta
-	if err := facades.Orm().Query().Model(&models.ContentMeta{}).
-		Select("content_metas.*").
-		Join("JOIN game_metas gm ON gm.content_meta_id = content_metas.id AND gm.deleted_at IS NULL").
-		Where("gm.game_level_id", gameLevelID).
-		Where("content_metas.is_break_done", true).
-		Order(`gm."order" ASC`).
+	if err := facades.Orm().Query().
+		Where("game_level_id", gameLevelID).
+		Where("is_break_done", true).
+		Order(`"order" ASC`).
 		Get(&metas); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load metas: %w", err))
 		return
 	}
-
 	if len(metas) == 0 {
 		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
 		writer.Close()
 		return
 	}
 
-	// Filter to metas that have items needing generation (items column is null)
 	metaIDs := make([]string, 0, len(metas))
 	metaMap := make(map[string]models.ContentMeta)
 	for _, m := range metas {
@@ -630,18 +568,15 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 	}
 
 	var pendingItems []models.ContentItem
-	if err := facades.Orm().Query().Model(&models.ContentItem{}).
-		Select("content_items.*").
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
-		Where("gi.game_level_id", gameLevelID).
-		Where("content_items.content_meta_id IN ?", metaIDs).
-		Where("content_items.items IS NULL").
+	if err := facades.Orm().Query().
+		Where("game_level_id", gameLevelID).
+		Where("content_meta_id IN ?", metaIDs).
+		Where("items IS NULL").
 		Get(&pendingItems); err != nil {
 		writeSSEError(writer, fmt.Errorf("failed to load pending items: %w", err))
 		return
 	}
 
-	// Group pending items by meta and compute word counts
 	pendingByMeta := make(map[string][]models.ContentItem)
 	metaItemWordCounts := make(map[string]int)
 	for _, item := range pendingItems {
@@ -653,14 +588,12 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 		metaItemWordCounts[mid] += helpers.CountWords(item.Content)
 	}
 
-	// Only process metas that have pending items
 	var activeMetas []models.ContentMeta
 	for _, m := range metas {
 		if len(pendingByMeta[m.ID]) > 0 {
 			activeMetas = append(activeMetas, m)
 		}
 	}
-
 	if len(activeMetas) == 0 {
 		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
 		writer.Close()
@@ -671,7 +604,6 @@ func GenerateContentItems(userID, gameLevelID string, writer *helpers.NDJSONWrit
 	for _, wc := range metaItemWordCounts {
 		totalCost += wc
 	}
-
 	if totalCost == 0 {
 		writeSSEError(writer, ErrEmptyContent)
 		return
@@ -764,7 +696,6 @@ func processGenItems(meta models.ContentMeta, existingItems []models.ContentItem
 		return false
 	}
 
-	// Build a map from content text → items JSON
 	aiMap := make(map[string]json.RawMessage)
 	for _, raw := range aiUnits {
 		var unit struct {
@@ -779,7 +710,6 @@ func processGenItems(meta models.ContentMeta, existingItems []models.ContentItem
 		}
 	}
 
-	// Update each existing item with the generated items JSON
 	for _, item := range existingItems {
 		itemsJSON, ok := aiMap[item.Content]
 		if !ok {
@@ -833,9 +763,8 @@ Example output:
   }
 ]`
 
-// --- Helpers ---
+// --- Helpers --- (verifyLevelOwnership unchanged)
 
-// verifyLevelOwnership checks that the user owns the game containing this level.
 func verifyLevelOwnership(userID, gameLevelID string) (*models.Game, *models.GameLevel, error) {
 	var level models.GameLevel
 	if err := facades.Orm().Query().Where("id", gameLevelID).First(&level); err != nil {
@@ -851,6 +780,229 @@ func verifyLevelOwnership(userID, gameLevelID string) (*models.Game, *models.Gam
 	}
 
 	return game, &level, nil
+}
+
+// --- GenerateVocab ---
+
+// GenerateVocabResult holds the response from vocab generation.
+type GenerateVocabResult struct {
+	Generated string `json:"generated,omitempty"`
+	Warning   string `json:"warning,omitempty"`
+}
+
+// GenerateVocab generates English-Chinese vocab pairs from keywords using DeepSeek AI.
+// Consumes 5 beans. Count based on game mode (5/8/20).
+func GenerateVocab(userID string, difficulty string, keywords []string, gameMode string) (*GenerateVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	if err := ConsumeBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateConsume, consts.BeanReasonAIVocabGenerateConsume); err != nil {
+		return nil, err
+	}
+
+	levelDesc, ok := difficultyDescriptions[difficulty]
+	if !ok {
+		levelDesc = difficultyDescriptions["a1-a2"]
+	}
+
+	count := consts.VocabGenerateCount(gameMode)
+	prompt := buildVocabGeneratePrompt(levelDesc, count)
+	userMsg := "Keywords: " + strings.Join(keywords, ", ")
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: prompt},
+			{Role: "user", Content: userMsg},
+		},
+		Temperature: 0.7,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateRefund, consts.BeanReasonAIVocabGenerateRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &GenerateVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	return &GenerateVocabResult{Generated: result}, nil
+}
+
+func buildVocabGeneratePrompt(levelDesc string, count int) string {
+	return fmt.Sprintf(`You are a vocabulary generator for an English learning app. Your job is to generate English-Chinese vocabulary pairs.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the provided keywords contain any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If they do, respond ONLY with: WARNING:包含不适当内容，请修改后重试
+Do NOT generate any vocabulary. Stop here.
+
+STEP 2 — GENERATE VOCABULARY:
+Generate exactly %d English-Chinese vocabulary pairs that:
+- Are related to ALL the provided keywords
+- Use CEFR level %s appropriate vocabulary
+- Include a mix of single words and short phrases
+- Are suitable for English language learners
+
+OUTPUT FORMAT:
+- Each pair on two lines: English word/phrase, then Chinese translation
+- No numbering, no bullets, no markdown, no explanations
+- No empty lines between pairs
+
+Example output:
+apple
+苹果
+banana
+香蕉
+red apple
+红苹果`, count, levelDesc)
+}
+
+// --- FormatVocab ---
+
+// FormatVocabResult holds the response from vocab formatting.
+type FormatVocabResult struct {
+	Formatted string `json:"formatted,omitempty"`
+	Warning   string `json:"warning,omitempty"`
+}
+
+// FormatVocab formats raw vocab text via DeepSeek.
+// Only vocab — rejects sentences. Cost = word count.
+func FormatVocab(userID string, content string) (*FormatVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	wordCount := helpers.CountWords(content)
+	if wordCount == 0 {
+		return nil, ErrEmptyContent
+	}
+
+	if err := ConsumeBeans(userID, wordCount, consts.BeanSlugAIVocabFormatConsume, consts.BeanReasonAIVocabFormatConsume); err != nil {
+		return nil, err
+	}
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: vocabFormatPrompt},
+			{Role: "user", Content: content},
+		},
+		Temperature: 0.1,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &FormatVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	formatted := cleanVocabFormatted(result)
+	if formatted == "" {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, helpers.ErrDeepSeekEmpty
+	}
+
+	return &FormatVocabResult{Formatted: formatted}, nil
+}
+
+var vocabFormatPrompt = `You are a content formatter for an English learning app. Your job is to clean up and reformat messy user input into a strict line-by-line format for vocabulary.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the content contains any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If it does, respond ONLY with: WARNING:内容包含不适当内容，请修改后重试
+Do NOT format the content. Stop here.
+
+STEP 2 — TYPE MISMATCH CHECK:
+If the content consists mostly of full sentences with punctuation, respond ONLY with: WARNING:内容看起来是语句而非词汇，请使用「连词成句」模式
+
+STEP 3 — FORMAT:
+- If the content contains Chinese text: output alternating lines of English word/phrase followed by its Chinese translation.
+- If the content contains NO Chinese text: output English words/phrases only, one per line.
+
+RULES:
+- Output ONLY the formatted text. No explanations, headers, numbering, or markdown.
+- Remove duplicates.
+- Fix obvious spelling errors in English.
+- Preserve the original meaning. Do not add or remove content.
+- Each line must contain exactly ONE word or phrase (or one translation).
+- Remove any empty lines.`
+
+// --- FormatVocabWords (English-only, for the personal vocab pool) ---
+
+// FormatVocabWords cleans raw text into pure English words/phrases, one per
+// line. Used by the AI 词汇库 manual tab where translations are NOT accepted
+// (the pool produces its own AI-generated definitions). Strips Chinese,
+// drops duplicates, fixes spelling, rejects sentence-shaped input.
+// Cost = word count of input.
+func FormatVocabWords(userID string, content string) (*FormatVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	wordCount := helpers.CountWords(content)
+	if wordCount == 0 {
+		return nil, ErrEmptyContent
+	}
+
+	if err := ConsumeBeans(userID, wordCount, consts.BeanSlugAIVocabFormatConsume, consts.BeanReasonAIVocabFormatConsume); err != nil {
+		return nil, err
+	}
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: vocabWordsFormatPrompt},
+			{Role: "user", Content: content},
+		},
+		Temperature: 0.1,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &FormatVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	formatted := cleanVocabFormatted(result)
+	if formatted == "" {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, helpers.ErrDeepSeekEmpty
+	}
+
+	return &FormatVocabResult{Formatted: formatted}, nil
+}
+
+var vocabWordsFormatPrompt = `You are a content formatter for an English vocabulary pool. Your job is to clean up messy user input into a strict English-only word list, one per line.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the content contains any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If it does, respond ONLY with: WARNING:内容包含不适当内容，请修改后重试
+
+STEP 2 — TYPE MISMATCH CHECK:
+If the content consists mostly of full sentences with punctuation, respond ONLY with: WARNING:内容看起来是语句而非词汇，请改为单词或短语
+
+STEP 3 — FORMAT (English only, NO translations):
+Output English words/phrases ONLY, one per line. CRITICAL RULES:
+- DROP any Chinese characters entirely. Do NOT output translations even if the input has them. Do NOT keep any pinyin.
+- DROP any line that is purely punctuation, numbers without context, or otherwise not an English word/phrase.
+- Allowed characters per line: letters (A-Za-z), digits (0-9), single spaces between words, apostrophe ('), hyphen (-). Strip any other punctuation.
+- Remove duplicates (case-insensitive — "Fast" and "fast" are duplicates; keep the first occurrence's casing).
+- Fix obvious spelling errors.
+- Preserve original casing where it carries meaning (e.g., "iPhone", "NASA").
+- Each line is exactly ONE word or short phrase (≤6 words).
+- No empty lines, no headers, no numbering, no markdown, no explanations.`
+
+// cleanVocabFormatted removes empty lines and trims whitespace.
+func cleanVocabFormatted(result string) string {
+	lines := strings.Split(result, "\n")
+	var clean []string
+	for _, line := range lines {
+		line = strings.TrimRight(line, " \t\r")
+		if line != "" {
+			clean = append(clean, line)
+		}
+	}
+	return strings.Join(clean, "\n")
 }
 
 func writeSSEError(writer *helpers.NDJSONWriter, err error) {

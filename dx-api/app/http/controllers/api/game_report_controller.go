@@ -31,7 +31,7 @@ func (c *GameReportController) SubmitReport(ctx contractshttp.Context) contracts
 		return resp
 	}
 
-	result, err := services.SubmitReport(userID, req.GameID, req.GameLevelID, req.ContentItemID, req.Reason, req.Note)
+	result, err := services.SubmitReport(userID, req.GameID, req.GameLevelID, req.ContentItemID, req.ContentVocabID, req.Reason, req.Note)
 	if err != nil {
 		if errors.Is(err, services.ErrRateLimited) {
 			return helpers.Error(ctx, http.StatusTooManyRequests, consts.CodeRateLimited, "举报过于频繁，请稍后再试")

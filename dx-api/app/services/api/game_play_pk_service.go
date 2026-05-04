@@ -545,11 +545,12 @@ func PkRestoreSessionData(userID, sessionID string) (*SessionRestoreData, error)
 }
 
 // PkUpdateContentItem updates the current content item in a PK session.
-func PkUpdateContentItem(userID, sessionID string, contentItemID *string) error {
+// Pass exactly one of contentItemID or contentVocabID; the other column is cleared.
+func PkUpdateContentItem(userID, sessionID string, contentItemID, contentVocabID *string) error {
 	if err := requireVip(userID); err != nil {
 		return err
 	}
-	return UpdateCurrentContentItem(userID, sessionID, contentItemID)
+	return UpdateCurrentContentItem(userID, sessionID, contentItemID, contentVocabID)
 }
 
 // --- Robot goroutine ---
@@ -592,19 +593,59 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 		return
 	}
 
-	// Fetch content items for the level
-	contentTypes := consts.DegreeContentTypes[degree]
-	contentQuery := query.Model(&models.ContentItem{}).
-		Select("content_items.*").
-		Join("JOIN game_items gi ON gi.content_item_id = content_items.id AND gi.deleted_at IS NULL").
-		Where("gi.game_level_id", gameLevelID)
-	if len(contentTypes) > 0 {
-		contentQuery = contentQuery.Where("content_items.content_type IN ?", contentTypes)
+	// Fetch the play set, mode-branched.
+	type playRow struct {
+		ID             string // ID we record back to the client (game_vocab_id for vocab, content_item_id for WS)
+		Content        string
+		ContentItemID  *string // populate exactly one of these on insert
+		ContentVocabID *string
 	}
-	var items []models.ContentItem
-	if err := contentQuery.Order(`gi."order" ASC`).Get(&items); err != nil || len(items) == 0 {
-		fmt.Printf("[PK] No content items for pk=%s level=%s\n", pkID, gameLevelID)
+
+	// Load game to determine mode
+	var game models.Game
+	if err := query.Select("id", "mode").Where("id", gameID).First(&game); err != nil || game.ID == "" {
+		fmt.Printf("[PK] Failed to load game for pk=%s: %v\n", pkID, err)
 		return
+	}
+
+	var rows []playRow
+	if consts.IsVocabMode(game.Mode) {
+		type vocabJoin struct {
+			GvID    string `gorm:"column:gv_id"`
+			Cv      string `gorm:"column:cv_id"`
+			Content string `gorm:"column:content"`
+		}
+		var vrows []vocabJoin
+		if err := query.Raw(
+			`SELECT gv.id AS gv_id, cv.id AS cv_id, cv.content
+			   FROM game_vocabs gv
+			   JOIN content_vocabs cv ON cv.id = gv.content_vocab_id AND cv.deleted_at IS NULL
+			  WHERE gv.game_level_id = ? AND gv.deleted_at IS NULL
+			  ORDER BY gv."order" ASC`,
+			gameLevelID,
+		).Scan(&vrows); err != nil || len(vrows) == 0 {
+			fmt.Printf("[PK] No content vocabs for pk=%s level=%s\n", pkID, gameLevelID)
+			return
+		}
+		for _, vr := range vrows {
+			cvID := vr.Cv
+			rows = append(rows, playRow{ID: vr.GvID, Content: vr.Content, ContentVocabID: &cvID})
+		}
+	} else {
+		contentTypes := consts.DegreeContentTypes[degree]
+		contentQuery := query.Model(&models.ContentItem{}).Where("game_level_id", gameLevelID)
+		if len(contentTypes) > 0 {
+			contentQuery = contentQuery.Where("content_type IN ?", contentTypes)
+		}
+		var items []models.ContentItem
+		if err := contentQuery.Order(`"order" ASC`).Get(&items); err != nil || len(items) == 0 {
+			fmt.Printf("[PK] No content items for pk=%s level=%s\n", pkID, gameLevelID)
+			return
+		}
+		for _, item := range items {
+			ciID := item.ID
+			rows = append(rows, playRow{ID: item.ID, Content: item.Content, ContentItemID: &ciID})
+		}
 	}
 
 	// Get difficulty params
@@ -627,7 +668,7 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 	// Simulate answering items
 	combo := helpers.ComboState{}
 	correctCount := 0
-	for i, item := range items {
+	for i := range rows {
 		// Check pause
 		rs.mu.Lock()
 		pauseCh := rs.pauseCh
@@ -669,17 +710,18 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 
 		// Write game record
 		record := models.GameRecord{
-			ID:            newID(),
-			UserID:        robotUserID,
-			GameSessionID: robotSession.ID,
-			GameLevelID:   gameLevelID,
-			ContentItemID: item.ID,
-			IsCorrect:     isCorrect,
-			SourceAnswer:  item.Content,
-			UserAnswer:    item.Content,
-			BaseScore:     consts.CorrectAnswer,
-			ComboScore:    result.ComboBonus,
-			Duration:      delayMs / 1000,
+			ID:             newID(),
+			UserID:         robotUserID,
+			GameSessionID:  robotSession.ID,
+			GameLevelID:    gameLevelID,
+			ContentItemID:  rows[i].ContentItemID,
+			ContentVocabID: rows[i].ContentVocabID,
+			IsCorrect:      isCorrect,
+			SourceAnswer:   rows[i].Content,
+			UserAnswer:     rows[i].Content,
+			BaseScore:      consts.CorrectAnswer,
+			ComboScore:     result.ComboBonus,
+			Duration:       delayMs / 1000,
 		}
 		if !isCorrect {
 			record.BaseScore = 0
@@ -695,26 +737,23 @@ func spawnRobotForLevel(pkID, robotUserID, gameID, gameLevelID, degree string, p
 			countCol = "wrong_count = wrong_count + 1"
 		}
 
-		var nextItemID *string
-		if i+1 < len(items) {
-			nextItemID = &items[i+1].ID
+		// Cursor for the next row: pick whichever polymorphic FK is populated
+		// on the next row, leaving the other NULL. Last row leaves both NULL.
+		// Setting both columns in one UPDATE keeps the at-most-one CHECK valid.
+		var nextItemFK, nextVocabFK *string
+		if i+1 < len(rows) {
+			nextItemFK = rows[i+1].ContentItemID
+			nextVocabFK = rows[i+1].ContentVocabID
 		}
 
 		// Track elapsed seconds so the robot contributes to the playtime
 		// leaderboard (helps seed rankings before many real users exist).
 		elapsedSec := int(time.Since(now).Seconds())
 
-		if nextItemID != nil {
-			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, elapsedSec, *nextItemID, robotSession.ID,
-			)
-		} else {
-			facades.Orm().Query().Exec(
-				fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = NULL, updated_at = now() WHERE id = ?", countCol),
-				combo.TotalScore, combo.MaxCombo, elapsedSec, robotSession.ID,
-			)
-		}
+		facades.Orm().Query().Exec(
+			fmt.Sprintf("UPDATE game_sessions SET score = ?, max_combo = ?, play_time = ?, played_items_count = played_items_count + 1, %s, current_content_item_id = ?, current_content_vocab_id = ?, updated_at = now() WHERE id = ?", countCol),
+			combo.TotalScore, combo.MaxCombo, elapsedSec, nextItemFK, nextVocabFK, robotSession.ID,
+		)
 
 		// Broadcast robot action
 		action := "score"

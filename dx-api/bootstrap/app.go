@@ -33,7 +33,6 @@ func Boot() contractsfoundation.Application {
 				&commands.ResetEnergyBeans{},
 				&commands.ImportCourses{},
 				&commands.ExpireStaleOrders{},
-				&commands.BackfillMetas{},
 			}
 		}).
 		WithSchedule(func() []schedule.Event {
