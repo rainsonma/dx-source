@@ -1,19 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Sparkles, BookOpen } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import { useHallMenuItem } from "@/features/web/hall/hooks/use-hall-menu";
 import { PageTopBar } from "@/features/web/hall/components/page-top-bar";
 import { VocabList } from "@/features/web/ai-vocabs/components/vocab-list";
-import { AddVocabFromAiDialog } from "@/features/web/ai-vocabs/components/add-vocab-from-ai-dialog";
-import { AddVocabManualDialog } from "@/features/web/ai-vocabs/components/add-vocab-manual-dialog";
+import { AddVocabDialog } from "@/features/web/ai-vocabs/components/add-vocab-dialog";
 
 export default function AiVocabsPage() {
   const menu = useHallMenuItem("/hall/ai-vocabs");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [aiDialogOpen, setAiDialogOpen] = useState(false);
-  const [manualDialogOpen, setManualDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   function handleSearchChange(value: string) {
@@ -46,24 +44,14 @@ export default function AiVocabsPage() {
             className="h-9 w-full rounded-lg border border-border bg-muted/50 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setAiDialogOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-700"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            AI 生成
-          </button>
-          <button
-            type="button"
-            onClick={() => setManualDialogOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-700"
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-            手动添加
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setDialogOpen(true)}
+          className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-sm font-semibold text-white hover:bg-teal-700"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          添加词汇
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden rounded-[14px] border border-border bg-card">
@@ -72,14 +60,9 @@ export default function AiVocabsPage() {
         </div>
       </div>
 
-      <AddVocabFromAiDialog
-        open={aiDialogOpen}
-        onOpenChange={setAiDialogOpen}
-        onAdded={handleAdded}
-      />
-      <AddVocabManualDialog
-        open={manualDialogOpen}
-        onOpenChange={setManualDialogOpen}
+      <AddVocabDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
         onAdded={handleAdded}
       />
     </div>

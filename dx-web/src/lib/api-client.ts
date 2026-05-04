@@ -769,6 +769,9 @@ export const contentVocabApi = {
   createBatch: (inputs: VocabInput[]) =>
     apiClient.post<CreateVocabResult[]>('/api/content-vocabs/batch', { inputs }),
 
+  createFromWords: (words: string[]) =>
+    apiClient.post<CreateVocabResult[]>('/api/content-vocabs/from-words', { words }),
+
   update: (id: string, input: VocabInput) =>
     apiClient.put<ContentVocabData>(`/api/content-vocabs/${id}`, input),
 
@@ -778,8 +781,8 @@ export const contentVocabApi = {
 
 // AI custom API functions
 export const aiCustomApi = {
-  generateVocabsFromKeywords: (keywords: string[]) =>
-    apiClient.post<string>('/api/ai-custom/generate-vocabs-from-keywords', { keywords }),
+  generateVocabWords: (keywords: string[], difficulty: string) =>
+    apiClient.post<{ words: string[] }>('/api/ai-custom/generate-vocab-words', { keywords, difficulty }),
 };
 
 // Game vocab placement API functions

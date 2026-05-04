@@ -20,10 +20,6 @@ export async function createVocabAction(input: VocabInput) {
   return apiClient.post<CreateVocabResult>('/api/content-vocabs', input);
 }
 
-export async function createVocabsBatchAction(inputs: VocabInput[]) {
-  return apiClient.post<CreateVocabResult[]>('/api/content-vocabs/batch', { inputs });
-}
-
 export async function updateVocabAction(id: string, input: VocabInput) {
   return apiClient.put<ContentVocabData>(`/api/content-vocabs/${id}`, input);
 }
@@ -32,6 +28,10 @@ export async function deleteVocabAction(id: string) {
   return apiClient.delete<void>(`/api/content-vocabs/${id}`);
 }
 
-export async function generateVocabsFromKeywordsAction(keywords: string[]) {
-  return apiClient.post<string>('/api/ai-custom/generate-vocabs-from-keywords', { keywords });
+export async function generateVocabWordsAction(keywords: string[], difficulty: string) {
+  return apiClient.post<{ words: string[] }>('/api/ai-custom/generate-vocab-words', { keywords, difficulty });
+}
+
+export async function createVocabsFromWordsAction(words: string[]) {
+  return apiClient.post<CreateVocabResult[]>('/api/content-vocabs/from-words', { words });
 }
