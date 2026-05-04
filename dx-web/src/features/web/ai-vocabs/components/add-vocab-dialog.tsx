@@ -11,10 +11,10 @@ import {
   Wand2,
   Play,
   RotateCcw,
-  Plus,
   CircleAlert,
   Gauge,
   TextCursorInput,
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,7 +47,7 @@ type AddVocabDialogProps = {
   onAdded: () => void;
 };
 
-const MAX_KEYWORDS = 10;
+const MAX_KEYWORDS = 5;
 const MAX_KEYWORD_LENGTH = 30;
 
 function getKeywordsWarning(keywords: string): string {
@@ -80,10 +80,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
   const [keywords, setKeywords] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState("");
-  const [aiWords, setAiWords] = useState<string[]>([]);
-  const [checkedWords, setCheckedWords] = useState<Set<number>>(new Set());
-  const [inlineInput, setInlineInput] = useState("");
-  const [showInlineAdd, setShowInlineAdd] = useState(false);
+  const [aiWordsText, setAiWordsText] = useState("");
 
   // Shared save state
   const [isSaving, startSaveTransition] = useTransition();
@@ -103,10 +100,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
       setKeywords("");
       setIsGenerating(false);
       setAiError("");
-      setAiWords([]);
-      setCheckedWords(new Set());
-      setInlineInput("");
-      setShowInlineAdd(false);
+      setAiWordsText("");
       setBeanDialogOpen(false);
       setBeanRequired(0);
       setBeanAvailable(0);
@@ -168,54 +162,30 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
     }
 
     const generated = result.data.words ?? [];
-    setAiWords(generated);
-    setCheckedWords(new Set(generated.map((_, i) => i)));
+    setAiWordsText(generated.join("\n"));
     setAiError("");
     toast.success(`已生成 ${generated.length} 个词汇`);
   }
 
   function handleAiReset() {
-    setAiWords([]);
-    setCheckedWords(new Set());
+    setAiWordsText("");
     setKeywords("");
     setDifficulty("a1-a2");
     setAiError("");
-    setInlineInput("");
-    setShowInlineAdd(false);
   }
 
-  function toggleWord(index: number) {
-    setCheckedWords((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index);
-      else next.add(index);
-      return next;
+  function parseWordsFromText(text: string): string[] {
+    const lines = text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    const seen = new Set<string>();
+    return lines.filter((l) => {
+      const lc = l.toLowerCase();
+      if (seen.has(lc)) return false;
+      seen.add(lc);
+      return true;
     });
-  }
-
-  function removeWord(index: number) {
-    setAiWords((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      return next;
-    });
-    setCheckedWords((prev) => {
-      // Re-index: remove the removed index and shift down indices above it
-      const next = new Set<number>();
-      for (const i of prev) {
-        if (i < index) next.add(i);
-        else if (i > index) next.add(i - 1);
-      }
-      return next;
-    });
-  }
-
-  function handleAddInline() {
-    const word = inlineInput.trim();
-    if (!word) return;
-    setAiWords((prev) => [...prev, word]);
-    setCheckedWords((prev) => new Set([...prev, aiWords.length]));
-    setInlineInput("");
-    setShowInlineAdd(false);
   }
 
   // Shared save handler
@@ -223,19 +193,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
     let words: string[];
 
     if (activeTab === "manual") {
-      const lines = manualText
-        .split("\n")
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0);
-      // Dedup
-      const seen = new Set<string>();
-      words = lines.filter((l) => {
-        const lc = l.toLowerCase();
-        if (seen.has(lc)) return false;
-        seen.add(lc);
-        return true;
-      });
-
+      words = parseWordsFromText(manualText);
       if (words.length === 0) {
         const msg = "请输入至少一个词汇";
         setManualError(msg);
@@ -243,9 +201,9 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
         return;
       }
     } else {
-      words = aiWords.filter((_, i) => checkedWords.has(i));
+      words = parseWordsFromText(aiWordsText);
       if (words.length === 0) {
-        toast.error("请至少勾选一个词汇");
+        toast.error("请至少保留一个词汇");
         return;
       }
     }
@@ -272,10 +230,11 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
 
   const keywordsWarning = getKeywordsWarning(keywords);
   const canGenerate = keywords.trim().length > 0 && !isGenerating && !keywordsWarning;
-  const canReset = aiWords.length > 0 || keywords.trim().length > 0;
+  const canReset = aiWordsText.length > 0 || keywords.trim().length > 0;
+  const aiWordCount = parseWordsFromText(aiWordsText).length;
   const canSave = activeTab === "manual"
     ? manualText.trim().length > 0 && !isSaving && !isFormatting
-    : checkedWords.size > 0 && !isSaving;
+    : aiWordCount > 0 && !isSaving;
   const canFormat = manualText.trim().length > 0 && !isFormatting && !isSaving;
 
   return (
@@ -347,7 +306,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
               {activeTab === "manual" ? (
                 <div className="flex flex-col gap-3 px-6 py-4">
                   <p className="text-xs text-muted-foreground">
-                    每行输入一个英文词汇，保存后 AI 将自动补全音标、释义和例句。
+                    每行输入一个英文词汇，保存后 AI 将自动补全音标和释义。
                   </p>
                   <textarea
                     value={manualText}
@@ -392,7 +351,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                     <div className="flex items-center gap-2">
                       <TextCursorInput className="h-3.5 w-3.5 text-teal-600" />
                       <span className="text-[13px] font-semibold text-foreground">关键词</span>
-                      <span className="text-xs text-muted-foreground">最多 10 个单词，用空格分开</span>
+                      <span className="text-xs text-muted-foreground">最多 5 个单词，用空格分开</span>
                     </div>
                     <input
                       value={keywords}
@@ -410,80 +369,35 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                     )}
                   </div>
 
-                  {/* Preview word list */}
-                  {aiWords.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[13px] font-semibold text-foreground">
-                          生成结果
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
-                            （{checkedWords.size}/{aiWords.length} 已选）
-                          </span>
+                  {/* Preview / editable word list (textarea, mirrors metadata AI tab pattern) */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Eye className="h-3.5 w-3.5 text-teal-600" />
+                        <span className="text-[13px] font-semibold text-foreground">生成预览</span>
+                      </div>
+                      {aiWordsText.length > 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          {aiWordCount} 条（每行一个，可编辑）
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setShowInlineAdd((v) => !v)}
-                          className="flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-accent"
-                        >
-                          <Plus className="h-3 w-3" />
-                          添加词汇
-                        </button>
-                      </div>
-
-                      {showInlineAdd && (
-                        <div className="flex gap-2">
-                          <input
-                            value={inlineInput}
-                            onChange={(e) => setInlineInput(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddInline(); } }}
-                            placeholder="输入词汇后回车添加"
-                            className="h-9 flex-1 rounded-lg border border-border bg-muted px-3 text-sm text-foreground outline-none focus:ring-1 focus:ring-teal-500"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={handleAddInline}
-                            disabled={!inlineInput.trim()}
-                            className="flex h-9 items-center rounded-lg bg-teal-600 px-3 text-sm font-semibold text-white disabled:opacity-50"
-                          >
-                            添加
-                          </button>
-                        </div>
                       )}
-
-                      <div className="flex max-h-60 flex-col gap-1.5 overflow-y-auto">
-                        {aiWords.map((word, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checkedWords.has(i)}
-                              onChange={() => toggleWord(i)}
-                              className="h-4 w-4 accent-teal-600"
-                            />
-                            <span className="flex-1 text-sm font-medium text-foreground">{word}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeWord(i)}
-                              aria-label="删除"
-                              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-red-500"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
                     </div>
-                  )}
-
-                  {aiError && (
-                    <p className="flex items-center gap-1.5 text-xs text-red-500">
-                      <CircleAlert className="h-3.5 w-3.5 shrink-0" />
-                      {aiError}
-                    </p>
-                  )}
+                    <textarea
+                      value={aiWordsText}
+                      onChange={(e) => { setAiWordsText(e.target.value); setAiError(""); }}
+                      placeholder={"生成后将在此处显示，每行一个词汇，可直接编辑或添加新词..."}
+                      rows={8}
+                      className={`w-full resize-none rounded-xl border bg-muted/50 px-3 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 ${
+                        aiError ? "border-red-400 focus:ring-red-400" : "border-border focus:ring-teal-500"
+                      }`}
+                    />
+                    {aiError && (
+                      <p className="flex items-center gap-1.5 text-xs text-red-500">
+                        <CircleAlert className="h-3.5 w-3.5 shrink-0" />
+                        {aiError}
+                      </p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -542,7 +456,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                       <Play className="h-3.5 w-3.5 text-teal-600" />
                     )}
                     <span className="text-xs font-semibold text-teal-600">
-                      {isGenerating ? "生成中..." : aiWords.length > 0 ? "重新生成" : "AI 生成"}
+                      {isGenerating ? "生成中..." : aiWordsText.length > 0 ? "重新生成" : "AI 生成"}
                     </span>
                   </button>
                   <button
@@ -557,7 +471,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                       <Save className="h-4 w-4 text-white" />
                     )}
                     <span className="text-sm font-semibold text-white">
-                      保存{checkedWords.size > 0 ? ` ${checkedWords.size} 条` : ""}
+                      保存{aiWordCount > 0 ? ` ${aiWordCount} 条` : ""}
                     </span>
                   </button>
                 </div>
