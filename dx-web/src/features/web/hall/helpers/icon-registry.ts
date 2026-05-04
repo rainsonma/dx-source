@@ -13,6 +13,7 @@ import {
   Trophy,
   Medal,
   MessageCircle,
+  Library,
 } from "lucide-react"
 
 export const iconRegistry: Record<string, LucideIcon> = {
@@ -29,4 +30,5 @@ export const iconRegistry: Record<string, LucideIcon> = {
   Trophy,
   Medal,
   MessageCircle,
+  Library,
 }
