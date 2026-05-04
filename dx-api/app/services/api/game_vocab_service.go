@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/goravel/framework/contracts/database/orm"
 	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
@@ -16,7 +15,6 @@ type AddedGameVocab struct {
 	GameVocabID    string `json:"gameVocabId"`
 	ContentVocabID string `json:"contentVocabId"`
 	Content        string `json:"content"`
-	WasReused      bool   `json:"wasReused"` // true if canonical existed
 }
 
 // LevelVocabData is one row in GetLevelVocabs.
@@ -26,9 +24,9 @@ type LevelVocabData struct {
 	Vocab       *ContentVocabData `json:"vocab"`
 }
 
-// AddVocabsToLevel creates/reuses canonical content_vocabs and inserts
-// game_vocabs placement rows. Validates batch-size for vocab modes.
-func AddVocabsToLevel(userID, gameID, gameLevelID string, entries []string) ([]AddedGameVocab, error) {
+// AddVocabsToLevel places vocabs from the user's pool into a level.
+// vocabIDs must all belong to userID; ownership is verified before insert.
+func AddVocabsToLevel(userID, gameID, levelID string, vocabIDs []string) ([]AddedGameVocab, error) {
 	if err := requireVip(userID); err != nil {
 		return nil, err
 	}
@@ -44,96 +42,80 @@ func AddVocabsToLevel(userID, gameID, gameLevelID string, entries []string) ([]A
 	}
 
 	var level models.GameLevel
-	if err := facades.Orm().Query().Where("id", gameLevelID).Where("game_id", gameID).First(&level); err != nil {
+	if err := facades.Orm().Query().Where("id", levelID).Where("game_id", gameID).First(&level); err != nil {
 		return nil, fmt.Errorf("failed to find level: %w", err)
 	}
 	if level.ID == "" {
 		return nil, ErrLevelNotFound
 	}
 
-	// Validate inputs first
-	cleaned := make([]string, 0, len(entries))
-	for _, raw := range entries {
-		if err := ValidateVocabContent(raw); err != nil {
-			return nil, fmt.Errorf("entry %q: %w", raw, err)
-		}
-		cleaned = append(cleaned, raw)
+	if len(vocabIDs) == 0 {
+		return []AddedGameVocab{}, nil
 	}
 
-	// Capacity & batch-size checks (match course_game.PublishGame logic)
-	existingCount, err := facades.Orm().Query().Model(&models.GameVocab{}).
-		Where("game_level_id", gameLevelID).Count()
+	// Ownership verification — load all referenced vocabs in one query.
+	var vocabs []models.ContentVocab
+	if err := facades.Orm().Query().Where("id IN ?", vocabIDs).Get(&vocabs); err != nil {
+		return nil, fmt.Errorf("failed to load vocabs: %w", err)
+	}
+	vocabByID := make(map[string]models.ContentVocab, len(vocabs))
+	for i := range vocabs {
+		vocabByID[vocabs[i].ID] = vocabs[i]
+	}
+	for _, id := range vocabIDs {
+		v, ok := vocabByID[id]
+		if !ok {
+			return nil, ErrContentItemNotFound
+		}
+		if v.UserID != userID {
+			return nil, ErrForbidden
+		}
+	}
+
+	// Capacity + batch-size (existing rules)
+	existingCount, err := facades.Orm().Query().Model(&models.GameVocab{}).Where("game_level_id", levelID).Count()
 	if err != nil {
 		return nil, fmt.Errorf("failed to count existing vocabs: %w", err)
 	}
-	if existingCount+int64(len(cleaned)) > int64(consts.MaxMetasPerLevel) {
+	if existingCount+int64(len(vocabIDs)) > int64(consts.MaxMetasPerLevel) {
 		return nil, ErrCapacityExceeded
 	}
 	batchSize := consts.VocabBatchSize(game.Mode)
-	if batchSize > 0 && (existingCount+int64(len(cleaned)))%int64(batchSize) != 0 {
+	if batchSize > 0 && (existingCount+int64(len(vocabIDs)))%int64(batchSize) != 0 {
 		return nil, ErrBatchSizeInvalid
 	}
 
-	// Find max order in level
+	// Find max order
 	type ordRow struct {
 		MaxOrder float64 `gorm:"column:max_order"`
 	}
 	var maxRow ordRow
 	if err := facades.Orm().Query().Raw(
-		`SELECT COALESCE(MAX("order"), 0) AS max_order
-		   FROM game_vocabs WHERE game_level_id = ? AND deleted_at IS NULL`,
-		gameLevelID,
+		`SELECT COALESCE(MAX("order"), 0) AS max_order FROM game_vocabs WHERE game_level_id = ? AND deleted_at IS NULL`,
+		levelID,
 	).Scan(&maxRow); err != nil {
 		return nil, fmt.Errorf("failed to load max order: %w", err)
 	}
 	maxOrder := maxRow.MaxOrder
 
-	added := make([]AddedGameVocab, 0, len(cleaned))
-
-	if err := facades.Orm().Transaction(func(tx orm.Query) error {
-		for i, raw := range cleaned {
-			key := NormalizeVocabContent(raw)
-			var canonical models.ContentVocab
-			err := tx.Where("content_key", key).First(&canonical)
-			wasReused := err == nil && canonical.ID != ""
-
-			if !wasReused {
-				canonical = models.ContentVocab{
-					ID:         uuid.Must(uuid.NewV7()).String(),
-					Content:    raw,
-					ContentKey: key,
-					IsVerified: false,
-				}
-				createdBy := userID
-				canonical.CreatedBy = &createdBy
-				if err := tx.Create(&canonical); err != nil {
-					return fmt.Errorf("create canonical vocab: %w", err)
-				}
-				snap, _ := SnapshotVocab(&canonical)
-				_ = WriteVocabEdit(tx, canonical.ID, userID, "create", "", snap)
-			}
-
-			gv := models.GameVocab{
-				ID:             uuid.Must(uuid.NewV7()).String(),
-				GameID:         gameID,
-				GameLevelID:    gameLevelID,
-				ContentVocabID: canonical.ID,
-				Order:          maxOrder + float64((i+1)*1000),
-			}
-			if err := tx.Create(&gv); err != nil {
-				return fmt.Errorf("create game_vocab: %w", err)
-			}
-
-			added = append(added, AddedGameVocab{
-				GameVocabID:    gv.ID,
-				ContentVocabID: canonical.ID,
-				Content:        canonical.Content,
-				WasReused:      wasReused,
-			})
+	added := make([]AddedGameVocab, 0, len(vocabIDs))
+	for i, id := range vocabIDs {
+		v := vocabByID[id]
+		gv := models.GameVocab{
+			ID:             uuid.Must(uuid.NewV7()).String(),
+			GameID:         gameID,
+			GameLevelID:    levelID,
+			ContentVocabID: id,
+			Order:          maxOrder + float64((i+1)*1000),
 		}
-		return nil
-	}); err != nil {
-		return nil, err
+		if err := facades.Orm().Query().Create(&gv); err != nil {
+			return nil, fmt.Errorf("create game_vocab: %w", err)
+		}
+		added = append(added, AddedGameVocab{
+			GameVocabID:    gv.ID,
+			ContentVocabID: id,
+			Content:        v.Content,
+		})
 	}
 
 	return added, nil
