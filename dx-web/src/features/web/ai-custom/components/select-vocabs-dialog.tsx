@@ -84,7 +84,6 @@ export function SelectVocabsDialog({
 
   useEffect(() => {
     loadPage("", true, debouncedSearch);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
   useEffect(() => {
@@ -103,7 +102,6 @@ export function SelectVocabsDialog({
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) return;
     await loadPage(cursor, false, debouncedSearch);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingMore, hasMore, cursor, debouncedSearch]);
 
   async function handleConfirm() {

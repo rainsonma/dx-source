@@ -19,7 +19,7 @@ export default function CourseGameLevelPage({
   const { id, levelId } = use(params)
 
   const { data: game, isLoading: gameLoading } = useSWR(`/api/course-games/${id}`)
-  const { data: profile, isLoading: profileLoading } = useSWR<{ id: string; username: string }>("/api/user/profile")
+  const { isLoading: profileLoading } = useSWR<{ id: string; username: string }>("/api/user/profile")
 
   type ContentGroupItem = { items: unknown[] | null; contentType: string };
   type ContentGroup = {
@@ -69,9 +69,6 @@ export default function CourseGameLevelPage({
   const level = game?.levels?.find((l: { id: string }) => l.id === levelId)
   const isPublished = game?.status === GAME_STATUSES.PUBLISHED
 
-  const currentUserId = profile?.id ?? ""
-  const isAdmin = profile?.username === "rainson"
-
   return (
     <div className="flex min-h-full flex-col gap-5 px-4 pt-5 pb-12 lg:gap-6 lg:px-8 lg:pt-7 lg:pb-16">
       <BreadcrumbTopBar
@@ -88,8 +85,6 @@ export default function CourseGameLevelPage({
           gameId={id}
           levelId={levelId}
           gameMode={(game?.mode ?? "vocab-battle") as GameMode}
-          currentUserId={currentUserId}
-          isAdmin={isAdmin}
           initialVocabs={gameVocabs ?? []}
           readOnly={isPublished}
         />

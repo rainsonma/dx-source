@@ -4,12 +4,8 @@ import { useState, useCallback, useRef } from "react";
 import {
   BookOpen,
   Plus,
-  Sparkles,
   Trash2,
-  Loader2,
   Volume2,
-  PenLine,
-  ShieldCheck,
   ShieldAlert,
   TriangleAlert,
 } from "lucide-react";
@@ -25,18 +21,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { GameMode } from "@/consts/game-mode";
-import type { PosKey, LevelVocabData, ContentVocabData } from "@/lib/api-client";
+import type { PosKey, LevelVocabData, AddedGameVocab } from "@/lib/api-client";
 import {
-  listGameVocabsAction,
   deleteGameVocabAction,
+  listGameVocabsAction,
 } from "@/features/web/ai-custom/actions/game-vocab.action";
-import { verifyVocabAction } from "@/features/web/ai-custom/actions/content-vocab.action";
-import { fetchWithProgress } from "@/features/web/ai-custom/helpers/stream-progress";
-import { AddVocabsDialog } from "@/features/web/ai-custom/components/add-vocabs-dialog";
-import { ComplementVocabDialog } from "@/features/web/ai-custom/components/complement-vocab-dialog";
-import { EditVocabDialog } from "@/features/web/ai-custom/components/edit-vocab-dialog";
-import { ProcessingOverlay } from "@/features/web/ai-custom/components/processing-overlay";
-import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
+import { SelectVocabsDialog } from "@/features/web/ai-custom/components/select-vocabs-dialog";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
@@ -72,8 +62,6 @@ type LevelVocabsPanelProps = {
   gameId: string;
   levelId: string;
   gameMode: GameMode;
-  currentUserId: string;
-  isAdmin: boolean;
   initialVocabs: LevelVocabData[];
   readOnly?: boolean;
 };
@@ -82,75 +70,15 @@ export function LevelVocabsPanel({
   gameId,
   levelId,
   gameMode,
-  currentUserId,
-  isAdmin,
   initialVocabs,
   readOnly,
 }: LevelVocabsPanelProps) {
   const [vocabs, setVocabs] = useState<LevelVocabData[]>(initialVocabs);
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [complementVocab, setComplementVocab] = useState<ContentVocabData | null>(null);
-  const [editVocab, setEditVocab] = useState<ContentVocabData | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [isEnriching, setIsEnriching] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [beanDialogOpen, setBeanDialogOpen] = useState(false);
-  const [beanRequired, setBeanRequired] = useState(0);
-  const [beanAvailable, setBeanAvailable] = useState(0);
-  const enrichAbortRef = useRef<AbortController | null>(null);
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Stable mount-time clock for the 24h edit gate. useState initializer is
-  // exempt from react-hooks/purity since it runs once at mount, not on every
-  // render. Reopening the page refreshes the cutoff.
-  const [renderNow] = useState(() => Date.now());
-
-  function canEdit(vocab: ContentVocabData | null) {
-    if (!vocab) return false;
-    if (vocab.createdBy === currentUserId || isAdmin) return true;
-    if (!vocab.isVerified && vocab.createdAt) {
-      return renderNow - new Date(vocab.createdAt).getTime() < 24 * 60 * 60 * 1000;
-    }
-    return false;
-  }
-
-  async function handleEnrich() {
-    const controller = new AbortController();
-    enrichAbortRef.current = controller;
-    setIsEnriching(true);
-    setProgress({ done: 0, total: vocabs.length });
-
-    const result = await fetchWithProgress(
-      "/api/ai-custom/generate-content-vocab-fields",
-      { gameLevelId: levelId },
-      controller.signal,
-      (event) => setProgress({ done: event.done, total: event.total })
-    );
-
-    enrichAbortRef.current = null;
-    setIsEnriching(false);
-    setProgress(null);
-
-    if (!result.ok) {
-      if (result.message !== "已取消") {
-        if (result.code === "INSUFFICIENT_BEANS") {
-          setBeanRequired(result.required ?? 0);
-          setBeanAvailable(result.available ?? 0);
-          setBeanDialogOpen(true);
-        } else {
-          toast.error(result.message);
-        }
-      }
-      return;
-    }
-
-    toast.success(`AI 补全完成（${result.processed} 条）`);
-    // Refresh vocab list
-    const res = await listGameVocabsAction(gameId, levelId);
-    if (res.code === 0 && res.data) setVocabs(res.data);
-  }
 
   const handleRequestDelete = useCallback((gvId: string) => {
     setPendingDeleteId(gvId);
@@ -172,19 +100,6 @@ export function LevelVocabsPanel({
     setPendingDeleteId(null);
   }, [pendingDeleteId, vocabs, gameId]);
 
-  async function handleVerifyToggle(vocab: ContentVocabData) {
-    const result = await verifyVocabAction(vocab.id, !vocab.isVerified);
-    if (result.code !== 0) { toast.error(result.message); return; }
-    if (result.data) {
-      setVocabs((prev) =>
-        prev.map((row) =>
-          row.vocab?.id === vocab.id ? { ...row, vocab: result.data! } : row
-        )
-      );
-      toast.success(result.data.isVerified ? "已标记为已验证" : "已取消验证");
-    }
-  }
-
   function handlePlayAudio(url: string) {
     if (playingUrl === url) {
       audioRef.current?.pause();
@@ -202,29 +117,21 @@ export function LevelVocabsPanel({
     audio.play().catch(() => setPlayingUrl(null));
   }
 
-  function handleAddSuccess(added: LevelVocabData[]) {
-    setVocabs((prev) => [...prev, ...added]);
-    setAddDialogOpen(false);
+  async function handlePickerAdded(added: AddedGameVocab[]) {
+    setPickerOpen(false);
+    // Re-fetch the level's vocabs to pick up the full LevelVocabData
+    // (AddedGameVocab only carries id+content; the picker dialog returns the
+    // backend's add-batch response shape).
+    const result = await listGameVocabsAction(gameId, levelId);
+    if (result.code === 0 && result.data) {
+      setVocabs(result.data);
+    }
     toast.success(`已添加 ${added.length} 个词汇`);
   }
 
-  function handleComplementSaved(updated: ContentVocabData) {
-    setVocabs((prev) =>
-      prev.map((row) =>
-        row.vocab?.id === updated.id ? { ...row, vocab: updated } : row
-      )
-    );
-    setComplementVocab(null);
-  }
-
-  function handleEditSaved(updated: ContentVocabData) {
-    setVocabs((prev) =>
-      prev.map((row) =>
-        row.vocab?.id === updated.id ? { ...row, vocab: updated } : row
-      )
-    );
-    setEditVocab(null);
-  }
+  const placedVocabIds = vocabs
+    .map((row) => row.vocab?.id)
+    .filter((id): id is string => Boolean(id));
 
   return (
     <>
@@ -248,37 +155,16 @@ export function LevelVocabsPanel({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <div className="flex items-center overflow-hidden rounded-lg bg-gradient-to-r from-teal-500 to-teal-700">
-                    <button
-                      type="button"
-                      onClick={handleEnrich}
-                      disabled={isEnriching || vocabs.length === 0 || readOnly}
-                      title={readOnly ? "已发布的游戏不可编辑" : undefined}
-                      className="flex items-center gap-1 px-3 py-1.5 disabled:opacity-50"
-                    >
-                      {isEnriching ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-                      ) : (
-                        <Sparkles className="h-3.5 w-3.5 text-white" />
-                      )}
-                      <span className="text-xs font-semibold text-white">AI 补全</span>
-                    </button>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setAddDialogOpen(true)}
-                  disabled={readOnly}
-                  title={readOnly ? "已发布的游戏不可编辑" : undefined}
-                  className="flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 disabled:opacity-50"
-                >
-                  <Plus className="h-3.5 w-3.5 text-white" />
-                  <span className="text-xs font-semibold text-white">添加词汇</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                disabled={readOnly}
+                title={readOnly ? "已发布的游戏不可编辑" : "从我的词库中选择"}
+                className="flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 disabled:opacity-50"
+              >
+                <Plus className="h-3.5 w-3.5 text-white" />
+                <span className="text-xs font-semibold text-white">选择词汇</span>
+              </button>
             </div>
           </div>
 
@@ -287,83 +173,33 @@ export function LevelVocabsPanel({
             {vocabs.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-16 text-muted-foreground">
                 <BookOpen className="h-8 w-8" />
-                <span className="text-sm">暂无词汇，点击上方按钮添加</span>
+                <span className="text-sm">暂无词汇，从「AI 词汇库」选择已添加的词条</span>
               </div>
             ) : (
               <div className="flex flex-col gap-2">
                 {vocabs.map((row) => {
                   const vocab = row.vocab;
                   const defs = parseDefinition(vocab?.definition);
-                  const editable = canEdit(vocab);
 
                   return (
                     <div
                       key={row.gameVocabId}
                       className="flex flex-col gap-2 rounded-xl border border-border bg-background p-3"
                     >
-                      {/* Top row: word + badges + verify */}
+                      {/* Top row: word + delete */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[15px] font-bold text-foreground">
-                            {vocab?.content ?? <span className="text-muted-foreground italic">词条缺失</span>}
-                          </span>
-                          {vocab && (
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                vocab.isVerified
-                                  ? "bg-emerald-100 text-emerald-700"
-                                  : "bg-amber-100 text-amber-700"
-                              }`}
-                            >
-                              {vocab.isVerified ? "已验证" : "未验证"}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1.5">
-                          {isAdmin && vocab && (
-                            <button
-                              type="button"
-                              onClick={() => handleVerifyToggle(vocab)}
-                              title={vocab.isVerified ? "取消验证" : "标记为已验证"}
-                              className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:bg-teal-100 hover:text-teal-700"
-                            >
-                              <ShieldCheck className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                          {vocab && (
-                            <button
-                              type="button"
-                              onClick={() => setComplementVocab(vocab)}
-                              disabled={readOnly}
-                              title="补全字段"
-                              className="flex h-7 items-center gap-1 rounded-lg bg-violet-50 px-2 text-xs font-semibold text-violet-700 hover:bg-violet-100 disabled:opacity-50"
-                            >
-                              <Sparkles className="h-3 w-3" />
-                              补全
-                            </button>
-                          )}
-                          {editable && (
-                            <button
-                              type="button"
-                              onClick={() => setEditVocab(vocab)}
-                              disabled={readOnly}
-                              title="编辑"
-                              className="flex h-7 items-center gap-1 rounded-lg bg-muted px-2 text-xs font-semibold text-muted-foreground hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
-                            >
-                              <PenLine className="h-3 w-3" />
-                              编辑
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleRequestDelete(row.gameVocabId)}
-                            disabled={readOnly}
-                            title="移除"
-                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-50"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        <span className="text-[15px] font-bold text-foreground">
+                          {vocab?.content ?? <span className="text-muted-foreground italic">词条缺失</span>}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRequestDelete(row.gameVocabId)}
+                          disabled={readOnly}
+                          title="移除"
+                          className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
 
                       {/* Definition pills */}
@@ -426,11 +262,11 @@ export function LevelVocabsPanel({
                         <p className="text-xs text-muted-foreground">{vocab.explanation}</p>
                       )}
 
-                      {/* Warning if vocab is null */}
+                      {/* Warning if vocab is null (canonical row deleted from user pool) */}
                       {!vocab && (
                         <div className="flex items-center gap-1 text-xs text-amber-600">
                           <TriangleAlert className="h-3 w-3" />
-                          词条数据缺失，请联系管理员
+                          该词条已从词库中删除，建议从本关卡移除
                         </div>
                       )}
                     </div>
@@ -442,30 +278,14 @@ export function LevelVocabsPanel({
         </div>
       </div>
 
-      {progress && <ProcessingOverlay done={progress.done} total={progress.total} />}
-
-      <AddVocabsDialog
-        gameId={gameId}
-        levelId={levelId}
-        gameMode={gameMode}
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        onSuccess={handleAddSuccess}
-      />
-
-      {complementVocab && (
-        <ComplementVocabDialog
-          vocab={complementVocab}
-          onClose={() => setComplementVocab(null)}
-          onSaved={handleComplementSaved}
-        />
-      )}
-
-      {editVocab && (
-        <EditVocabDialog
-          vocab={editVocab}
-          onClose={() => setEditVocab(null)}
-          onSaved={handleEditSaved}
+      {pickerOpen && (
+        <SelectVocabsDialog
+          gameId={gameId}
+          levelId={levelId}
+          gameMode={gameMode}
+          alreadyPlacedVocabIds={placedVocabIds}
+          onClose={() => setPickerOpen(false)}
+          onAdded={handlePickerAdded}
         />
       )}
 
@@ -474,7 +294,7 @@ export function LevelVocabsPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>确认移除词汇</AlertDialogTitle>
             <AlertDialogDescription>
-              将从本关卡移除该词汇，不会删除公共词库中的词条。此操作不可撤销。
+              将从本关卡移除该词汇，不会从「AI 词汇库」中删除词条。此操作不可撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -485,13 +305,6 @@ export function LevelVocabsPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <InsufficientBeansDialog
-        open={beanDialogOpen}
-        onOpenChange={setBeanDialogOpen}
-        required={beanRequired}
-        available={beanAvailable}
-      />
     </>
   );
 }
