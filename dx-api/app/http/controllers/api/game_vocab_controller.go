@@ -32,7 +32,7 @@ func (c *GameVocabController) Add(ctx http.Context) http.Response {
 	gameID := ctx.Request().Route("id")
 	levelID := ctx.Request().Route("levelId")
 
-	added, err := services.AddVocabsToLevel(userID, gameID, levelID, req.Entries)
+	added, err := services.AddVocabsToLevel(userID, gameID, levelID, req.VocabIDs)
 	if err != nil {
 		return mapGameVocabError(ctx, err)
 	}

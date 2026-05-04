@@ -228,8 +228,8 @@ func Api() {
 				// Vocab text helpers (kept; output is raw text user pastes)
 				ai.Post("/generate-vocab", aiCustomController.GenerateVocab)
 				ai.Post("/format-vocab", aiCustomController.FormatVocab)
-				// AI enrichment for canonical content_vocabs (SSE)
-				ai.Post("/generate-content-vocab-fields", aiCustomController.GenerateContentVocabFields)
+				// AI vocab pool generation
+				ai.Post("/generate-vocabs-from-keywords", aiCustomController.GenerateVocabsFromKeywords)
 			})
 
 			// User-facing admin routes (user JWT + admin check)
@@ -271,12 +271,13 @@ func Api() {
 				cg.Delete("/{id}/levels/{levelId}/content-items", courseGameController.DeleteAllLevelContent)
 			})
 
-			// Content vocabs (canonical wiki ops)
+			// Content vocabs (per-user pool)
 			contentVocabController := apicontrollers.NewContentVocabController()
-			protected.Get("/content-vocabs", contentVocabController.GetByContent)
-			protected.Post("/content-vocabs/{id}/complement", contentVocabController.Complement)
-			protected.Put("/content-vocabs/{id}", contentVocabController.Replace)
-			protected.Post("/content-vocabs/{id}/verify", contentVocabController.Verify)
+			protected.Get("/content-vocabs/mine", contentVocabController.ListMine)
+			protected.Post("/content-vocabs", contentVocabController.Create)
+			protected.Post("/content-vocabs/batch", contentVocabController.CreateBatch)
+			protected.Put("/content-vocabs/{id}", contentVocabController.Update)
+			protected.Delete("/content-vocabs/{id}", contentVocabController.Delete)
 
 			// Game vocabs (placement ops, nested under course-games)
 			gameVocabController := apicontrollers.NewGameVocabController()

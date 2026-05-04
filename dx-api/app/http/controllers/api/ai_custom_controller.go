@@ -218,22 +218,25 @@ func (c *AiCustomController) FormatVocab(ctx contractshttp.Context) contractshtt
 	})
 }
 
-// GenerateContentVocabFields enriches content_vocabs rows referenced by this
-// level's game_vocabs via SSE.
-func (c *AiCustomController) GenerateContentVocabFields(ctx contractshttp.Context) contractshttp.Response {
+// GenerateVocabsFromKeywords generates 20 vocab entries from keywords using AI.
+func (c *AiCustomController) GenerateVocabsFromKeywords(ctx contractshttp.Context) contractshttp.Response {
 	userID, authErr := facades.Auth(ctx).Guard("user").ID()
 	if authErr != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	var req apiReq.AiCustomLevelRequest
+	var req apiReq.GenerateVocabsFromKeywordsRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
+	if len(req.Keywords) == 0 || len(req.Keywords) > 10 {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请提供1-10个关键词")
+	}
 
-	w := ctx.Response().Writer()
-	writer := helpers.NewNDJSONWriter(w)
-	services.GenerateContentVocabFields(userID, req.GameLevelID, writer)
-	return nil
+	result, err := services.GenerateVocabsFromKeywords(userID, req.Keywords)
+	if err != nil {
+		return mapAIServiceError(ctx, err, "AI 词汇生成")
+	}
+	return helpers.Success(ctx, map[string]any{"result": result})
 }
 
 // mapAIServiceError maps service errors to HTTP responses.

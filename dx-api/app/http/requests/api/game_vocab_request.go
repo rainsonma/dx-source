@@ -7,13 +7,13 @@ import (
 
 // AddGameVocabsRequest — POST /api/course-games/{id}/levels/{levelId}/game-vocabs
 type AddGameVocabsRequest struct {
-	Entries []string `form:"entries" json:"entries"`
+	VocabIDs []string `form:"vocabIds" json:"vocabIds"`
 }
 
 func (r *AddGameVocabsRequest) Authorize(http.Context) error { return nil }
 func (r *AddGameVocabsRequest) Rules(http.Context) map[string]string {
 	return map[string]string{
-		"entries": "required",
+		"vocabIds": "required",
 	}
 }
 func (r *AddGameVocabsRequest) Filters(http.Context) map[string]string    { return nil }
