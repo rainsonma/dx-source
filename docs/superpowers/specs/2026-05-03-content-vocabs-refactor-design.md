@@ -1,7 +1,38 @@
 # Content / Vocab Schema Refactor — Design
 
 Date: 2026-05-03
-Status: Approved (pending implementation plan)
+Status: **Partially superseded by `2026-05-04-vocab-pool-pivot-design.md`** — see notice below
+
+> ## ⚠️ Partially Superseded
+>
+> The vocab-related portions of this spec describe a public-wiki design (canonical pool shared across users, anti-vandalism gating via `complement` / gated `replace` / admin `verify`, audit log via `content_vocab_edits`). That design shipped, then was reconsidered and replaced by a per-user private pool model.
+>
+> **The replacement spec is `docs/superpowers/specs/2026-05-04-vocab-pool-pivot-design.md`.** Read it for the current vocab design.
+>
+> **Sections of THIS spec that the pivot supersedes:**
+> - Section 1 — `content_vocabs` table (now has `user_id NOT NULL`; dropped `is_verified` / `created_by` / `last_edited_by`)
+> - Section 1 — `content_vocabs` partial unique index (now per-user `(user_id, content_key)`)
+> - Section 1 — `content_vocab_edits` table — **deleted entirely**
+> - Section 2 — `content_vocab_service` wiki ops (`ComplementContentVocab`, `ReplaceContentVocab`, `VerifyContentVocab`, `GetContentVocabByContent`, `GenerateContentVocabFields` SSE) — **all replaced** by per-user CRUD (`ListUserVocabs`, `CreateUserVocab`, `CreateUserVocabsBatch`, `UpdateUserVocab`, `DeleteUserVocab`, `GetUserVocabByContent`)
+> - Section 2 — `AddVocabsToLevel` signature changed: now takes `vocabIDs []string` (from the user's pool) instead of `entries []string` (raw text); enforces ownership
+> - Section 2 — Routes: dropped wiki endpoints (`GET /api/content-vocabs?content=`, `/complement`, `/verify`, `/generate-content-vocab-fields`); added user-pool routes (`/mine`, `/`, `/batch`, `DELETE`, `/generate-vocabs-from-keywords`)
+> - Section 2 — `IsAdmin`, `CanReplaceVocab`, `MergeDefinition`, `SnapshotVocab`, `WriteVocabEdit` helpers — all dropped
+> - Section 3 — `LevelVocabsPanel` no longer has inline add or AI补全 / Complement / Edit / Verify buttons; replaced by a `SelectVocabsDialog` picker that pulls from the user's pool. Wiki dialogs (`AddVocabsDialog`, `ComplementVocabDialog`, `EditVocabDialog`) deleted; replaced by a new "AI 词汇库" page with sibling components (`vocab-list`, `add-vocab-from-ai-dialog`, `add-vocab-manual-dialog`, `vocab-edit-dialog`)
+> - Section 3 — New sidebar menu entry "AI 词汇库" above "AI 随心学" at route `/hall/ai-vocabs/`
+> - Section 5 — `content_vocab_wiki_test.go` — deleted; replaced by `user_vocab_crud_test.go`
+>
+> **Sections of THIS spec that REMAIN ACCURATE:**
+> - Section 1 — `content_metas`, `content_items`, `game_vocabs` schemas
+> - Section 1 — All 6 tracking tables (polymorphism via two FK columns, soft-delete additions, partial unique indexes, XOR CHECK constraints)
+> - Section 1 — POS consts (12-key set)
+> - Section 2 — Word-sentence pipeline rewrite (`SaveMetadataBatch`, `BreakMetadata`, `GenerateContentItems`, etc.)
+> - Section 2 — Mode-aware `PublishGame`, `countLevelItems`, `content_service.GetLevelContent` envelope synthesis
+> - Section 4 — dx-mini compatibility (the synthesized envelope shape is preserved by the pivot — mini still works without changes)
+> - Section 5 — `level_content_branching_test`, `tracking_polymorphic_test`, `game_vocab_placement_test` (the last had its `entries → vocabIDs` signature update folded in)
+> - Section 6 — Migration & rollout principles
+> - Section 7 — Phases 1–7 are accurate as shipped; Phase 8/9 partially altered by the pivot
+
+---
 
 ## Background
 
