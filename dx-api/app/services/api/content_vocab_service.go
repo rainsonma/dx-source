@@ -2,10 +2,11 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"sync"
-	"sync/atomic"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/goravel/framework/facades"
 
 	"dx-api/app/consts"
@@ -13,137 +14,37 @@ import (
 	"dx-api/app/models"
 )
 
-// ContentVocabData is the public response shape for canonical wiki entries.
+// ContentVocabData is the public response shape — no createdBy / lastEditedBy / isVerified.
 type ContentVocabData struct {
-	ID           string  `json:"id"`
-	Content      string  `json:"content"`
-	UkPhonetic   *string `json:"ukPhonetic"`
-	UsPhonetic   *string `json:"usPhonetic"`
-	UkAudioURL   *string `json:"ukAudioUrl"`
-	UsAudioURL   *string `json:"usAudioUrl"`
-	Definition   *string `json:"definition"`
-	Explanation  *string `json:"explanation"`
-	IsVerified   bool    `json:"isVerified"`
-	CreatedBy    *string `json:"createdBy"`
-	LastEditedBy *string `json:"lastEditedBy"`
-	CreatedAt    any     `json:"createdAt"`
+	ID          string  `json:"id"`
+	Content     string  `json:"content"`
+	UkPhonetic  *string `json:"ukPhonetic"`
+	UsPhonetic  *string `json:"usPhonetic"`
+	UkAudioURL  *string `json:"ukAudioUrl"`
+	UsAudioURL  *string `json:"usAudioUrl"`
+	Definition  *string `json:"definition"`
+	Explanation *string `json:"explanation"`
+	CreatedAt   any     `json:"createdAt"`
+	UpdatedAt   any     `json:"updatedAt"`
 }
 
 func vocabToData(v *models.ContentVocab) *ContentVocabData {
 	return &ContentVocabData{
-		ID:           v.ID,
-		Content:      v.Content,
-		UkPhonetic:   v.UkPhonetic,
-		UsPhonetic:   v.UsPhonetic,
-		UkAudioURL:   v.UkAudioURL,
-		UsAudioURL:   v.UsAudioURL,
-		Definition:   v.Definition,
-		Explanation:  v.Explanation,
-		IsVerified:   v.IsVerified,
-		CreatedBy:    v.CreatedBy,
-		LastEditedBy: v.LastEditedBy,
-		CreatedAt:    v.CreatedAt,
+		ID:          v.ID,
+		Content:     v.Content,
+		UkPhonetic:  v.UkPhonetic,
+		UsPhonetic:  v.UsPhonetic,
+		UkAudioURL:  v.UkAudioURL,
+		UsAudioURL:  v.UsAudioURL,
+		Definition:  v.Definition,
+		Explanation: v.Explanation,
+		CreatedAt:   v.CreatedAt,
+		UpdatedAt:   v.UpdatedAt,
 	}
 }
 
-// GetContentVocabByContent returns the canonical wiki row matching content (case-insensitive).
-// Returns nil, nil if not found.
-func GetContentVocabByContent(content string) (*ContentVocabData, error) {
-	key := NormalizeVocabContent(content)
-	if key == "" {
-		return nil, nil
-	}
-	var v models.ContentVocab
-	if err := facades.Orm().Query().Where("content_key", key).First(&v); err != nil {
-		return nil, nil
-	}
-	if v.ID == "" {
-		return nil, nil
-	}
-	return vocabToData(&v), nil
-}
-
-// VocabComplementPatch is the request body for ComplementContentVocab.
-// All fields optional; only non-nil fields are applied.
-// Definition is the new POS entries to merge additively.
-type VocabComplementPatch struct {
-	Definition  []map[string]string `json:"definition,omitempty"`
-	UkPhonetic  *string             `json:"ukPhonetic,omitempty"`
-	UsPhonetic  *string             `json:"usPhonetic,omitempty"`
-	UkAudioURL  *string             `json:"ukAudioUrl,omitempty"`
-	UsAudioURL  *string             `json:"usAudioUrl,omitempty"`
-	Explanation *string             `json:"explanation,omitempty"`
-}
-
-// ComplementContentVocab applies an additive merge: definition appends only
-// new POS keys; phonetic/audio/explanation set only if currently null.
-// Anyone may complement.
-func ComplementContentVocab(userID, vocabID string, patch VocabComplementPatch) (*ContentVocabData, error) {
-	var v models.ContentVocab
-	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
-		return nil, ErrVocabNotFound
-	}
-
-	beforeSnapshot, err := SnapshotVocab(&v)
-	if err != nil {
-		return nil, err
-	}
-
-	updates := map[string]any{}
-	if patch.Definition != nil {
-		if err := ValidatePosEntries(patch.Definition); err != nil {
-			return nil, err
-		}
-		existing := ""
-		if v.Definition != nil {
-			existing = *v.Definition
-		}
-		merged, err := MergeDefinition(existing, patch.Definition)
-		if err != nil {
-			return nil, err
-		}
-		updates["definition"] = merged
-	}
-	if patch.UkPhonetic != nil && (v.UkPhonetic == nil || *v.UkPhonetic == "") {
-		updates["uk_phonetic"] = *patch.UkPhonetic
-	}
-	if patch.UsPhonetic != nil && (v.UsPhonetic == nil || *v.UsPhonetic == "") {
-		updates["us_phonetic"] = *patch.UsPhonetic
-	}
-	if patch.UkAudioURL != nil && (v.UkAudioURL == nil || *v.UkAudioURL == "") {
-		updates["uk_audio_url"] = *patch.UkAudioURL
-	}
-	if patch.UsAudioURL != nil && (v.UsAudioURL == nil || *v.UsAudioURL == "") {
-		updates["us_audio_url"] = *patch.UsAudioURL
-	}
-	if patch.Explanation != nil && (v.Explanation == nil || *v.Explanation == "") {
-		updates["explanation"] = *patch.Explanation
-	}
-
-	if len(updates) == 0 {
-		// Nothing to merge — return current state without writing an edit log.
-		return vocabToData(&v), nil
-	}
-	updates["last_edited_by"] = userID
-
-	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
-		Where("id", vocabID).Update(updates); err != nil {
-		return nil, fmt.Errorf("failed to update content_vocab: %w", err)
-	}
-
-	// Reload + write audit
-	var updated models.ContentVocab
-	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
-		return nil, fmt.Errorf("failed to reload content_vocab: %w", err)
-	}
-	afterSnapshot, _ := SnapshotVocab(&updated)
-	_ = WriteVocabEdit(nil, vocabID, userID, "complement", beforeSnapshot, afterSnapshot)
-
-	return vocabToData(&updated), nil
-}
-
-// VocabReplacePatch is the request body for ReplaceContentVocab — full overwrite.
-type VocabReplacePatch struct {
+// VocabInput is the create/update payload.
+type VocabInput struct {
 	Content     string              `json:"content"`
 	Definition  []map[string]string `json:"definition"`
 	UkPhonetic  *string             `json:"ukPhonetic"`
@@ -153,263 +54,230 @@ type VocabReplacePatch struct {
 	Explanation *string             `json:"explanation"`
 }
 
-// ReplaceContentVocab fully overwrites the row, gated by CanReplaceVocab.
-func ReplaceContentVocab(userID, vocabID string, patch VocabReplacePatch) (*ContentVocabData, error) {
+// CreateVocabResult — one entry in the batch-create response.
+type CreateVocabResult struct {
+	Vocab     *ContentVocabData `json:"vocab"`
+	WasReused bool              `json:"wasReused"`
+}
+
+// ErrDuplicateVocab is returned when an UPDATE would collide with another of the user's vocabs.
+var ErrDuplicateVocab = errors.New("duplicate vocab content for this user")
+
+// ListUserVocabs returns a paginated list of the user's vocab pool.
+func ListUserVocabs(userID, cursor, search string, limit int) ([]ContentVocabData, string, bool, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+
+	q := facades.Orm().Query().Model(&models.ContentVocab{}).Where("user_id", userID)
+	if search != "" {
+		q = q.Where("content_key LIKE ?", "%"+NormalizeVocabContent(search)+"%")
+	}
+	if cursor != "" {
+		var cursorRow models.ContentVocab
+		if err := facades.Orm().Query().Where("id", cursor).First(&cursorRow); err == nil && cursorRow.ID != "" {
+			q = q.Where("(created_at < ? OR (created_at = ? AND id < ?))", cursorRow.CreatedAt, cursorRow.CreatedAt, cursor)
+		}
+	}
+
+	var rows []models.ContentVocab
+	if err := q.Order("created_at DESC").Order("id DESC").Limit(limit + 1).Get(&rows); err != nil {
+		return nil, "", false, fmt.Errorf("failed to list user vocabs: %w", err)
+	}
+
+	hasMore := len(rows) > limit
+	if hasMore {
+		rows = rows[:limit]
+	}
+	nextCursor := ""
+	if hasMore && len(rows) > 0 {
+		nextCursor = rows[len(rows)-1].ID
+	}
+	out := make([]ContentVocabData, 0, len(rows))
+	for i := range rows {
+		out = append(out, *vocabToData(&rows[i]))
+	}
+	return out, nextCursor, hasMore, nil
+}
+
+// GetUserVocabByContent returns the user's vocab matching content (case-insensitive).
+// Returns nil, nil if not found.
+func GetUserVocabByContent(userID, content string) (*ContentVocabData, error) {
+	key := NormalizeVocabContent(content)
+	if key == "" {
+		return nil, nil
+	}
 	var v models.ContentVocab
-	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
+	if err := facades.Orm().Query().Where("user_id", userID).Where("content_key", key).First(&v); err != nil || v.ID == "" {
+		return nil, nil
+	}
+	return vocabToData(&v), nil
+}
+
+// CreateUserVocab creates a vocab in the user's pool. Idempotent by content_key.
+func CreateUserVocab(userID string, in VocabInput) (*CreateVocabResult, error) {
+	if err := ValidateVocabContent(in.Content); err != nil {
+		return nil, err
+	}
+	if err := ValidatePosEntries(in.Definition); err != nil {
+		return nil, err
+	}
+	key := NormalizeVocabContent(in.Content)
+
+	// Idempotent — return existing if user already has this content_key.
+	var existing models.ContentVocab
+	if err := facades.Orm().Query().Where("user_id", userID).Where("content_key", key).First(&existing); err == nil && existing.ID != "" {
+		return &CreateVocabResult{Vocab: vocabToData(&existing), WasReused: true}, nil
+	}
+
+	defJSON, err := json.Marshal(in.Definition)
+	if err != nil {
+		return nil, fmt.Errorf("definition marshal: %w", err)
+	}
+	defStr := string(defJSON)
+
+	v := models.ContentVocab{
+		ID:          uuid.Must(uuid.NewV7()).String(),
+		UserID:      userID,
+		Content:     in.Content,
+		ContentKey:  key,
+		UkPhonetic:  in.UkPhonetic,
+		UsPhonetic:  in.UsPhonetic,
+		UkAudioURL:  in.UkAudioURL,
+		UsAudioURL:  in.UsAudioURL,
+		Definition:  &defStr,
+		Explanation: in.Explanation,
+	}
+	if err := facades.Orm().Query().Create(&v); err != nil {
+		return nil, fmt.Errorf("failed to create user vocab: %w", err)
+	}
+	return &CreateVocabResult{Vocab: vocabToData(&v), WasReused: false}, nil
+}
+
+// CreateUserVocabsBatch creates multiple vocabs in the user's pool sequentially.
+func CreateUserVocabsBatch(userID string, inputs []VocabInput) ([]CreateVocabResult, error) {
+	out := make([]CreateVocabResult, 0, len(inputs))
+	for _, in := range inputs {
+		res, err := CreateUserVocab(userID, in)
+		if err != nil {
+			return nil, fmt.Errorf("entry %q: %w", in.Content, err)
+		}
+		out = append(out, *res)
+	}
+	return out, nil
+}
+
+// UpdateUserVocab fully overwrites a user's vocab row.
+func UpdateUserVocab(userID, vocabID string, in VocabInput) (*ContentVocabData, error) {
+	if err := ValidateVocabContent(in.Content); err != nil {
+		return nil, err
+	}
+	if err := ValidatePosEntries(in.Definition); err != nil {
+		return nil, err
+	}
+
+	var v models.ContentVocab
+	if err := facades.Orm().Query().Where("id", vocabID).Where("user_id", userID).First(&v); err != nil || v.ID == "" {
 		return nil, ErrVocabNotFound
 	}
-	if !CanReplaceVocab(userID, &v) {
-		return nil, ErrVocabNotEditable
-	}
-	if err := ValidateVocabContent(patch.Content); err != nil {
-		return nil, err
-	}
-	if err := ValidatePosEntries(patch.Definition); err != nil {
-		return nil, err
+
+	newKey := NormalizeVocabContent(in.Content)
+	if newKey != v.ContentKey {
+		// Collision check: another vocab of same user with that content_key
+		var collision models.ContentVocab
+		if err := facades.Orm().Query().Where("user_id", userID).Where("content_key", newKey).Where("id != ?", vocabID).First(&collision); err == nil && collision.ID != "" {
+			return nil, ErrDuplicateVocab
+		}
 	}
 
-	beforeSnapshot, _ := SnapshotVocab(&v)
-
-	defJSON, err := json.Marshal(patch.Definition)
+	defJSON, err := json.Marshal(in.Definition)
 	if err != nil {
 		return nil, fmt.Errorf("definition marshal: %w", err)
 	}
 
 	updates := map[string]any{
-		"content":        patch.Content,
-		"content_key":    NormalizeVocabContent(patch.Content),
-		"definition":     string(defJSON),
-		"uk_phonetic":    patch.UkPhonetic,
-		"us_phonetic":    patch.UsPhonetic,
-		"uk_audio_url":   patch.UkAudioURL,
-		"us_audio_url":   patch.UsAudioURL,
-		"explanation":    patch.Explanation,
-		"last_edited_by": userID,
+		"content":      in.Content,
+		"content_key":  newKey,
+		"definition":   string(defJSON),
+		"uk_phonetic":  in.UkPhonetic,
+		"us_phonetic":  in.UsPhonetic,
+		"uk_audio_url": in.UkAudioURL,
+		"us_audio_url": in.UsAudioURL,
+		"explanation":  in.Explanation,
 	}
-	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
-		Where("id", vocabID).Update(updates); err != nil {
-		return nil, fmt.Errorf("failed to replace content_vocab: %w", err)
+	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).Where("id", vocabID).Update(updates); err != nil {
+		return nil, fmt.Errorf("failed to update user vocab: %w", err)
 	}
 
 	var updated models.ContentVocab
 	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to reload user vocab: %w", err)
 	}
-	afterSnapshot, _ := SnapshotVocab(&updated)
-	_ = WriteVocabEdit(nil, vocabID, userID, "replace", beforeSnapshot, afterSnapshot)
-
 	return vocabToData(&updated), nil
 }
 
-// VerifyContentVocab toggles is_verified. Admin only.
-func VerifyContentVocab(adminUserID, vocabID string, verified bool) (*ContentVocabData, error) {
-	if !IsAdmin(adminUserID) {
-		return nil, ErrVocabAdminOnly
-	}
+// DeleteUserVocab soft-deletes a user's vocab row.
+func DeleteUserVocab(userID, vocabID string) error {
 	var v models.ContentVocab
-	if err := facades.Orm().Query().Where("id", vocabID).First(&v); err != nil || v.ID == "" {
-		return nil, ErrVocabNotFound
+	if err := facades.Orm().Query().Where("id", vocabID).Where("user_id", userID).First(&v); err != nil || v.ID == "" {
+		return ErrVocabNotFound
 	}
-	beforeSnapshot, _ := SnapshotVocab(&v)
-
-	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
-		Where("id", vocabID).Update(map[string]any{
-		"is_verified":    verified,
-		"last_edited_by": adminUserID,
-	}); err != nil {
-		return nil, fmt.Errorf("failed to verify content_vocab: %w", err)
+	if _, err := facades.Orm().Query().Exec(
+		`UPDATE content_vocabs SET deleted_at = NOW() WHERE id = ? AND user_id = ? AND deleted_at IS NULL`,
+		vocabID, userID,
+	); err != nil {
+		return fmt.Errorf("failed to delete user vocab: %w", err)
 	}
-
-	var updated models.ContentVocab
-	if err := facades.Orm().Query().Where("id", vocabID).First(&updated); err != nil {
-		return nil, err
-	}
-	afterSnapshot, _ := SnapshotVocab(&updated)
-	_ = WriteVocabEdit(nil, vocabID, adminUserID, "verify", beforeSnapshot, afterSnapshot)
-
-	return vocabToData(&updated), nil
+	return nil
 }
 
-// --- AI enrichment SSE: GenerateContentVocabFields ---
-
-// GenerateContentVocabFields enriches every content_vocabs row referenced by
-// this level's game_vocabs that has uk_phonetic IS NULL.
-func GenerateContentVocabFields(userID, gameLevelID string, writer *helpers.NDJSONWriter) {
+// GenerateVocabsFromKeywords: keywords → JSON array of 20 vocab entries.
+// Bean cost = aiGenerateCost (5). Refunds on AI failure.
+func GenerateVocabsFromKeywords(userID string, keywords []string) (string, error) {
 	if err := requireVip(userID); err != nil {
-		writeSSEError(writer, err)
-		return
+		return "", err
 	}
-	game, level, err := verifyLevelOwnership(userID, gameLevelID)
-	if err != nil {
-		writeSSEError(writer, err)
-		return
-	}
-	if game.Status == consts.GameStatusPublished {
-		writeSSEError(writer, ErrGamePublished)
-		return
-	}
-	if !consts.IsVocabMode(game.Mode) {
-		writeSSEError(writer, ErrForbidden)
-		return
-	}
-	_ = level
-
-	// Find canonical rows via game_vocabs
-	var vocabs []models.ContentVocab
-	if err := facades.Orm().Query().Model(&models.ContentVocab{}).
-		Select("DISTINCT content_vocabs.*").
-		Join("JOIN game_vocabs gv ON gv.content_vocab_id = content_vocabs.id AND gv.deleted_at IS NULL").
-		Where("gv.game_level_id", gameLevelID).
-		Where("content_vocabs.uk_phonetic IS NULL").
-		Get(&vocabs); err != nil {
-		writeSSEError(writer, fmt.Errorf("failed to load vocabs needing enrichment: %w", err))
-		return
-	}
-	if len(vocabs) == 0 {
-		_ = writer.Write(SSEProgressEvent{Done: 0, Total: 0, Processed: 0, Failed: 0, Complete: true})
-		writer.Close()
-		return
+	if err := ConsumeBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateConsume, consts.BeanReasonAIVocabGenerateConsume); err != nil {
+		return "", err
 	}
 
-	// Bean cost = total word count across vocabs
-	totalCost := 0
-	for _, v := range vocabs {
-		totalCost += helpers.CountWords(v.Content)
-	}
-	if totalCost == 0 {
-		writeSSEError(writer, ErrEmptyContent)
-		return
-	}
-	if err := ConsumeBeans(userID, totalCost, consts.BeanSlugAIVocabGenItemsConsume, consts.BeanReasonAIVocabGenItemsConsume); err != nil {
-		writeSSEError(writer, err)
-		return
-	}
+	userMsg := "Keywords: " + strings.Join(keywords, ", ")
 
-	var failedWords int64
-	var processed int64
-	var failed int64
-	sem := make(chan struct{}, genItemsConcurrencyLimit)
-	var wg sync.WaitGroup
-	var done int64
-	total := len(vocabs)
-
-	for _, v := range vocabs {
-		wg.Add(1)
-		sem <- struct{}{}
-
-		go func(vocab models.ContentVocab) {
-			defer wg.Done()
-			defer func() { <-sem }()
-
-			ok := enrichContentVocab(userID, vocab)
-			d := atomic.AddInt64(&done, 1)
-			if ok {
-				atomic.AddInt64(&processed, 1)
-				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "ok"})
-			} else {
-				atomic.AddInt64(&failed, 1)
-				atomic.AddInt64(&failedWords, int64(helpers.CountWords(vocab.Content)))
-				_ = writer.Write(SSEProgressEvent{Done: int(d), Total: total, Status: "failed"})
-			}
-		}(v)
-	}
-	wg.Wait()
-
-	fw := int(atomic.LoadInt64(&failedWords))
-	if fw > 0 {
-		_ = RefundBeans(userID, fw, consts.BeanSlugAIVocabGenItemsRefund, consts.BeanReasonAIVocabGenItemsRefund)
-	}
-	_ = writer.Write(SSEProgressEvent{
-		Done:      total,
-		Total:     total,
-		Processed: int(atomic.LoadInt64(&processed)),
-		Failed:    int(atomic.LoadInt64(&failed)),
-		Complete:  true,
-	})
-	writer.Close()
-}
-
-func enrichContentVocab(userID string, v models.ContentVocab) bool {
-	userMsg := "Word: " + v.Content
 	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
 		Messages: []helpers.DeepSeekMessage{
-			{Role: "system", Content: vocabFieldsPrompt},
+			{Role: "system", Content: vocabsFromKeywordsPrompt},
 			{Role: "user", Content: userMsg},
 		},
-		Temperature: 0.1,
+		Temperature: 0.7,
 	})
 	if err != nil {
-		return false
+		_ = RefundBeans(userID, aiGenerateCost, consts.BeanSlugAIVocabGenerateRefund, consts.BeanReasonAIVocabGenerateRefund)
+		return "", err
 	}
 
-	var ai struct {
-		UkPhonetic  string              `json:"ukPhonetic"`
-		UsPhonetic  string              `json:"usPhonetic"`
-		Definition  []map[string]string `json:"definition"`
-		Explanation string              `json:"explanation"`
-	}
-	if err := json.Unmarshal([]byte(result), &ai); err != nil {
-		return false
-	}
-	if err := ValidatePosEntries(ai.Definition); err != nil {
-		return false
+	if rest, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return "WARNING:" + strings.TrimSpace(rest), nil
 	}
 
-	beforeSnapshot, _ := SnapshotVocab(&v)
-
-	// Additive merge — never overwrite existing curated data.
-	// Phonetic / explanation set only when currently null/empty.
-	// Definition merges new POS keys (existing keys win on conflict).
-	updates := map[string]any{"last_edited_by": userID}
-	if v.UkPhonetic == nil || *v.UkPhonetic == "" {
-		updates["uk_phonetic"] = ai.UkPhonetic
-	}
-	if v.UsPhonetic == nil || *v.UsPhonetic == "" {
-		updates["us_phonetic"] = ai.UsPhonetic
-	}
-	if v.Explanation == nil || *v.Explanation == "" {
-		updates["explanation"] = ai.Explanation
-	}
-	existingDef := ""
-	if v.Definition != nil {
-		existingDef = *v.Definition
-	}
-	mergedDef, err := MergeDefinition(existingDef, ai.Definition)
-	if err != nil {
-		return false
-	}
-	if mergedDef != existingDef {
-		updates["definition"] = mergedDef
-	}
-
-	if len(updates) == 1 {
-		// Only "last_edited_by" — nothing to merge in. Skip update + edit log.
-		return true
-	}
-
-	if _, err := facades.Orm().Query().Model(&models.ContentVocab{}).
-		Where("id", v.ID).Update(updates); err != nil {
-		return false
-	}
-	var updated models.ContentVocab
-	if err := facades.Orm().Query().Where("id", v.ID).First(&updated); err == nil {
-		afterSnapshot, _ := SnapshotVocab(&updated)
-		_ = WriteVocabEdit(nil, v.ID, userID, "complement", beforeSnapshot, afterSnapshot)
-	}
-	return true
+	return result, nil
 }
 
-var vocabFieldsPrompt = `You are an English dictionary writer. Given a single English word or phrase, produce JSON with phonetic, definition (POS entries), and a short explanation.
+var vocabsFromKeywordsPrompt = `You are a vocabulary generator. Given keywords, produce a JSON array of EXACTLY 20 English vocabulary entries related to those keywords.
 
 OUTPUT FORMAT:
-A JSON object with these keys:
+A JSON array. Each element has:
+- content: English word or short phrase
 - ukPhonetic: IPA pronunciation in UK style, e.g. "/fæst/"
 - usPhonetic: IPA pronunciation in US style, e.g. "/fæst/"
 - definition: array of single-key objects mapping POS to Chinese gloss; allowed POS keys are n, v, adj, adv, prep, conj, pron, art, num, int, aux, det
 - explanation: short Chinese explanation/example (1-2 sentences)
 
-Output ONLY the JSON. No markdown, no extra text.
+Output ONLY the JSON array. No markdown code fences, no explanation, no extra text.
 
-Example for "fast":
-{"ukPhonetic":"/fɑːst/","usPhonetic":"/fæst/","definition":[{"adj":"快的"},{"adv":"快速地"},{"v":"斋戒"}],"explanation":"形容速度快或动作迅速；动词义为禁食。"}`
+CONTENT MODERATION: if keywords contain any insulting, violent, sexually explicit, or otherwise inappropriate material, respond ONLY with: WARNING:包含不适当内容，请修改后重试
+
+Example for keyword "speed":
+[
+  {"content":"fast","ukPhonetic":"/fɑːst/","usPhonetic":"/fæst/","definition":[{"adj":"快的"},{"v":"斋戒"}],"explanation":"形容速度快或动作迅速；动词义为禁食。"},
+  ...
+]`
