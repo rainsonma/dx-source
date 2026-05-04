@@ -15,6 +15,7 @@ import {
   Gauge,
   TextCursorInput,
   Eye,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Dialog,
@@ -188,24 +189,15 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
     });
   }
 
-  // Shared save handler
+  // Save handler — only the manual tab can save directly. The AI tab uses
+  // "使用" to import into the manual tab first, where the user reviews and saves.
   function handleSave() {
-    let words: string[];
-
-    if (activeTab === "manual") {
-      words = parseWordsFromText(manualText);
-      if (words.length === 0) {
-        const msg = "请输入至少一个词汇";
-        setManualError(msg);
-        toast.error(msg);
-        return;
-      }
-    } else {
-      words = parseWordsFromText(aiWordsText);
-      if (words.length === 0) {
-        toast.error("请至少保留一个词汇");
-        return;
-      }
+    const words = parseWordsFromText(manualText);
+    if (words.length === 0) {
+      const msg = "请输入至少一个词汇";
+      setManualError(msg);
+      toast.error(msg);
+      return;
     }
 
     startSaveTransition(async () => {
@@ -232,10 +224,23 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
   const canGenerate = keywords.trim().length > 0 && !isGenerating && !keywordsWarning;
   const canReset = aiWordsText.length > 0 || keywords.trim().length > 0;
   const aiWordCount = parseWordsFromText(aiWordsText).length;
-  const canSave = activeTab === "manual"
-    ? manualText.trim().length > 0 && !isSaving && !isFormatting
-    : aiWordCount > 0 && !isSaving;
+  const canUse = aiWordCount > 0 && !isGenerating;
+  const canSave = manualText.trim().length > 0 && !isSaving && !isFormatting;
   const canFormat = manualText.trim().length > 0 && !isFormatting && !isSaving;
+
+  function handleUseGenerated() {
+    if (aiWordCount === 0) return;
+    // Append to manual textarea (preserve any existing content user typed),
+    // then switch to manual tab so the user can edit/format/save from there.
+    setManualText((prev) => {
+      const trimmedPrev = prev.replace(/\s+$/, "");
+      if (!trimmedPrev) return aiWordsText;
+      return `${trimmedPrev}\n${aiWordsText}`;
+    });
+    setManualError("");
+    setActiveTab("manual");
+    toast.success("已导入到手动添加，可调整后保存");
+  }
 
   return (
     <>
@@ -369,7 +374,8 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                     )}
                   </div>
 
-                  {/* Preview / editable word list (textarea, mirrors metadata AI tab pattern) */}
+                  {/* Read-only preview (mirrors metadata AI tab pattern). To
+                      adjust the list, click 使用 to import into the manual tab. */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -378,19 +384,21 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                       </div>
                       {aiWordsText.length > 0 && (
                         <span className="text-xs text-muted-foreground">
-                          {aiWordCount} 条（每行一个，可编辑）
+                          {aiWordCount} 条
                         </span>
                       )}
                     </div>
-                    <textarea
-                      value={aiWordsText}
-                      onChange={(e) => { setAiWordsText(e.target.value); setAiError(""); }}
-                      placeholder={"生成后将在此处显示，每行一个词汇，可直接编辑或添加新词..."}
-                      rows={8}
-                      className={`w-full resize-none rounded-xl border bg-muted/50 px-3 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 ${
-                        aiError ? "border-red-400 focus:ring-red-400" : "border-border focus:ring-teal-500"
-                      }`}
-                    />
+                    <div className="min-h-[180px] max-h-[280px] overflow-y-auto rounded-xl border border-border bg-muted p-4">
+                      {aiWordsText ? (
+                        <p className="whitespace-pre-line font-mono text-[13px] leading-[1.8] text-foreground">
+                          {aiWordsText}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          生成后将在此处显示预览内容...
+                        </p>
+                      )}
+                    </div>
                     {aiError && (
                       <p className="flex items-center gap-1.5 text-xs text-red-500">
                         <CircleAlert className="h-3.5 w-3.5 shrink-0" />
@@ -461,18 +469,12 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                   </button>
                   <button
                     type="button"
-                    disabled={!canSave}
-                    onClick={handleSave}
+                    disabled={!canUse}
+                    onClick={handleUseGenerated}
                     className="flex h-11 items-center justify-center gap-1.5 bg-teal-600 px-5 disabled:opacity-50"
                   >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    ) : (
-                      <Save className="h-4 w-4 text-white" />
-                    )}
-                    <span className="text-sm font-semibold text-white">
-                      保存{aiWordCount > 0 ? ` ${aiWordCount} 条` : ""}
-                    </span>
+                    <ArrowLeft className="h-4 w-4 text-white" />
+                    <span className="text-sm font-semibold text-white">使用</span>
                   </button>
                 </div>
               )}
