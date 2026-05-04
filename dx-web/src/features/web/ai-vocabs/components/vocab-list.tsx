@@ -166,7 +166,7 @@ export function VocabList({ search, refreshKey }: VocabListProps) {
             <div key={vocab.id}
               className="flex flex-col gap-2 rounded-xl border border-border bg-background p-3">
               <div className="flex items-start justify-between gap-2">
-                <span className="text-[15px] font-bold text-foreground">{vocab.content}</span>
+                <span className="text-xl font-bold text-foreground">{vocab.content}</span>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <button type="button" onClick={() => setEditVocab(vocab)}
                     className="flex h-7 items-center gap-1 rounded-lg bg-muted px-2 text-xs font-semibold text-muted-foreground hover:bg-blue-50 hover:text-blue-700">
@@ -179,25 +179,11 @@ export function VocabList({ search, refreshKey }: VocabListProps) {
                 </div>
               </div>
 
-              {defs.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {defs.map((entry, i) =>
-                    Object.entries(entry).map(([pos, gloss]) => (
-                      <span key={`${i}-${pos}`}
-                        className="flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs">
-                        <span className="font-semibold text-teal-700">{POS_LABELS[pos as PosKey] ?? pos}</span>
-                        <span className="text-muted-foreground">{gloss}</span>
-                      </span>
-                    ))
-                  )}
-                </div>
-              )}
-
               {(vocab.ukPhonetic || vocab.usPhonetic) && (
                 <div className="flex flex-wrap items-center gap-2">
                   {vocab.ukPhonetic && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">UK</span>
+                      <span className="font-medium text-foreground">英</span>
                       <span>{vocab.ukPhonetic}</span>
                       {vocab.ukAudioUrl && (
                         <button type="button" onClick={() => handlePlayAudio(vocab.ukAudioUrl!)}
@@ -209,7 +195,7 @@ export function VocabList({ search, refreshKey }: VocabListProps) {
                   )}
                   {vocab.usPhonetic && (
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">US</span>
+                      <span className="font-medium text-foreground">美</span>
                       <span>{vocab.usPhonetic}</span>
                       {vocab.usAudioUrl && (
                         <button type="button" onClick={() => handlePlayAudio(vocab.usAudioUrl!)}
@@ -218,6 +204,20 @@ export function VocabList({ search, refreshKey }: VocabListProps) {
                         </button>
                       )}
                     </span>
+                  )}
+                </div>
+              )}
+
+              {defs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {defs.map((entry, i) =>
+                    Object.entries(entry).map(([pos, gloss]) => (
+                      <span key={`${i}-${pos}`}
+                        className="flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs">
+                        <span className="font-semibold text-teal-700">{POS_LABELS[pos as PosKey] ?? pos}</span>
+                        <span className="text-muted-foreground">{gloss}</span>
+                      </span>
+                    ))
                   )}
                 </div>
               )}
