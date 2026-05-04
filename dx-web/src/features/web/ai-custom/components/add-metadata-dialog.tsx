@@ -22,7 +22,7 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ManualAddTab } from "@/features/web/ai-custom/components/manual-add-tab";
 import { AiGenerateTab, getKeywordsWarning } from "@/features/web/ai-custom/components/ai-generate-tab";
-import { parseMetadataText, MAX_ENTRIES, MAX_CONTENT_LENGTH, MAX_SENTENCES, MAX_VOCAB } from "@/features/web/ai-custom/helpers/format-metadata";
+import { parseMetadataText, splitIntoSentences, MAX_ENTRIES, MAX_CONTENT_LENGTH, MAX_SENTENCES, MAX_VOCAB } from "@/features/web/ai-custom/helpers/format-metadata";
 import { saveMetadataAction } from "@/features/web/ai-custom/actions/course-game.action";
 import { SOURCE_FROMS } from "@/consts/source-from";
 import { SOURCE_TYPES, type SourceType } from "@/consts/source-type";
@@ -231,7 +231,7 @@ export function AddMetadataDialog({
   }
 
   function handleUseGenerated() {
-    setManualText(aiPreview);
+    setManualText(splitIntoSentences(aiPreview));
     setIsFormatted(false);
     setIsFromAi(true);
     setSourceTypes([]);
