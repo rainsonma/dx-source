@@ -218,6 +218,40 @@ func (c *AiCustomController) FormatVocab(ctx contractshttp.Context) contractshtt
 	})
 }
 
+// FormatVocabWords formats raw text into pure English words/phrases for the
+// personal vocab pool — no translations, no sentences. Mirrors FormatVocab
+// shape but uses the English-only prompt.
+func (c *AiCustomController) FormatVocabWords(ctx contractshttp.Context) contractshttp.Response {
+	userID, err := facades.Auth(ctx).Guard("user").ID()
+	if err != nil || userID == "" {
+		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+
+	var req struct {
+		Content string `json:"content"`
+	}
+	if err := ctx.Request().Bind(&req); err != nil {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "无效的请求")
+	}
+
+	if req.Content == "" {
+		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请输入内容")
+	}
+
+	result, err := services.FormatVocabWords(userID, req.Content)
+	if err != nil {
+		return mapAIServiceError(ctx, err, "格式化服务")
+	}
+
+	if result.Warning != "" {
+		return helpers.Success(ctx, map[string]any{"warning": result.Warning})
+	}
+
+	return helpers.Success(ctx, map[string]any{
+		"formatted": result.Formatted,
+	})
+}
+
 // GenerateVocabWords generates 15-25 English word strings from keywords (Phase 1).
 func (c *AiCustomController) GenerateVocabWords(ctx contractshttp.Context) contractshttp.Response {
 	userID, authErr := facades.Auth(ctx).Guard("user").ID()

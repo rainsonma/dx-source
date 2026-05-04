@@ -35,7 +35,7 @@ import {
   generateVocabWordsAction,
   createVocabsFromWordsAction,
 } from "@/features/web/ai-custom/actions/content-vocab.action";
-import { formatVocab } from "@/features/web/ai-custom/helpers/vocab-format-api";
+import { formatVocabWords } from "@/features/web/ai-vocabs/helpers/vocab-words-format-api";
 import { InsufficientBeansDialog } from "@/components/in/insufficient-beans-dialog";
 import { DIFFICULTY_OPTIONS } from "@/consts/difficulty";
 
@@ -123,7 +123,7 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
     const raw = manualText.trim();
     if (!raw) return;
     setIsFormatting(true);
-    const result = await formatVocab(raw);
+    const result = await formatVocabWords(raw);
     setIsFormatting(false);
 
     if (!result.ok) {

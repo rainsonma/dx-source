@@ -230,6 +230,8 @@ func Api() {
 				ai.Post("/format-vocab", aiCustomController.FormatVocab)
 				// AI vocab pool: Phase 1 — generate word list from keywords
 				ai.Post("/generate-vocab-words", aiCustomController.GenerateVocabWords)
+				// AI vocab pool: format paste — English-only, no translations
+				ai.Post("/format-vocab-words", aiCustomController.FormatVocabWords)
 			})
 
 			// User-facing admin routes (user JWT + admin check)

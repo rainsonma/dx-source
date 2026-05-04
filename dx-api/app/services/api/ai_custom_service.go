@@ -927,6 +927,71 @@ RULES:
 - Each line must contain exactly ONE word or phrase (or one translation).
 - Remove any empty lines.`
 
+// --- FormatVocabWords (English-only, for the personal vocab pool) ---
+
+// FormatVocabWords cleans raw text into pure English words/phrases, one per
+// line. Used by the AI 词汇库 manual tab where translations are NOT accepted
+// (the pool produces its own AI-generated definitions). Strips Chinese,
+// drops duplicates, fixes spelling, rejects sentence-shaped input.
+// Cost = word count of input.
+func FormatVocabWords(userID string, content string) (*FormatVocabResult, error) {
+	if err := requireVip(userID); err != nil {
+		return nil, err
+	}
+	wordCount := helpers.CountWords(content)
+	if wordCount == 0 {
+		return nil, ErrEmptyContent
+	}
+
+	if err := ConsumeBeans(userID, wordCount, consts.BeanSlugAIVocabFormatConsume, consts.BeanReasonAIVocabFormatConsume); err != nil {
+		return nil, err
+	}
+
+	result, err := helpers.CallDeepSeek(helpers.DeepSeekRequest{
+		Messages: []helpers.DeepSeekMessage{
+			{Role: "system", Content: vocabWordsFormatPrompt},
+			{Role: "user", Content: content},
+		},
+		Temperature: 0.1,
+	})
+	if err != nil {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, err
+	}
+
+	if warning, ok := strings.CutPrefix(result, "WARNING:"); ok {
+		return &FormatVocabResult{Warning: strings.TrimSpace(warning)}, nil
+	}
+
+	formatted := cleanVocabFormatted(result)
+	if formatted == "" {
+		_ = RefundBeans(userID, wordCount, consts.BeanSlugAIVocabFormatRefund, consts.BeanReasonAIVocabFormatRefund)
+		return nil, helpers.ErrDeepSeekEmpty
+	}
+
+	return &FormatVocabResult{Formatted: formatted}, nil
+}
+
+var vocabWordsFormatPrompt = `You are a content formatter for an English vocabulary pool. Your job is to clean up messy user input into a strict English-only word list, one per line.
+
+STEP 1 — CONTENT MODERATION (do this FIRST):
+Check if the content contains any insulting, violent, sexually explicit, or otherwise inappropriate/sensitive material.
+If it does, respond ONLY with: WARNING:内容包含不适当内容，请修改后重试
+
+STEP 2 — TYPE MISMATCH CHECK:
+If the content consists mostly of full sentences with punctuation, respond ONLY with: WARNING:内容看起来是语句而非词汇，请改为单词或短语
+
+STEP 3 — FORMAT (English only, NO translations):
+Output English words/phrases ONLY, one per line. CRITICAL RULES:
+- DROP any Chinese characters entirely. Do NOT output translations even if the input has them. Do NOT keep any pinyin.
+- DROP any line that is purely punctuation, numbers without context, or otherwise not an English word/phrase.
+- Allowed characters per line: letters (A-Za-z), digits (0-9), single spaces between words, apostrophe ('), hyphen (-). Strip any other punctuation.
+- Remove duplicates (case-insensitive — "Fast" and "fast" are duplicates; keep the first occurrence's casing).
+- Fix obvious spelling errors.
+- Preserve original casing where it carries meaning (e.g., "iPhone", "NASA").
+- Each line is exactly ONE word or short phrase (≤6 words).
+- No empty lines, no headers, no numbering, no markdown, no explanations.`
+
 // cleanVocabFormatted removes empty lines and trims whitespace.
 func cleanVocabFormatted(result string) string {
 	lines := strings.Split(result, "\n")
