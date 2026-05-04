@@ -228,8 +228,8 @@ func Api() {
 				// Vocab text helpers (kept; output is raw text user pastes)
 				ai.Post("/generate-vocab", aiCustomController.GenerateVocab)
 				ai.Post("/format-vocab", aiCustomController.FormatVocab)
-				// AI vocab pool generation
-				ai.Post("/generate-vocabs-from-keywords", aiCustomController.GenerateVocabsFromKeywords)
+				// AI vocab pool: Phase 1 — generate word list from keywords
+				ai.Post("/generate-vocab-words", aiCustomController.GenerateVocabWords)
 			})
 
 			// User-facing admin routes (user JWT + admin check)
@@ -276,6 +276,7 @@ func Api() {
 			protected.Get("/content-vocabs/mine", contentVocabController.ListMine)
 			protected.Post("/content-vocabs", contentVocabController.Create)
 			protected.Post("/content-vocabs/batch", contentVocabController.CreateBatch)
+			protected.Post("/content-vocabs/from-words", contentVocabController.CreateFromWords)
 			protected.Put("/content-vocabs/{id}", contentVocabController.Update)
 			protected.Delete("/content-vocabs/{id}", contentVocabController.Delete)
 

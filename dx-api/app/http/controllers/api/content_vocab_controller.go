@@ -137,6 +137,27 @@ func (c *ContentVocabController) Delete(ctx http.Context) http.Response {
 	return helpers.Success(ctx, nil)
 }
 
+// POST /api/content-vocabs/from-words
+func (c *ContentVocabController) CreateFromWords(ctx http.Context) http.Response {
+	userID, authErr := facades.Auth(ctx).Guard("user").ID()
+	if authErr != nil || userID == "" {
+		return helpers.Error(ctx, nethttp.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
+	}
+	var req apiReq.CreateVocabsFromWordsRequest
+	if resp := helpers.Validate(ctx, &req); resp != nil {
+		return resp
+	}
+	if len(req.Words) == 0 || len(req.Words) > 50 {
+		return helpers.Error(ctx, nethttp.StatusBadRequest, consts.CodeValidationError, "请提供1-50个词汇")
+	}
+
+	results, err := services.CreateVocabsFromWords(userID, req.Words)
+	if err != nil {
+		return mapVocabError(ctx, err)
+	}
+	return helpers.Success(ctx, results)
+}
+
 func mapVocabError(ctx http.Context, err error) http.Response {
 	switch {
 	case errors.Is(err, services.ErrVocabNotFound):

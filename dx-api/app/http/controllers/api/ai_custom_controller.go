@@ -218,25 +218,36 @@ func (c *AiCustomController) FormatVocab(ctx contractshttp.Context) contractshtt
 	})
 }
 
-// GenerateVocabsFromKeywords generates 20 vocab entries from keywords using AI.
-func (c *AiCustomController) GenerateVocabsFromKeywords(ctx contractshttp.Context) contractshttp.Response {
+// GenerateVocabWords generates 15-25 English word strings from keywords (Phase 1).
+func (c *AiCustomController) GenerateVocabWords(ctx contractshttp.Context) contractshttp.Response {
 	userID, authErr := facades.Auth(ctx).Guard("user").ID()
 	if authErr != nil || userID == "" {
 		return helpers.Error(ctx, http.StatusUnauthorized, consts.CodeUnauthorized, "unauthorized")
 	}
-	var req apiReq.GenerateVocabsFromKeywordsRequest
+	var req apiReq.GenerateVocabWordsRequest
 	if resp := helpers.Validate(ctx, &req); resp != nil {
 		return resp
 	}
 	if len(req.Keywords) == 0 || len(req.Keywords) > 10 {
 		return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "请提供1-10个关键词")
 	}
+	for _, kw := range req.Keywords {
+		if len(kw) > 30 {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "单个关键词不能超过30个字符")
+		}
+	}
+	if req.Difficulty == "" {
+		req.Difficulty = "a1-a2"
+	}
 
-	result, err := services.GenerateVocabsFromKeywords(userID, req.Keywords)
+	words, err := services.GenerateVocabWords(userID, req.Keywords, req.Difficulty)
 	if err != nil {
+		if errors.Is(err, services.ErrModerationWarning) {
+			return helpers.Error(ctx, http.StatusBadRequest, consts.CodeValidationError, "包含不适当内容，请修改后重试")
+		}
 		return mapAIServiceError(ctx, err, "AI 词汇生成")
 	}
-	return helpers.Success(ctx, map[string]any{"result": result})
+	return helpers.Success(ctx, map[string]any{"words": words})
 }
 
 // mapAIServiceError maps service errors to HTTP responses.
