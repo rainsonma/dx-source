@@ -16,6 +16,9 @@ import {
   TextCursorInput,
   Eye,
   ArrowLeft,
+  Type,
+  Copy,
+  Trash2,
 } from "lucide-react";
 import {
   Dialog,
@@ -30,6 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { toast } from "sonner";
 import type { CreateVocabResult } from "@/lib/api-client";
 import {
@@ -320,6 +328,65 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                   <p className="text-xs text-muted-foreground">
                     每行输入一个英文词汇，保存后 AI 将自动补全音标和释义。
                   </p>
+
+                  {/* Toolbar: format example (hover) + copy/clear */}
+                  <div className="flex items-center gap-2">
+                    <HoverCard openDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                        >
+                          <Type className="h-3.5 w-3.5" />
+                          词汇输入格式示例
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent align="start" className="w-80">
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs font-semibold text-foreground">词汇输入格式示例</p>
+                          <p className="text-xs text-muted-foreground">
+                            每行一个英文单词或短语；不要包含中文、句子或标点符号。
+                          </p>
+                          <div className="rounded-lg bg-muted p-3 text-xs leading-[1.8] text-muted-foreground">
+                            <p>dolphin</p>
+                            <p>sunflower</p>
+                            <p>polar bear</p>
+                            <p>well-known</p>
+                            <p>iPhone</p>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={!manualText}
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(manualText);
+                          toast.success("已复制到剪贴板");
+                        }}
+                        className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        复制
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!manualText}
+                        onClick={() => {
+                          setManualText("");
+                          setManualError("");
+                          setIsFormatted(false);
+                          setIsFromAi(false);
+                        }}
+                        className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        清空
+                      </button>
+                    </div>
+                  </div>
+
                   <textarea
                     value={manualText}
                     onChange={(e) => {
