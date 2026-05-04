@@ -75,6 +75,10 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
   const [manualText, setManualText] = useState("");
   const [manualError, setManualError] = useState("");
   const [isFormatting, setIsFormatting] = useState(false);
+  // Save gate: must be true to enable 保存. Set by either successful format
+  // or by 使用 (AI import). Any manual edit resets it back to false.
+  const [isFormatted, setIsFormatted] = useState(false);
+  const [isFromAi, setIsFromAi] = useState(false);
 
   // AI tab state
   const [difficulty, setDifficulty] = useState("a1-a2");
@@ -97,6 +101,8 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
       setManualText("");
       setManualError("");
       setIsFormatting(false);
+      setIsFormatted(false);
+      setIsFromAi(false);
       setDifficulty("a1-a2");
       setKeywords("");
       setIsGenerating(false);
@@ -141,6 +147,8 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
 
     setManualText(result.formatted);
     setManualError("");
+    setIsFormatted(true);
+    setIsFromAi(false);
     toast.success("格式化完成");
   }
 
@@ -225,21 +233,20 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
   const canReset = aiWordsText.length > 0 || keywords.trim().length > 0;
   const aiWordCount = parseWordsFromText(aiWordsText).length;
   const canUse = aiWordCount > 0 && !isGenerating;
-  const canSave = manualText.trim().length > 0 && !isSaving && !isFormatting;
+  const canSave = manualText.trim().length > 0 && !isSaving && !isFormatting && (isFormatted || isFromAi);
   const canFormat = manualText.trim().length > 0 && !isFormatting && !isSaving;
 
   function handleUseGenerated() {
     if (aiWordCount === 0) return;
-    // Append to manual textarea (preserve any existing content user typed),
-    // then switch to manual tab so the user can edit/format/save from there.
-    setManualText((prev) => {
-      const trimmedPrev = prev.replace(/\s+$/, "");
-      if (!trimmedPrev) return aiWordsText;
-      return `${trimmedPrev}\n${aiWordsText}`;
-    });
+    // Mirrors metadata dialog: 使用 OVERWRITES the manual textarea with the
+    // AI-generated content (which is already validated/clean). Sets isFromAi
+    // to bypass the format gate, since AI output doesn't need format step.
+    setManualText(aiWordsText);
     setManualError("");
+    setIsFormatted(false);
+    setIsFromAi(true);
     setActiveTab("manual");
-    toast.success("已导入到手动添加，可调整后保存");
+    toast.success("已导入到手动添加，可直接保存或编辑后保存");
   }
 
   return (
@@ -315,7 +322,14 @@ export function AddVocabDialog({ open, onOpenChange, onAdded }: AddVocabDialogPr
                   </p>
                   <textarea
                     value={manualText}
-                    onChange={(e) => { setManualText(e.target.value); setManualError(""); }}
+                    onChange={(e) => {
+                      setManualText(e.target.value);
+                      setManualError("");
+                      // Any manual edit invalidates the format/AI gate — the user
+                      // must re-format (or re-use AI) before save unlocks again.
+                      setIsFormatted(false);
+                      setIsFromAi(false);
+                    }}
                     placeholder={"fast\nquick\nrun fast"}
                     rows={10}
                     className={`w-full resize-none rounded-xl border bg-muted/50 px-3 py-2.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 ${
