@@ -9,10 +9,10 @@ export async function listGameVocabsAction(gameId: string, levelId: string) {
   );
 }
 
-export async function addGameVocabsAction(gameId: string, levelId: string, entries: string[]) {
+export async function addGameVocabsAction(gameId: string, levelId: string, vocabIds: string[]) {
   return apiClient.post<AddedGameVocab[]>(
     `/api/course-games/${gameId}/levels/${levelId}/game-vocabs`,
-    { entries }
+    { vocabIds }
   );
 }
 
