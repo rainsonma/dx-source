@@ -721,22 +721,11 @@ export interface ContentVocabData {
   usAudioUrl?: string | null;
   definition?: string | null;
   explanation?: string | null;
-  isVerified: boolean;
-  createdBy?: string | null;
-  lastEditedBy?: string | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
 }
 
-export interface ContentVocabComplementPatch {
-  definition?: DefinitionEntry[];
-  ukPhonetic?: string | null;
-  usPhonetic?: string | null;
-  ukAudioUrl?: string | null;
-  usAudioUrl?: string | null;
-  explanation?: string | null;
-}
-
-export interface ContentVocabReplacePatch {
+export interface VocabInput {
   content: string;
   definition: DefinitionEntry[];
   ukPhonetic?: string | null;
@@ -746,11 +735,15 @@ export interface ContentVocabReplacePatch {
   explanation?: string | null;
 }
 
+export interface CreateVocabResult {
+  vocab: ContentVocabData;
+  wasReused: boolean;
+}
+
 export interface AddedGameVocab {
   gameVocabId: string;
   contentVocabId: string;
   content: string;
-  wasReused: boolean;
 }
 
 export interface LevelVocabData {
@@ -761,26 +754,32 @@ export interface LevelVocabData {
 
 // Content vocab API functions
 export const contentVocabApi = {
-  getByContent: (content: string) =>
-    apiFetch<ContentVocabData | null>(`/api/content-vocabs?content=${encodeURIComponent(content)}`),
+  listMine: (params?: { cursor?: string; search?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.cursor) query.set("cursor", params.cursor);
+    if (params?.search) query.set("search", params.search);
+    if (params?.limit) query.set("limit", String(params.limit));
+    const qs = query.toString();
+    return apiClient.get<CursorPaginated<ContentVocabData>>(`/api/content-vocabs/mine${qs ? `?${qs}` : ""}`);
+  },
 
-  complement: (id: string, patch: ContentVocabComplementPatch) =>
-    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/complement`, {
-      method: 'POST',
-      body: JSON.stringify(patch),
-    }),
+  create: (input: VocabInput) =>
+    apiClient.post<CreateVocabResult>('/api/content-vocabs', input),
 
-  replace: (id: string, patch: ContentVocabReplacePatch) =>
-    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(patch),
-    }),
+  createBatch: (inputs: VocabInput[]) =>
+    apiClient.post<CreateVocabResult[]>('/api/content-vocabs/batch', { inputs }),
 
-  verify: (id: string, verified: boolean) =>
-    apiFetch<ContentVocabData>(`/api/content-vocabs/${id}/verify`, {
-      method: 'POST',
-      body: JSON.stringify({ verified }),
-    }),
+  update: (id: string, input: VocabInput) =>
+    apiClient.put<ContentVocabData>(`/api/content-vocabs/${id}`, input),
+
+  delete: (id: string) =>
+    apiClient.delete<void>(`/api/content-vocabs/${id}`),
+};
+
+// AI custom API functions
+export const aiCustomApi = {
+  generateVocabsFromKeywords: (keywords: string[]) =>
+    apiClient.post<string>('/api/ai-custom/generate-vocabs-from-keywords', { keywords }),
 };
 
 // Game vocab placement API functions
@@ -788,10 +787,10 @@ export const gameVocabApi = {
   list: (gameId: string, levelId: string) =>
     apiFetch<LevelVocabData[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`),
 
-  add: (gameId: string, levelId: string, entries: string[]) =>
+  add: (gameId: string, levelId: string, vocabIds: string[]) =>
     apiFetch<AddedGameVocab[]>(`/api/course-games/${gameId}/levels/${levelId}/game-vocabs`, {
       method: 'POST',
-      body: JSON.stringify({ entries }),
+      body: JSON.stringify({ vocabIds }),
     }),
 
   reorder: (gameId: string, gvId: string, newOrder: number) =>
